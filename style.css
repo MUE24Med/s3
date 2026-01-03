@@ -1,20 +1,3 @@
-<style>
-    .wood-layer {
-        pointer-events: none; /* لكي لا تعيق النقر على الأزرار */
-        shape-rendering: crispEdges; /* لمنع ظهور خطوط بيضاء بين القطع */
-    }
-
-    /* تأكد أن حاوية المحتوى لها z-index صحيح برمجياً */
-    .scroll-container-group {
-        cursor: grab;
-    }
-
-    /* أي أزرار خارجية مثل زر البحث أو الرجوع يجب أن تكون في مقدمة الـ SVG */
-    #back-button-group, #js-toggle-container {
-        z-index: 100;
-    }
-</style>
-
 /* ===== منع Samsung Dark Mode ===== */
 html {
   color-scheme: only light !important;
@@ -40,34 +23,41 @@ html, body, div, svg, image, img {
   -webkit-filter: none !important;
 }
 
+/* ===== تنسيق الطبقات الخشبية ===== */
+.wood-layer {
+    pointer-events: none;
+    shape-rendering: crispEdges;
+}
+
+.scroll-container-group {
+    cursor: grab;
+}
+
+#back-button-group, #js-toggle-container {
+    z-index: 100;
+}
+
 /* الحالة العادية */
 .wood-banner-animation {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   transform-box: fill-box;
   transform-origin: center;
-  /* الأنيميشن العادي وهو ثابت */
   animation: wood-pulse-soft 3s infinite ease-in-out;
   will-change: transform, filter;
-  transform: scale(1) translateY(0); /* نقطة البداية الصفرية */
+  transform: scale(1) translateY(0);
 }
 
-/* حالة الـ Hover: تلغي كل ما سبق وتبدأ الزوم الجديد */
+/* حالة الـ Hover */
 .wood-banner-animation:hover {
-  /* 1. إلغاء أي أنيميشن نبض قديم فوراً وبقوة */
   animation: none !important; 
-
-  /* 2. تصفير أي مفعول قديم وتطبيق الزوم الـ 3D الجديد */
-  /* نحدد الـ scale بناءً على الحجم الأصلي 1.0 */
   transform: translateY(-15px) scale(1.15) !important; 
-
-  /* 3. تطبيق أنيميشن التوهج المتأرجح الجديد فقط */
   animation: glow-oscillation 1.5s infinite ease-in-out !important;
   filter: brightness(1.2);
-  z-index: 100; /* لضمان ظهوره فوق أي عنصر آخر */
+  z-index: 100;
 }
 
-/* أنيميشن تأرجح التوهج (بدون التأثير على الحجم ليبقى الزوم ثابتاً) */
+/* أنيميشن تأرجح التوهج */
 @keyframes glow-oscillation {
   0%, 100% {
     filter: brightness(1.1) drop-shadow(0 10px 20px rgba(255, 204, 0, 0.4));
@@ -79,7 +69,7 @@ html, body, div, svg, image, img {
   }
 }
 
-/* أنيميشن النبض العادي للحالة الثابتة */
+/* أنيميشن النبض العادي */
 @keyframes wood-pulse-soft {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.03); }
@@ -128,7 +118,7 @@ html, body, div, svg, image, img {
     ry: 5;
 }
 
-/* 1. إعدادات توحيد الرؤية ومنع المتصفحات من الاجتهاد في تكبير الخطوط */
+/* 1. إعدادات توحيد الرؤية */
 *, *::before, *::after {
   box-sizing: border-box !important;
   -webkit-tap-highlight-color: transparent;
@@ -212,7 +202,6 @@ html, body {
   transition: opacity .5s ease-out, transform .5s ease-out;
 }
 
-/* منع أي سحب أفقي */
 body {
   overflow-x: hidden;
 }
@@ -223,16 +212,12 @@ body {
   pointer-events: none;
 }
 
-/* ===== ✅ استخدام transform بدلاً من zoom - متمركز في منتصف الشاشة ===== */
 #group-selection-content {
   text-align: center;
   width: 90%;
   max-width: 600px;
   box-sizing: border-box;
-
-  /* ✅ بدلاً من zoom: 0.85 */
   transform: scale(0.85);
-  /* ✅ التمركز في منتصف الـ viewport على المحورين X و Y */
   transform-origin: center center;
 }
 
@@ -253,7 +238,6 @@ body {
   text-transform: uppercase;
   letter-spacing: 3px;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
-
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -265,7 +249,7 @@ body {
   gap: 20px;
   padding: 0 20px;
   box-sizing: border-box;
-  direction: ltr; /* الأزرار تبدأ من الشمال لليمين */
+  direction: ltr;
 }
 
 .group-btn {
@@ -319,8 +303,6 @@ body {
   color: #ccc;
   text-transform: uppercase;
   letter-spacing: 2px;
-
-  /* ✅ إضافة معالجة أفضل للنص الطويل */
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -332,9 +314,7 @@ body {
 /* ===== موبايل صغير جدًا ===== */
 @media (max-height: 700px) {
   #group-selection-content {
-    /* ✅ بدلاً من zoom: 0.78 */
     transform: scale(0.78);
-    /* transform-origin يبقى center center */
   }
 }
 
@@ -367,7 +347,7 @@ body {
   }
 }
 
-/* تنسيق عارض PDF المنبثق */
+/* تنسيق عارض PDF */
 #pdf-overlay {
   height: 100svh;
   transition: transform .35s ease, opacity .35s ease;
@@ -420,7 +400,7 @@ body {
   height: 100svh;
   inset: 0;
   background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-  display: none; /* مخفي افتراضياً */
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 9999;
@@ -430,7 +410,7 @@ body {
 }
 
 #loading-overlay.active {
-  display: flex; /* يظهر فقط عند التفعيل */
+  display: flex;
   opacity: 1;
   pointer-events: all;
 }
@@ -484,30 +464,25 @@ body {
   transition: all .4s ease;
 }
 
-/* ===== 🎨 ألوان المصابيح المختلفة ===== */
-
-/* المصباح الأول (الأخضر) - يضيء عند 100% */
+/* ألوان المصابيح */
 #bulb-1.on {
   background-color: #4dff88;
   box-shadow: 0 0 15px #4dff88, 0 0 30px #00ff66;
   border-color: #fff;
 }
 
-/* المصباح الثاني (الأصفر) - يضيء عند 75% */
 #bulb-2.on {
   background-color: #ffff4d;
   box-shadow: 0 0 15px #ffff4d, 0 0 30px #ffff00;
   border-color: #fff;
 }
 
-/* المصباح الثالث (البرتقالي) - يضيء عند 50% */
 #bulb-3.on {
   background-color: #ffaa00;
   box-shadow: 0 0 15px #ffaa00, 0 0 30px #ff8800;
   border-color: #fff;
 }
 
-/* المصباح الرابع (الأحمر) - يضيء عند 25% */
 #bulb-4.on {
   background-color: #ff4d4d;
   box-shadow: 0 0 15px #ff4d4d, 0 0 30px #ff0000;
@@ -712,7 +687,7 @@ img, image, svg, rect {
   user-select: none;
 }
 
-/* ===== تحسينات شريط التمرير المخصص ===== */
+/* ===== تحسينات شريط التمرير ===== */
 .scroll-container-group rect[x="910"] {
   transition: fill 0.2s ease, y 0.15s ease-out;
 }
@@ -725,7 +700,7 @@ img, image, svg, rect {
   fill: #ffeb3b !important;
 }
 
-/* ===== تأثيرات hover للعناصر في القائمة ===== */
+/* ===== hover للعناصر ===== */
 .wood-folder-group:hover rect,
 .wood-file-group:hover rect {
   stroke-width: 2 !important;
@@ -737,7 +712,7 @@ img, image, svg, rect {
   transform: scale(0.98);
 }
 
-/* ===== منع التمرير على الصور واللوجو ===== */
+/* ===== منع التمرير على الصور ===== */
 .wood-banner-animation,
 image[data-src*="wood.webp"] {
   pointer-events: auto;
