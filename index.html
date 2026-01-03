@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Map</title>
+  
+  <!-- ✅ منع Samsung من فرض الوضع الداكن -->
+  <meta name="color-scheme" content="only light">
+  <meta name="supported-color-schemes" content="light">
+  
+  <!-- ✅ لون الثيم للمتصفح -->
+  <meta name="theme-color" content="#000000">
+  
+  <!-- ✅ Preconnect لـ GitHub (تسريع التحميل) -->
+  <link rel="preconnect" href="https://raw.githubusercontent.com">
+  <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
+  <link rel="preconnect" href="https://api.github.com">
+  <link rel="dns-prefetch" href="https://api.github.com">
+  
+  <!-- ✅ Preload للخلفية الخشبية -->
+  <link rel="preload" href="image/wood.webp" as="image">
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/webp" href="image/0.png">
+  
+  <!-- ✅ منع الفلاتر التلقائية من Samsung -->
+  <style>
+    html {
+      color-scheme: only light !important;
+      -webkit-color-scheme: only light !important;
+      background-color: #000000 !important;
+    }
+    
+    body, #main-svg, * {
+      color-scheme: only light !important;
+      -webkit-color-scheme: only light !important;
+    }
+    
+    /* منع Samsung من تطبيق الفلاتر */
+    html, body, div, svg, image, img {
+      filter: none !important;
+      -webkit-filter: none !important;
+    }
+  </style>
+</head>
+<body>
+
+<!-- شاشة اختيار الجروب -->
+<div id="group-selection-screen">
+  <div id="group-selection-content">
+    <img id="main-logo" src="image/0.png" alt="Logo" />
+    <h1>اختر مجموعتك</h1>
+    <div id="group-buttons">
+      <button class="group-btn" data-group="A">
+        <span class="group-letter">A</span>
+        <span class="group-label">Group A</span>
+      </button>
+      <button class="group-btn" data-group="B">
+        <span class="group-letter">B</span>
+        <span class="group-label">Group B</span>
+      </button>
+      <button class="group-btn" data-group="C">
+        <span class="group-letter">C</span>
+        <span class="group-label">Group C</span>
+      </button>
+      <button class="group-btn" data-group="D">
+        <span class="group-letter">D</span>
+        <span class="group-label">Group D</span>
+      </button>
+    </div>
+    <p style="color: #888; font-size: 12px; margin-top: 20px;">💡 يمكنك تغيير المجموعة لاحقاً من زر "🔄 Change Group"</p>
+  </div>
+</div>
+
+<div id="js-toggle-container" class="top">
+  <div id="search-container">
+    <input type="text" id="search-input" placeholder="ابحث باسم الملف...">
+    <span id="search-icon" class="clickable-area">🔙</span>
+  </div>
+  <div class="controls-row">
+    <span id="move-toggle" style="cursor:pointer; font-size: 18px;">↕️</span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 12px; opacity: 0.8;">Interaction</span>
+      <label class="switch">
+        <input type="checkbox" id="js-toggle" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<div id="loading-overlay">
+  <div id="loading-content">
+    <img id="splash-image" src="image/0.png" />
+    <h1>Interactive College Map</h1>
+    <div id="loader-lights">
+      <div class="light-bulb" id="bulb-1"></div>
+      <div class="light-bulb" id="bulb-2"></div>
+      <div class="light-bulb" id="bulb-3"></div>
+      <div class="light-bulb" id="bulb-4"></div>
+    </div>
+    <div id="legend">
+      <div class="legend-item red">أسئلة</div>
+      <div class="legend-item yellow">محاضرات</div>
+      <div class="legend-item white">مواد أخرى</div>
+      <div class="legend-item purple">إجابات</div>
+      <div class="legend-item green">سكاشن العملي</div>
+      <div class="legend-item blue">فيديو شرح</div>
+    </div>
+  </div>
+</div>
+
+<div id="pdf-overlay" class="hidden">
+  <div id="toolbar">
+    <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
+    <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
+    <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
+  </div>
+  <iframe id="pdfFrame" src="" loading="lazy"></iframe>
+</div>
+
+<div id="scroll-container">
+  <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
+    <defs></defs>
+
+    <g transform="translate(0,0)" id="files-list-container">
+      <image data-src="image/wood.webp" x="0" y="0" width="1024" height="2454" />
+
+      <g id="change-group-btn" style="cursor: pointer;">
+        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff"/>
+        <text id="group-btn-text" x="245" y="130" text-anchor="middle" fill="white" font-weight="bold">Change Group 🔄</text>
+      </g>
+
+      <g id="back-button-group" style="cursor: pointer;">
+        <rect id="back-btn" x="112" y="160" width="800" height="70" rx="15" fill="#3e2723" stroke="#fff" stroke-width="2" />
+        <text x="512" y="205" id="back-btn-text" text-anchor="middle" fill="white" font-size="22" font-weight="bold">➡️ إلى الخريطة ➡️</text>
+      </g>
+    </g>
+    <g id="dynamic-links-group"></g>
+
+    <!-- مكان حقن SVG الخاص بكل Group -->
+    <g id="group-specific-content"></g>
+
+  </svg>
+</div>
+<script src="script.js"></script>
+<script src="tracker.js"></script>
+</body>
+</html>
