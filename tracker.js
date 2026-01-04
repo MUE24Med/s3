@@ -1,5 +1,3 @@
-/* ===== نظام التتبع المتقدم مع Device Fingerprint ===== */
-
 const UserTracker = {
     activities: [], // لتخزين الأنشطة حتى لحظة الخروج
     deviceFingerprint: null, // البصمة الفريدة للجهاز
