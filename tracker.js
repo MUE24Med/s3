@@ -102,7 +102,7 @@ const UserTracker = {
         try {
             const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            
+
             if (!gl) return 'no_webgl';
 
             const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
@@ -134,7 +134,7 @@ const UserTracker = {
             for (const baseFont of baseFonts) {
                 ctx.font = `72px ${baseFont}`;
                 const baseWidth = ctx.measureText('mmmmmmmmmmlli').width;
-                
+
                 ctx.font = `72px ${font}, ${baseFont}`;
                 const testWidth = ctx.measureText('mmmmmmmmmmlli').width;
 
@@ -284,7 +284,7 @@ const UserTracker = {
         }
 
         const data = new FormData();
-        
+
         // ✅ البيانات الرئيسية (مع Device Fingerprint)
         data.append("01-Device_ID", this.deviceFingerprint); // 🔒 البصمة الفريدة
         data.append("02-User_Name", this.getDisplayName());
@@ -312,7 +312,7 @@ const UserTracker = {
 
         // ✅ إرسال البيانات
         navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", data);
-        
+
         console.log(`📤 تم إرسال البيانات - Device ID: ${this.deviceFingerprint.substring(0, 8)}...`);
     }
 };
