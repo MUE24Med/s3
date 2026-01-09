@@ -1,4 +1,4 @@
-/* --- 1. الإعدادات والمتغيرات العالمية --- */
+// --- 1. الإعدادات والمتغيرات العالمية --- //
 const REPO_NAME = "semester-3";
 const GITHUB_USER = "MUE24Med";
 
@@ -84,7 +84,6 @@ if (jsToggle) {
 // ✅ دالة تطبيع النص العربي (إزالة التشكيل والهمزات) - محدثة
 function normalizeArabic(text) {
     if (!text) return '';
-    // تحويل النص إلى سلسلة نصية أولاً (لدعم الأرقام)
     text = String(text);
     return text
         .replace(/[أإآ]/g, 'ا')
@@ -231,59 +230,71 @@ async function calculateTotalSize() {
 /* --- 5. تحميل SVG الخاص بالمجموعة --- */
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
+    if (!groupContainer) {
+        console.error('❌ group-specific-content غير موجود');
+        return;
+    }
+
     groupContainer.innerHTML = '';
 
-    try {  
-        console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);  
-        const response = await fetch(`groups/group-${groupLetter}.svg`);  
+    try {
+        console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);
+        const response = await fetch(`groups/group-${groupLetter}.svg`);
 
-        if (!response.ok) {  
-            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);  
-            return;  
-        }  
+        if (!response.ok) {
+            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
+            return;
+        }
 
-        const svgText = await response.text();  
-        const svgSize = new Blob([svgText]).size;  
-        loadedBytes += svgSize;  
-        updateLoadProgress();  
+        const svgText = await response.text();
+        const svgSize = new Blob([svgText]).size;
+        loadedBytes += svgSize;
+        updateLoadProgress();
 
-        console.log(`✅ SVG محمّل (${(svgSize/1024).toFixed(1)}KB)`);  
+        console.log(`✅ SVG محمّل (${(svgSize/1024).toFixed(1)}KB)`);
 
-        const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);  
+        const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
 
-        if (match && match[1]) {  
-            groupContainer.innerHTML = match[1];  
-            console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);  
+        if (match && match[1]) {
+            groupContainer.innerHTML = match[1];
+            console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
 
-            const injectedImages = groupContainer.querySelectorAll('image[data-src]');  
-            console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);  
+            // ✅ التأكد من أن dynamic-links-group في المقدمة
+            const dynamicGroup = document.getElementById('dynamic-links-group');
+            if (dynamicGroup) {
+                // نقله للبداية (background)
+                mainSvg.insertBefore(dynamicGroup, mainSvg.firstChild);
+                console.log('✅ dynamic-links-group في الخلفية');
+            }
 
-            imageUrlsToLoad = [];  
+            const injectedImages = groupContainer.querySelectorAll('image[data-src]');
+            console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
 
-            imageUrlsToLoad.push('image/wood.webp');  
+            imageUrlsToLoad = [];
+            imageUrlsToLoad.push('image/wood.webp');
 
-            injectedImages.forEach(img => {  
-                const src = img.getAttribute('data-src');  
+            injectedImages.forEach(img => {
+                const src = img.getAttribute('data-src');
 
-                if (src && !imageUrlsToLoad.includes(src)) {  
-                    const isGroupImage = src.includes(`image/${groupLetter}/`) ||   
-                                       src.includes(`logo-${groupLetter}`) ||   
-                                       src.includes(`logo-wood-${groupLetter}`);  
+                if (src && !imageUrlsToLoad.includes(src)) {
+                    const isGroupImage = src.includes(`image/${groupLetter}/`) ||
+                                       src.includes(`logo-${groupLetter}`) ||
+                                       src.includes(`logo-wood-${groupLetter}`);
 
-                    if (isGroupImage) {  
-                        imageUrlsToLoad.push(src);  
-                    }  
-                }  
-            });  
+                    if (isGroupImage) {
+                        imageUrlsToLoad.push(src);
+                    }
+                }
+            });
 
-            console.log(`📋 قائمة الصور للتحميل:`, imageUrlsToLoad);  
-            await calculateTotalSize();  
-        } else {  
-            console.error('❌ فشل استخراج محتوى SVG');  
-        }  
+            console.log(`📋 قائمة الصور للتحميل:`, imageUrlsToLoad);
+            await calculateTotalSize();
+        } else {
+            console.error('❌ فشل استخراج محتوى SVG');
+        }
 
-    } catch (err) {  
-        console.error(`❌ خطأ في loadGroupSVG:`, err);  
+    } catch (err) {
+        console.error(`❌ خطأ في loadGroupSVG:`, err);
     }
 }
 
@@ -452,24 +463,49 @@ window.goToMapEnd = () => {
     scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' });
 };
 
-/* --- 11. تحديث الأحجام --- */
+/* --- 11. تحديث الأحجام (ديناميكي 100%) --- */
 function updateDynamicSizes() {
     if (!mainSvg) return;
 
-    const allImages = mainSvg.querySelectorAll('image[width="1024"][height="2454"]');  
-    console.log(`📏 عدد الصور: ${allImages.length}`);  
+    // ✅ 1. حساب عدد الصور من group-specific-content فقط
+    const groupContent = document.getElementById('group-specific-content');
+    if (!groupContent) {
+        console.warn('⚠️ group-specific-content غير موجود');
+        return;
+    }
 
-    if (allImages.length === 0) {  
-        console.warn('⚠️ لم يتم العثور على صور');  
-        return;  
-    }  
+    // ✅ 2. البحث عن جميع الصور داخل مجموعات <g> ذات transform
+    const imageGroups = groupContent.querySelectorAll('g[transform^="translate"]');
+    console.log(`📏 عدد مجموعات الصور المكتشفة: ${imageGroups.length}`);
 
-    const imgW = 1024;  
-    const imgH = 2454;  
-    const totalWidth = allImages.length * imgW;  
+    if (imageGroups.length === 0) {
+        console.warn('⚠️ لم يتم العثور على صور');
+        return;
+    }
 
-    mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imgH}`);  
-    console.log(`✅ viewBox: 0 0 ${totalWidth} ${imgH}`);
+    // ✅ 3. حساب أقصى عرض من قيم translate
+    let maxX = 0;
+    const imgW = 1024;
+    const imgH = 2454;
+
+    imageGroups.forEach(group => {
+        const transform = group.getAttribute('transform');
+        const match = transform.match(/translate\s*\(\s*([\d.]+)\s*,\s*([\d.]+)\s*\)/);
+        
+        if (match) {
+            const x = parseFloat(match[1]);
+            if (x > maxX) maxX = x;
+        }
+    });
+
+    // ✅ 4. حساب العرض الكلي (آخر صورة + عرضها)
+    const totalWidth = maxX + imgW;
+
+    // ✅ 5. تحديث viewBox
+    mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imgH}`);
+    
+    console.log(`✅ ViewBox محدّث: 0 0 ${totalWidth} ${imgH}`);
+    console.log(`📊 عدد الصور: ${imageGroups.length}, العرض الكلي: ${totalWidth}px`);
 }
 window.updateDynamicSizes = updateDynamicSizes;
 
@@ -734,7 +770,9 @@ async function updateWoodInterface() {
 
     if (!dynamicGroup || !backBtnText) return;
 
-    if (groupBtnText && currentGroup) {
+    if (groupBtnText &&
+
+currentGroup) {
         groupBtnText.textContent = `Change Group 🔄 ${currentGroup}`;
     }
 
@@ -1472,7 +1510,8 @@ function loadImages() {
             const url = imageUrlsToLoad[currentIndex];  
             currentIndex++;  
 
-            const img = new Image();  
+            const img
+ = new Image();  
 
             img.onload = function() {  
                 const actualSize = estimateFileSize(url);  
@@ -1577,7 +1616,7 @@ if (searchInput) {
         if (!mainSvg) return;  
 
         const query = normalizeArabic(e.target.value);  
-        
+
         // إذا كان البحث فارغاً، أظهر كل شيء
         const isEmptySearch = query.length === 0;
 
@@ -1604,7 +1643,7 @@ if (searchInput) {
                 const normalizedFullText = normalizeArabic(fullText);
                 const normalizedFileName = normalizeArabic(fileName);
                 const normalizedAutoArabic = normalizeArabic(autoArabic);
-                
+
                 const isMatch = normalizedHref.includes(query) ||   
                               normalizedFullText.includes(query) ||
                               normalizedFileName.includes(query) ||
@@ -1686,76 +1725,5 @@ if (hasSavedGroup) {
         groupSelectionScreen.classList.remove('hidden');
     }
 }
-
-/* --- 21. إضافة أنماط CSS للتمرير المحسن --- */
-function addFixedScrollStyles() {
-    if (document.getElementById('fixed-scroll-styles')) return;
-
-    const style = document.createElement('style');
-    style.id = 'fixed-scroll-styles';
-    style.textContent = `
-        /* ✅ التأكد من أن clip-path يعمل */
-        .scrollable-content {
-            transition: transform 0.1s ease-out;
-            overflow: visible !important;
-            cursor: grab;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        
-        .scrollable-content:active {
-            cursor: grabbing;
-        }
-        
-        .scrollable-content * {
-            pointer-events: auto;
-        }
-        
-        /* ✅ شريط التمرير أكثر وضوحاً */
-        .scroll-handle {
-            transition: y 0.1s ease-out;
-        }
-        
-        .scroll-handle:hover {
-            fill: #ffd54f !important;
-            filter: drop-shadow(0 0 5px rgba(255, 213, 79, 0.7));
-        }
-        
-        /* ✅ التأكد من أن clip-path لا يقطع بشكل مفرط */
-        .scrollable-content[clip-path],
-        .subject-separator-group[clip-path] {
-            clip-path: inherit;
-            -webkit-clip-path: inherit;
-        }
-        
-        /* ✅ تحسين اللمس على الهواتف */
-        @media (hover: none) {
-            .scrollable-content {
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            .scroll-handle {
-                width: 16px !important;
-                x: 908px !important;
-            }
-        }
-        
-        /* ✅ hover للعناصر */
-        .wood-folder-group:hover rect,
-        .wood-file-group:hover rect {
-            stroke-width: 2 !important;
-            filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 204, 0, 0.5));
-        }
-        
-        .wood-folder-group:active,
-        .wood-file-group:active {
-            transform: scale(0.98);
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// استدعاء إضافة الأنماط
-document.addEventListener('DOMContentLoaded', addFixedScrollStyles);
 
 console.log('✅ تم تحميل script.js بالكامل - إصدار محدث مع دعم البحث بالأرقام والحروف المفردة');
