@@ -255,8 +255,18 @@
 
 </g>
 </g>
-<!-- الاسبوع السابع عشر -->
+<!-- الاسبوع الخامس عشر -->
 <g transform="translate(15360,0)">
+<image data-src="image/B/15.webp" width="1024" height="2454" />
+
+</g>
+<!-- الاسبوع السادس عشر -->
+<g transform="translate(16384,0)">
+<image data-src="image/B/16.webp" width="1024" height="2454" />
+
+</g>
+<!-- الاسبوع السابع عشر -->
+<g transform="translate(17408,0)">
 <image data-src="image/B/17.webp" width="1024" height="2454" />
 
 </g>
