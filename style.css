@@ -845,28 +845,3 @@ input:focus:not(:focus-visible) {
     transition-duration: 0.01ms !important;
   }
 }
-
-/* ===== إصلاح ترتيب الطبقات ===== */
-#group-specific-content {
-    pointer-events: none;
-}
-
-#group-specific-content image {
-    pointer-events: none;
-}
-
-#group-specific-content rect {
-    pointer-events: auto;
-}
-
-#dynamic-links-group {
-    pointer-events: auto;
-    z-index: 10;
-}
-
-/* ===== تحسين عرض الصور ===== */
-#group-specific-content > g > image {
-    shape-rendering: crispEdges;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-}
