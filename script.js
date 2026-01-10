@@ -698,7 +698,7 @@ function updateWelcomeMessages() {
 
     const loadingH1 = document.querySelector('#loading-content h1');  
     if (loadingH1 && currentGroup) {  
-        loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span> في INTERACTIVE COLLEGE MAP`;  
+        loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span> في ${REPO_NAME.toUpperCase()}`;  
     }
 }
 
@@ -1406,7 +1406,7 @@ function processRect(r) {
                 console.warn(`⚠️ CORS Error, trying direct open:`, error);  
                 const overlay = document.getElementById("pdf-overlay");  
                 const pdfViewer = document.getElementById("pdfFrame");  
-                overlay.classList.remove("hidden");  
+                overlay.classList.remove("hidden");
                 pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
                                 encodeURIComponent(href) + "#zoom=page-width";  
             }  
