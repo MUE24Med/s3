@@ -95,7 +95,7 @@
   </div>
 </div>
 
-<!-- شاشة التحميل -->
+<!-- ✅ شاشة التحميل (معدلة) -->
 <div id="loading-overlay">
   <div id="loading-content">
     <img 
@@ -104,7 +104,8 @@
       alt="شعار التحميل"
       loading="eager"
     />
-    <h1>Interactive College Map</h1>
+    <!-- ✅ تم تغيير h1 الأول -->
+    <h1 id="project-loading-title">جاري التحميل...</h1>
     <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
       <div class="light-bulb" id="bulb-1"></div>
       <div class="light-bulb" id="bulb-2"></div>
@@ -200,10 +201,3 @@
     <g id="group-specific-content"></g>
   </svg>
 </div>
-
-<!-- ✅ Scripts مع defer للأداء الأفضل -->
-<script defer src="script.js"></script>
-<script defer src="tracker.js"></script>
-
-</body>
-</html>
