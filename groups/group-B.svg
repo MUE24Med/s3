@@ -4,35 +4,35 @@
 
 <!-- الاسبوع الأول -->
 <g transform="translate(1024,0)">
-<image data-src="image/B/1.webp" width="1024" height="2454" />
+<image data-src="image/B/01.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثاني -->
 <g transform="translate(2048,0)">
-<image data-src="image/B/2.webp" width="1024" height="2454" />
+<image data-src="image/B/02.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثالث -->
 <g transform="translate(3072,0)">
-<image data-src="image/B/3.webp" width="1024" height="2454" />
+<image data-src="image/B/03.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الرابع -->
 <g transform="translate(4096,0)">
-<image data-src="image/B/4.webp" width="1024" height="2454" />
+<image data-src="image/B/04.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الخامس -->
 <g transform="translate(5120,0)">
-<image data-src="image/B/5.webp" width="1024" height="2454" />
+<image data-src="image/B/05.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع السادس -->
 <g transform="translate(6144,0)">
-<image data-src="image/B/6.webp" width="1024" height="2454" />
+<image data-src="image/B/06.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع السابع -->
 <g transform="translate(7168,0)">
-<image data-src="image/B/7.webp" width="1024" height="2454" />
+<image data-src="image/B/07.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثامن -->
 <g transform="translate(8192,0)">
-<image data-src="image/B/8.webp" width="1024" height="2454" />
+<image data-src="image/B/08.webp" width="1024" height="2454" />
 
 <!-- Monday 8 -->
 <g transform="translate(368,0)">
@@ -69,7 +69,7 @@
 </g>
 <!-- الاسبوع التاسع -->
 <g transform="translate(9216,0)">
-    <image data-src="image/B/9.webp" width="1024" height="2454"/>
+    <image data-src="image/B/09.webp" width="1024" height="2454"/>
 
 <!-- Saturday 9 -->
 <g transform="translate(140,0)">
