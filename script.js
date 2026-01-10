@@ -1,3 +1,39 @@
+/* --- دالة تحويل اسم المستودع لعنوان مقروء --- */
+function getProjectDisplayName() {
+    return REPO_NAME
+        .replace(/semester-/gi, 'الفصل الدراسي ')  // تحويل semester- إلى عربي
+        .replace(/-/g, ' ')                         // تحويل - إلى مسافة
+        .trim();
+    // النتيجة من "semester-3" → "الفصل الدراسي 3"
+}
+
+/* --- دالة تحديث رسائل الترحيب والأسماء (محدثة) --- */
+function updateWelcomeMessages() {
+    const displayName = getDisplayName();
+    const projectName = getProjectDisplayName(); // ✅ جلب اسم المستودع
+
+    // ✅ تحديث العنوان في شاشة التحميل
+    const loadingTitle = document.getElementById('project-loading-title');
+    if (loadingTitle) {
+        loadingTitle.textContent = projectName;
+    }
+
+    // تحديث شاشة اختيار المجموعة
+    const groupScreenH1 = document.querySelector('#group-selection-screen h1');
+    if (groupScreenH1) {
+        groupScreenH1.innerHTML = `مرحباً بك يا <span style="color: #ffca28;">${displayName}</span> إختر جروبك`;
+    }
+
+    // تحديث رسالة الترحيب في شاشة التحميل
+    const loadingH1 = document.querySelector('#loading-content h1');
+    if (loadingH1 && currentGroup) {
+        loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span> في ${projectName}`;
+    }
+    
+    // ✅ تحديث عنوان الصفحة
+    document.title = `${projectName} - خريطة الكلية التفاعلية`;
+}
+
 /* --- 1. الإعدادات والمتغيرات العالمية --- */
 const REPO_NAME = "semester-3";
 const GITHUB_USER = "MUE24Med";
