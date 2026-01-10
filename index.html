@@ -95,7 +95,7 @@
   </div>
 </div>
 
-<!-- ✅ شاشة التحميل (معدلة) -->
+<!-- شاشة التحميل -->
 <div id="loading-overlay">
   <div id="loading-content">
     <img 
@@ -104,7 +104,7 @@
       alt="شعار التحميل"
       loading="eager"
     />
-    <!-- ✅ تم تغيير h1 الأول -->
+    <!-- ✅ تم تغيير h1 ليتم تحديثه ديناميكيًا -->
     <h1 id="project-loading-title">جاري التحميل...</h1>
     <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
       <div class="light-bulb" id="bulb-1"></div>
@@ -201,3 +201,10 @@
     <g id="group-specific-content"></g>
   </svg>
 </div>
+
+<!-- ✅ Scripts مع defer للأداء الأفضل -->
+<script defer src="script.js"></script>
+<script defer src="tracker.js"></script>
+
+</body>
+</html>
