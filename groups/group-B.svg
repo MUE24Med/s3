@@ -269,6 +269,39 @@
 <g transform="translate(17408,0)">
 <image data-src="image/B/17.webp" width="1024" height="2454" />
 
+<!-- Monday 17 -->
+<g transform="translate(368,0)">
+
+<rect x="0" y="1093.5" height="327.32" class="m w l" data-href="#" />
+
+<rect x="0" y="1423" height="327.75" class="m w l" data-href="#" />
+
+<rect x="0" y="1752" height="370.7" class="m w l" data-href="#" />
+</g>
+
+<!-- Tuesday 17 -->
+<g transform="translate(483,0)">
+
+<rect x="0" y="355.4" height="518.2" class="m w l" data-href="#" />
+
+<rect x="0" y="875.4" height="438.1" class="m w l" data-href="#" />
+
+<rect x="0" y="1313" height="438.53" class="m w l" data-href="#" />
+
+<rect x="0" y="1752.2" height="492.9" class="m w l" data-href="#" />
+</g>
+
+<!-- Wednesday 17 -->
+<g transform="translate(597,0)">
+
+<rect x="0" y="355.18" height="517" class="m w l" data-href="#" />
+</g>
+
+<!-- Thursday 17 -->
+<g transform="translate(713,0)">
+
+<rect x="0" y="874" height="438.76" class="m w l" data-href="#" />
+</g>
 </g>
 <g id="dynamic-links-group"></g>
 </svg>
