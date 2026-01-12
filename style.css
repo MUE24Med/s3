@@ -183,12 +183,13 @@ html, body {
   cursor: pointer;
 }
 
-.q { stroke: var(--color-q); }
-.v { stroke: var(--color-v); }
-.i { stroke: var(--color-i); }
-.a { stroke: var(--color-a); }
-.s { stroke: var(--color-s); }
-.l { stroke: var(--color-l); }
+.q  { stroke: var(--color-q); }
+.v  { stroke: var(--color-v); }
+.i  { stroke: var(--color-i); }
+.a  { stroke: var(--color-a); }
+.s  { stroke: var(--color-s); }
+.l  { stroke: var(--color-l); }
+.il { stroke: var(--color-il); }
 
 /* ===== شاشة اختيار الجروب ===== */
 #group-selection-screen {
