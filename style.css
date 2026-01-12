@@ -135,7 +135,7 @@ html, body, div, svg, image, img {
   --color-a: purple;
   --color-s: green;
   --color-l: yellow;
-  --color-il: pale yellow;
+  --color-is: #c8ff8e;
 }
 
 html, body {
@@ -189,7 +189,7 @@ html, body {
 .a  { stroke: var(--color-a); }
 .s  { stroke: var(--color-s); }
 .l  { stroke: var(--color-l); }
-.il { stroke: var(--color-il); }
+.is { stroke: var(--color-is); }
 
 /* ===== شاشة اختيار الجروب ===== */
 #group-selection-screen {
@@ -540,7 +540,7 @@ body {
 .legend-item.purple { --item-color: var(--color-a); }
 .legend-item.green  { --item-color: var(--color-s); }
 .legend-item.yellow { --item-color: var(--color-l); }
-.legend-item.pale yellow { --item-color: var(--color-il); }
+.legend-item.is { --item-color: var(--color-is); }
 
 /* ===== Toggle & Search UI ===== */
 #js-toggle-container {
