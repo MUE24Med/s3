@@ -540,6 +540,7 @@ body {
 .legend-item.purple { --item-color: var(--color-a); }
 .legend-item.green  { --item-color: var(--color-s); }
 .legend-item.yellow { --item-color: var(--color-l); }
+.legend-item.pale yellow { --item-color: var(--color-il); }
 
 /* ===== Toggle & Search UI ===== */
 #js-toggle-container {
