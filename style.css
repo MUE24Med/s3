@@ -778,7 +778,8 @@ input:focus:not(:focus-visible) {
   #js-toggle-container,
   #loading-overlay,
   #group-selection-screen,
-  #pdf-overlay {
+  #pdf-overlay,
+  #clear-cache-btn {
     display: none !important;
   }
 
@@ -847,4 +848,122 @@ input:focus:not(:focus-visible) {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ===== أنماط زر مسح الكاش ===== */
+#clear-cache-btn {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+  padding: 10px 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#clear-cache-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+#clear-cache-btn:active {
+  transform: scale(0.95);
+}
+
+/* تحسين زر مسح الكاش على الشاشات الصغيرة */
+@media (max-width: 768px) {
+  #clear-cache-btn {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+    top: 5px !important;
+    left: 5px !important;
+  }
+}
+
+/* ===== تحسينات إضافية للأداء ===== */
+
+/* تقليل Repaints */
+#main-svg image {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* تحسين Font Rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* منع Layout Shifts */
+#group-selection-screen,
+#loading-overlay,
+#pdf-overlay {
+  contain: layout size;
+}
+
+/* Lazy Loading Support */
+image[loading="lazy"] {
+  content-visibility: auto;
+}
+
+/* ===== تحسينات الحركة والتفاعل ===== */
+
+/* تحسين Touch على iOS */
+#scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+/* منع Double-Tap Zoom على iOS */
+button, [role="button"], input {
+  touch-action: manipulation;
+}
+
+/* تحسين Tap Highlight */
+* {
+  -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
+}
+
+/* ===== Loading States ===== */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Scroll Indicators ===== */
+#scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+#scroll-container::-webkit-scrollbar-track {
+  background: #000;
+}
+
+#scroll-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+#scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
 }
