@@ -1,5 +1,5 @@
 // ✅ نظام versioning ذكي - غيّر الرقم عند كل تحديث مهم
-const VERSION = '2025.01.13.005';
+const VERSION = '2025.01.14.001';
 const CACHE_NAME = 'interactive-map-' + VERSION;
 
 // ✅ الملفات الأساسية المشتركة (تحميل أولي)
