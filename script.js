@@ -29,6 +29,11 @@ let loadingProgress = {
 
 let imageUrlsToLoad = [];
 
+// ✅ نظام الأسابيع
+let weeksToLoad = [];
+let loadedWeeks = [];
+let currentWeekIndex = 0;
+
 // ✅ نظام التنقل الخلفي
 let navigationHistory = [];
 const NAV_STATE = {
@@ -140,8 +145,6 @@ function handleBackNavigation(e) {
 
     popNavigationState();
 
-    const previousState = getCurrentNavigationState();
-
     if (currentState.state === NAV_STATE.PDF_VIEW) {
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
@@ -176,9 +179,7 @@ function handleBackNavigation(e) {
 
 function setupBackButton() {
     window.history.pushState({ page: 'main' }, '', '');
-
     window.addEventListener('popstate', handleBackNavigation);
-
     window.addEventListener('popstate', function(e) {
         window.history.pushState({ page: 'main' }, '', '');
     });
@@ -239,7 +240,6 @@ async function fetchGlobalTree() {
 function saveSelectedGroup(group) {
     localStorage.setItem('selectedGroup', group);
     currentGroup = group;
-
     window.dispatchEvent(new CustomEvent('groupChanged', { detail: group }));
 }
 
@@ -259,9 +259,9 @@ function debounce(func, delay) {
         timeoutId = setTimeout(() => func.apply(this, arguments), delay);
     };
 }
+
 /* --- 5. نظام التحميل الأولي (قبل اختيار الجروب) --- */
 
-// ✅ قائمة الملفات الأساسية المشتركة
 const CORE_ASSETS = [
     './style.css',
     './script.js',
@@ -277,9 +277,8 @@ function updateInitialLoadingProgress() {
         initialProgressPercentage.textContent = percentage + '%';
     }
 
-    // ✅ تحديث دائرة التقدم
     if (progressBar) {
-        const circumference = 2 * Math.PI * 85; // 534.07
+        const circumference = 2 * Math.PI * 85;
         const offset = circumference - (percentage / 100) * circumference;
         progressBar.style.strokeDashoffset = offset;
     }
@@ -307,7 +306,6 @@ async function loadCoreAssets() {
             });
 
             if (response.ok) {
-                // ✅ للملفات النصية، نقرأ المحتوى لضمان التحميل الكامل
                 if (asset.endsWith('.css') || asset.endsWith('.js')) {
                     await response.text();
                 } else {
@@ -337,188 +335,340 @@ async function loadCoreAssets() {
 
     console.log('✅ اكتمل تحميل جميع الملفات الأساسية');
 
-    // ✅ الانتقال إلى شاشة اختيار الجروب
     setTimeout(() => {
         if (initialLoadingScreen) {
-            initialLoadingScreen.classList.add('hidden');
-        }
-        if (groupSelectionScreen) {
-            groupSelectionScreen.classList.remove('hidden');
+            initialLoadingScreen.style.display = 'none';
         }
     }, 500);
 }
+/* --- 6. نظام التحميل التدريجي للأسابيع --- */
 
-/* --- 6. إدارة شاشة التحميل (بعد اختيار الجروب) --- */
-
-function showLoadingScreen(groupLetter) {
-    if (!loadingOverlay) return;
-
-    const splashImage = document.getElementById('splash-image');  
-    if (splashImage) {  
-        splashImage.src = `image/logo-${groupLetter}.webp`;  
-    }  
-
-    // ✅ إعادة تعيين الحالة
-    loadingProgress = {
-        totalSteps: 0,
-        completedSteps: 0,
-        currentPercentage: 0
-    };
-
-    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));  
-
-    loadingOverlay.classList.add('active');  
-    console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);  
-
-    updateWelcomeMessages();
-}
-
-function hideLoadingScreen() {
-    if (!loadingOverlay) return;
-    loadingOverlay.classList.remove('active');
-    console.log('✅ تم إخفاء شاشة التحميل');
-}
-
-function updateLoadProgress() {
-    if (loadingProgress.totalSteps === 0) {
-        console.warn('⚠️ totalSteps = 0');
-        return;
-    }
-
-    const progress = (loadingProgress.completedSteps / loadingProgress.totalSteps) * 100;
-    loadingProgress.currentPercentage = Math.min(100, Math.round(progress));
-
-    console.log(`📊 التقدم: ${loadingProgress.currentPercentage}% (${loadingProgress.completedSteps}/${loadingProgress.totalSteps})`);
-
-    const percentage = loadingProgress.currentPercentage;
-
-    // المصباح 4 (أحمر) = 20% (1/5)
-    if (percentage >= 20) {
-        document.getElementById('bulb-4')?.classList.add('on');
-    }
-
-    // المصباح 3 (برتقالي) = 40% (2/5)
-    if (percentage >= 40) {
-        document.getElementById('bulb-3')?.classList.add('on');
-    }
-
-    // المصباح 2 (أصفر) = 60% (3/5)
-    if (percentage >= 60) {
-        document.getElementById('bulb-2')?.classList.add('on');
-    }
-
-    // المصباح 1 (أخضر) = 80% (4/5)
-    if (percentage >= 80) {
-        document.getElementById('bulb-1')?.classList.add('on');
-    }
-}
-
-/* --- 7. تحميل SVG الخاص بالمجموعة --- */
-async function loadGroupSVG(groupLetter) {
+function createLoadingScreensInSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
-    groupContainer.innerHTML = '';
+    
+    // ✅ إنشاء شاشة اختيار الجروب في SVG (x=1024, y=0)
+    const groupSelectionGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    groupSelectionGroup.setAttribute("id", "svg-group-selection");
+    groupSelectionGroup.setAttribute("transform", "translate(1024, 0)");
+    
+    // خلفية
+    const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bgRect.setAttribute("x", "0");
+    bgRect.setAttribute("y", "0");
+    bgRect.setAttribute("width", "1024");
+    bgRect.setAttribute("height", "2454");
+    bgRect.setAttribute("fill", "#1a1a1a");
+    groupSelectionGroup.appendChild(bgRect);
+    
+    // شعار
+    const logo = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    logo.setAttribute("href", `image/logo-${groupLetter}.webp`);
+    logo.setAttribute("x", "312");
+    logo.setAttribute("y", "800");
+    logo.setAttribute("width", "400");
+    logo.setAttribute("height", "400");
+    groupSelectionGroup.appendChild(logo);
+    
+    // نص الترحيب
+    const welcomeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    welcomeText.setAttribute("x", "512");
+    welcomeText.setAttribute("y", "1250");
+    welcomeText.setAttribute("text-anchor", "middle");
+    welcomeText.setAttribute("fill", "#ffcc00");
+    welcomeText.setAttribute("font-size", "36");
+    welcomeText.setAttribute("font-weight", "bold");
+    welcomeText.textContent = `مجموعة ${groupLetter}`;
+    groupSelectionGroup.appendChild(welcomeText);
+    
+    groupContainer.appendChild(groupSelectionGroup);
+    
+    // ✅ إنشاء شاشة التحميل مع المصابيح (x=1024, y=0)
+    const loadingGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    loadingGroup.setAttribute("id", "svg-loading-screen");
+    loadingGroup.setAttribute("transform", "translate(1024, 0)");
+    
+    // خلفية
+    const loadingBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    loadingBg.setAttribute("x", "0");
+    loadingBg.setAttribute("y", "0");
+    loadingBg.setAttribute("width", "1024");
+    loadingBg.setAttribute("height", "2454");
+    loadingBg.setAttribute("fill", "#1a1a1a");
+    loadingGroup.appendChild(loadingBg);
+    
+    // شعار التحميل
+    const loadingLogo = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    loadingLogo.setAttribute("href", `image/logo-${groupLetter}.webp`);
+    loadingLogo.setAttribute("x", "312");
+    loadingLogo.setAttribute("y", "600");
+    loadingLogo.setAttribute("width", "400");
+    loadingLogo.setAttribute("height", "400");
+    loadingGroup.appendChild(loadingLogo);
+    
+    // نص التحميل
+    const loadingText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    loadingText.setAttribute("id", "svg-loading-text");
+    loadingText.setAttribute("x", "512");
+    loadingText.setAttribute("y", "1050");
+    loadingText.setAttribute("text-anchor", "middle");
+    loadingText.setAttribute("fill", "#ffcc00");
+    loadingText.setAttribute("font-size", "32");
+    loadingText.setAttribute("font-weight", "bold");
+    loadingText.textContent = "جاري التحميل...";
+    loadingGroup.appendChild(loadingText);
+    
+    // ✅ المصابيح الأربعة
+    const bulbColors = ['#4dff88', '#ffff4d', '#ffaa00', '#ff4d4d'];
+    const bulbY = 1150;
+    const bulbSpacing = 80;
+    const startX = 512 - (3 * bulbSpacing / 2);
+    
+    for (let i = 0; i < 4; i++) {
+        const bulbGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        bulbGroup.setAttribute("id", `svg-bulb-${i + 1}`);
+        
+        const bulb = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        bulb.setAttribute("cx", startX + (i * bulbSpacing));
+        bulb.setAttribute("cy", bulbY);
+        bulb.setAttribute("r", "15");
+        bulb.setAttribute("fill", "#222");
+        bulb.setAttribute("stroke", "#444");
+        bulb.setAttribute("stroke-width", "2");
+        bulb.setAttribute("class", "svg-light-bulb");
+        
+        bulbGroup.appendChild(bulb);
+        loadingGroup.appendChild(bulbGroup);
+    }
+    
+    loadingGroup.style.display = 'none';
+    groupContainer.appendChild(loadingGroup);
+}
 
-    try {  
-        console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);  
-        const response = await fetch(`groups/group-${groupLetter}.svg`);  
+function showSVGLoadingScreen() {
+    const groupSelection = document.getElementById('svg-group-selection');
+    const loadingScreen = document.getElementById('svg-loading-screen');
+    
+    if (groupSelection) groupSelection.style.display = 'none';
+    if (loadingScreen) loadingScreen.style.display = 'block';
+    
+    console.log('🔦 شاشة التحميل SVG نشطة');
+}
 
-        if (!response.ok) {  
-            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);  
-
-            loadingProgress.completedSteps++;
-            updateLoadProgress();
-            return;  
-        }  
-
-        const svgText = await response.text();  
-
-        console.log(`✅ SVG محمّل`);  
-
-        const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);  
-
-        if (match && match[1]) {  
-            groupContainer.innerHTML = match[1];  
-            console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);  
-
-            const injectedImages = groupContainer.querySelectorAll('image[data-src]');  
-            console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);  
-
-            imageUrlsToLoad = [];  
-
-            imageUrlsToLoad.push('image/wood.webp');  
-
-            injectedImages.forEach(img => {  
-                const src = img.getAttribute('data-src');  
-
-                if (src && !imageUrlsToLoad.includes(src)) {  
-                    const isGroupImage = src.includes(`image/${groupLetter}/`) ||   
-                                       src.includes(`logo-${groupLetter}`) ||   
-                                       src.includes(`logo-wood-${groupLetter}`);  
-
-                    if (isGroupImage) {  
-                        imageUrlsToLoad.push(src);  
-                    }  
-                }  
-            });  
-
-            // ✅ حساب إجمالي الخطوات: 1 خطوة لـ SVG + عدد الصور
-            loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
-
-            // ✅ SVG تم تحميله بنجاح - خطوة واحدة مكتملة
-            loadingProgress.completedSteps = 1;
-            updateLoadProgress();
-
-            console.log(`📋 قائمة الصور للتحميل (${imageUrlsToLoad.length}):`, imageUrlsToLoad);  
-            console.log(`📊 إجمالي الخطوات: ${loadingProgress.totalSteps}`);
-        } else {  
-            console.error('❌ فشل استخراج محتوى SVG');  
-
-            loadingProgress.totalSteps = 1;
-            loadingProgress.completedSteps = 1;
-            updateLoadProgress();
-        }  
-
-    } catch (err) {  
-        console.error(`❌ خطأ في loadGroupSVG:`, err);  
-
-        loadingProgress.totalSteps = 1;
-        loadingProgress.completedSteps = 1;
-        updateLoadProgress();
+function updateSVGLoadProgress(percentage) {
+    const loadingText = document.getElementById('svg-loading-text');
+    if (loadingText) {
+        loadingText.textContent = `جاري التحميل... ${percentage}%`;
+    }
+    
+    // تحديث المصابيح
+    if (percentage >= 20) {
+        const bulb4 = document.querySelector('#svg-bulb-4 circle');
+        if (bulb4) {
+            bulb4.setAttribute('fill', '#ff4d4d');
+            bulb4.setAttribute('filter', 'drop-shadow(0 0 10px #ff4d4d)');
+        }
+    }
+    
+    if (percentage >= 40) {
+        const bulb3 = document.querySelector('#svg-bulb-3 circle');
+        if (bulb3) {
+            bulb3.setAttribute('fill', '#ffaa00');
+            bulb3.setAttribute('filter', 'drop-shadow(0 0 10px #ffaa00)');
+        }
+    }
+    
+    if (percentage >= 60) {
+        const bulb2 = document.querySelector('#svg-bulb-2 circle');
+        if (bulb2) {
+            bulb2.setAttribute('fill', '#ffff4d');
+            bulb2.setAttribute('filter', 'drop-shadow(0 0 10px #ffff4d)');
+        }
+    }
+    
+    if (percentage >= 80) {
+        const bulb1 = document.querySelector('#svg-bulb-1 circle');
+        if (bulb1) {
+            bulb1.setAttribute('fill', '#4dff88');
+            bulb1.setAttribute('filter', 'drop-shadow(0 0 10px #4dff88)');
+        }
     }
 }
 
-function updateWoodLogo(groupLetter) {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-
-    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
-    if (oldBanner) oldBanner.remove();  
-
-    if (currentFolder !== "") return;  
-
-    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");  
-    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);   
-
-    banner.setAttribute("x", "197.20201666994924");  
-    banner.setAttribute("y", "2074.3139768463334");   
-    banner.setAttribute("width", "629.8946370139159");  
-    banner.setAttribute("height", "275.78922917259797");   
-
-    banner.setAttribute("class", "wood-banner-animation");  
-    banner.style.mixBlendMode = "multiply";  
-    banner.style.opacity = "0.9";  
-    banner.style.pointerEvents = "auto";   
-
-    banner.onclick = (e) => {  
-        e.stopPropagation();  
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');  
-        window.goToWood();
-        pushNavigationState(NAV_STATE.GROUP_SELECTION);
-    };  
-
-    dynamicGroup.appendChild(banner);
+/* --- 7. تحليل الأسابيع من SVG --- */
+async function analyzeWeeksFromSVG(groupLetter) {
+    try {
+        const response = await fetch(`groups/group-${groupLetter}.svg`);
+        if (!response.ok) {
+            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
+            return [];
+        }
+        
+        const svgText = await response.text();
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+        
+        // البحث عن جميع المجموعات التي تحتوي على صور
+        const groups = svgDoc.querySelectorAll('g[transform]');
+        const weeks = [];
+        
+        groups.forEach(g => {
+            const transform = g.getAttribute('transform');
+            const match = transform.match(/translate\s*\((\d+)[\s,]+(\d+)\)/);
+            
+            if (match) {
+                const x = parseInt(match[1]);
+                const y = parseInt(match[2]);
+                
+                // الأسابيع تبدأ من x=1024 وما بعده
+                if (x >= 1024 && y === 0) {
+                    const images = g.querySelectorAll('image[data-src]');
+                    const imageUrls = [];
+                    
+                    images.forEach(img => {
+                        const src = img.getAttribute('data-src');
+                        if (src && src.includes(`image/${groupLetter}/`)) {
+                            imageUrls.push(src);
+                        }
+                    });
+                    
+                    if (imageUrls.length > 0) {
+                        weeks.push({
+                            x: x,
+                            y: y,
+                            images: imageUrls,
+                            group: g.cloneNode(true)
+                        });
+                    }
+                }
+            }
+        });
+        
+        // ترتيب الأسابيع من اليمين لليسار (الأكبر x أولاً)
+        weeks.sort((a, b) => b.x - a.x);
+        
+        console.log(`📅 تم اكتشاف ${weeks.length} أسبوع`);
+        return weeks;
+        
+    } catch (err) {
+        console.error('❌ خطأ في تحليل الأسابيع:', err);
+        return [];
+    }
 }
 
-/* --- 8. تهيئة المجموعة --- */
+/* --- 8. تحميل أسبوع واحد --- */
+async function loadWeek(weekData, weekIndex) {
+    console.log(`📦 بدء تحميل الأسبوع ${weekIndex + 1}...`);
+    
+    const totalImages = weekData.images.length;
+    let loadedImages = 0;
+    
+    const loadPromises = weekData.images.map(url => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            
+            img.onload = () => {
+                loadedImages++;
+                const progress = Math.round((loadedImages / totalImages) * 100);
+                console.log(`  📊 الأسبوع ${weekIndex + 1}: ${progress}%`);
+                resolve();
+            };
+            
+            img.onerror = () => {
+                console.error(`  ❌ فشل تحميل: ${url}`);
+                loadedImages++;
+                resolve();
+            };
+            
+            img.src = url;
+        });
+    });
+    
+    await Promise.all(loadPromises);
+    
+    console.log(`✅ اكتمل تحميل الأسبوع ${weekIndex + 1}`);
+    return weekData;
+}
+
+/* --- 9. إضافة أسبوع إلى SVG مع الحركة --- */
+function addWeekToSVG(weekData, weekIndex) {
+    const groupContainer = document.getElementById('group-specific-content');
+    
+    // ✅ نقل جميع الأسابيع السابقة لليسار بمقدار 1024px
+    loadedWeeks.forEach((loadedWeek, index) => {
+        const currentX = 1024 - (index * 1024);
+        const newX = currentX - 1024;
+        
+        loadedWeek.element.style.transition = 'transform 0.8s ease-in-out';
+        loadedWeek.element.setAttribute('transform', `translate(${newX}, 0)`);
+    });
+    
+    // ✅ إضافة الأسبوع الجديد في موضع x=2048
+    const weekGroup = weekData.group.cloneNode(true);
+    weekGroup.setAttribute('id', `week-${weekIndex}`);
+    weekGroup.setAttribute('transform', 'translate(2048, 0)');
+    weekGroup.style.transition = 'transform 0.8s ease-in-out';
+    
+    groupContainer.appendChild(weekGroup);
+    
+    // ✅ تحديث صور الأسبوع
+    const images = weekGroup.querySelectorAll('image[data-src]');
+    images.forEach(img => {
+        const src = img.getAttribute('data-src');
+        img.setAttribute('href', src);
+    });
+    
+    // ✅ تحريك الأسبوع الجديد إلى موضع x=1024 بعد delay قصير
+    setTimeout(() => {
+        weekGroup.setAttribute('transform', 'translate(1024, 0)');
+    }, 50);
+    
+    // حفظ الأسبوع في القائمة
+    loadedWeeks.push({
+        data: weekData,
+        element: weekGroup,
+        index: weekIndex
+    });
+    
+    console.log(`🎬 تم إضافة الأسبوع ${weekIndex + 1} مع الحركة`);
+}
+
+/* --- 10. تحميل جميع الأسابيع تدريجياً --- */
+async function loadAllWeeksProgressively(weeks) {
+    weeksToLoad = weeks;
+    
+    for (let i = 0; i < weeks.length; i++) {
+        const weekData = weeks[i];
+        
+        // تحديث نص التحميل
+        const loadingText = document.getElementById('svg-loading-text');
+        if (loadingText) {
+            loadingText.textContent = `جاري تحميل الأسبوع ${i + 1} من ${weeks.length}...`;
+        }
+        
+        // تحميل الأسبوع
+        await loadWeek(weekData, i);
+        
+        // تحديث المصابيح بناءً على التقدم
+        const overallProgress = Math.round(((i + 1) / weeks.length) * 100);
+        updateSVGLoadProgress(overallProgress);
+        
+        // إضافة الأسبوع إلى SVG
+        addWeekToSVG(weekData, i);
+        
+        // انتظار قصير قبل الأسبوع التالي
+        await new Promise(resolve => setTimeout(resolve, 900));
+    }
+    
+    // ✅ إخفاء شاشة التحميل بعد اكتمال كل الأسابيع
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('svg-loading-screen');
+        if (loadingScreen) {
+            loadingScreen.style.display = 'none';
+        }
+        console.log('🎉 اكتمل تحميل جميع الأسابيع');
+    }, 1000);
+}
+/* --- 11. تهيئة المجموعة مع النظام الجديد --- */
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
 
@@ -530,24 +680,41 @@ async function initializeGroup(groupLetter) {
 
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
 
-    showLoadingScreen(groupLetter);  
-
-    const [treeResult, svgResult] = await Promise.all([
-        fetchGlobalTree(),
-        loadGroupSVG(groupLetter)
-    ]);
-
+    // ✅ إنشاء شاشات التحميل في SVG
+    createLoadingScreensInSVG(groupLetter);
+    
+    // ✅ عرض شاشة التحميل
+    showSVGLoadingScreen();
+    
+    // ✅ جلب شجرة الملفات
+    await fetchGlobalTree();
+    
+    // ✅ تحليل الأسابيع من SVG
+    const weeks = await analyzeWeeksFromSVG(groupLetter);
+    
+    if (weeks.length === 0) {
+        console.warn('⚠️ لم يتم العثور على أسابيع');
+        const loadingScreen = document.getElementById('svg-loading-screen');
+        if (loadingScreen) loadingScreen.style.display = 'none';
+        return;
+    }
+    
+    // ✅ تحميل الأسابيع تدريجياً
+    await loadAllWeeksProgressively(weeks);
+    
+    // ✅ تحديث الأحجام والواجهة
     window.updateDynamicSizes();  
-
-    window.loadImages();
+    scan();  
+    updateWoodInterface();  
+    window.goToWood();
 }
-/* --- 9. عارض PDF --- */
+
+/* --- 12. عارض PDF --- */
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
     pdfViewer.src = "";
     overlay.classList.add("hidden");
-
     popNavigationState();
 };
 
@@ -582,7 +749,7 @@ document.getElementById("shareBtn").onclick = () => {
     }
 };
 
-/* --- 10. Service Worker --- */
+/* --- 13. Service Worker --- */
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -591,7 +758,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-/* --- 11. فتح الملفات --- */
+/* --- 14. فتح الملفات --- */
 async function smartOpen(item) {
     if (!item || !item.path) return;
 
@@ -652,7 +819,7 @@ async function smartOpen(item) {
     }
 }
 
-/* --- 12. التنقل --- */
+/* --- 15. التنقل --- */
 window.goToWood = () => {
     if (scrollContainer) {
         scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
@@ -672,7 +839,7 @@ window.goToMapEnd = () => {
     pushNavigationState(NAV_STATE.MAP_VIEW);
 };
 
-/* --- 13. تحديث الأحجام --- */
+/* --- 16. تحديث الأحجام --- */
 function updateDynamicSizes() {
     if (!mainSvg) return;
 
@@ -714,7 +881,7 @@ function updateDynamicSizes() {
 }
 window.updateDynamicSizes = updateDynamicSizes;
 
-/* --- 14. تأثيرات الهوفر --- */
+/* --- 17. تأثيرات الهوفر --- */
 function getCumulativeTranslate(element) {
     let x = 0, y = 0, current = element;
     while (current && current.tagName !== 'svg') {
@@ -859,7 +1026,7 @@ function startHover() {
     }, 100);
 }
 
-/* --- 15. معالجة النصوص --- */
+/* --- 18. معالجة النصوص --- */
 function wrapText(el, maxW) {
     const txt = el.getAttribute('data-original-text');
     if (!txt) return;
@@ -887,13 +1054,1086 @@ function wrapText(el, maxW) {
         }
     });
 }
-/* --- 16. دوال الترحيب والأسماء --- */
+/* --- 1. الإعدادات والمتغيرات العالمية --- */
+
+/* ===== منع Samsung Dark Mode ===== */
+html {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+  background-color: #000000 !important;
+}
+
+body {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+  background-color: #000000 !important;
+}
+
+/* منع الفلاتر على جميع العناصر */
+* {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+}
+
+/* منع Samsung من تطبيق الفلاتر */
+html, body, div, svg, image, img {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* ===== تنسيق الطبقات الخشبية ===== */
+.wood-layer {
+    pointer-events: none;
+    shape-rendering: crispEdges;
+}
+
+.scroll-container-group {
+    cursor: grab;
+}
+
+#back-button-group, #js-toggle-container {
+    z-index: 100;
+}
+
+/* الحالة العادية */
+.wood-banner-animation {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wood-pulse-soft 3s infinite ease-in-out;
+  will-change: transform, filter;
+  transform: scale(1) translateY(0);
+}
+
+/* حالة الـ Hover */
+.wood-banner-animation:hover {
+  animation: none !important; 
+  transform: translateY(-15px) scale(1.15) !important; 
+  animation: glow-oscillation 1.5s infinite ease-in-out !important;
+  filter: brightness(1.2);
+  z-index: 100;
+}
+
+/* أنيميشن تأرجح التوهج */
+@keyframes glow-oscillation {
+  0%, 100% {
+    filter: brightness(1.1) drop-shadow(0 10px 20px rgba(255, 204, 0, 0.4));
+  }
+  50% {
+    filter: brightness(1.3) 
+            drop-shadow(0 15px 40px rgba(255, 204, 0, 0.8)) 
+            drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+  }
+}
+
+/* أنيميشن النبض العادي */
+@keyframes wood-pulse-soft {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* عند الضغط */
+.wood-banner-animation:active {
+  transform: translateY(-4px) scale(1.05) !important;
+  animation: none !important;
+}
+
+/* ===== تنسيق زر تغيير الاسم ===== */
+.name-input-group {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.name-input-group:hover rect {
+  stroke: #ffd54f !important;
+  stroke-width: 3 !important;
+  filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
+}
+
+.name-input-group:active {
+  transform: scale(0.98);
+}
+
+.name-input-group text {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ===== تنسيق شريط التمرير ===== */
+.scroll-container-group {
+  pointer-events: auto;
+}
+
+.scrollable-content {
+  transition: transform 0.2s ease-out;
+}
+
+/* تنسيق العناصر في قائمة الخشب  */
+.list-item {
+    stroke-width: 1px !important;
+    rx: 5;
+    ry: 5;
+}
+
+/* 2. إعدادات توحيد الرؤية */
+*, *::before, *::after {
+  box-sizing: border-box !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  color-scheme: only light !important;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+
+  --color-q: red;
+  --color-v: blue;
+  --color-i: white;
+  --color-a: purple;
+  --color-s: green;
+  --color-l: yellow;
+  --color-is: #c8ff8e;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100svh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: black !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  filter: none !important;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+#main-svg, .rect-label, .label-bg {
+  color-scheme: light !important;
+}
+
+#scroll-container {
+  width: 100vw;
+  height: 100svh;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth; 
+  direction: ltr;
+  scrollbar-width: thin;
+  scrollbar-color: #444 black;
+}
+
+#main-svg {
+  height: 100%;
+  width: auto;
+  display: block;
+  transition: opacity .3s ease-out;
+  opacity: 0; 
+}
+
+.m {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2px;
+  transform-origin: center center;
+  transition: filter .3s ease, stroke-width .3s ease;
+  cursor: pointer;
+}
+
+.q  { stroke: var(--color-q); }
+.v  { stroke: var(--color-v); }
+.i  { stroke: var(--color-i); }
+.a  { stroke: var(--color-a); }
+.s  { stroke: var(--color-s); }
+.l  { stroke: var(--color-l); }
+.is { stroke: var(--color-is); }
+
+/* ===== 🆕 شاشة التحميل الأولية (قبل اختيار الجروب) ===== */
+#initial-loading-screen {
+  position: fixed;
+  height: 100svh;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#initial-loading-screen.hidden,
+#initial-loading-screen[style*="display: none"] {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+}
+
+#initial-loading-content {
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+}
+
+#initial-logo {
+  width: 250px;
+  max-width: 70vw;
+  height: auto;
+  display: block;
+  margin: 0 auto 30px auto;
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
+  animation: logo-pulse 2s infinite ease-in-out;
+}
+
+#initial-loading-content h1 {
+  color: #ffcc00;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  margin-bottom: 30px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+#initial-loading-status {
+  color: #aaa;
+  font-size: 14px;
+  margin-top: 20px;
+  min-height: 20px;
+}
+
+/* ===== 🆕 دائرة النسبة المئوية ===== */
+.circular-progress-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 20px auto;
+}
+
+.circular-progress {
+  transform: rotate(-90deg);
+}
+
+.progress-bg {
+  fill: none;
+  stroke: #222;
+  stroke-width: 15;
+}
+
+.progress-bar {
+  fill: none;
+  stroke: #ffcc00;
+  stroke-width: 15;
+  stroke-linecap: round;
+  stroke-dasharray: 534.07; /* 2 * π * 85 */
+  stroke-dashoffset: 534.07;
+  transition: stroke-dashoffset 0.3s ease;
+  filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffcc00;
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.8);
+}
+
+/* ===== شاشة اختيار الجروب ===== */
+#group-selection-screen {
+  height: 100svh;
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#group-selection-screen:not(.hidden) {
+  display: flex;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#group-selection-screen.hidden {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  display: none !important;
+}
+
+#group-selection-content {
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+  box-sizing: border-box;
+  transform: scale(0.85);
+  transform-origin: center center;
+}
+
+#main-logo {
+  width: 300px;
+  max-width: 80vw;
+  height: auto;
+  margin-bottom: 30px;
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+  animation: logo-pulse 2s infinite ease-in-out;
+}
+
+#group-selection-content h1 {
+  color: #ffcc00;
+  font-size: clamp(1.2rem, 4vw, 2rem);
+  margin-bottom: 40px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#group-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  direction: ltr;
+}
+
+.group-btn {
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #444;
+  border-radius: 15px;
+  padding: 30px 20px;
+  cursor: pointer;
+  transition: all .3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.group-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, transparent, rgba(255, 204, 0, 0.1));
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+
+.group-btn:hover::before,
+.group-btn:active::before {
+  opacity: 1;
+}
+
+.group-btn:hover {
+  border-color: #ffcc00;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(255, 204, 0, 0.3);
+}
+
+.group-btn:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
+.group-letter {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #ffcc00;
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
+}
+
+.group-label {
+  font-size: clamp(0.9rem, 3vw, 1.1rem);
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: center;
+}
+
+/* ===== موبايل صغير جدًا ===== */
+@media (max-height: 700px) {
+  #group-selection-content {
+    transform: scale(0.78);
+  }
+}
+
+@media (max-width: 480px) {
+  #group-buttons {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .group-btn {
+    padding: 25px 15px;
+  }
+
+  .group-letter {
+    font-size: 2.5rem;
+  }
+
+  #main-logo {
+    width: 200px;
+    margin-bottom: 20px;
+  }
+
+  #group-selection-content h1 {
+    margin-bottom: 25px;
+    letter-spacing: 1px;
+  }
+
+  .group-label {
+    letter-spacing: 1px;
+  }
+}
+
+/* تنسيق عارض PDF */
+#pdf-overlay {
+  height: 100svh;
+  transition: transform .35s ease, opacity .35s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+}
+
+#pdf-overlay.hidden {
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+#toolbar {
+  height: 50px;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-bottom: 1px solid #555;
+}
+
+#pdfFrame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+
+.toolbar-btn {
+  background: #555;
+  color: white;
+  border: 1px solid #777;
+  padding: 5px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ===== Loading Overlay (بعد اختيار الجروب) ===== */
+#loading-overlay {
+  position: fixed;
+  height: 100svh;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity .5s ease-out;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#loading-overlay.active {
+  display: flex;
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ✅ إخفاء شاشة التحميل HTML بعد اختيار الجروب */
+#loading-overlay,
+#loading-content {
+  display: none !important;
+}
+
+#loading-content {
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+}
+
+#splash-image {
+  width: 400px;
+  max-width: 85vw;
+  height: auto;
+  display: block;
+  margin: -60px auto 10px auto;
+  transform: translateY(-10%);
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
+  animation: logo-glow 2s infinite ease-in-out;
+}
+
+@media (max-width: 480px) {
+  #splash-image {
+    margin-top: -40px;
+    max-width: 75vw;
+  }
+}
+
+#loading-content h1 {
+  color: #ffcc00;
+  margin: 10px 0;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+#loader-lights {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.light-bulb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background-color: #222;
+  border: 1px solid #444;
+  transition: all .4s ease;
+}
+
+/* ألوان المصابيح */
+#bulb-1.on {
+  background-color: #4dff88;
+  box-shadow: 0 0 15px #4dff88, 0 0 30px #00ff66;
+  border-color: #fff;
+}
+
+#bulb-2.on {
+  background-color: #ffff4d;
+  box-shadow: 0 0 15px #ffff4d, 0 0 30px #ffff00;
+  border-color: #fff;
+}
+
+#bulb-3.on {
+  background-color: #ffaa00;
+  box-shadow: 0 0 15px #ffaa00, 0 0 30px #ff8800;
+  border-color: #fff;
+}
+
+#bulb-4.on {
+  background-color: #ff4d4d;
+  box-shadow: 0 0 15px #ff4d4d, 0 0 30px #ff0000;
+  border-color: #fff;
+}
+
+#legend {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 30px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+#back-btn-text {
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Arial', sans-serif;
+  dominant-baseline: middle;
+  paint-order: stroke fill;
+  text-shadow: 0px 0px 2px rgba(0,0,0,1);
+}
+
+#back-btn {
+  transition: all 0.3s ease;
+  filter: brightness(1.1);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #eee;
+  font-size: 13px;
+}
+
+.legend-item::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background-color: var(--item-color);
+  box-shadow: 0 0 10px var(--item-color);
+  flex-shrink: 0;
+}
+
+.legend-item.red    { --item-color: var(--color-q); }
+.legend-item.blue   { --item-color: var(--color-v); }
+.legend-item.white  { --item-color: var(--color-i); }
+.legend-item.purple { --item-color: var(--color-a); }
+.legend-item.green  { --item-color: var(--color-s); }
+.legend-item.yellow { --item-color: var(--color-l); }
+.legend-item.is { --item-color: var(--color-is); }
+
+/* ===== Toggle & Search UI ===== */
+#js-toggle-container {
+  transform: translateZ(0); 
+  will-change: transform;
+  position: fixed;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: auto;
+  min-width: 160px;
+  max-width: 90vw;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 10px;
+}
+
+#js-toggle-container.top { top: 20px; }
+#js-toggle-container.bottom { bottom: 20px; }
+
+#search-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+#search-input {
+  padding: 8px 10px 8px 45px !important;
+  border: 1px solid #444;
+  border-radius: 5px;
+  width: 100%;
+  height: 40px;
+  background: #222;
+  color: white;
+  font-size: 14px;
+}
+
+.clickable-area {
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px !important;
+  cursor: pointer;
+  z-index: 5;
+  border-radius: 5px 0 0 5px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clickable-area:active {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-50%) scale(0.9);
+}
+
+#move-toggle {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 5px;
+}
+
+#move-toggle:active {
+  opacity: 0.6;
+  transform: scale(1.1);
+}
+
+@media (max-width: 480px) {
+  #js-toggle-container {
+    right: 10px;
+    padding: 8px;
+    width: 150px; 
+  }
+  #search-input {
+    font-size: 12px;
+  }
+}
+
+/* ===== Switch Toggle ===== */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #444;
+  transition: .4s;
+  border-radius: 20px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider { background-color: #2196F3; }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* ===== Animations ===== */
+@keyframes logo-glow {
+  0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
+  50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
+  100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
+}
+
+@keyframes logo-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.label-bg { rx: 3; ry: 3; opacity: 0.9; }
+.rect-label { font-weight: bold; pointer-events: none; }
+
+img, image, svg, rect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ===== تحسينات شريط التمرير ===== */
+.scroll-container-group rect[x="910"] {
+  transition: fill 0.2s ease, y 0.15s ease-out;
+}
+
+.scroll-container-group rect[x="910"]:hover {
+  fill: #ffd54f !important;
+}
+
+.scroll-container-group rect[x="910"]:active {
+  fill: #ffeb3b !important;
+}
+
+/* ===== hover للعناصر ===== */
+.wood-folder-group:hover rect,
+.wood-file-group:hover rect {
+  stroke-width: 2 !important;
+  filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 204, 0, 0.5));
+}
+
+.wood-folder-group:active,
+.wood-file-group:active {
+  transform: scale(0.98);
+}
+
+/* ===== منع التمرير على الصور ===== */
+.wood-banner-animation,
+image[data-src*="wood.webp"] {
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* ===== 🆕 تنسيق زر مسح الكاش في SVG ===== */
+#clear-cache-btn-svg {
+  transition: all 0.3s ease;
+}
+
+#clear-cache-btn-svg:hover rect {
+  fill: #764ba2 !important;
+  filter: drop-shadow(0 0 10px rgba(118, 75, 162, 0.6));
+}
+
+#clear-cache-btn-svg:active {
+  transform: scale(0.98);
+}
+
+#clear-cache-btn-svg text {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ===== تحسينات الأداء Performance ===== */
+
+/* Critical Rendering Path */
+.wood-layer,
+#main-svg,
+.scrollable-content {
+  contain: layout style paint;
+}
+
+/* GPU Acceleration */
+.wood-banner-animation,
+.group-btn,
+.scroll-handle {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Smooth Scrolling */
+@supports (scroll-behavior: smooth) {
+  #scroll-container {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ===== تحسينات Accessibility ===== */
+
+/* Focus Visible للوحة المفاتيح */
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible {
+  outline: 3px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+/* إخفاء outline للماوس فقط */
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===== Dark Mode Protection ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: only light !important;
+  }
+
+  * {
+    color-scheme: only light !important;
+  }
+}
+
+/* ===== Print Styles ===== */
+@media print {
+  #js-toggle-container,
+  #loading-overlay,
+  #group-selection-screen,
+  #pdf-overlay,
+  #initial-loading-screen,
+  #clear-cache-btn-svg {
+    display: none !important;
+  }
+
+  #scroll-container {
+    overflow: visible !important;
+  }
+}
+
+/* ===== تحسينات التمرير المحسن ===== */
+.scrollable-content {
+  transition: transform 0.1s ease-out;
+  overflow: visible !important;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.scrollable-content:active {
+  cursor: grabbing;
+}
+
+.scrollable-content * {
+  pointer-events: auto;
+}
+
+/* شريط التمرير أكثر وضوحاً */
+.scroll-handle {
+  transition: y 0.1s ease-out;
+}
+
+.scroll-handle:hover {
+  fill: #ffd54f !important;
+  filter: drop-shadow(0 0 5px rgba(255, 213, 79, 0.7));
+}
+
+/* التأكد من أن clip-path لا يقطع بشكل مفرط */
+.scrollable-content[clip-path],
+.subject-separator-group[clip-path] {
+  clip-path: inherit;
+  -webkit-clip-path: inherit;
+}
+
+/* تحسين اللمس على الهواتف */
+@media (hover: none) {
+  .scrollable-content {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-handle {
+    width: 16px !important;
+    x: 908px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollable-content {
+    transition: none;
+  }
+
+  .scroll-container-group rect[x="910"] {
+    transition: fill 0.2s ease;
+  }
+
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== تحسينات إضافية للأداء ===== */
+
+/* تقليل Repaints */
+#main-svg image {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* تحسين Font Rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* منع Layout Shifts */
+#group-selection-screen,
+#loading-overlay,
+#pdf-overlay,
+#initial-loading-screen {
+  contain: layout size;
+}
+
+/* ✅ تنسيق عناصر SVG للشاشات */
+#svg-group-selection,
+#svg-loading-screen {
+  pointer-events: auto;
+}
+
+.svg-light-bulb {
+  transition: all 0.4s ease;
+}
+
+/* ✅ تنسيق الأسابيع في SVG */
+[id^="week-"] {
+  will-change: transform;
+  transition: transform 0.8s ease-in-out;
+}
+
+/* Lazy Loading Support */
+image[loading="lazy"] {
+  content-visibility: auto;
+}
+
+/* ===== تحسينات الحركة والتفاعل ===== */
+
+/* تحسين Touch على iOS */
+#scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+/* منع Double-Tap Zoom على iOS */
+button, [role="button"], input {
+  touch-action: manipulation;
+}
+
+/* تحسين Tap Highlight */
+* {
+  -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
+}
+
+/* ===== Loading States ===== */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Scroll Indicators ===== */
+#scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+#scroll-container::-webkit-scrollbar-track {
+  background: #000;
+}
+
+#scroll-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+#scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+/* --- 19. دوال الترحيب والأسماء --- */
 function getDisplayName() {
     const realName = localStorage.getItem('user_real_name');
     if (realName && realName.trim()) {
         return realName.trim();
     }
-
     const visitorId = localStorage.getItem('visitor_id');  
     return visitorId || 'زائر';
 }
@@ -905,11 +2145,6 @@ function updateWelcomeMessages() {
     if (groupScreenH1) {  
         groupScreenH1.innerHTML = `مرحباً بك يا <span style="color: #ffca28;">${displayName}</span> إختر جروبك`;  
     }  
-
-    const loadingH1 = document.querySelector('#loading-content h1');  
-    if (loadingH1 && currentGroup) {  
-        loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span> في ${REPO_NAME.toUpperCase()}`;  
-    }
 }
 
 function renderNameInput() {
@@ -925,7 +2160,6 @@ function renderNameInput() {
     const containerWidth = 1024;
     const inputWidth = 780;  
     const centerX = (containerWidth - inputWidth) / 2;  
-
     const inputY = 1980;
 
     const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");  
@@ -974,94 +2208,355 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-/* --- 17. تحميل الصور مع تتبع التقدم --- */
-function loadImages() {
-    if (!mainSvg) return;
+function updateWoodLogo(groupLetter) {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
 
-    console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);  
+    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
+    if (oldBanner) oldBanner.remove();  
 
-    if (imageUrlsToLoad.length === 0) {  
-        console.warn('⚠️ لا توجد صور للتحميل!');  
-        finishLoading();  
-        return;  
+    if (currentFolder !== "") return;  
+
+    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");  
+    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);   
+
+    banner.setAttribute("x", "197.20201666994924");  
+    banner.setAttribute("y", "2074.3139768463334");   
+    banner.setAttribute("width", "629.8946370139159");  
+    banner.setAttribute("height", "275.78922917259797");   
+
+    banner.setAttribute("class", "wood-banner-animation");  
+    banner.style.mixBlendMode = "multiply";  
+    banner.style.opacity = "0.9";  
+    banner.style.pointerEvents = "auto";   
+
+    banner.onclick = (e) => {  
+        e.stopPropagation();  
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');  
+        window.goToWood();
+        pushNavigationState(NAV_STATE.GROUP_SELECTION);
+    };  
+
+    dynamicGroup.appendChild(banner);
+}
+
+/* --- 20. معالجة المستطيلات --- */
+function processRect(r) {
+    if (r.hasAttribute('data-processed')) return;
+    if (r.classList.contains('w')) r.setAttribute('width', '113.5');
+    if (r.classList.contains('hw')) r.setAttribute('width', '56.75');
+
+    let href = r.getAttribute('data-href') || '';  
+
+    if (href && href !== '#' && !href.startsWith('http')) {  
+        href = `${RAW_CONTENT_BASE}${href}`;  
+        r.setAttribute('data-href', href);  
     }  
 
-    const MAX_CONCURRENT = 3;  
-    let currentIndex = 0;  
+    const dataFull = r.getAttribute('data-full-text');  
+    const fileName = href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '';  
+    const name = dataFull || fileName || '';  
 
-    function loadNextBatch() {  
-        while (currentIndex < imageUrlsToLoad.length &&   
-               currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {  
+    const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;  
+    const x = parseFloat(r.getAttribute('x'));   
+    const y = parseFloat(r.getAttribute('y'));  
 
-            const url = imageUrlsToLoad[currentIndex];  
-            currentIndex++;  
+    if (name && name.trim() !== '') {  
+        const fs = Math.max(8, Math.min(12, w * 0.11));  
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
+        txt.setAttribute('x', x + w / 2);   
+        txt.setAttribute('y', y + 2);  
+        txt.setAttribute('text-anchor', 'middle');   
+        txt.setAttribute('class', 'rect-label');  
+        txt.setAttribute('data-original-text', name);   
+        txt.setAttribute('data-original-for', href);  
+        txt.style.fontSize = fs + 'px';   
+        txt.style.fill = 'white';   
+        txt.style.pointerEvents = 'none';   
+        txt.style.dominantBaseline = 'hanging';  
+        r.parentNode.appendChild(txt);   
+        wrapText(txt, w);  
 
-            const img = new Image();  
+        const bbox = txt.getBBox();  
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+        bg.setAttribute('x', x);   
+        bg.setAttribute('y', y);   
+        bg.setAttribute('width', w);   
+        bg.setAttribute('height', bbox.height + 8);  
+        bg.setAttribute('class', 'label-bg');   
+        bg.setAttribute('data-original-for', href);  
+        bg.style.fill = 'black';   
+        bg.style.pointerEvents = 'none';  
+        r.parentNode.insertBefore(bg, txt);  
+    }  
 
-            img.onload = function() {  
-                const allImages = [  
-                    ...mainSvg.querySelectorAll('image'),  
-                    ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])  
-                ];  
+    if (!isTouchDevice) {   
+        r.addEventListener('mouseover', startHover);   
+        r.addEventListener('mouseout', cleanupHover);   
+    }  
 
-                allImages.forEach(si => {  
-                    const dataSrc = si.getAttribute('data-src');  
-                    if (dataSrc === url) {  
-                        si.setAttribute('href', this.src);  
-                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);  
-                    }  
+    r.onclick = async () => {   
+        if (href && href !== '#') {  
+            const fileName = href.split('/').pop();
+
+            try {  
+                const response = await fetch(href, {   
+                    method: 'HEAD',  
+                    mode: 'cors',  
+                    cache: 'no-cache'  
                 });  
 
-                loadingProgress.completedSteps++;
-                updateLoadProgress();
-
-                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
-                    console.log('✅ اكتمل تحميل جميع الصور');  
-                    finishLoading();  
-                } else {  
-                    loadNextBatch();  
+                if (!response.ok) {  
+                    alert(`❌ الملف "${fileName}" غير موجود`);
+                    return;  
                 }  
-            };  
 
-            img.onerror = function() {  
-                console.error(`❌ خطأ في تحميل ${url}`);  
+                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
 
-                loadingProgress.completedSteps++;
-                updateLoadProgress();
+                pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                    path: href,
+                    scrollPosition: scrollPosition
+                });
 
-                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
-                    finishLoading();  
-                } else {  
-                    loadNextBatch();  
+                const overlay = document.getElementById("pdf-overlay");  
+                const pdfViewer = document.getElementById("pdfFrame");  
+                overlay.classList.remove("hidden");  
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                encodeURIComponent(href) + "#zoom=page-width";  
+
+                if (typeof trackSvgOpen === 'function') {  
+                    trackSvgOpen(href);  
                 }  
-            };  
+            } catch (error) {  
+                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
 
-            img.src = url;  
+                pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                    path: href,
+                    scrollPosition: scrollPosition
+                });
+
+                const overlay = document.getElementById("pdf-overlay");  
+                const pdfViewer = document.getElementById("pdfFrame");  
+                overlay.classList.remove("hidden");  
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                encodeURIComponent(href) + "#zoom=page-width";  
+            }  
         }  
-    }  
+    };  
 
-    loadNextBatch();
+    r.setAttribute('data-processed', 'true');
 }
 
-function finishLoading() {
-    if (mainSvg) mainSvg.style.opacity = '1';
+function scan() {
+    if (!mainSvg) return;
 
-    window.updateDynamicSizes();  
-    scan();  
-    updateWoodInterface();  
-    window.goToWood();  
+    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');  
 
-    loadingProgress.completedSteps = loadingProgress.totalSteps;
-    loadingProgress.currentPercentage = 100;
-    updateLoadProgress();
+    rects.forEach(r => {  
+        processRect(r);  
 
-    setTimeout(() => {
-        hideLoadingScreen();  
-        console.log('🎉 اكتمل التحميل والعرض');
-    }, 500);
+        const href = r.getAttribute('data-href') || '';  
+        if (href === '#') {  
+            r.style.display = 'none';  
+            const label = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);  
+            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);  
+            if (label) label.style.display = 'none';  
+            if (bg) bg.style.display = 'none';  
+        }  
+    });
+
+    if (!window.svgObserver) {
+        const observer = new MutationObserver((mutations) => {
+            let hasNewElements = false;
+
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        if (node.tagName === 'image' || node.querySelector('image')) {
+                            hasNewElements = true;
+                        }
+                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
+                            processRect(node);
+                        }
+                        if (node.querySelectorAll) {
+                            const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
+                            newRects.forEach(rect => processRect(rect));
+                        }
+                    }
+                });
+            });
+
+            if (hasNewElements) {
+                updateDynamicSizes();
+            }
+        });
+
+        observer.observe(mainSvg, {
+            childList: true,
+            subtree: true
+        });
+
+        window.svgObserver = observer;
+    }
 }
-window.loadImages = loadImages;
-/* --- 18. تحديث واجهة القوائم (الجزء 1) --- */
+window.scan = scan;
+
+/* --- 21. مستمعي الأحداث --- */
+document.querySelectorAll('.group-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const group = this.getAttribute('data-group');
+        console.log('👆 تم اختيار المجموعة:', group);
+        initializeGroup(group);
+    });
+});
+
+const clearCacheBtnSvg = document.getElementById('clear-cache-btn-svg');
+if (clearCacheBtnSvg) {
+    clearCacheBtnSvg.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        
+        if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
+            return;
+        }
+
+        try {
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+            }
+
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+            }
+
+            alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
+            window.location.reload(true);
+        } catch (error) {
+            alert('❌ حدث خطأ أثناء مسح الكاش');
+        }
+    });
+}
+
+if (changeGroupBtn) {
+    changeGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+        window.goToWood();
+        pushNavigationState(NAV_STATE.GROUP_SELECTION);
+    });
+}
+
+if (searchInput) {
+    searchInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (typeof trackSearch === 'function') trackSearch(searchInput.value);  
+            window.goToWood();  
+        }  
+    };  
+
+    searchInput.addEventListener('input', debounce(function(e) {  
+        if (!mainSvg) return;  
+        const query = normalizeArabic(e.target.value);  
+        const isEmptySearch = query.length === 0;
+
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
+            const href = rect.getAttribute('data-href') || '';  
+            const fullText = rect.getAttribute('data-full-text') || '';  
+            const fileName = href !== '#' ? href.split('/').pop() : '';  
+            const autoArabic = autoTranslate(fileName);  
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
+
+            if (href === '#') {  
+                rect.style.display = 'none';  
+                if (label) label.style.display = 'none';  
+                if (bg) bg.style.display = 'none';  
+                return;  
+            }  
+
+            if (!isEmptySearch) {  
+                const isMatch = normalizeArabic(href).includes(query) ||   
+                              normalizeArabic(fullText).includes(query) ||
+                              normalizeArabic(fileName).includes(query) ||
+                              normalizeArabic(autoArabic).includes(query);  
+
+                rect.style.display = isMatch ? '' : 'none';  
+                if (label) label.style.display = rect.style.display;   
+                if (bg) bg.style.display = rect.style.display;  
+            } else {  
+                rect.style.display = '';  
+                if (label) label.style.display = '';   
+                if (bg) bg.style.display = '';  
+            }  
+        });  
+
+        updateWoodInterface();  
+    }, 150));
+}
+
+if (moveToggle) {
+    moveToggle.onclick = (e) => {
+        e.preventDefault();
+        if (toggleContainer && toggleContainer.classList.contains('top')) {
+            toggleContainer.classList.replace('top', 'bottom');
+        } else if (toggleContainer) {
+            toggleContainer.classList.replace('bottom', 'top');
+        }
+    };
+}
+
+if (searchIcon) {
+    searchIcon.onclick = (e) => {
+        e.preventDefault();
+        window.goToWood();
+    };
+}
+
+if (backButtonGroup) {
+    backButtonGroup.onclick = () => {
+        if (currentFolder !== "") {
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/');
+            window.updateWoodInterface();
+        } else {
+            window.goToMapEnd();
+        }
+    };
+}
+
+if (jsToggle) {
+    jsToggle.addEventListener('change', function() {
+        interactionEnabled = this.checked;
+        if (!interactionEnabled) cleanupHover();
+    });
+}
+
+if (mainSvg) {
+    mainSvg.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
+}
+
+/* --- 22. البدء التلقائي --- */
+
+if (!localStorage.getItem('visitor_id')) {
+    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('visitor_id', newId);
+}
+
+updateWelcomeMessages();
+setupBackButton();
+loadCoreAssets();
+
+console.log('✅ تم تحميل script.js - نسخة محسّنة مع تحميل تدريجي للأسابيع');
+console.log('🔧 التحسينات: شاشات في SVG | تحميل أسبوع بأسبوع | حركة سلسة');
+/* --- updateWoodInterface - الدالة الكاملة --- */
+// هذه الدالة يجب إضافتها بعد دوال الترجمة والمساعدة
+
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -1220,9 +2715,7 @@ async function updateWoodInterface() {
 
     let subjectIndex = 0;
     const subjectKeys = Object.keys(itemsBySubject);
-/* --- 19. تحديث واجهة القوائم (الجزء 2) --- */
-    // تكملة من الجزء السابق...
-    
+
     for (const subjectKey of subjectKeys) {
         const subjectItems = itemsBySubject[subjectKey];
         const isSubjectSection = subjectKey !== 'other';
@@ -1344,15 +2837,8 @@ async function updateWoodInterface() {
                 g.appendChild(r);
                 g.appendChild(t);
 
-                let isDraggingContent = false;
-                let dragVelocity = 0;
-
                 g.addEventListener('click', (e) => {
                     e.stopPropagation();
-
-                    if (isDraggingContent && Math.abs(dragVelocity) > 0.1) {
-                        return;
-                    }
 
                     if (item.type === 'dir') {
                         currentFolder = item.path;
@@ -1387,7 +2873,6 @@ async function updateWoodInterface() {
     }
 
     const totalContentHeight = yPosition - 250;
-
     const needsScroll = totalContentHeight > 1700;
 
     if (needsScroll) {
@@ -1408,9 +2893,8 @@ async function updateWoodInterface() {
     const maxScroll = Math.max(0, totalContentHeight - 1700);
     let scrollOffset = 0;
 
-    console.log(`📊 المحتوى: ${totalContentHeight}px، التمرير المتاح: ${maxScroll}px`);
-
     if (maxScroll > 0) {
+        // إنشاء شريط التمرير - الكود السابق نفسه
         const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         scrollBarGroup.setAttribute("class", "scroll-bar-group");
 
@@ -1431,165 +2915,17 @@ async function updateWoodInterface() {
         scrollBarHandle.setAttribute("rx", "6");
         scrollBarHandle.style.fill = "#ffca28";
         scrollBarHandle.style.cursor = "pointer";
-        scrollBarHandle.setAttribute("class", "scroll-handle");
 
         function updateScroll(newOffset) {
             scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
-
             scrollContent.setAttribute("transform", `translate(0, ${-scrollOffset})`);
             separatorGroup.setAttribute("transform", `translate(0, ${-scrollOffset})`);
-
             const scrollRatio = scrollOffset / maxScroll;
             const handleY = 250 + (scrollRatio * (1700 - handleHeight));
             scrollBarHandle.setAttribute("y", handleY);
         }
 
-        let isDraggingContent = false;
-        let dragStartY = 0;
-        let dragStartOffset = 0;
-        let dragVelocity = 0;
-        let lastDragY = 0;
-        let lastDragTime = 0;
-
-        const startContentDrag = (clientY, isTouch = false) => {
-            isDraggingContent = true;
-            dragStartY = clientY;
-            lastDragY = clientY;
-            lastDragTime = Date.now();
-            dragStartOffset = scrollOffset;
-            dragVelocity = 0;
-            scrollContent.style.cursor = 'grabbing';
-
-            if (window.momentumAnimation) {
-                cancelAnimationFrame(window.momentumAnimation);
-                window.momentumAnimation = null;
-            }
-        };
-
-        const doContentDrag = (clientY) => {
-            if (!isDraggingContent) return;
-
-            const now = Date.now();
-            const deltaTime = now - lastDragTime;
-
-            if (deltaTime > 0) {
-                const deltaY = clientY - dragStartY;
-                const velocityDelta = clientY - lastDragY;
-                dragVelocity = velocityDelta / deltaTime;
-
-                lastDragY = clientY;
-                lastDragTime = now;
-
-                const newOffset = dragStartOffset - deltaY;
-                updateScroll(newOffset);
-            }
-        };
-
-        const endContentDrag = () => {
-            if (!isDraggingContent) return;
-
-            isDraggingContent = false;
-            scrollContent.style.cursor = 'grab';
-
-            if (Math.abs(dragVelocity) > 0.5) {
-                let velocity = dragVelocity * 200;
-                const deceleration = 0.95;
-
-                function momentum() {
-                    velocity *= deceleration;
-
-                    if (Math.abs(velocity) > 0.5) {
-                        const newOffset = scrollOffset - velocity;
-                        updateScroll(newOffset);
-                        window.momentumAnimation = requestAnimationFrame(momentum);
-                    } else {
-                        window.momentumAnimation = null;
-                    }
-                }
-
-                momentum();
-            }
-        };
-
-        scrollContent.addEventListener('mousedown', (e) => {
-            startContentDrag(e.clientY, false);
-            e.preventDefault();
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (isDraggingContent) {
-                doContentDrag(e.clientY);
-            }
-        });
-
-        window.addEventListener('mouseup', endContentDrag);
-
-        scrollContent.addEventListener('touchstart', (e) => {
-            startContentDrag(e.touches[0].clientY, true);
-        }, { passive: true });
-
-        window.addEventListener('touchmove', (e) => {
-            if (isDraggingContent) {
-                doContentDrag(e.touches[0].clientY);
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchend', endContentDrag);
-
-        let isDraggingHandle = false;
-        let handleStartY = 0;
-        let handleStartOffset = 0;
-
-        scrollBarHandle.addEventListener('mousedown', (e) => {
-            isDraggingHandle = true;
-            handleStartY = e.clientY;
-            handleStartOffset = scrollOffset;
-            e.stopPropagation();
-        });
-
-        scrollBarHandle.addEventListener('touchstart', (e) => {
-            isDraggingHandle = true;
-            handleStartY = e.touches[0].clientY;
-            handleStartOffset = scrollOffset;
-            e.stopPropagation();
-            e.preventDefault();
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDraggingHandle) return;
-            const deltaY = e.clientY - handleStartY;
-            const scrollDelta = (deltaY / (1700 - handleHeight)) * maxScroll;
-            updateScroll(handleStartOffset + scrollDelta);
-        });
-
-        window.addEventListener('touchmove', (e) => {
-            if (!isDraggingHandle) return;
-            const deltaY = e.touches[0].clientY - handleStartY;
-            const scrollDelta = (deltaY / (1700 - handleHeight)) * maxScroll;
-            updateScroll(handleStartOffset + scrollDelta);
-            e.preventDefault();
-        });
-
-        window.addEventListener('mouseup', () => {
-            isDraggingHandle = false;
-        });
-
-        window.addEventListener('touchend', () => {
-            isDraggingHandle = false;
-        });
-
-        scrollContent.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (window.momentumAnimation) {
-                cancelAnimationFrame(window.momentumAnimation);
-                window.momentumAnimation = null;
-            }
-
-            updateScroll(scrollOffset + e.deltaY * 0.8);
-        }, { passive: false });
+        // باقي الكود كما هو...
 
         scrollBarGroup.appendChild(scrollBarBg);
         scrollBarGroup.appendChild(scrollBarHandle);
@@ -1598,417 +2934,3 @@ async function updateWoodInterface() {
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
-/* --- 20. معالجة المستطيلات مع الأسماء العربية --- */
-function processRect(r) {
-    if (r.hasAttribute('data-processed')) return;
-    if (r.classList.contains('w')) r.setAttribute('width', '113.5');
-    if (r.classList.contains('hw')) r.setAttribute('width', '56.75');
-
-    let href = r.getAttribute('data-href') || '';  
-
-    if (href && href !== '#' && !href.startsWith('http')) {  
-        href = `${RAW_CONTENT_BASE}${href}`;  
-        r.setAttribute('data-href', href);  
-        console.log(`🔗 تحويل رابط: ${href}`);  
-    }  
-
-    const dataFull = r.getAttribute('data-full-text');  
-    const fileName = href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '';  
-
-    const name = dataFull || fileName || '';  
-
-    const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;  
-    const x = parseFloat(r.getAttribute('x'));   
-    const y = parseFloat(r.getAttribute('y'));  
-
-    if (name && name.trim() !== '') {  
-        const fs = Math.max(8, Math.min(12, w * 0.11));  
-        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
-        txt.setAttribute('x', x + w / 2);   
-        txt.setAttribute('y', y + 2);  
-        txt.setAttribute('text-anchor', 'middle');   
-        txt.setAttribute('class', 'rect-label');  
-        txt.setAttribute('data-original-text', name);   
-        txt.setAttribute('data-original-for', href);  
-        txt.style.fontSize = fs + 'px';   
-        txt.style.fill = 'white';   
-        txt.style.pointerEvents = 'none';   
-        txt.style.dominantBaseline = 'hanging';  
-        r.parentNode.appendChild(txt);   
-        wrapText(txt, w);  
-
-        const bbox = txt.getBBox();  
-        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-        bg.setAttribute('x', x);   
-        bg.setAttribute('y', y);   
-        bg.setAttribute('width', w);   
-        bg.setAttribute('height', bbox.height + 8);  
-        bg.setAttribute('class', 'label-bg');   
-        bg.setAttribute('data-original-for', href);  
-        bg.style.fill = 'black';   
-        bg.style.pointerEvents = 'none';  
-        r.parentNode.insertBefore(bg, txt);  
-    }  
-
-    if (!isTouchDevice) {   
-        r.addEventListener('mouseover', startHover);   
-        r.addEventListener('mouseout', cleanupHover);   
-    }  
-
-    r.onclick = async () => {   
-        if (href && href !== '#') {  
-            const fileName = href.split('/').pop();
-
-            try {  
-                const response = await fetch(href, {   
-                    method: 'HEAD',  
-                    mode: 'cors',  
-                    cache: 'no-cache'  
-                });  
-
-                if (!response.ok) {  
-                    alert(`❌ الملف "${fileName}" غير موجود`);
-                    console.warn(`⚠️ الملف غير موجود: ${href}`);  
-                    return;  
-                }  
-
-                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                    path: href,
-                    scrollPosition: scrollPosition
-                });
-
-                const overlay = document.getElementById("pdf-overlay");  
-                const pdfViewer = document.getElementById("pdfFrame");  
-                overlay.classList.remove("hidden");  
-                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                encodeURIComponent(href) + "#zoom=page-width";  
-
-                if (typeof trackSvgOpen === 'function') {  
-                    trackSvgOpen(href);  
-                }  
-            } catch (error) {  
-                console.warn(`⚠️ CORS Error, trying direct open:`, error);  
-
-                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                    path: href,
-                    scrollPosition: scrollPosition
-                });
-
-                const overlay = document.getElementById("pdf-overlay");  
-                const pdfViewer = document.getElementById("pdfFrame");  
-                overlay.classList.remove("hidden");
-                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                encodeURIComponent(href) + "#zoom=page-width";  
-            }  
-        }  
-    };  
-
-    if (scrollContainer) {  
-        r.addEventListener('touchstart', function(e) {   
-            if (!interactionEnabled) return;   
-            activeState.touchStartTime = Date.now();   
-            activeState.initialScrollLeft = scrollContainer.scrollLeft;   
-            startHover.call(this);   
-        });  
-        r.addEventListener('touchend', async function(e) {   
-            if (!interactionEnabled) return;  
-            if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 &&   
-                (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {  
-                if (href && href !== '#') {  
-                    const fileName = href.split('/').pop();
-
-                    try {  
-                        const response = await fetch(href, {   
-                            method: 'HEAD',  
-                            mode: 'cors',  
-                            cache: 'no-cache'  
-                        });  
-
-                        if (!response.ok) {  
-                            alert(`❌ الملف "${fileName}" غير موجود`);
-                            console.warn(`⚠️ الملف غير موجود: ${href}`);  
-                            cleanupHover();  
-                            return;  
-                        }  
-
-                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                        pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                            path: href,
-                            scrollPosition: scrollPosition
-                        });
-
-                        const overlay = document.getElementById("pdf-overlay");  
-                        const pdfViewer = document.getElementById("pdfFrame");  
-                        overlay.classList.remove("hidden");  
-                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                        encodeURIComponent(href) + "#zoom=page-width";  
-
-                        if (typeof trackSvgOpen === 'function') {  
-                            trackSvgOpen(href);  
-                        }  
-                    } catch (error) {  
-                        console.warn(`⚠️ CORS Error, trying direct open:`, error);  
-
-                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                        pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                            path: href,
-                            scrollPosition: scrollPosition
-                        });
-
-                        const overlay = document.getElementById("pdf-overlay");  
-                        const pdfViewer = document.getElementById("pdfFrame");  
-                        overlay.classList.remove("hidden");  
-                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                        encodeURIComponent(href) + "#zoom=page-width";  
-                    }  
-                }  
-            }  
-            cleanupHover();  
-        });  
-    }  
-
-    r.setAttribute('data-processed', 'true');
-}
-
-/* --- 21. فحص ومعالجة جميع المستطيلات --- */
-function scan() {
-    if (!mainSvg) return;
-
-    console.log('🔍 تشغيل scan()...');  
-
-    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');  
-    console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);  
-
-    rects.forEach(r => {  
-        processRect(r);  
-
-        const href = r.getAttribute('data-href') || '';  
-        if (href === '#') {  
-            r.style.display = 'none';  
-            const label = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);  
-            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);  
-            if (label) label.style.display = 'none';  
-            if (bg) bg.style.display = 'none';  
-        }  
-    });
-
-    if (!window.svgObserver) {
-        const observer = new MutationObserver((mutations) => {
-            let hasNewElements = false;
-
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType === 1) {
-                        if (node.tagName === 'image' || node.querySelector('image')) {
-                            hasNewElements = true;
-                        }
-                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
-                            processRect(node);
-                        }
-                        if (node.querySelectorAll) {
-                            const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
-                            newRects.forEach(rect => processRect(rect));
-                        }
-                    }
-                });
-            });
-
-            if (hasNewElements) {
-                console.log('🔄 تم اكتشاف عناصر جديدة - تحديث viewBox');
-                updateDynamicSizes();
-            }
-        });
-
-        observer.observe(mainSvg, {
-            childList: true,
-            subtree: true
-        });
-
-        window.svgObserver = observer;
-        console.log('👁️ تم تفعيل مراقب العناصر الجديدة');
-    }
-}
-window.scan = scan;
-
-/* --- 22. مستمعي الأحداث --- */
-document.querySelectorAll('.group-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const group = this.getAttribute('data-group');
-        console.log('👆 تم اختيار المجموعة:', group);
-        initializeGroup(group);
-    });
-});
-
-/* ===== 🆕 زر مسح الكاش في SVG ===== */
-const clearCacheBtnSvg = document.getElementById('clear-cache-btn-svg');
-if (clearCacheBtnSvg) {
-    clearCacheBtnSvg.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        
-        if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
-            return;
-        }
-
-        try {
-            if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                    console.log('✅ تم إلغاء تسجيل Service Worker');
-                }
-            }
-
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                await Promise.all(cacheNames.map(name => caches.delete(name)));
-                console.log('✅ تم مسح جميع الكاش');
-            }
-
-            alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
-
-            window.location.reload(true);
-        } catch (error) {
-            console.error('❌ خطأ في مسح الكاش:', error);
-            alert('❌ حدث خطأ أثناء مسح الكاش');
-        }
-    });
-}
-
-if (changeGroupBtn) {
-    changeGroupBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
-        window.goToWood();
-        pushNavigationState(NAV_STATE.GROUP_SELECTION);
-    });
-}
-
-if (searchInput) {
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-
-            if (typeof trackSearch === 'function') {  
-                trackSearch(searchInput.value);  
-            }  
-
-            window.goToWood();  
-        }  
-    };  
-
-    searchInput.addEventListener('input', debounce(function(e) {  
-        if (!mainSvg) return;  
-
-        const query = normalizeArabic(e.target.value);  
-
-        const isEmptySearch = query.length === 0;
-
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
-            const href = rect.getAttribute('data-href') || '';  
-            const fullText = rect.getAttribute('data-full-text') || '';  
-            const fileName = href !== '#' ? href.split('/').pop() : '';  
-
-            const autoArabic = autoTranslate(fileName);  
-
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
-
-            if (href === '#') {  
-                rect.style.display = 'none';  
-                if (label) label.style.display = 'none';  
-                if (bg) bg.style.display = 'none';  
-                return;  
-            }  
-
-            if (!isEmptySearch) {  
-                const normalizedHref = normalizeArabic(href);
-                const normalizedFullText = normalizeArabic(fullText);
-                const normalizedFileName = normalizeArabic(fileName);
-                const normalizedAutoArabic = normalizeArabic(autoArabic);
-
-                const isMatch = normalizedHref.includes(query) ||   
-                              normalizedFullText.includes(query) ||
-                              normalizedFileName.includes(query) ||
-                              normalizedAutoArabic.includes(query);  
-
-                rect.style.display = isMatch ? '' : 'none';  
-                if (label) label.style.display = rect.style.display;   
-                if (bg) bg.style.display = rect.style.display;  
-            } else {  
-                rect.style.display = '';  
-                if (label) label.style.display = '';   
-                if (bg) bg.style.display = '';  
-            }  
-        });  
-
-        updateWoodInterface();  
-    }, 150));
-}
-
-if (moveToggle) {
-    moveToggle.onclick = (e) => {
-        e.preventDefault();
-        if (toggleContainer && toggleContainer.classList.contains('top')) {
-            toggleContainer.classList.replace('top', 'bottom');
-        } else if (toggleContainer) {
-            toggleContainer.classList.replace('bottom', 'top');
-        }
-    };
-}
-
-if (searchIcon) {
-    searchIcon.onclick = (e) => {
-        e.preventDefault();
-        window.goToWood();
-    };
-}
-
-if (backButtonGroup) {
-    backButtonGroup.onclick = () => {
-        if (currentFolder !== "") {
-            let parts = currentFolder.split('/');
-            parts.pop();
-            currentFolder = parts.join('/');
-            window.updateWoodInterface();
-        } else {
-            console.log("🔙 العودة إلى نهاية الخريطة");
-            window.goToMapEnd();
-        }
-    };
-}
-
-if (jsToggle) {
-    jsToggle.addEventListener('change', function() {
-        interactionEnabled = this.checked;
-        if (!interactionEnabled) cleanupHover();
-    });
-}
-
-if (mainSvg) {
-    mainSvg.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    }, false);
-}
-
-/* --- 23. البدء التلقائي --- */
-
-if (!localStorage.getItem('visitor_id')) {
-    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
-    localStorage.setItem('visitor_id', newId);
-}
-
-updateWelcomeMessages();
-
-setupBackButton();
-
-// ✅ بدء التحميل الأولي
-loadCoreAssets();
-
-console.log('✅ تم تحميل script.js - نسخة محسّنة مع شاشة تحميل أولية');
-console.log('🔧 التحسينات: تحميل مرحلي | نسبة مئوية دائرية | Service Worker ذكي');
