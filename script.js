@@ -2020,3 +2020,134 @@ document.addEventListener('DOMContentLoaded', addFixedScrollStyles);
 
 console.log('✅ تم تحميل script.js - نسخة محسّنة مع نظام التنقل الخلفي');
 console.log('🔧 التحسينات: زر الرجوع | رسالة خطأ واحدة | حفظ موقع التمرير');
+
+/* --- 23. نظام تحديث Service Worker التلقائي --- */
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+
+  // ✅ مراقبة تغيير Service Worker وإعادة تحميل الصفحة تلقائياً
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    console.log('🔄 تحديث جديد متاح - إعادة التحميل...');
+    window.location.reload();
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('✅ Service Worker مسجل');
+
+        // ✅ فحص التحديثات كل 5 دقائق
+        setInterval(() => {
+          console.log('🔍 فحص التحديثات...');
+          reg.update();
+        }, 5 * 60 * 1000);
+
+        // ✅ عند اكتشاف service worker جديد
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          console.log('🆕 Service Worker جديد قيد التثبيت...');
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('✅ Service Worker الجديد جاهز');
+              
+              // ✅ إظهار إشعار للمستخدم
+              const updateNow = confirm('🎉 تحديث جديد متاح!\n\nهل تريد إعادة التحميل الآن للحصول على آخر التحديثات؟');
+              
+              if (updateNow) {
+                newWorker.postMessage({ action: 'skipWaiting' });
+              } else {
+                console.log('⏳ المستخدم اختار التحديث لاحقاً');
+              }
+            }
+          });
+        });
+      })
+      .catch(err => console.log('❌ فشل Service Worker:', err));
+  });
+}
+
+/* --- 24. زر مسح الكاش يدوياً (اختياري) --- */
+// إنشاء زر مسح الكاش
+function createClearCacheButton() {
+  // تحقق من عدم وجود الزر مسبقاً
+  if (document.getElementById('clear-cache-btn')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'clear-cache-btn';
+  btn.innerHTML = '🗑️ مسح الكاش';
+  btn.style.cssText = `
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 9999;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  `;
+
+  btn.onmouseover = () => {
+    btn.style.transform = 'scale(1.05)';
+    btn.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+  };
+
+  btn.onmouseout = () => {
+    btn.style.transform = 'scale(1)';
+    btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+  };
+
+  btn.onclick = async () => {
+    if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
+      return;
+    }
+
+    try {
+      // ✅ إلغاء تسجيل Service Worker
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+          console.log('✅ تم إلغاء تسجيل Service Worker');
+        }
+      }
+
+      // ✅ مسح جميع الكاش
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        console.log('✅ تم مسح جميع الكاش');
+      }
+
+      // ✅ مسح LocalStorage (اختياري - احذف هذا السطر إذا كنت تريد الاحتفاظ بالبيانات المحلية)
+      // localStorage.clear();
+
+      alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
+      
+      // ✅ إعادة تحميل قوية
+      window.location.reload(true);
+    } catch (error) {
+      console.error('❌ خطأ في مسح الكاش:', error);
+      alert('❌ حدث خطأ أثناء مسح الكاش');
+    }
+  };
+
+  document.body.appendChild(btn);
+  console.log('🗑️ تم إضافة زر مسح الكاش');
+}
+
+// ✅ تفعيل زر مسح الكاش عند تحميل الصفحة
+window.addEventListener('load', () => {
+  setTimeout(createClearCacheButton, 1000);
+});
+
+console.log('✅ تم تحميل script.js - نسخة محسّنة مع نظام التحديث التلقائي');
+console.log('🔧 التحسينات: Service Worker ذكي | تحديث تلقائي | مسح الكاش اليدوي');
