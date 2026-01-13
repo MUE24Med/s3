@@ -1,5 +1,5 @@
 // ✅ نظام versioning ذكي - غيّر الرقم عند كل تحديث مهم
-const VERSION = '2025.01.13.002';
+const VERSION = '2025.01.13.004';
 const CACHE_NAME = 'interactive-map-' + VERSION;
 
 const ASSETS_TO_CACHE = [
