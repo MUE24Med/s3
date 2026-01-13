@@ -1,5 +1,7 @@
-// ✅ تحديث رقم الإصدار عند كل تعديل مهم
-const CACHE_NAME = 'interactive-map-v3'; 
+// ✅ نظام versioning ذكي - غيّر الرقم عند كل تحديث مهم
+const VERSION = '2025.01.13.002';
+const CACHE_NAME = 'interactive-map-' + VERSION;
+
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -10,10 +12,13 @@ const ASSETS_TO_CACHE = [
   './image/0.png',
 ];
 
-// ✅ تثبيت
+// ✅ تثبيت Service Worker
 self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker: تثبيت الإصدار', CACHE_NAME);
+  
+  // ✅ تخطي مرحلة الانتظار وتفعيل مباشرة
   self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('📦 Service Worker: حفظ الملفات في الكاش');
@@ -22,9 +27,10 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// ✅ تنظيف الكاش القديم
+// ✅ تنظيف الكاش القديم فوراً
 self.addEventListener('activate', (event) => {
   console.log('🔄 Service Worker: تفعيل الإصدار', CACHE_NAME);
+  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -35,12 +41,21 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      // ✅ السيطرة الفورية على جميع الصفحات
+      return self.clients.claim();
     })
   );
-  return self.clients.claim();
 });
 
-// ✅ استراتيجية ذكية: Cache First للصور، Network First للباقي
+// ✅ السماح للصفحة بإجبار Service Worker على التحديث
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+
+// ✅ استراتيجية ذكية للتعامل مع الطلبات
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
     return;
@@ -48,15 +63,37 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // ✅ تجاهل طلبات GitHub API
+  // ✅ تجاهل طلبات GitHub API - دائماً من الشبكة
   if (url.hostname === 'api.github.com' || url.hostname === 'raw.githubusercontent.com') {
-    // دائماً استخدم الشبكة لطلبات GitHub
     event.respondWith(fetch(event.request));
     return;
   }
 
+  // ✅ HTML/CSS/JS: Network First مع timeout (دائماً محدّث)
+  if (url.pathname.match(/\.(html|css|js)$/i) || url.pathname === '/' || url.pathname === './') {
+    event.respondWith(
+      Promise.race([
+        fetch(event.request).then((response) => {
+          console.log('🌐 Network Success:', url.pathname);
+          const resClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, resClone);
+          });
+          return response;
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('timeout')), 3000)
+        )
+      ]).catch(() => {
+        console.log('💾 Cache Fallback:', url.pathname);
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
   // ✅ الصور: Cache First (سريع)
-  if (url.pathname.match(/\.(webp|png|jpg|jpeg|svg)$/i)) {
+  if (url.pathname.match(/\.(webp|png|jpg|jpeg|svg|gif)$/i)) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
@@ -75,7 +112,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ✅ HTML/CSS/JS: Network First (دائماً محدّث)
+  // ✅ باقي الملفات: Network First
   event.respondWith(
     fetch(event.request)
       .then((response) => {
