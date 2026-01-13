@@ -853,20 +853,25 @@ input:focus:not(:focus-visible) {
 /* ===== أنماط زر مسح الكاش ===== */
 #clear-cache-btn {
   position: fixed;
-  top: 10px;
-  left: 10px;
+  top: 100px;
+  right: 120px;
   z-index: 9999;
   padding: 10px 15px;
+  width: 250px;
+  height: 50px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
   font-size: 14px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   transition: all 0.3s ease;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #clear-cache-btn:hover {
@@ -883,8 +888,10 @@ input:focus:not(:focus-visible) {
   #clear-cache-btn {
     font-size: 12px !important;
     padding: 8px 12px !important;
-    top: 5px !important;
-    left: 5px !important;
+    top: 95px !important;
+    right: 120px !important;
+    width: 250px !important;
+    height: 50px !important;
   }
 }
 
