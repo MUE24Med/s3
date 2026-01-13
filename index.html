@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ✅ رقم الإصدار (يساعد في تتبع التحديثات) -->
-<meta name="version" content="2025.01.13.002">
+<meta name="version" content="2025.01.13.005">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -17,34 +17,49 @@
   <!-- ✅ منع Samsung Dark Mode -->
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
-  <meta name="theme-color" content="#000000"
+  <meta name="theme-color" content="#000000">
   <!-- ✅ SEO -->
   <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
   <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
 
-  <!-- ✅ Preconnect لـ GitHub (تسريع التحميل) -->
-  <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
-  <link rel="preconnect" href="https://api.github.com" crossorigin>
-  <link rel="dns-prefetch" href="https://mozilla.github.io">
-  <!-- ✅ Preload للصور المهمة -->
-  <link rel="preload" href="image/wood.webp" as="image" type="image/webp">
-  <link rel="preload" href="image/0.png" as="image" type="image/png">
   <!-- ✅ Favicon -->
   <link rel="icon" type="image/png" href="image/0.png">
   <link rel="apple-touch-icon" href="image/0.png">
-<link rel="preload" href="image/logo-A.webp" as="image" type="image/webp">
-<link rel="preload" href="image/logo-B.webp" as="image" type="image/webp">
-<link rel="preload" href="image/logo-C.webp" as="image" type="image/webp">
-<link rel="preload" href="image/logo-D.webp" as="image" type="image/webp">
+
   <!-- ✅ CSS الرئيسي -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- شاشة التحميل الأولية للملفات المشتركة -->
+<div id="initial-loading-screen">
+  <div id="initial-loading-content">
+    <img id="initial-logo" src="image/0.png" alt="شعار الكلية" />
+    <h1>جاري تحميل الملفات الأساسية</h1>
+    <div id="circular-progress">
+      <svg viewBox="0 0 200 200" class="progress-ring">
+        <defs>
+          <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#ffcc00;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#ffd54f;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#ffcc00;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <circle class="progress-ring-bg" cx="100" cy="100" r="90" />
+        <circle class="progress-ring-circle" cx="100" cy="100" r="90" />
+        <text x="100" y="100" class="progress-text" text-anchor="middle" dominant-baseline="central">
+          <tspan id="progress-percentage">0%</tspan>
+        </text>
+      </svg>
+    </div>
+    <p id="loading-status">جاري التحميل...</p>
+  </div>
+</div>
+
 <!-- شاشة اختيار الجروب -->
 <div id="group-selection-screen">
   <div id="group-selection-content">
-    <img id="main-logo" src="image/0.png" alt="شعار الكلية" loading="eager" />
+    <img id="main-logo" src="image/0.png" alt="شعار الكلية" />
     <h1>اختر مجموعتك</h1>
     <div id="group-buttons">
       <button class="group-btn" data-group="A" aria-label="اختر المجموعة A">
@@ -106,7 +121,6 @@
       id="splash-image" 
       src="image/0.png" 
       alt="شعار التحميل"
-      loading="eager"
     />
     <!-- ✅ تم تغيير h1 ليتم تحديثه ديناميكيًا -->
     <h1 id="project-loading-title">جاري التحميل...</h1>
@@ -137,7 +151,6 @@
   <iframe 
     id="pdfFrame" 
     src="" 
-    loading="lazy"
     title="عارض PDF"
     sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
   ></iframe>
@@ -175,6 +188,17 @@
           fill="white" 
           font-weight="bold"
         >Change Group 🔄</text>
+      </g>
+
+      <g id="clear-cache-btn-svg" style="cursor: pointer;" role="button" tabindex="0">
+        <rect x="654" y="100" width="250" height="50" rx="10" fill="#764ba2" stroke="#fff"/>
+        <text 
+          x="779" 
+          y="130" 
+          text-anchor="middle" 
+          fill="white" 
+          font-weight="bold"
+        >🗑️ Clear Cache</text>
       </g>
 
       <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
