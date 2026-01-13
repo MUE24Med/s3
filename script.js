@@ -252,7 +252,15 @@ function loadSelectedGroup() {
     return false;
 }
 
-/* --- 5. إدارة شاشة التحميل --- */
+/* --- 5.إدارة شاشة التحميل --- */
+
+// ✅ نظام تتبع تقدم دقيق
+let loadingProgress = {
+    totalSteps: 0,      // إجمالي الخطوات
+    completedSteps: 0,  // الخطوات المكتملة
+    currentPercentage: 0
+};
+
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
 
@@ -261,11 +269,14 @@ function showLoadingScreen(groupLetter) {
         splashImage.src = `image/logo-${groupLetter}.webp`;  
     }  
 
-    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));  
+    // ✅ إعادة تعيين الحالة
+    loadingProgress = {
+        totalSteps: 0,
+        completedSteps: 0,
+        currentPercentage: 0
+    };
 
-    totalBytes = 0;  
-    loadedBytes = 0;  
-    imageUrlsToLoad = [];  
+    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));  
 
     loadingOverlay.classList.add('active');  
     console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);  
@@ -279,54 +290,41 @@ function hideLoadingScreen() {
     console.log('✅ تم إخفاء شاشة التحميل');
 }
 
+// ✅ تحديث التقدم بناءً على الخطوات المكتملة
 function updateLoadProgress() {
-    if (totalBytes === 0) return;
-
-    const progress = (loadedBytes / totalBytes) * 100;  
-    console.log(`📊 التقدم: ${Math.round(progress)}%`);  
-
-    if (progress >= 20) document.getElementById('bulb-4')?.classList.add('on');  
-    if (progress >= 40) document.getElementById('bulb-3')?.classList.add('on');  
-    if (progress >= 60) document.getElementById('bulb-2')?.classList.add('on');  
-    if (progress >= 80) document.getElementById('bulb-1')?.classList.add('on');
-}
-
-async function getActualFileSize(url) {
-    try {
-        const response = await fetch(url, {
-            method: 'HEAD',
-            mode: 'cors',
-            cache: 'no-cache'
-        });
-        const contentLength = response.headers.get('Content-Length');
-        if (contentLength) {
-            return parseInt(contentLength);
-        }
-    } catch (err) {
-        console.warn(`⚠️ لم يتم الحصول على حجم ${url}`);
+    if (loadingProgress.totalSteps === 0) {
+        console.warn('⚠️ totalSteps = 0');
+        return;
     }
-    return estimateFileSize(url);
-}
 
-function estimateFileSize(url) {
-    const ext = url.split('.').pop().toLowerCase();
-    const sizesMap = {
-        'webp': 150000, 'jpg': 200000, 'jpeg': 200000,
-        'png': 300000, 'svg': 50000, 'pdf': 500000
-    };
-    return sizesMap[ext] || 100000;
-}
+    // ✅ حساب النسبة المئوية
+    const progress = (loadingProgress.completedSteps / loadingProgress.totalSteps) * 100;
+    loadingProgress.currentPercentage = Math.min(100, Math.round(progress));
 
-async function calculateTotalSize() {
-    totalBytes = 0;
+    console.log(`📊 التقدم: ${loadingProgress.currentPercentage}% (${loadingProgress.completedSteps}/${loadingProgress.totalSteps})`);
 
-    const sizePromises = imageUrlsToLoad.map(url => getActualFileSize(url));  
-    const sizes = await Promise.all(sizePromises);  
+    // ✅ إضاءة المصابيح بنظام 1/5، 2/5، 3/5، 4/5
+    const percentage = loadingProgress.currentPercentage;
 
-    totalBytes = sizes.reduce((sum, size) => sum + size, 0);  
-    totalBytes += 100000;
+    // المصباح 4 (أحمر) = 20% (1/5)
+    if (percentage >= 20) {
+        document.getElementById('bulb-4')?.classList.add('on');
+    }
 
-    console.log(`📦 الحجم المتوقع: ${(totalBytes/1024).toFixed(1)}KB`);
+    // المصباح 3 (برتقالي) = 40% (2/5)
+    if (percentage >= 40) {
+        document.getElementById('bulb-3')?.classList.add('on');
+    }
+
+    // المصباح 2 (أصفر) = 60% (3/5)
+    if (percentage >= 60) {
+        document.getElementById('bulb-2')?.classList.add('on');
+    }
+
+    // المصباح 1 (أخضر) = 80% (4/5)
+    if (percentage >= 80) {
+        document.getElementById('bulb-1')?.classList.add('on');
+    }
 }
 
 /* --- 6. تحميل SVG الخاص بالمجموعة --- */
@@ -340,15 +338,16 @@ async function loadGroupSVG(groupLetter) {
 
         if (!response.ok) {  
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);  
+            
+            // ✅ حتى لو فشل، نحسبه كخطوة مكتملة
+            loadingProgress.completedSteps++;
+            updateLoadProgress();
             return;  
         }  
 
         const svgText = await response.text();  
-        const svgSize = new Blob([svgText]).size;  
-        loadedBytes += svgSize;  
-        updateLoadProgress();  
 
-        console.log(`✅ SVG محمّل (${(svgSize/1024).toFixed(1)}KB)`);  
+        console.log(`✅ SVG محمّل`);  
 
         const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);  
 
@@ -361,6 +360,7 @@ async function loadGroupSVG(groupLetter) {
 
             imageUrlsToLoad = [];  
 
+            // ✅ إضافة صورة الخشب أولاً
             imageUrlsToLoad.push('image/wood.webp');  
 
             injectedImages.forEach(img => {  
@@ -377,46 +377,33 @@ async function loadGroupSVG(groupLetter) {
                 }  
             });  
 
-            console.log(`📋 قائمة الصور للتحميل:`, imageUrlsToLoad);  
-            await calculateTotalSize();  
+            // ✅ حساب إجمالي الخطوات:
+            // 1 خطوة لـ SVG + عدد الصور
+            loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
+
+            // ✅ SVG تم تحميله بنجاح - خطوة واحدة مكتملة
+            loadingProgress.completedSteps = 1;
+            updateLoadProgress();
+
+            console.log(`📋 قائمة الصور للتحميل (${imageUrlsToLoad.length}):`, imageUrlsToLoad);  
+            console.log(`📊 إجمالي الخطوات: ${loadingProgress.totalSteps}`);
         } else {  
             console.error('❌ فشل استخراج محتوى SVG');  
+            
+            // ✅ حتى لو فشل، نحسبه كخطوة مكتملة
+            loadingProgress.totalSteps = 1;
+            loadingProgress.completedSteps = 1;
+            updateLoadProgress();
         }  
 
     } catch (err) {  
         console.error(`❌ خطأ في loadGroupSVG:`, err);  
+        
+        // ✅ حتى لو فشل، نحسبه كخطوة مكتملة
+        loadingProgress.totalSteps = 1;
+        loadingProgress.completedSteps = 1;
+        updateLoadProgress();
     }
-}
-
-function updateWoodLogo(groupLetter) {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-
-    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
-    if (oldBanner) oldBanner.remove();  
-
-    if (currentFolder !== "") return;  
-
-    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");  
-    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);   
-
-    banner.setAttribute("x", "197.20201666994924");  
-    banner.setAttribute("y", "2074.3139768463334");   
-    banner.setAttribute("width", "629.8946370139159");  
-    banner.setAttribute("height", "275.78922917259797");   
-
-    banner.setAttribute("class", "wood-banner-animation");  
-    banner.style.mixBlendMode = "multiply";  
-    banner.style.opacity = "0.9";  
-    banner.style.pointerEvents = "auto";   
-
-    banner.onclick = (e) => {  
-        e.stopPropagation();  
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');  
-        window.goToWood();
-        pushNavigationState(NAV_STATE.GROUP_SELECTION);
-    };  
-
-    dynamicGroup.appendChild(banner);
 }
 
 /* --- 7. تهيئة المجموعة (محسّن - بدون تأخير) --- */
@@ -1704,7 +1691,8 @@ function scan() {
 }
 window.scan = scan;
 
-/* --- 19. تحميل الصور مع تتبع التقدم --- */
+/* --- 5. إدارة شاشة التحميل --- */
+
 function loadImages() {
     if (!mainSvg) return;
 
@@ -1716,13 +1704,12 @@ function loadImages() {
         return;  
     }  
 
-    let imagesCompleted = 0;  
     const MAX_CONCURRENT = 3;  
     let currentIndex = 0;  
 
     function loadNextBatch() {  
         while (currentIndex < imageUrlsToLoad.length &&   
-               currentIndex < imagesCompleted + MAX_CONCURRENT) {  
+               currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {  
 
             const url = imageUrlsToLoad[currentIndex];  
             currentIndex++;  
@@ -1730,11 +1717,6 @@ function loadImages() {
             const img = new Image();  
 
             img.onload = function() {  
-                const actualSize = estimateFileSize(url);  
-
-                loadedBytes += actualSize;  
-                updateLoadProgress();  
-
                 const allImages = [  
                     ...mainSvg.querySelectorAll('image'),  
                     ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])  
@@ -1748,9 +1730,11 @@ function loadImages() {
                     }  
                 });  
 
-                imagesCompleted++;  
+                // ✅ كل صورة = خطوة واحدة
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
 
-                if (imagesCompleted === imageUrlsToLoad.length) {  
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
                     console.log('✅ اكتمل تحميل جميع الصور');  
                     finishLoading();  
                 } else {  
@@ -1761,13 +1745,11 @@ function loadImages() {
             img.onerror = function() {  
                 console.error(`❌ خطأ في تحميل ${url}`);  
 
-                const estimatedSize = estimateFileSize(url);  
-                loadedBytes += estimatedSize;  
-                updateLoadProgress();  
+                // ✅ حتى لو فشلت الصورة، نحسبها كخطوة مكتملة
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
 
-                imagesCompleted++;  
-
-                if (imagesCompleted === imageUrlsToLoad.length) {  
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
                     finishLoading();  
                 } else {  
                     loadNextBatch();  
@@ -1789,11 +1771,16 @@ function finishLoading() {
     updateWoodInterface();  
     window.goToWood();  
 
-    loadedBytes = totalBytes;  
-    updateLoadProgress();  
+    // ✅ تأكد من الوصول لـ 100%
+    loadingProgress.completedSteps = loadingProgress.totalSteps;
+    loadingProgress.currentPercentage = 100;
+    updateLoadProgress();
 
-    hideLoadingScreen();  
-    console.log('🎉 اكتمل التحميل والعرض');
+    // ✅ تأخير بسيط لإظهار كل المصابيح
+    setTimeout(() => {
+        hideLoadingScreen();  
+        console.log('🎉 اكتمل التحميل والعرض');
+    }, 500);
 }
 window.loadImages = loadImages;
 
