@@ -206,7 +206,8 @@ html, body {
   transition: opacity .5s ease-out, transform .5s ease-out;
 }
 
-#initial-loading-screen.hidden {
+#initial-loading-screen.hidden,
+#initial-loading-screen[style*="display: none"] {
   opacity: 0;
   transform: scale(0.9);
   pointer-events: none;
@@ -291,11 +292,15 @@ html, body {
   position: fixed;
   inset: 0;
   background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 10000;
   transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#group-selection-screen:not(.hidden) {
+  display: flex;
 }
 
 body {
@@ -306,6 +311,7 @@ body {
   opacity: 0;
   transform: scale(0.9);
   pointer-events: none;
+  display: none !important;
 }
 
 #group-selection-content {
@@ -509,6 +515,12 @@ body {
   display: flex;
   opacity: 1;
   pointer-events: all;
+}
+
+/* ✅ إخفاء شاشة التحميل HTML بعد اختيار الجروب */
+#loading-overlay,
+#loading-content {
+  display: none !important;
 }
 
 #loading-content {
@@ -970,3 +982,93 @@ input:focus:not(:focus-visible) {
 #main-svg image {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
+}
+
+/* تحسين Font Rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* منع Layout Shifts */
+#group-selection-screen,
+#loading-overlay,
+#pdf-overlay,
+#initial-loading-screen {
+  contain: layout size;
+}
+
+/* ✅ تنسيق عناصر SVG للشاشات */
+#svg-group-selection,
+#svg-loading-screen {
+  pointer-events: auto;
+}
+
+.svg-light-bulb {
+  transition: all 0.4s ease;
+}
+
+/* ✅ تنسيق الأسابيع في SVG */
+[id^="week-"] {
+  will-change: transform;
+  transition: transform 0.8s ease-in-out;
+}
+
+/* Lazy Loading Support */
+image[loading="lazy"] {
+  content-visibility: auto;
+}
+
+/* ===== تحسينات الحركة والتفاعل ===== */
+
+/* تحسين Touch على iOS */
+#scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+/* منع Double-Tap Zoom على iOS */
+button, [role="button"], input {
+  touch-action: manipulation;
+}
+
+/* تحسين Tap Highlight */
+* {
+  -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
+}
+
+/* ===== Loading States ===== */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Scroll Indicators ===== */
+#scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+#scroll-container::-webkit-scrollbar-track {
+  background: #000;
+}
+
+#scroll-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+#scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
