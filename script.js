@@ -11,7 +11,6 @@ let currentGroup = null;
 let currentFolder = "";
 let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
-const TAP_THRESHOLD_MS = 300;
 
 // ✅ متغيرات نظام التحميل الأولي
 let initialLoadingProgress = {
@@ -20,19 +19,9 @@ let initialLoadingProgress = {
     percentage: 0
 };
 
-// ✅ متغيرات نظام التحميل للمجموعة
-let loadingProgress = {
-    totalSteps: 0,
-    completedSteps: 0,
-    currentPercentage: 0
-};
-
-let imageUrlsToLoad = [];
-
 // ✅ نظام الأسابيع
 let weeksToLoad = [];
 let loadedWeeks = [];
-let currentWeekIndex = 0;
 
 // ✅ نظام التنقل الخلفي
 let navigationHistory = [];
@@ -87,7 +76,6 @@ let activeState = {
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
 const clipDefs = mainSvg?.querySelector('defs');
-const loadingOverlay = document.getElementById('loading-overlay');
 const jsToggle = document.getElementById('js-toggle');
 const searchInput = document.getElementById('search-input');
 const searchIcon = document.getElementById('search-icon');
@@ -339,18 +327,27 @@ async function loadCoreAssets() {
         if (initialLoadingScreen) {
             initialLoadingScreen.style.display = 'none';
         }
+        if (groupSelectionScreen) {
+            groupSelectionScreen.classList.remove('hidden');
+        }
     }, 500);
 }
+
 /* --- 6. نظام التحميل التدريجي للأسابيع --- */
 
 function createLoadingScreensInSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
-    
+    if (!groupContainer) return;
+
+    // ✅ مسح أي شاشات سابقة
+    const oldScreens = groupContainer.querySelectorAll('#svg-group-selection, #svg-loading-screen');
+    oldScreens.forEach(s => s.remove());
+
     // ✅ إنشاء شاشة اختيار الجروب في SVG (x=1024, y=0)
     const groupSelectionGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     groupSelectionGroup.setAttribute("id", "svg-group-selection");
     groupSelectionGroup.setAttribute("transform", "translate(1024, 0)");
-    
+
     // خلفية
     const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     bgRect.setAttribute("x", "0");
@@ -359,7 +356,7 @@ function createLoadingScreensInSVG(groupLetter) {
     bgRect.setAttribute("height", "2454");
     bgRect.setAttribute("fill", "#1a1a1a");
     groupSelectionGroup.appendChild(bgRect);
-    
+
     // شعار
     const logo = document.createElementNS("http://www.w3.org/2000/svg", "image");
     logo.setAttribute("href", `image/logo-${groupLetter}.webp`);
@@ -368,7 +365,7 @@ function createLoadingScreensInSVG(groupLetter) {
     logo.setAttribute("width", "400");
     logo.setAttribute("height", "400");
     groupSelectionGroup.appendChild(logo);
-    
+
     // نص الترحيب
     const welcomeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
     welcomeText.setAttribute("x", "512");
@@ -379,14 +376,14 @@ function createLoadingScreensInSVG(groupLetter) {
     welcomeText.setAttribute("font-weight", "bold");
     welcomeText.textContent = `مجموعة ${groupLetter}`;
     groupSelectionGroup.appendChild(welcomeText);
-    
+
     groupContainer.appendChild(groupSelectionGroup);
-    
+
     // ✅ إنشاء شاشة التحميل مع المصابيح (x=1024, y=0)
     const loadingGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     loadingGroup.setAttribute("id", "svg-loading-screen");
     loadingGroup.setAttribute("transform", "translate(1024, 0)");
-    
+
     // خلفية
     const loadingBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     loadingBg.setAttribute("x", "0");
@@ -395,7 +392,7 @@ function createLoadingScreensInSVG(groupLetter) {
     loadingBg.setAttribute("height", "2454");
     loadingBg.setAttribute("fill", "#1a1a1a");
     loadingGroup.appendChild(loadingBg);
-    
+
     // شعار التحميل
     const loadingLogo = document.createElementNS("http://www.w3.org/2000/svg", "image");
     loadingLogo.setAttribute("href", `image/logo-${groupLetter}.webp`);
@@ -404,7 +401,7 @@ function createLoadingScreensInSVG(groupLetter) {
     loadingLogo.setAttribute("width", "400");
     loadingLogo.setAttribute("height", "400");
     loadingGroup.appendChild(loadingLogo);
-    
+
     // نص التحميل
     const loadingText = document.createElementNS("http://www.w3.org/2000/svg", "text");
     loadingText.setAttribute("id", "svg-loading-text");
@@ -416,17 +413,17 @@ function createLoadingScreensInSVG(groupLetter) {
     loadingText.setAttribute("font-weight", "bold");
     loadingText.textContent = "جاري التحميل...";
     loadingGroup.appendChild(loadingText);
-    
+
     // ✅ المصابيح الأربعة
     const bulbColors = ['#4dff88', '#ffff4d', '#ffaa00', '#ff4d4d'];
     const bulbY = 1150;
     const bulbSpacing = 80;
     const startX = 512 - (3 * bulbSpacing / 2);
-    
+
     for (let i = 0; i < 4; i++) {
         const bulbGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         bulbGroup.setAttribute("id", `svg-bulb-${i + 1}`);
-        
+
         const bulb = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         bulb.setAttribute("cx", startX + (i * bulbSpacing));
         bulb.setAttribute("cy", bulbY);
@@ -435,11 +432,11 @@ function createLoadingScreensInSVG(groupLetter) {
         bulb.setAttribute("stroke", "#444");
         bulb.setAttribute("stroke-width", "2");
         bulb.setAttribute("class", "svg-light-bulb");
-        
+
         bulbGroup.appendChild(bulb);
         loadingGroup.appendChild(bulbGroup);
     }
-    
+
     loadingGroup.style.display = 'none';
     groupContainer.appendChild(loadingGroup);
 }
@@ -447,45 +444,47 @@ function createLoadingScreensInSVG(groupLetter) {
 function showSVGLoadingScreen() {
     const groupSelection = document.getElementById('svg-group-selection');
     const loadingScreen = document.getElementById('svg-loading-screen');
-    
+
     if (groupSelection) groupSelection.style.display = 'none';
     if (loadingScreen) loadingScreen.style.display = 'block';
-    
+
     console.log('🔦 شاشة التحميل SVG نشطة');
 }
 
-function updateSVGLoadProgress(percentage) {
+function updateSVGLoadProgress(weekNumber, totalWeeks) {
     const loadingText = document.getElementById('svg-loading-text');
-    if (loadingText) {
-        loadingText.textContent = `جاري التحميل... ${percentage}%`;
-    }
+    const percentage = Math.round(((totalWeeks - weekNumber + 1) / totalWeeks) * 100);
     
-    // تحديث المصابيح
-    if (percentage >= 20) {
+    if (loadingText) {
+        loadingText.textContent = `جاري تحميل الأسبوع ${weekNumber}... ${percentage}%`;
+    }
+
+    // تحديث المصابيح بناءً على التقدم
+    if (percentage >= 25) {
         const bulb4 = document.querySelector('#svg-bulb-4 circle');
         if (bulb4) {
             bulb4.setAttribute('fill', '#ff4d4d');
             bulb4.setAttribute('filter', 'drop-shadow(0 0 10px #ff4d4d)');
         }
     }
-    
-    if (percentage >= 40) {
+
+    if (percentage >= 50) {
         const bulb3 = document.querySelector('#svg-bulb-3 circle');
         if (bulb3) {
             bulb3.setAttribute('fill', '#ffaa00');
             bulb3.setAttribute('filter', 'drop-shadow(0 0 10px #ffaa00)');
         }
     }
-    
-    if (percentage >= 60) {
+
+    if (percentage >= 75) {
         const bulb2 = document.querySelector('#svg-bulb-2 circle');
         if (bulb2) {
             bulb2.setAttribute('fill', '#ffff4d');
             bulb2.setAttribute('filter', 'drop-shadow(0 0 10px #ffff4d)');
         }
     }
-    
-    if (percentage >= 80) {
+
+    if (percentage >= 90) {
         const bulb1 = document.querySelector('#svg-bulb-1 circle');
         if (bulb1) {
             bulb1.setAttribute('fill', '#4dff88');
@@ -502,39 +501,44 @@ async function analyzeWeeksFromSVG(groupLetter) {
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
             return [];
         }
-        
+
         const svgText = await response.text();
         const parser = new DOMParser();
         const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-        
+
         // البحث عن جميع المجموعات التي تحتوي على صور
         const groups = svgDoc.querySelectorAll('g[transform]');
         const weeks = [];
-        
+
         groups.forEach(g => {
             const transform = g.getAttribute('transform');
             const match = transform.match(/translate\s*\((\d+)[\s,]+(\d+)\)/);
-            
+
             if (match) {
                 const x = parseInt(match[1]);
                 const y = parseInt(match[2]);
-                
+
                 // الأسابيع تبدأ من x=1024 وما بعده
                 if (x >= 1024 && y === 0) {
                     const images = g.querySelectorAll('image[data-src]');
                     const imageUrls = [];
-                    
+
                     images.forEach(img => {
                         const src = img.getAttribute('data-src');
                         if (src && src.includes(`image/${groupLetter}/`)) {
                             imageUrls.push(src);
                         }
                     });
-                    
+
                     if (imageUrls.length > 0) {
+                        // استخراج رقم الأسبوع من اسم الصورة
+                        const weekNumberMatch = imageUrls[0].match(/\/(\d+)\.webp$/);
+                        const weekNumber = weekNumberMatch ? parseInt(weekNumberMatch[1]) : 0;
+
                         weeks.push({
                             x: x,
                             y: y,
+                            weekNumber: weekNumber,
                             images: imageUrls,
                             group: g.cloneNode(true)
                         });
@@ -542,13 +546,13 @@ async function analyzeWeeksFromSVG(groupLetter) {
                 }
             }
         });
-        
-        // ترتيب الأسابيع من اليمين لليسار (الأكبر x أولاً)
-        weeks.sort((a, b) => b.x - a.x);
-        
-        console.log(`📅 تم اكتشاف ${weeks.length} أسبوع`);
+
+        // ✅ ترتيب الأسابيع من الأكبر رقماً (آخر أسبوع) إلى الأصغر (الأسبوع الأول)
+        weeks.sort((a, b) => b.weekNumber - a.weekNumber);
+
+        console.log(`📅 تم اكتشاف ${weeks.length} أسبوع، مرتبة من ${weeks[0]?.weekNumber} إلى ${weeks[weeks.length - 1]?.weekNumber}`);
         return weeks;
-        
+
     } catch (err) {
         console.error('❌ خطأ في تحليل الأسابيع:', err);
         return [];
@@ -556,152 +560,156 @@ async function analyzeWeeksFromSVG(groupLetter) {
 }
 
 /* --- 8. تحميل أسبوع واحد --- */
-async function loadWeek(weekData, weekIndex) {
-    console.log(`📦 بدء تحميل الأسبوع ${weekIndex + 1}...`);
-    
+async function loadWeek(weekData) {
+    console.log(`📦 بدء تحميل الأسبوع ${weekData.weekNumber}...`);
+
     const totalImages = weekData.images.length;
     let loadedImages = 0;
-    
+
     const loadPromises = weekData.images.map(url => {
         return new Promise((resolve) => {
             const img = new Image();
-            
+
             img.onload = () => {
                 loadedImages++;
                 const progress = Math.round((loadedImages / totalImages) * 100);
-                console.log(`  📊 الأسبوع ${weekIndex + 1}: ${progress}%`);
+                console.log(`  📊 الأسبوع ${weekData.weekNumber}: ${progress}%`);
                 resolve();
             };
-            
+
             img.onerror = () => {
                 console.error(`  ❌ فشل تحميل: ${url}`);
                 loadedImages++;
                 resolve();
             };
-            
+
             img.src = url;
         });
     });
-    
+
     await Promise.all(loadPromises);
-    
-    console.log(`✅ اكتمل تحميل الأسبوع ${weekIndex + 1}`);
+
+    console.log(`✅ اكتمل تحميل الأسبوع ${weekData.weekNumber}`);
     return weekData;
 }
 
 /* --- 9. إضافة أسبوع إلى SVG مع الحركة --- */
-function addWeekToSVG(weekData, weekIndex) {
+function addWeekToSVG(weekData, isFirstWeek) {
     const groupContainer = document.getElementById('group-specific-content');
-    
-    // ✅ نقل جميع الأسابيع السابقة لليسار بمقدار 1024px
-    loadedWeeks.forEach((loadedWeek, index) => {
-        const currentX = 1024 - (index * 1024);
-        const newX = currentX - 1024;
-        
-        loadedWeek.element.style.transition = 'transform 0.8s ease-in-out';
-        loadedWeek.element.setAttribute('transform', `translate(${newX}, 0)`);
-    });
-    
-    // ✅ إضافة الأسبوع الجديد في موضع x=2048
+
+    // ✅ إذا لم يكن الأسبوع الأول، نزيح جميع الأسابيع السابقة 1024px لليسار
+    if (!isFirstWeek) {
+        loadedWeeks.forEach((loadedWeek) => {
+            const currentTransform = loadedWeek.element.getAttribute('transform');
+            const match = currentTransform.match(/translate\s*\(([\d.-]+)[\s,]+([\d.-]+)\)/);
+            
+            if (match) {
+                const currentX = parseFloat(match[1]);
+                const currentY = parseFloat(match[2]);
+                const newX = currentX - 1024;
+                
+                loadedWeek.element.setAttribute('transform', `translate(${newX}, ${currentY})`);
+            }
+        });
+    }
+
+    // ✅ إنشاء عنصر الأسبوع الجديد
     const weekGroup = weekData.group.cloneNode(true);
-    weekGroup.setAttribute('id', `week-${weekIndex}`);
-    weekGroup.setAttribute('transform', 'translate(2048, 0)');
-    weekGroup.style.transition = 'transform 0.8s ease-in-out';
+    weekGroup.setAttribute('id', `week-${weekData.weekNumber}`);
     
+    // ✅ الأسبوع الأول يظهر مباشرة في x=1024 (مكان شاشة التحميل)
+    // باقي الأسابيع تبدأ من x=1024, y=2454 (أسفل الشاشة) ثم تنزلق للأعلى
+    if (isFirstWeek) {
+        weekGroup.setAttribute('transform', 'translate(1024, 0)');
+    } else {
+        weekGroup.setAttribute('transform', 'translate(1024, 2454)');
+    }
+
     groupContainer.appendChild(weekGroup);
-    
+
     // ✅ تحديث صور الأسبوع
     const images = weekGroup.querySelectorAll('image[data-src]');
     images.forEach(img => {
         const src = img.getAttribute('data-src');
         img.setAttribute('href', src);
     });
-    
-    // ✅ تحريك الأسبوع الجديد إلى موضع x=1024 بعد delay قصير
-    setTimeout(() => {
-        weekGroup.setAttribute('transform', 'translate(1024, 0)');
-    }, 50);
-    
+
+    // ✅ إذا لم يكن الأسبوع الأول، نحركه من الأسفل إلى الأعلى
+    if (!isFirstWeek) {
+        requestAnimationFrame(() => {
+            weekGroup.setAttribute('transform', 'translate(1024, 0)');
+        });
+    }
+
     // حفظ الأسبوع في القائمة
     loadedWeeks.push({
         data: weekData,
         element: weekGroup,
-        index: weekIndex
+        weekNumber: weekData.weekNumber
     });
-    
-    console.log(`🎬 تم إضافة الأسبوع ${weekIndex + 1} مع الحركة`);
+
+    console.log(`🎬 تم إضافة الأسبوع ${weekData.weekNumber} ${isFirstWeek ? '(مباشرة)' : '(مع الحركة)'}`);
 }
 
 /* --- 10. تحميل جميع الأسابيع تدريجياً --- */
 async function loadAllWeeksProgressively(weeks) {
-    weeksToLoad = weeks;
-    
-    for (let i = 0; i < weeks.length; i++) {
-        const weekData = weeks[i];
-        
-        // تحديث نص التحميل
-        const loadingText = document.getElementById('svg-loading-text');
-        if (loadingText) {
-            loadingText.textContent = `جاري تحميل الأسبوع ${i + 1} من ${weeks.length}...`;
-        }
-        
-        // تحميل الأسبوع
-        await loadWeek(weekData, i);
-        
-        // تحديث المصابيح بناءً على التقدم
-        const overallProgress = Math.round(((i + 1) / weeks.length) * 100);
-        updateSVGLoadProgress(overallProgress);
-        
-        // إضافة الأسبوع إلى SVG
-        addWeekToSVG(weekData, i);
-        
-        // انتظار قصير قبل الأسبوع التالي
-        await new Promise(resolve => setTimeout(resolve, 900));
+    if (weeks.length === 0) {
+        console.warn('⚠️ لا توجد أسابيع للتحميل');
+        return;
     }
-    
-    // ✅ إخفاء شاشة التحميل بعد اكتمال كل الأسابيع
-    setTimeout(() => {
-        const loadingScreen = document.getElementById('svg-loading-screen');
-        if (loadingScreen) {
-            loadingScreen.style.display = 'none';
+
+    weeksToLoad = weeks;
+    const totalWeeks = weeks.length;
+
+    // ✅ التحميل من آخر أسبوع (الأكبر رقماً) إلى الأول
+    for (let i = 0; i < totalWeeks; i++) {
+        const weekData = weeks[i];
+        const isFirstWeek = (i === totalWeeks - 1); // آخر عنصر في المصفوفة = الأسبوع الأول
+        const isLastWeek = (i === 0); // أول عنصر في المصفوفة = آخر أسبوع
+
+        // تحديث نص التحميل
+        updateSVGLoadProgress(weekData.weekNumber, totalWeeks);
+
+        // تحميل الأسبوع
+        await loadWeek(weekData);
+
+        // إضافة الأسبوع إلى SVG
+        addWeekToSVG(weekData, isFirstWeek);
+
+        // ✅ إخفاء شاشة التحميل بعد إضافة الأسبوع الأول (آخر أسبوع يتم تحميله)
+        if (isFirstWeek) {
+            const loadingScreen = document.getElementById('svg-loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.remove();
+                }, 600);
+            }
         }
-        console.log('🎉 اكتمل تحميل جميع الأسابيع');
-    }, 1000);
+    }
+
+    console.log('🎉 اكتمل تحميل جميع الأسابيع');
 }
 
 /* --- 11. تهيئة المجموعة مع النظام الجديد --- */
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
 
-    saveSelectedGroup(groupLetter);
+    saveSelectedGroup(groupLetter);  
 
-    // ✅ إخفاء شاشة اختيار الجروب HTML
-    if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');
+    if (toggleContainer) toggleContainer.style.display = 'flex';  
+    if (scrollContainer) scrollContainer.style.display = 'block';  
+    if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');  
 
-    // ✅ إظهار الواجهة الرئيسية
-    if (toggleContainer) toggleContainer.style.display = 'flex';
-    if (scrollContainer) scrollContainer.style.display = 'block';
-
-    pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
-
-    // ✅ تحميل صورة الخشب الرئيسية أولاً
-    const woodImage = filesListContainer.querySelector('image[data-src="image/wood.webp"]');
-    if (woodImage && !woodImage.getAttribute('href')) {
+    // ✅ تحميل صورة wood.webp
+    const woodImage = document.querySelector('image[data-src="image/wood.webp"]');
+    if (woodImage) {
         woodImage.setAttribute('href', 'image/wood.webp');
     }
 
-    // ✅ تحميل شعار الخشب للمجموعة مسبقاً
-    const logoWood = new Image();
-    logoWood.src = `image/logo-wood-${groupLetter}.webp`;
-    await new Promise((resolve) => {
-        logoWood.onload = resolve;
-        logoWood.onerror = () => {
-            console.warn(`⚠️ فشل تحميل logo-wood-${groupLetter}.webp`);
-            resolve();
-        };
-    });
+    pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
 
-    // ✅ إنشاء شاشة التحميل في SVG
+    // ✅ إنشاء شاشات التحميل في SVG
     createLoadingScreensInSVG(groupLetter);
 
     // ✅ عرض شاشة التحميل
@@ -717,30 +725,19 @@ async function initializeGroup(groupLetter) {
         console.warn('⚠️ لم يتم العثور على أسابيع');
         const loadingScreen = document.getElementById('svg-loading-screen');
         if (loadingScreen) loadingScreen.style.display = 'none';
-        
-        // ✅ تحديث الأحجام حتى لو لم توجد أسابيع
-        window.updateDynamicSizes();
-        scan();
-        updateWoodInterface();
-        window.goToWood();
-        
-        // ✅ جعل SVG مرئي
-        if (mainSvg) {
-            mainSvg.style.opacity = '1';
-        }
         return;
     }
 
-    // ✅ تحميل الأسابيع تدريجياً
+    // ✅ تحميل الأسابيع تدريجياً (من الآخر إلى الأول)
     await loadAllWeeksProgressively(weeks);
 
     // ✅ تحديث الأحجام والواجهة
-    window.updateDynamicSizes();
-    scan();
-    updateWoodInterface();
+    window.updateDynamicSizes();  
+    scan();  
+    updateWoodInterface();  
     window.goToWood();
     
-    // ✅ جعل SVG مرئي
+    // ✅ إظهار SVG بعد التحميل
     if (mainSvg) {
         mainSvg.style.opacity = '1';
     }
@@ -888,7 +885,7 @@ function updateDynamicSizes() {
         return;  
     }  
 
-    let maxX = 0;
+    let maxX = 1024; // على الأقل صورة الخشب
     let maxY = 2454;
 
     allImages.forEach(img => {
@@ -1091,6 +1088,7 @@ function wrapText(el, maxW) {
         }
     });
 }
+
 /* --- 19. دوال الترحيب والأسماء --- */
 function getDisplayName() {
     const realName = localStorage.getItem('user_real_name');
@@ -1173,6 +1171,7 @@ function renderNameInput() {
 
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
+    if (!dynamicGroup) return;
 
     const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
     if (oldBanner) oldBanner.remove();  
@@ -1376,7 +1375,7 @@ const clearCacheBtnSvg = document.getElementById('clear-cache-btn-svg');
 if (clearCacheBtnSvg) {
     clearCacheBtnSvg.addEventListener('click', async (e) => {
         e.stopPropagation();
-        
+
         if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
             return;
         }
@@ -1504,22 +1503,7 @@ if (mainSvg) {
     }, false);
 }
 
-/* --- 22. البدء التلقائي --- */
-
-if (!localStorage.getItem('visitor_id')) {
-    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
-    localStorage.setItem('visitor_id', newId);
-}
-
-updateWelcomeMessages();
-setupBackButton();
-loadCoreAssets();
-
-console.log('✅ تم تحميل script.js - نسخة محسّنة مع تحميل تدريجي للأسابيع');
-console.log('🔧 التحسينات: شاشات في SVG | تحميل أسبوع بأسبوع | حركة سلسة');
-/* --- updateWoodInterface - الدالة الكاملة --- */
-// هذه الدالة يجب إضافتها بعد دوال الترجمة والمساعدة
-
+/* --- 22. updateWoodInterface - الدالة الكاملة --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -1857,7 +1841,6 @@ async function updateWoodInterface() {
     let scrollOffset = 0;
 
     if (maxScroll > 0) {
-        // إنشاء شريط التمرير - الكود السابق نفسه
         const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         scrollBarGroup.setAttribute("class", "scroll-bar-group");
 
@@ -1878,6 +1861,7 @@ async function updateWoodInterface() {
         scrollBarHandle.setAttribute("rx", "6");
         scrollBarHandle.style.fill = "#ffca28";
         scrollBarHandle.style.cursor = "pointer";
+        scrollBarHandle.setAttribute("class", "scroll-handle");
 
         function updateScroll(newOffset) {
             scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
@@ -1888,7 +1872,40 @@ async function updateWoodInterface() {
             scrollBarHandle.setAttribute("y", handleY);
         }
 
-        // باقي الكود كما هو...
+        let isDragging = false;
+        let startY = 0;
+        let startOffset = 0;
+
+        scrollBarHandle.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startY = e.clientY;
+            startOffset = scrollOffset;
+            e.preventDefault();
+        });
+
+        scrollBarBg.addEventListener('click', (e) => {
+            const svgRect = mainSvg.getBoundingClientRect();
+            const clickY = e.clientY - svgRect.top;
+            const relativeY = clickY - 250;
+            const newScrollRatio = relativeY / 1700;
+            updateScroll(newScrollRatio * maxScroll);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaY = e.clientY - startY;
+            const scrollDelta = (deltaY / 1700) * maxScroll;
+            updateScroll(startOffset + scrollDelta);
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        scrollContent.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            updateScroll(scrollOffset + e.deltaY * 2);
+        }, { passive: false });
 
         scrollBarGroup.appendChild(scrollBarBg);
         scrollBarGroup.appendChild(scrollBarHandle);
@@ -1897,3 +1914,23 @@ async function updateWoodInterface() {
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
+window.updateWoodInterface = updateWoodInterface;
+
+/* --- 23. البدء التلقائي --- */
+
+if (!localStorage.getItem('visitor_id')) {
+    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('visitor_id', newId);
+}
+
+updateWelcomeMessages();
+setupBackButton();
+loadCoreAssets();
+
+console.log('✅ تم تحميل script.js - النسخة النهائية');
+console.log('🎯 المميزات:');
+console.log('  ✓ التحميل من آخر أسبوع إلى الأول');
+console.log('  ✓ الحركة الانسيابية من أسفل شاشة التحميل');
+console.log('  ✓ إزاحة تلقائية للأسابيع السابقة');
+console.log('  ✓ الأسبوع الأول يظهر مكان شاشة التحميل');
+console.log('  ✓ بدون أي delay - سرعة فورية');
