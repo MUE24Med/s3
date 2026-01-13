@@ -668,45 +668,82 @@ async function loadAllWeeksProgressively(weeks) {
         console.log('🎉 اكتمل تحميل جميع الأسابيع');
     }, 1000);
 }
+
 /* --- 11. تهيئة المجموعة مع النظام الجديد --- */
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
 
-    saveSelectedGroup(groupLetter);  
+    saveSelectedGroup(groupLetter);
 
-    if (toggleContainer) toggleContainer.style.display = 'flex';  
-    if (scrollContainer) scrollContainer.style.display = 'block';  
-    if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');  
+    // ✅ إخفاء شاشة اختيار الجروب HTML
+    if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');
+
+    // ✅ إظهار الواجهة الرئيسية
+    if (toggleContainer) toggleContainer.style.display = 'flex';
+    if (scrollContainer) scrollContainer.style.display = 'block';
 
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
 
-    // ✅ إنشاء شاشات التحميل في SVG
+    // ✅ تحميل صورة الخشب الرئيسية أولاً
+    const woodImage = filesListContainer.querySelector('image[data-src="image/wood.webp"]');
+    if (woodImage && !woodImage.getAttribute('href')) {
+        woodImage.setAttribute('href', 'image/wood.webp');
+    }
+
+    // ✅ تحميل شعار الخشب للمجموعة مسبقاً
+    const logoWood = new Image();
+    logoWood.src = `image/logo-wood-${groupLetter}.webp`;
+    await new Promise((resolve) => {
+        logoWood.onload = resolve;
+        logoWood.onerror = () => {
+            console.warn(`⚠️ فشل تحميل logo-wood-${groupLetter}.webp`);
+            resolve();
+        };
+    });
+
+    // ✅ إنشاء شاشة التحميل في SVG
     createLoadingScreensInSVG(groupLetter);
-    
+
     // ✅ عرض شاشة التحميل
     showSVGLoadingScreen();
-    
+
     // ✅ جلب شجرة الملفات
     await fetchGlobalTree();
-    
+
     // ✅ تحليل الأسابيع من SVG
     const weeks = await analyzeWeeksFromSVG(groupLetter);
-    
+
     if (weeks.length === 0) {
         console.warn('⚠️ لم يتم العثور على أسابيع');
         const loadingScreen = document.getElementById('svg-loading-screen');
         if (loadingScreen) loadingScreen.style.display = 'none';
+        
+        // ✅ تحديث الأحجام حتى لو لم توجد أسابيع
+        window.updateDynamicSizes();
+        scan();
+        updateWoodInterface();
+        window.goToWood();
+        
+        // ✅ جعل SVG مرئي
+        if (mainSvg) {
+            mainSvg.style.opacity = '1';
+        }
         return;
     }
-    
+
     // ✅ تحميل الأسابيع تدريجياً
     await loadAllWeeksProgressively(weeks);
-    
+
     // ✅ تحديث الأحجام والواجهة
-    window.updateDynamicSizes();  
-    scan();  
-    updateWoodInterface();  
+    window.updateDynamicSizes();
+    scan();
+    updateWoodInterface();
     window.goToWood();
+    
+    // ✅ جعل SVG مرئي
+    if (mainSvg) {
+        mainSvg.style.opacity = '1';
+    }
 }
 
 /* --- 12. عارض PDF --- */
