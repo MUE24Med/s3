@@ -13,6 +13,14 @@ let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
 
+// ✅ متغيرات نظام التحميل الجديد
+let imageUrlsToLoad = [];
+let loadingProgress = {
+    totalSteps: 0,
+    completedSteps: 0,
+    currentPercentage: 0
+};
+
 // ✅ نظام التنقل الخلفي
 let navigationHistory = [];
 const NAV_STATE = {
@@ -55,11 +63,6 @@ const SUBJECT_FOLDERS = [
     'pharma',
     'patho'
 ];
-
-// ✅ متغيرات تتبع التحميل
-let totalBytes = 0;
-let loadedBytes = 0;
-let imageUrlsToLoad = [];
 
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -112,30 +115,25 @@ function getCurrentNavigationState() {
 
 function handleBackNavigation(e) {
     e.preventDefault();
-    
+
     const currentState = getCurrentNavigationState();
     console.log('🔙 زر الرجوع - الحالة الحالية:', currentState);
-    
+
     if (!currentState) {
-        // لا توجد حالات - اسمح بالرجوع الطبيعي للمتصفح
         window.history.back();
         return;
     }
-    
-    // إزالة الحالة الحالية
+
     popNavigationState();
-    
-    // الحصول على الحالة السابقة
+
     const previousState = getCurrentNavigationState();
-    
+
     if (currentState.state === NAV_STATE.PDF_VIEW) {
-        // إغلاق PDF والعودة للخريطة
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
         pdfViewer.src = "";
         overlay.classList.add("hidden");
-        
-        // العودة لموقع الملف في الخريطة
+
         if (currentState.data.scrollPosition !== undefined) {
             setTimeout(() => {
                 if (scrollContainer) {
@@ -143,60 +141,49 @@ function handleBackNavigation(e) {
                 }
             }, 100);
         }
-        
+
     } else if (currentState.state === NAV_STATE.MAP_VIEW) {
-        // العودة لصفحة الخشب
         currentFolder = "";
         window.goToWood();
         updateWoodInterface();
-        
+
     } else if (currentState.state === NAV_STATE.WOOD_VIEW) {
-        // العودة لاختيار المجموعة
         if (groupSelectionScreen) {
             groupSelectionScreen.classList.remove('hidden');
         }
         if (toggleContainer) toggleContainer.style.display = 'none';
         if (scrollContainer) scrollContainer.style.display = 'none';
-        navigationHistory = []; // مسح السجل
-        
+        navigationHistory = [];
+
     } else if (currentState.state === NAV_STATE.GROUP_SELECTION) {
-        // لا يوجد شيء قبل اختيار المجموعة - اسمح بالرجوع للمتصفح
         window.history.back();
     }
 }
 
-// ✅ إعداد مستمع زر الرجوع
 function setupBackButton() {
-    // إضافة حالة أولية للتاريخ
     window.history.pushState({ page: 'main' }, '', '');
-    
-    // مستمع زر الرجوع
+
     window.addEventListener('popstate', handleBackNavigation);
-    
-    // منع السلوك الافتراضي عند الضغط على زر الرجوع
+
     window.addEventListener('popstate', function(e) {
-        // إضافة حالة جديدة فوراً لمنع الخروج من الصفحة
         window.history.pushState({ page: 'main' }, '', '');
     });
 }
 
 /* --- 3. دوال مساعدة للنصوص العربية --- */
 
-// ✅ دالة تطبيع النص العربي (إزالة التشكيل والهمزات) - محدثة
 function normalizeArabic(text) {
     if (!text) return '';
-    // تحويل النص إلى سلسلة نصية أولاً (لدعم الأرقام)
     text = String(text);
     return text
         .replace(/[أإآ]/g, 'ا')
         .replace(/[ىي]/g, 'ي')
         .replace(/ة/g, 'ه')
-        .replace(/[ًٌٍَُِّْ]/g, '') // إزالة التشكيل
+        .replace(/[ًٌٍَُِّْ]/g, '')
         .toLowerCase()
         .trim();
 }
 
-// ✅ دالة الترجمة التلقائية من إنجليزي لعربي
 function autoTranslate(filename) {
     if (!filename) return '';
 
@@ -217,7 +204,6 @@ function autoTranslate(filename) {
     return arabic;
 }
 
-// ✅ دالة للتحقق إذا كان المجلد مادة دراسية
 function isSubjectFolder(folderName) {
     const lowerName = folderName.toLowerCase();
     return SUBJECT_FOLDERS.some(subject => lowerName.includes(subject));
@@ -252,14 +238,7 @@ function loadSelectedGroup() {
     return false;
 }
 
-/* --- 5.إدارة شاشة التحميل --- */
-
-// ✅ نظام تتبع تقدم دقيق
-let loadingProgress = {
-    totalSteps: 0,      // إجمالي الخطوات
-    completedSteps: 0,  // الخطوات المكتملة
-    currentPercentage: 0
-};
+/* --- 5. إدارة شاشة التحميل (نظام 1/5، 2/5، 3/5، 4/5) --- */
 
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
@@ -290,20 +269,17 @@ function hideLoadingScreen() {
     console.log('✅ تم إخفاء شاشة التحميل');
 }
 
-// ✅ تحديث التقدم بناءً على الخطوات المكتملة
 function updateLoadProgress() {
     if (loadingProgress.totalSteps === 0) {
         console.warn('⚠️ totalSteps = 0');
         return;
     }
 
-    // ✅ حساب النسبة المئوية
     const progress = (loadingProgress.completedSteps / loadingProgress.totalSteps) * 100;
     loadingProgress.currentPercentage = Math.min(100, Math.round(progress));
 
     console.log(`📊 التقدم: ${loadingProgress.currentPercentage}% (${loadingProgress.completedSteps}/${loadingProgress.totalSteps})`);
 
-    // ✅ إضاءة المصابيح بنظام 1/5، 2/5، 3/5، 4/5
     const percentage = loadingProgress.currentPercentage;
 
     // المصباح 4 (أحمر) = 20% (1/5)
@@ -327,7 +303,7 @@ function updateLoadProgress() {
     }
 }
 
-/* --- 6. تحميل SVG الخاص بالمجموعة --- */
+/* --- 6. تحميل SVG الخاص بالمجموعة (محسّن مع التتبع) --- */
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
     groupContainer.innerHTML = '';
@@ -339,7 +315,6 @@ async function loadGroupSVG(groupLetter) {
         if (!response.ok) {  
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);  
             
-            // ✅ حتى لو فشل، نحسبه كخطوة مكتملة
             loadingProgress.completedSteps++;
             updateLoadProgress();
             return;  
@@ -360,7 +335,6 @@ async function loadGroupSVG(groupLetter) {
 
             imageUrlsToLoad = [];  
 
-            // ✅ إضافة صورة الخشب أولاً
             imageUrlsToLoad.push('image/wood.webp');  
 
             injectedImages.forEach(img => {  
@@ -377,8 +351,7 @@ async function loadGroupSVG(groupLetter) {
                 }  
             });  
 
-            // ✅ حساب إجمالي الخطوات:
-            // 1 خطوة لـ SVG + عدد الصور
+            // ✅ حساب إجمالي الخطوات: 1 خطوة لـ SVG + عدد الصور
             loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
 
             // ✅ SVG تم تحميله بنجاح - خطوة واحدة مكتملة
@@ -390,7 +363,6 @@ async function loadGroupSVG(groupLetter) {
         } else {  
             console.error('❌ فشل استخراج محتوى SVG');  
             
-            // ✅ حتى لو فشل، نحسبه كخطوة مكتملة
             loadingProgress.totalSteps = 1;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
@@ -399,14 +371,44 @@ async function loadGroupSVG(groupLetter) {
     } catch (err) {  
         console.error(`❌ خطأ في loadGroupSVG:`, err);  
         
-        // ✅ حتى لو فشل، نحسبه كخطوة مكتملة
         loadingProgress.totalSteps = 1;
         loadingProgress.completedSteps = 1;
         updateLoadProgress();
     }
 }
 
-/* --- 7. تهيئة المجموعة (محسّن - بدون تأخير) --- */
+function updateWoodLogo(groupLetter) {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+
+    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
+    if (oldBanner) oldBanner.remove();  
+
+    if (currentFolder !== "") return;  
+
+    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");  
+    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);   
+
+    banner.setAttribute("x", "197.20201666994924");  
+    banner.setAttribute("y", "2074.3139768463334");   
+    banner.setAttribute("width", "629.8946370139159");  
+    banner.setAttribute("height", "275.78922917259797");   
+
+    banner.setAttribute("class", "wood-banner-animation");  
+    banner.style.mixBlendMode = "multiply";  
+    banner.style.opacity = "0.9";  
+    banner.style.pointerEvents = "auto";   
+
+    banner.onclick = (e) => {  
+        e.stopPropagation();  
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');  
+        window.goToWood();
+        pushNavigationState(NAV_STATE.GROUP_SELECTION);
+    };  
+
+    dynamicGroup.appendChild(banner);
+}
+
+/* --- 7. تهيئة المجموعة --- */
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
 
@@ -416,22 +418,17 @@ async function initializeGroup(groupLetter) {
     if (scrollContainer) scrollContainer.style.display = 'block';  
     if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');  
 
-    // ✅ تسجيل الحالة في التنقل
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
 
-    // ✅ عرض شاشة التحميل فوراً
     showLoadingScreen(groupLetter);  
 
-    // ✅ تحميل البيانات بالتوازي (بدون انتظار)
     const [treeResult, svgResult] = await Promise.all([
         fetchGlobalTree(),
         loadGroupSVG(groupLetter)
     ]);
 
-    // ✅ تحديث الأحجام فوراً
     window.updateDynamicSizes();  
 
-    // ✅ بدء تحميل الصور مباشرة
     window.loadImages();
 }
 
@@ -441,8 +438,7 @@ document.getElementById("closePdfBtn").onclick = () => {
     const pdfViewer = document.getElementById("pdfFrame");
     pdfViewer.src = "";
     overlay.classList.add("hidden");
-    
-    // إزالة حالة PDF من التنقل
+
     popNavigationState();
 };
 
@@ -494,7 +490,7 @@ function debounce(func, delay) {
     };
 }
 
-/* --- 10. فتح الملفات (محسّن - رسالة واحدة فقط) --- */
+/* --- 10. فتح الملفات --- */
 async function smartOpen(item) {
     if (!item || !item.path) return;
 
@@ -509,13 +505,11 @@ async function smartOpen(item) {
         });  
 
         if (!response.ok) {  
-            // ✅ رسالة خطأ واحدة فقط
             alert(`❌ الملف "${fileName}" غير موجود`);
             console.warn(`⚠️ الملف غير موجود: ${url}`);  
             return;  
         }  
 
-        // حفظ موقع التمرير الحالي
         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
 
         let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");  
@@ -528,7 +522,6 @@ async function smartOpen(item) {
             trackSvgOpen(item.path);  
         }  
 
-        // ✅ تسجيل حالة PDF في التنقل
         pushNavigationState(NAV_STATE.PDF_VIEW, { 
             path: item.path,
             scrollPosition: scrollPosition
@@ -543,9 +536,8 @@ async function smartOpen(item) {
     } catch (error) {  
         console.warn(`⚠️ CORS Error, trying direct open:`, error);  
 
-        // ✅ لا رسالة خطأ هنا - سنحاول فتح الملف مباشرة
         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-        
+
         pushNavigationState(NAV_STATE.PDF_VIEW, { 
             path: item.path,
             scrollPosition: scrollPosition
@@ -564,8 +556,7 @@ window.goToWood = () => {
     if (scrollContainer) {
         scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
     }
-    
-    // تسجيل الحالة إذا لم تكن موجودة
+
     const currentState = getCurrentNavigationState();
     if (!currentState || currentState.state !== NAV_STATE.WOOD_VIEW) {
         pushNavigationState(NAV_STATE.WOOD_VIEW, { folder: currentFolder });
@@ -576,16 +567,14 @@ window.goToMapEnd = () => {
     if (!scrollContainer) return;
     const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
     scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' });
-    
-    // تسجيل حالة الخريطة
+
     pushNavigationState(NAV_STATE.MAP_VIEW);
 };
 
-/* --- 12. تحديث الأحجام (محسّن) --- */
+/* --- 12. تحديث الأحجام --- */
 function updateDynamicSizes() {
     if (!mainSvg) return;
 
-    // ✅ البحث عن جميع الصور بغض النظر عن الحجم
     const allImages = mainSvg.querySelectorAll('image[width][height]');  
     console.log(`📏 عدد جميع الصور: ${allImages.length}`);  
 
@@ -594,9 +583,8 @@ function updateDynamicSizes() {
         return;  
     }  
 
-    // ✅ حساب العرض الكلي ديناميكيًا
     let maxX = 0;
-    let maxY = 2454; // الارتفاع الافتراضي
+    let maxY = 2454;
 
     allImages.forEach(img => {
         const g = img.closest('g[transform]');
@@ -625,7 +613,7 @@ function updateDynamicSizes() {
 }
 window.updateDynamicSizes = updateDynamicSizes;
 
-/* --- 13. تأثيرات الهوفر (محسّن) --- */
+/* --- 13. تأثيرات الهوفر --- */
 function getCumulativeTranslate(element) {
     let x = 0, y = 0, current = element;
     while (current && current.tagName !== 'svg') {
@@ -718,7 +706,6 @@ function startHover() {
         zPart.setAttribute('height', imgData.height);    
         zPart.setAttribute('clip-path', `url(#${clipId})`);    
 
-        // ✅ حساب موقع الصورة بشكل صحيح
         const mTrans = imgData.group.getAttribute('transform')?.match(/translate\s*\(([\d.-]+)[ ,]+([\d.-]+)\s*\)/);    
         const imgTransX = mTrans ? parseFloat(mTrans[1]) : 0;
         const imgTransY = mTrans ? parseFloat(mTrans[2]) : 0;
@@ -887,7 +874,7 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-/* --- 16. تحديث واجهة القوائم (مع التمرير المباشر المحسن) --- */
+/* --- 16. تحديث واجهة القوائم --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -899,7 +886,6 @@ async function updateWoodInterface() {
         groupBtnText.textContent = `Change Group 🔄 ${currentGroup}`;
     }
 
-    // إزالة العناصر القديمة
     dynamicGroup.querySelectorAll('.wood-folder-group, .wood-file-group, .scroll-container-group, .subject-separator-group, .scroll-bar-group, .window-frame')
         .forEach(el => el.remove());
 
@@ -937,7 +923,6 @@ async function updateWoodInterface() {
     const folderPrefix = currentFolder ? currentFolder + '/' : '';
     const itemsMap = new Map();
 
-    // جمع العناصر
     globalFileTree.forEach(item => {
         if (item.path.startsWith(folderPrefix)) {
             const relativePath = item.path.substring(folderPrefix.length);
@@ -985,7 +970,6 @@ async function updateWoodInterface() {
 
     let filteredData = Array.from(itemsMap.values());
 
-    // ترتيب العناصر
     filteredData.sort((a, b) => {
         if (a.isSubject && !b.isSubject) return -1;
         if (!a.isSubject && b.isSubject) return 1;
@@ -1008,11 +992,9 @@ async function updateWoodInterface() {
     const scrollContainerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     scrollContainerGroup.setAttribute("class", "scroll-container-group");
 
-    // تنظيف clip-paths القديمة
     const oldClips = mainSvg.querySelectorAll('clipPath[id^="window-clip"]');
     oldClips.forEach(clip => clip.remove());
 
-    // ✅ 1. إنشاء clip-path للنافذة الخفية
     const clipPathId = "window-clip-" + Date.now();
     const clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
     clipPath.setAttribute("id", clipPathId);
@@ -1027,13 +1009,11 @@ async function updateWoodInterface() {
     clipPath.appendChild(clipRect);
     mainSvg.querySelector('defs').appendChild(clipPath);
 
-    // ✅ 2. المجموعة الرئيسية للمحتوى
     const scrollContent = document.createElementNS("http://www.w3.org/2000/svg", "g");
     scrollContent.setAttribute("class", "scrollable-content");
     scrollContent.setAttribute("clip-path", `url(#${clipPathId})`);
     scrollContent.style.cursor = "grab";
 
-    // ✅ 3. مجموعة الخطوط الفاصلة
     const separatorGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     separatorGroup.setAttribute("class", "subject-separator-group");
     separatorGroup.setAttribute("clip-path", `url(#${clipPathId})`);
@@ -1058,7 +1038,6 @@ async function updateWoodInterface() {
         const subjectItems = itemsBySubject[subjectKey];
         const isSubjectSection = subjectKey !== 'other';
 
-        // إضافة خط فاصل بين المواد
         if (subjectIndex > 0 && itemsAdded > 0) {
             yPosition += 20;
 
@@ -1081,7 +1060,6 @@ async function updateWoodInterface() {
         for (let i = 0; i < subjectItems.length; i++) {
             const item = subjectItems[i];
 
-            // ✅ إعادة تعيين عداد الملفات عند بداية مجلد جديد
             if (item.type === 'dir' && fileRowCounter > 0) {
                 if (fileRowCounter % 2 === 1) {
                     yPosition += 90;
@@ -1177,14 +1155,12 @@ async function updateWoodInterface() {
                 g.appendChild(r);
                 g.appendChild(t);
 
-                // ✅ متغير لتتبع حالة السحب
                 let isDraggingContent = false;
                 let dragVelocity = 0;
 
                 g.addEventListener('click', (e) => {
                     e.stopPropagation();
 
-                    // منع الفتح أثناء السحب
                     if (isDraggingContent && Math.abs(dragVelocity) > 0.1) {
                         return;
                     }
@@ -1201,7 +1177,6 @@ async function updateWoodInterface() {
                 itemsAdded++;
             }
 
-            // ✅ تحديث المواقع
             if (item.type === 'dir') {
                 yPosition += 90;
                 fileRowCounter = 0;
@@ -1224,10 +1199,8 @@ async function updateWoodInterface() {
 
     const totalContentHeight = yPosition - 250;
 
-    // ✅ تحديد ما إذا كنا بحاجة لشريط تمرير
     const needsScroll = totalContentHeight > 1700;
 
-    // ✅ إخفاء أو إظهار اللوجو وزر تغيير الاسم بناءً على حالة التمرير
     if (needsScroll) {
         const woodBanner = dynamicGroup.querySelector('.wood-banner-animation');
         const nameInputGroup = dynamicGroup.querySelector('.name-input-group');
@@ -1240,11 +1213,9 @@ async function updateWoodInterface() {
         }
     }
 
-    // ✅ 4. إضافة المحتوى والخطوط
     scrollContainerGroup.appendChild(separatorGroup);
     scrollContainerGroup.appendChild(scrollContent);
 
-    // ✅ 5. نظام التمرير
     const maxScroll = Math.max(0, totalContentHeight - 1700);
     let scrollOffset = 0;
 
@@ -1273,7 +1244,6 @@ async function updateWoodInterface() {
         scrollBarHandle.style.cursor = "pointer";
         scrollBarHandle.setAttribute("class", "scroll-handle");
 
-        // ✅ دالة تحديث التمرير المحسنة
         function updateScroll(newOffset) {
             scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
 
@@ -1285,7 +1255,6 @@ async function updateWoodInterface() {
             scrollBarHandle.setAttribute("y", handleY);
         }
 
-        // ✅ نظام التمرير 1: سحب المحتوى مباشرة (محسّن)
         let isDraggingContent = false;
         let dragStartY = 0;
         let dragStartOffset = 0;
@@ -1333,7 +1302,6 @@ async function updateWoodInterface() {
             isDraggingContent = false;
             scrollContent.style.cursor = 'grab';
 
-            // تطبيق حركة القصور الذاتي
             if (Math.abs(dragVelocity) > 0.5) {
                 let velocity = dragVelocity * 200;
                 const deceleration = 0.95;
@@ -1380,7 +1348,6 @@ async function updateWoodInterface() {
 
         window.addEventListener('touchend', endContentDrag);
 
-        // ✅ نظام التمرير 2: سحب مقبض شريط التمرير
         let isDraggingHandle = false;
         let handleStartY = 0;
         let handleStartOffset = 0;
@@ -1423,7 +1390,6 @@ async function updateWoodInterface() {
             isDraggingHandle = false;
         });
 
-        // ✅ نظام التمرير 3: عجلة الماوس (محسّن)
         scrollContent.addEventListener('wheel', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1504,7 +1470,7 @@ function processRect(r) {
     r.onclick = async () => {   
         if (href && href !== '#') {  
             const fileName = href.split('/').pop();
-            
+
             try {  
                 const response = await fetch(href, {   
                     method: 'HEAD',  
@@ -1513,15 +1479,13 @@ function processRect(r) {
                 });  
 
                 if (!response.ok) {  
-                    // ✅ رسالة واحدة فقط
                     alert(`❌ الملف "${fileName}" غير موجود`);
                     console.warn(`⚠️ الملف غير موجود: ${href}`);  
                     return;  
                 }  
 
-                // حفظ موقع التمرير
                 const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-                
+
                 pushNavigationState(NAV_STATE.PDF_VIEW, { 
                     path: href,
                     scrollPosition: scrollPosition
@@ -1538,9 +1502,9 @@ function processRect(r) {
                 }  
             } catch (error) {  
                 console.warn(`⚠️ CORS Error, trying direct open:`, error);  
-                
+
                 const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-                
+
                 pushNavigationState(NAV_STATE.PDF_VIEW, { 
                     path: href,
                     scrollPosition: scrollPosition
@@ -1568,7 +1532,7 @@ function processRect(r) {
                 (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {  
                 if (href && href !== '#') {  
                     const fileName = href.split('/').pop();
-                    
+
                     try {  
                         const response = await fetch(href, {   
                             method: 'HEAD',  
@@ -1577,7 +1541,6 @@ function processRect(r) {
                         });  
 
                         if (!response.ok) {  
-                            // ✅ رسالة واحدة فقط
                             alert(`❌ الملف "${fileName}" غير موجود`);
                             console.warn(`⚠️ الملف غير موجود: ${href}`);  
                             cleanupHover();  
@@ -1585,7 +1548,7 @@ function processRect(r) {
                         }  
 
                         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-                        
+
                         pushNavigationState(NAV_STATE.PDF_VIEW, { 
                             path: href,
                             scrollPosition: scrollPosition
@@ -1602,9 +1565,9 @@ function processRect(r) {
                         }  
                     } catch (error) {  
                         console.warn(`⚠️ CORS Error, trying direct open:`, error);  
-                        
+
                         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-                        
+
                         pushNavigationState(NAV_STATE.PDF_VIEW, { 
                             path: href,
                             scrollPosition: scrollPosition
@@ -1625,13 +1588,12 @@ function processRect(r) {
     r.setAttribute('data-processed', 'true');
 }
 
-/* --- 18. فحص ومعالجة جميع المستطيلات (محسّن) --- */
+/* --- 18. فحص ومعالجة جميع المستطيلات --- */
 function scan() {
     if (!mainSvg) return;
 
     console.log('🔍 تشغيل scan()...');  
 
-    // ✅ معالجة المستطيلات الحالية
     const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');  
     console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);  
 
@@ -1648,23 +1610,19 @@ function scan() {
         }  
     });
 
-    // ✅ إعداد MutationObserver لمراقبة الصور الجديدة
     if (!window.svgObserver) {
         const observer = new MutationObserver((mutations) => {
             let hasNewElements = false;
 
             mutations.forEach(mutation => {
                 mutation.addedNodes.forEach(node => {
-                    if (node.nodeType === 1) { // Element node
-                        // فحص إذا كانت صورة جديدة
+                    if (node.nodeType === 1) {
                         if (node.tagName === 'image' || node.querySelector('image')) {
                             hasNewElements = true;
                         }
-                        // فحص إذا كان مستطيل جديد
                         if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
                             processRect(node);
                         }
-                        // فحص المستطيلات داخل العنصر الجديد
                         if (node.querySelectorAll) {
                             const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
                             newRects.forEach(rect => processRect(rect));
@@ -1673,7 +1631,6 @@ function scan() {
                 });
             });
 
-            // تحديث viewBox إذا تمت إضافة صور جديدة
             if (hasNewElements) {
                 console.log('🔄 تم اكتشاف عناصر جديدة - تحديث viewBox');
                 updateDynamicSizes();
@@ -1691,8 +1648,7 @@ function scan() {
 }
 window.scan = scan;
 
-/* --- 5. إدارة شاشة التحميل --- */
-
+/* --- 19. تحميل الصور مع تتبع التقدم (نظام 1/5، 2/5، 3/5، 4/5) --- */
 function loadImages() {
     if (!mainSvg) return;
 
@@ -1730,7 +1686,6 @@ function loadImages() {
                     }  
                 });  
 
-                // ✅ كل صورة = خطوة واحدة
                 loadingProgress.completedSteps++;
                 updateLoadProgress();
 
@@ -1745,7 +1700,6 @@ function loadImages() {
             img.onerror = function() {  
                 console.error(`❌ خطأ في تحميل ${url}`);  
 
-                // ✅ حتى لو فشلت الصورة، نحسبها كخطوة مكتملة
                 loadingProgress.completedSteps++;
                 updateLoadProgress();
 
@@ -1771,12 +1725,10 @@ function finishLoading() {
     updateWoodInterface();  
     window.goToWood();  
 
-    // ✅ تأكد من الوصول لـ 100%
     loadingProgress.completedSteps = loadingProgress.totalSteps;
     loadingProgress.currentPercentage = 100;
     updateLoadProgress();
 
-    // ✅ تأخير بسيط لإظهار كل المصابيح
     setTimeout(() => {
         hideLoadingScreen();  
         console.log('🎉 اكتمل التحميل والعرض');
@@ -1815,13 +1767,11 @@ if (searchInput) {
         }  
     };  
 
-    // ✅ مستمع البحث المحدث - يدعم الأرقام والحروف المفردة
     searchInput.addEventListener('input', debounce(function(e) {  
         if (!mainSvg) return;  
 
         const query = normalizeArabic(e.target.value);  
 
-        // إذا كان البحث فارغاً، أظهر كل شيء
         const isEmptySearch = query.length === 0;
 
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
@@ -1842,7 +1792,6 @@ if (searchInput) {
             }  
 
             if (!isEmptySearch) {  
-                // ✅ تطبيع جميع النصوص للمقارنة
                 const normalizedHref = normalizeArabic(href);
                 const normalizedFullText = normalizeArabic(fullText);
                 const normalizedFileName = normalizeArabic(fileName);
@@ -1921,7 +1870,6 @@ if (!localStorage.getItem('visitor_id')) {
 
 updateWelcomeMessages();
 
-// ✅ إعداد زر الرجوع
 setupBackButton();
 
 const hasSavedGroup = loadSelectedGroup();
@@ -1934,85 +1882,10 @@ if (hasSavedGroup) {
     pushNavigationState(NAV_STATE.GROUP_SELECTION);
 }
 
-/* --- 22. إضافة أنماط CSS للتمرير المحسن --- */
-function addFixedScrollStyles() {
-    if (document.getElementById('fixed-scroll-styles')) return;
-
-    const style = document.createElement('style');
-    style.id = 'fixed-scroll-styles';
-    style.textContent = `
-        /* ✅ التأكد من أن clip-path يعمل */
-        .scrollable-content {
-            transition: transform 0.1s ease-out;
-            overflow: visible !important;
-            cursor: grab;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        
-        .scrollable-content:active {
-            cursor: grabbing;
-        }
-        
-        .scrollable-content * {
-            pointer-events: auto;
-        }
-        
-        /* ✅ شريط التمرير أكثر وضوحاً */
-        .scroll-handle {
-            transition: y 0.1s ease-out;
-        }
-        
-        .scroll-handle:hover {
-            fill: #ffd54f !important;
-            filter: drop-shadow(0 0 5px rgba(255, 213, 79, 0.7));
-        }
-        
-        /* ✅ التأكد من أن clip-path لا يقطع بشكل مفرط */
-        .scrollable-content[clip-path],
-        .subject-separator-group[clip-path] {
-            clip-path: inherit;
-            -webkit-clip-path: inherit;
-        }
-        
-        /* ✅ تحسين اللمس على الهواتف */
-        @media (hover: none) {
-            .scrollable-content {
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            .scroll-handle {
-                width: 16px !important;
-                x: 908px !important;
-            }
-        }
-        
-        /* ✅ hover للعناصر */
-        .wood-folder-group:hover rect,
-        .wood-file-group:hover rect {
-            stroke-width: 2 !important;
-            filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 204, 0, 0.5));
-        }
-        
-        .wood-folder-group:active,
-        .wood-file-group:active {
-            transform: scale(0.98);
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// استدعاء إضافة الأنماط
-document.addEventListener('DOMContentLoaded', addFixedScrollStyles);
-
-console.log('✅ تم تحميل script.js - نسخة محسّنة مع نظام التنقل الخلفي');
-console.log('🔧 التحسينات: زر الرجوع | رسالة خطأ واحدة | حفظ موقع التمرير');
-
-/* --- 23. نظام تحديث Service Worker التلقائي --- */
+/* --- 22. نظام تحديث Service Worker التلقائي --- */
 if ('serviceWorker' in navigator) {
   let refreshing = false;
 
-  // ✅ مراقبة تغيير Service Worker وإعادة تحميل الصفحة تلقائياً
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
     refreshing = true;
@@ -2025,13 +1898,11 @@ if ('serviceWorker' in navigator) {
       .then(reg => {
         console.log('✅ Service Worker مسجل');
 
-        // ✅ فحص التحديثات كل 5 دقائق
         setInterval(() => {
           console.log('🔍 فحص التحديثات...');
           reg.update();
         }, 5 * 60 * 1000);
 
-        // ✅ عند اكتشاف service worker جديد
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           console.log('🆕 Service Worker جديد قيد التثبيت...');
@@ -2040,7 +1911,6 @@ if ('serviceWorker' in navigator) {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               console.log('✅ Service Worker الجديد جاهز');
               
-              // ✅ إظهار إشعار للمستخدم
               const updateNow = confirm('🎉 تحديث جديد متاح!\n\nهل تريد إعادة التحميل الآن للحصول على آخر التحديثات؟');
               
               if (updateNow) {
@@ -2056,10 +1926,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* --- 24. زر مسح الكاش يدوياً (اختياري) --- */
-// إنشاء زر مسح الكاش
+/* --- 23. زر مسح الكاش يدوياً --- */
 function createClearCacheButton() {
-  // تحقق من عدم وجود الزر مسبقاً
   if (document.getElementById('clear-cache-btn')) return;
 
   const btn = document.createElement('button');
@@ -2098,7 +1966,6 @@ function createClearCacheButton() {
     }
 
     try {
-      // ✅ إلغاء تسجيل Service Worker
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (let registration of registrations) {
@@ -2107,19 +1974,14 @@ function createClearCacheButton() {
         }
       }
 
-      // ✅ مسح جميع الكاش
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map(name => caches.delete(name)));
         console.log('✅ تم مسح جميع الكاش');
       }
 
-      // ✅ مسح LocalStorage (اختياري - احذف هذا السطر إذا كنت تريد الاحتفاظ بالبيانات المحلية)
-      // localStorage.clear();
-
       alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
       
-      // ✅ إعادة تحميل قوية
       window.location.reload(true);
     } catch (error) {
       console.error('❌ خطأ في مسح الكاش:', error);
@@ -2131,10 +1993,9 @@ function createClearCacheButton() {
   console.log('🗑️ تم إضافة زر مسح الكاش');
 }
 
-// ✅ تفعيل زر مسح الكاش عند تحميل الصفحة
 window.addEventListener('load', () => {
   setTimeout(createClearCacheButton, 1000);
 });
 
-console.log('✅ تم تحميل script.js - نسخة محسّنة مع نظام التحديث التلقائي');
-console.log('🔧 التحسينات: Service Worker ذكي | تحديث تلقائي | مسح الكاش اليدوي');
+console.log('✅ تم تحميل script.js - نسخة محسّنة مع نظام المصابيح 1/5، 2/5، 3/5، 4/5');
+console.log('🔧 التحسينات: نظام تتبع دقيق | مصابيح متساوية | Service Worker ذكي');
