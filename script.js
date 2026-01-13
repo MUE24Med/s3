@@ -1745,6 +1745,26 @@ document.querySelectorAll('.group-btn').forEach(btn => {
     });
 });
 
+/* --- Preload Group Logos --- */
+function preloadGroupLogos() {
+    const groups = ['A', 'B', 'C', 'D'];
+    
+    groups.forEach(group => {
+        const img = new Image();
+        img.src = `image/logo-${group}.webp`;
+        console.log(`🖼️ تحميل مسبق: logo-${group}.webp`);
+    });
+}
+
+// تشغيل التحميل المسبق فور تحميل الصفحة
+window.addEventListener('load', () => {
+    preloadGroupLogos();
+});
+
+document.querySelectorAll('.group-btn').forEach(btn => {
+    // ... باقي الكود
+});
+
 if (changeGroupBtn) {
     changeGroupBtn.addEventListener('click', function(e) {
         e.stopPropagation();
