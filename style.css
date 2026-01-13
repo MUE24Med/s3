@@ -854,7 +854,7 @@ input:focus:not(:focus-visible) {
 #clear-cache-btn {
   position: fixed;
   top: 100px;
-  right: 120px;
+  left: 120px;
   z-index: 9999;
   padding: 10px 15px;
   width: 250px;
@@ -889,7 +889,7 @@ input:focus:not(:focus-visible) {
     font-size: 12px !important;
     padding: 8px 12px !important;
     top: 95px !important;
-    right: 120px !important;
+    left: 120px !important;
     width: 250px !important;
     height: 50px !important;
   }
