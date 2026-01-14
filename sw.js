@@ -1,8 +1,6 @@
-// ✅ نظام versioning ذكي - غيّر الرقم عند كل تحديث مهم
-const VERSION = '2025.01.14.001';
+const VERSION = '2025.01.14.002';
 const CACHE_NAME = 'interactive-map-' + VERSION;
 
-// ✅ الملفات الأساسية المشتركة (تحميل أولي)
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -12,11 +10,8 @@ const CORE_ASSETS = [
   './image/0.png'
 ];
 
-// ✅ تثبيت Service Worker
 self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker: تثبيت الإصدار', CACHE_NAME);
-
-  // ✅ تخطي مرحلة الانتظار وتفعيل مباشرة
   self.skipWaiting();
 
   event.waitUntil(
@@ -27,7 +22,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// ✅ تنظيف الكاش القديم فوراً
 self.addEventListener('activate', (event) => {
   console.log('🔄 Service Worker: تفعيل الإصدار', CACHE_NAME);
 
@@ -42,20 +36,17 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => {
-      // ✅ السيطرة الفورية على جميع الصفحات
       return self.clients.claim();
     })
   );
 });
 
-// ✅ السماح للصفحة بإجبار Service Worker على التحديث
 self.addEventListener('message', (event) => {
   if (event.data && event.data.action === 'skipWaiting') {
     self.skipWaiting();
   }
 });
 
-// ✅ استراتيجية ذكية للتعامل مع الطلبات
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
     return;
@@ -63,13 +54,11 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // ✅ تجاهل طلبات GitHub API - دائماً من الشبكة
   if (url.hostname === 'api.github.com' || url.hostname === 'raw.githubusercontent.com') {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // ✅ HTML/CSS/JS: Network First مع timeout (دائماً محدّث)
   if (url.pathname.match(/\.(html|css|js)$/i) || url.pathname === '/' || url.pathname === './') {
     event.respondWith(
       Promise.race([
@@ -92,7 +81,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ✅ الصور: Cache First (سريع)
   if (url.pathname.match(/\.(webp|png|jpg|jpeg|svg|gif)$/i)) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
@@ -112,7 +100,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ✅ باقي الملفات: Network First
   event.respondWith(
     fetch(event.request)
       .then((response) => {
