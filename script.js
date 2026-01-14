@@ -2,6 +2,7 @@
 const REPO_NAME = "semester-3";
 const GITHUB_USER = "MUE24Med";
 
+const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
@@ -10,6 +11,7 @@ let currentGroup = null;
 let currentFolder = "";
 let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
+const TAP_THRESHOLD_MS = 300;
 
 // ✅ متغيرات نظام التحميل الأولي
 let initialLoadingProgress = {
@@ -18,10 +20,19 @@ let initialLoadingProgress = {
     percentage: 0
 };
 
+// ✅ متغيرات نظام التحميل للمجموعة
+let loadingProgress = {
+    totalSteps: 0,
+    completedSteps: 0,
+    currentPercentage: 0
+};
+
+let imageUrlsToLoad = [];
+
 // ✅ نظام الأسابيع
-let weeksData = [];
+let weeksToLoad = [];
 let loadedWeeks = [];
-let isFirstWeekLoaded = false;
+let currentWeekIndex = 0;
 
 // ✅ نظام التنقل الخلفي
 let navigationHistory = [];
@@ -68,13 +79,15 @@ const SUBJECT_FOLDERS = [
 
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-    baseText: null, baseBg: null, animationId: null, clipPathId: null
+    baseText: null, baseBg: null, animationId: null, clipPathId: null,
+    touchStartTime: 0, initialScrollLeft: 0
 };
 
 // الحصول على العناصر فورًا
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
 const clipDefs = mainSvg?.querySelector('defs');
+const loadingOverlay = document.getElementById('loading-overlay');
 const jsToggle = document.getElementById('js-toggle');
 const searchInput = document.getElementById('search-input');
 const searchIcon = document.getElementById('search-icon');
@@ -84,6 +97,7 @@ const backButtonGroup = document.getElementById('back-button-group');
 const backBtnText = document.getElementById('back-btn-text');
 const changeGroupBtn = document.getElementById('change-group-btn');
 const groupSelectionScreen = document.getElementById('group-selection-screen');
+const filesListContainer = document.getElementById('files-list-container');
 
 // ✅ عناصر شاشة التحميل الأولية
 const initialLoadingScreen = document.getElementById('initial-loading-screen');
@@ -327,22 +341,16 @@ async function loadCoreAssets() {
         }
     }, 500);
 }
-
 /* --- 6. نظام التحميل التدريجي للأسابيع --- */
 
 function createLoadingScreensInSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
-    if (!groupContainer) return;
-
-    // ✅ مسح أي شاشات سابقة
-    const oldScreens = groupContainer.querySelectorAll('#svg-group-selection, #svg-loading-screen');
-    oldScreens.forEach(s => s.remove());
-
+    
     // ✅ إنشاء شاشة اختيار الجروب في SVG (x=1024, y=0)
     const groupSelectionGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     groupSelectionGroup.setAttribute("id", "svg-group-selection");
     groupSelectionGroup.setAttribute("transform", "translate(1024, 0)");
-
+    
     // خلفية
     const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     bgRect.setAttribute("x", "0");
@@ -351,7 +359,7 @@ function createLoadingScreensInSVG(groupLetter) {
     bgRect.setAttribute("height", "2454");
     bgRect.setAttribute("fill", "#1a1a1a");
     groupSelectionGroup.appendChild(bgRect);
-
+    
     // شعار
     const logo = document.createElementNS("http://www.w3.org/2000/svg", "image");
     logo.setAttribute("href", `image/logo-${groupLetter}.webp`);
@@ -360,7 +368,7 @@ function createLoadingScreensInSVG(groupLetter) {
     logo.setAttribute("width", "400");
     logo.setAttribute("height", "400");
     groupSelectionGroup.appendChild(logo);
-
+    
     // نص الترحيب
     const welcomeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
     welcomeText.setAttribute("x", "512");
@@ -371,14 +379,14 @@ function createLoadingScreensInSVG(groupLetter) {
     welcomeText.setAttribute("font-weight", "bold");
     welcomeText.textContent = `مجموعة ${groupLetter}`;
     groupSelectionGroup.appendChild(welcomeText);
-
+    
     groupContainer.appendChild(groupSelectionGroup);
-
+    
     // ✅ إنشاء شاشة التحميل مع المصابيح (x=1024, y=0)
     const loadingGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     loadingGroup.setAttribute("id", "svg-loading-screen");
     loadingGroup.setAttribute("transform", "translate(1024, 0)");
-
+    
     // خلفية
     const loadingBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     loadingBg.setAttribute("x", "0");
@@ -387,7 +395,7 @@ function createLoadingScreensInSVG(groupLetter) {
     loadingBg.setAttribute("height", "2454");
     loadingBg.setAttribute("fill", "#1a1a1a");
     loadingGroup.appendChild(loadingBg);
-
+    
     // شعار التحميل
     const loadingLogo = document.createElementNS("http://www.w3.org/2000/svg", "image");
     loadingLogo.setAttribute("href", `image/logo-${groupLetter}.webp`);
@@ -396,7 +404,7 @@ function createLoadingScreensInSVG(groupLetter) {
     loadingLogo.setAttribute("width", "400");
     loadingLogo.setAttribute("height", "400");
     loadingGroup.appendChild(loadingLogo);
-
+    
     // نص التحميل
     const loadingText = document.createElementNS("http://www.w3.org/2000/svg", "text");
     loadingText.setAttribute("id", "svg-loading-text");
@@ -408,17 +416,17 @@ function createLoadingScreensInSVG(groupLetter) {
     loadingText.setAttribute("font-weight", "bold");
     loadingText.textContent = "جاري التحميل...";
     loadingGroup.appendChild(loadingText);
-
+    
     // ✅ المصابيح الأربعة
     const bulbColors = ['#4dff88', '#ffff4d', '#ffaa00', '#ff4d4d'];
     const bulbY = 1150;
     const bulbSpacing = 80;
     const startX = 512 - (3 * bulbSpacing / 2);
-
+    
     for (let i = 0; i < 4; i++) {
         const bulbGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         bulbGroup.setAttribute("id", `svg-bulb-${i + 1}`);
-
+        
         const bulb = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         bulb.setAttribute("cx", startX + (i * bulbSpacing));
         bulb.setAttribute("cy", bulbY);
@@ -427,11 +435,11 @@ function createLoadingScreensInSVG(groupLetter) {
         bulb.setAttribute("stroke", "#444");
         bulb.setAttribute("stroke-width", "2");
         bulb.setAttribute("class", "svg-light-bulb");
-
+        
         bulbGroup.appendChild(bulb);
         loadingGroup.appendChild(bulbGroup);
     }
-
+    
     loadingGroup.style.display = 'none';
     groupContainer.appendChild(loadingGroup);
 }
@@ -439,10 +447,10 @@ function createLoadingScreensInSVG(groupLetter) {
 function showSVGLoadingScreen() {
     const groupSelection = document.getElementById('svg-group-selection');
     const loadingScreen = document.getElementById('svg-loading-screen');
-
+    
     if (groupSelection) groupSelection.style.display = 'none';
     if (loadingScreen) loadingScreen.style.display = 'block';
-
+    
     console.log('🔦 شاشة التحميل SVG نشطة');
 }
 
@@ -451,33 +459,33 @@ function updateSVGLoadProgress(percentage) {
     if (loadingText) {
         loadingText.textContent = `جاري التحميل... ${percentage}%`;
     }
-
+    
     // تحديث المصابيح
-    if (percentage >= 25) {
+    if (percentage >= 20) {
         const bulb4 = document.querySelector('#svg-bulb-4 circle');
         if (bulb4) {
             bulb4.setAttribute('fill', '#ff4d4d');
             bulb4.setAttribute('filter', 'drop-shadow(0 0 10px #ff4d4d)');
         }
     }
-
-    if (percentage >= 50) {
+    
+    if (percentage >= 40) {
         const bulb3 = document.querySelector('#svg-bulb-3 circle');
         if (bulb3) {
             bulb3.setAttribute('fill', '#ffaa00');
             bulb3.setAttribute('filter', 'drop-shadow(0 0 10px #ffaa00)');
         }
     }
-
-    if (percentage >= 75) {
+    
+    if (percentage >= 60) {
         const bulb2 = document.querySelector('#svg-bulb-2 circle');
         if (bulb2) {
             bulb2.setAttribute('fill', '#ffff4d');
             bulb2.setAttribute('filter', 'drop-shadow(0 0 10px #ffff4d)');
         }
     }
-
-    if (percentage >= 90) {
+    
+    if (percentage >= 80) {
         const bulb1 = document.querySelector('#svg-bulb-1 circle');
         if (bulb1) {
             bulb1.setAttribute('fill', '#4dff88');
@@ -494,59 +502,53 @@ async function analyzeWeeksFromSVG(groupLetter) {
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
             return [];
         }
-
+        
         const svgText = await response.text();
         const parser = new DOMParser();
         const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-
+        
         // البحث عن جميع المجموعات التي تحتوي على صور
         const groups = svgDoc.querySelectorAll('g[transform]');
         const weeks = [];
-
+        
         groups.forEach(g => {
             const transform = g.getAttribute('transform');
             const match = transform.match(/translate\s*\((\d+)[\s,]+(\d+)\)/);
-
+            
             if (match) {
                 const x = parseInt(match[1]);
                 const y = parseInt(match[2]);
-
+                
                 // الأسابيع تبدأ من x=1024 وما بعده
-                if (x >= 1024) {
+                if (x >= 1024 && y === 0) {
                     const images = g.querySelectorAll('image[data-src]');
                     const imageUrls = [];
-
+                    
                     images.forEach(img => {
                         const src = img.getAttribute('data-src');
                         if (src && src.includes(`image/${groupLetter}/`)) {
                             imageUrls.push(src);
                         }
                     });
-
+                    
                     if (imageUrls.length > 0) {
-                        // استخراج رقم الأسبوع من اسم الصورة
-                        const weekNumberMatch = imageUrls[0].match(/\/(\d+)\.webp$/);
-                        const weekNumber = weekNumberMatch ? parseInt(weekNumberMatch[1]) : 0;
-
                         weeks.push({
                             x: x,
                             y: y,
-                            weekNumber: weekNumber,
                             images: imageUrls,
-                            group: g.cloneNode(true),
-                            transformX: x
+                            group: g.cloneNode(true)
                         });
                     }
                 }
             }
         });
-
-        // ✅ ترتيب الأسابيع من الأكبر رقماً (آخر أسبوع) إلى الأصغر (الأسبوع الأول)
+        
+        // ترتيب الأسابيع من اليمين لليسار (الأكبر x أولاً)
         weeks.sort((a, b) => b.x - a.x);
-
-        console.log(`📅 تم اكتشاف ${weeks.length} أسبوع، مرتبة من x=${weeks[0]?.x} إلى x=${weeks[weeks.length - 1]?.x}`);
+        
+        console.log(`📅 تم اكتشاف ${weeks.length} أسبوع`);
         return weeks;
-
+        
     } catch (err) {
         console.error('❌ خطأ في تحليل الأسابيع:', err);
         return [];
@@ -554,157 +556,118 @@ async function analyzeWeeksFromSVG(groupLetter) {
 }
 
 /* --- 8. تحميل أسبوع واحد --- */
-async function loadWeek(weekData) {
-    console.log(`📦 بدء تحميل الأسبوع ${weekData.weekNumber}...`);
-
+async function loadWeek(weekData, weekIndex) {
+    console.log(`📦 بدء تحميل الأسبوع ${weekIndex + 1}...`);
+    
     const totalImages = weekData.images.length;
     let loadedImages = 0;
-
+    
     const loadPromises = weekData.images.map(url => {
         return new Promise((resolve) => {
             const img = new Image();
-
+            
             img.onload = () => {
                 loadedImages++;
                 const progress = Math.round((loadedImages / totalImages) * 100);
-                console.log(`  📊 الأسبوع ${weekData.weekNumber}: ${progress}%`);
+                console.log(`  📊 الأسبوع ${weekIndex + 1}: ${progress}%`);
                 resolve();
             };
-
+            
             img.onerror = () => {
                 console.error(`  ❌ فشل تحميل: ${url}`);
                 loadedImages++;
                 resolve();
             };
-
+            
             img.src = url;
         });
     });
-
+    
     await Promise.all(loadPromises);
-
-    console.log(`✅ اكتمل تحميل الأسبوع ${weekData.weekNumber}`);
+    
+    console.log(`✅ اكتمل تحميل الأسبوع ${weekIndex + 1}`);
     return weekData;
 }
 
 /* --- 9. إضافة أسبوع إلى SVG مع الحركة --- */
-function addWeekToSVG(weekData, isFirstWeek) {
+function addWeekToSVG(weekData, weekIndex) {
     const groupContainer = document.getElementById('group-specific-content');
-
-    // ✅ إذا كان هذا هو الأسبوع الأول (الأخير في الترتيب - أصغر رقم)
-    if (isFirstWeek) {
-        // ✅ الأسبوع الأول يظهر مباشرة في x=1024 (مكان شاشة التحميل)
-        const weekGroup = weekData.group.cloneNode(true);
-        weekGroup.setAttribute('id', `week-${weekData.weekNumber}`);
+    
+    // ✅ نقل جميع الأسابيع السابقة لليسار بمقدار 1024px
+    loadedWeeks.forEach((loadedWeek, index) => {
+        const currentX = 1024 - (index * 1024);
+        const newX = currentX - 1024;
+        
+        loadedWeek.element.style.transition = 'transform 0.8s ease-in-out';
+        loadedWeek.element.setAttribute('transform', `translate(${newX}, 0)`);
+    });
+    
+    // ✅ إضافة الأسبوع الجديد في موضع x=2048
+    const weekGroup = weekData.group.cloneNode(true);
+    weekGroup.setAttribute('id', `week-${weekIndex}`);
+    weekGroup.setAttribute('transform', 'translate(2048, 0)');
+    weekGroup.style.transition = 'transform 0.8s ease-in-out';
+    
+    groupContainer.appendChild(weekGroup);
+    
+    // ✅ تحديث صور الأسبوع
+    const images = weekGroup.querySelectorAll('image[data-src]');
+    images.forEach(img => {
+        const src = img.getAttribute('data-src');
+        img.setAttribute('href', src);
+    });
+    
+    // ✅ تحريك الأسبوع الجديد إلى موضع x=1024 بعد delay قصير
+    setTimeout(() => {
         weekGroup.setAttribute('transform', 'translate(1024, 0)');
-        
-        groupContainer.appendChild(weekGroup);
-
-        // ✅ تحديث صور الأسبوع
-        const images = weekGroup.querySelectorAll('image[data-src]');
-        images.forEach(img => {
-            const src = img.getAttribute('data-src');
-            img.setAttribute('href', src);
-        });
-
-        loadedWeeks.push({
-            data: weekData,
-            element: weekGroup,
-            weekNumber: weekData.weekNumber
-        });
-
-        console.log(`🎬 تم إضافة الأسبوع ${weekData.weekNumber} (الأول - مباشرة في x=1024)`);
-
-    } else {
-        // ✅ إذا لم يكن الأسبوع الأول، نزيح جميع الأسابيع السابقة 1024px لليسار
-        loadedWeeks.forEach((loadedWeek) => {
-            const currentTransform = loadedWeek.element.getAttribute('transform');
-            const match = currentTransform.match(/translate\s*\(([\d.-]+)[\s,]+([\d.-]+)\)/);
-            
-            if (match) {
-                const currentX = parseFloat(match[1]);
-                const currentY = parseFloat(match[2]);
-                const newX = currentX - 1024;
-                
-                loadedWeek.element.setAttribute('transform', `translate(${newX}, ${currentY})`);
-            }
-        });
-
-        // ✅ إنشاء عنصر الأسبوع الجديد
-        const weekGroup = weekData.group.cloneNode(true);
-        weekGroup.setAttribute('id', `week-${weekData.weekNumber}`);
-        
-        // ✅ باقي الأسابيع تبدأ من x=1024, y=2454 (أسفل الشاشة) ثم تنزلق للأعلى
-        weekGroup.setAttribute('transform', 'translate(1024, 2454)');
-        groupContainer.appendChild(weekGroup);
-
-        // ✅ تحديث صور الأسبوع
-        const images = weekGroup.querySelectorAll('image[data-src]');
-        images.forEach(img => {
-            const src = img.getAttribute('data-src');
-            img.setAttribute('href', src);
-        });
-
-        // ✅ حركة انزلاق من الأسفل إلى الأعلى
-        requestAnimationFrame(() => {
-            weekGroup.setAttribute('transform', 'translate(1024, 0)');
-        });
-
-        // حفظ الأسبوع في القائمة
-        loadedWeeks.push({
-            data: weekData,
-            element: weekGroup,
-            weekNumber: weekData.weekNumber
-        });
-
-        console.log(`🎬 تم إضافة الأسبوع ${weekData.weekNumber} (مع الحركة من الأسفل)`);
-    }
-
-    // ✅ إخفاء شاشة التحميل بعد إضافة الأسبوع الأول
-    if (isFirstWeek) {
-        const loadingScreen = document.getElementById('svg-loading-screen');
-        if (loadingScreen) {
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => {
-                loadingScreen.remove();
-            }, 600);
-        }
-    }
+    }, 50);
+    
+    // حفظ الأسبوع في القائمة
+    loadedWeeks.push({
+        data: weekData,
+        element: weekGroup,
+        index: weekIndex
+    });
+    
+    console.log(`🎬 تم إضافة الأسبوع ${weekIndex + 1} مع الحركة`);
 }
 
 /* --- 10. تحميل جميع الأسابيع تدريجياً --- */
 async function loadAllWeeksProgressively(weeks) {
-    if (weeks.length === 0) {
-        console.warn('⚠️ لا توجد أسابيع للتحميل');
-        return;
-    }
-
-    const totalWeeks = weeks.length;
-
-    // ✅ التحميل من آخر أسبوع (الأكبر x) إلى الأول (الأصغر x)
-    for (let i = 0; i < totalWeeks; i++) {
+    weeksToLoad = weeks;
+    
+    for (let i = 0; i < weeks.length; i++) {
         const weekData = weeks[i];
-        const isFirstWeek = (i === totalWeeks - 1); // آخر عنصر في المصفوفة = الأسبوع الأول (x=1024)
-
+        
         // تحديث نص التحميل
-        const overallProgress = Math.round(((i + 1) / totalWeeks) * 100);
-        updateSVGLoadProgress(overallProgress);
-
-        // تحميل الأسبوع
-        await loadWeek(weekData);
-
-        // إضافة الأسبوع إلى SVG
-        addWeekToSVG(weekData, isFirstWeek);
-
-        // ✅ انتظار قصير للحركة (إلا إذا كان هذا هو الأسبوع الأول)
-        if (!isFirstWeek) {
-            await new Promise(resolve => setTimeout(resolve, 300));
+        const loadingText = document.getElementById('svg-loading-text');
+        if (loadingText) {
+            loadingText.textContent = `جاري تحميل الأسبوع ${i + 1} من ${weeks.length}...`;
         }
+        
+        // تحميل الأسبوع
+        await loadWeek(weekData, i);
+        
+        // تحديث المصابيح بناءً على التقدم
+        const overallProgress = Math.round(((i + 1) / weeks.length) * 100);
+        updateSVGLoadProgress(overallProgress);
+        
+        // إضافة الأسبوع إلى SVG
+        addWeekToSVG(weekData, i);
+        
+        // انتظار قصير قبل الأسبوع التالي
+        await new Promise(resolve => setTimeout(resolve, 900));
     }
-
-    console.log('🎉 اكتمل تحميل جميع الأسابيع');
+    
+    // ✅ إخفاء شاشة التحميل بعد اكتمال كل الأسابيع
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('svg-loading-screen');
+        if (loadingScreen) {
+            loadingScreen.style.display = 'none';
+        }
+        console.log('🎉 اكتمل تحميل جميع الأسابيع');
+    }, 1000);
 }
-
 /* --- 11. تهيئة المجموعة مع النظام الجديد --- */
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
@@ -715,46 +678,35 @@ async function initializeGroup(groupLetter) {
     if (scrollContainer) scrollContainer.style.display = 'block';  
     if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');  
 
-    // ✅ تحميل صورة wood.webp
-    const woodImage = document.querySelector('image[data-src="image/wood.webp"]');
-    if (woodImage) {
-        woodImage.setAttribute('href', 'image/wood.webp');
-    }
-
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
 
     // ✅ إنشاء شاشات التحميل في SVG
     createLoadingScreensInSVG(groupLetter);
-
+    
     // ✅ عرض شاشة التحميل
     showSVGLoadingScreen();
-
+    
     // ✅ جلب شجرة الملفات
     await fetchGlobalTree();
-
+    
     // ✅ تحليل الأسابيع من SVG
     const weeks = await analyzeWeeksFromSVG(groupLetter);
-
+    
     if (weeks.length === 0) {
         console.warn('⚠️ لم يتم العثور على أسابيع');
         const loadingScreen = document.getElementById('svg-loading-screen');
         if (loadingScreen) loadingScreen.style.display = 'none';
         return;
     }
-
-    // ✅ تحميل الأسابيع تدريجياً (من الأكبر x إلى الأصغر x)
+    
+    // ✅ تحميل الأسابيع تدريجياً
     await loadAllWeeksProgressively(weeks);
-
+    
     // ✅ تحديث الأحجام والواجهة
     window.updateDynamicSizes();  
     scan();  
     updateWoodInterface();  
     window.goToWood();
-    
-    // ✅ إظهار SVG بعد التحميل
-    if (mainSvg) {
-        mainSvg.style.opacity = '1';
-    }
 }
 
 /* --- 12. عارض PDF --- */
@@ -899,7 +851,7 @@ function updateDynamicSizes() {
         return;  
     }  
 
-    let maxX = 1024; // على الأقل صورة الخشب + شاشة التحميل
+    let maxX = 0;
     let maxY = 2454;
 
     allImages.forEach(img => {
@@ -1102,7 +1054,1080 @@ function wrapText(el, maxW) {
         }
     });
 }
+/* --- 1. الإعدادات والمتغيرات العالمية --- */
 
+/* ===== منع Samsung Dark Mode ===== */
+html {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+  background-color: #000000 !important;
+}
+
+body {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+  background-color: #000000 !important;
+}
+
+/* منع الفلاتر على جميع العناصر */
+* {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+}
+
+/* منع Samsung من تطبيق الفلاتر */
+html, body, div, svg, image, img {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* ===== تنسيق الطبقات الخشبية ===== */
+.wood-layer {
+    pointer-events: none;
+    shape-rendering: crispEdges;
+}
+
+.scroll-container-group {
+    cursor: grab;
+}
+
+#back-button-group, #js-toggle-container {
+    z-index: 100;
+}
+
+/* الحالة العادية */
+.wood-banner-animation {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wood-pulse-soft 3s infinite ease-in-out;
+  will-change: transform, filter;
+  transform: scale(1) translateY(0);
+}
+
+/* حالة الـ Hover */
+.wood-banner-animation:hover {
+  animation: none !important; 
+  transform: translateY(-15px) scale(1.15) !important; 
+  animation: glow-oscillation 1.5s infinite ease-in-out !important;
+  filter: brightness(1.2);
+  z-index: 100;
+}
+
+/* أنيميشن تأرجح التوهج */
+@keyframes glow-oscillation {
+  0%, 100% {
+    filter: brightness(1.1) drop-shadow(0 10px 20px rgba(255, 204, 0, 0.4));
+  }
+  50% {
+    filter: brightness(1.3) 
+            drop-shadow(0 15px 40px rgba(255, 204, 0, 0.8)) 
+            drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+  }
+}
+
+/* أنيميشن النبض العادي */
+@keyframes wood-pulse-soft {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* عند الضغط */
+.wood-banner-animation:active {
+  transform: translateY(-4px) scale(1.05) !important;
+  animation: none !important;
+}
+
+/* ===== تنسيق زر تغيير الاسم ===== */
+.name-input-group {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.name-input-group:hover rect {
+  stroke: #ffd54f !important;
+  stroke-width: 3 !important;
+  filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
+}
+
+.name-input-group:active {
+  transform: scale(0.98);
+}
+
+.name-input-group text {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ===== تنسيق شريط التمرير ===== */
+.scroll-container-group {
+  pointer-events: auto;
+}
+
+.scrollable-content {
+  transition: transform 0.2s ease-out;
+}
+
+/* تنسيق العناصر في قائمة الخشب  */
+.list-item {
+    stroke-width: 1px !important;
+    rx: 5;
+    ry: 5;
+}
+
+/* 2. إعدادات توحيد الرؤية */
+*, *::before, *::after {
+  box-sizing: border-box !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  color-scheme: only light !important;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+
+  --color-q: red;
+  --color-v: blue;
+  --color-i: white;
+  --color-a: purple;
+  --color-s: green;
+  --color-l: yellow;
+  --color-is: #c8ff8e;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100svh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: black !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  filter: none !important;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+#main-svg, .rect-label, .label-bg {
+  color-scheme: light !important;
+}
+
+#scroll-container {
+  width: 100vw;
+  height: 100svh;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth; 
+  direction: ltr;
+  scrollbar-width: thin;
+  scrollbar-color: #444 black;
+}
+
+#main-svg {
+  height: 100%;
+  width: auto;
+  display: block;
+  transition: opacity .3s ease-out;
+  opacity: 0; 
+}
+
+.m {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2px;
+  transform-origin: center center;
+  transition: filter .3s ease, stroke-width .3s ease;
+  cursor: pointer;
+}
+
+.q  { stroke: var(--color-q); }
+.v  { stroke: var(--color-v); }
+.i  { stroke: var(--color-i); }
+.a  { stroke: var(--color-a); }
+.s  { stroke: var(--color-s); }
+.l  { stroke: var(--color-l); }
+.is { stroke: var(--color-is); }
+
+/* ===== 🆕 شاشة التحميل الأولية (قبل اختيار الجروب) ===== */
+#initial-loading-screen {
+  position: fixed;
+  height: 100svh;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#initial-loading-screen.hidden,
+#initial-loading-screen[style*="display: none"] {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+}
+
+#initial-loading-content {
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+}
+
+#initial-logo {
+  width: 250px;
+  max-width: 70vw;
+  height: auto;
+  display: block;
+  margin: 0 auto 30px auto;
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
+  animation: logo-pulse 2s infinite ease-in-out;
+}
+
+#initial-loading-content h1 {
+  color: #ffcc00;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  margin-bottom: 30px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+#initial-loading-status {
+  color: #aaa;
+  font-size: 14px;
+  margin-top: 20px;
+  min-height: 20px;
+}
+
+/* ===== 🆕 دائرة النسبة المئوية ===== */
+.circular-progress-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 20px auto;
+}
+
+.circular-progress {
+  transform: rotate(-90deg);
+}
+
+.progress-bg {
+  fill: none;
+  stroke: #222;
+  stroke-width: 15;
+}
+
+.progress-bar {
+  fill: none;
+  stroke: #ffcc00;
+  stroke-width: 15;
+  stroke-linecap: round;
+  stroke-dasharray: 534.07; /* 2 * π * 85 */
+  stroke-dashoffset: 534.07;
+  transition: stroke-dashoffset 0.3s ease;
+  filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffcc00;
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.8);
+}
+
+/* ===== شاشة اختيار الجروب ===== */
+#group-selection-screen {
+  height: 100svh;
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#group-selection-screen:not(.hidden) {
+  display: flex;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#group-selection-screen.hidden {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  display: none !important;
+}
+
+#group-selection-content {
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+  box-sizing: border-box;
+  transform: scale(0.85);
+  transform-origin: center center;
+}
+
+#main-logo {
+  width: 300px;
+  max-width: 80vw;
+  height: auto;
+  margin-bottom: 30px;
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+  animation: logo-pulse 2s infinite ease-in-out;
+}
+
+#group-selection-content h1 {
+  color: #ffcc00;
+  font-size: clamp(1.2rem, 4vw, 2rem);
+  margin-bottom: 40px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#group-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  direction: ltr;
+}
+
+.group-btn {
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #444;
+  border-radius: 15px;
+  padding: 30px 20px;
+  cursor: pointer;
+  transition: all .3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.group-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, transparent, rgba(255, 204, 0, 0.1));
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+
+.group-btn:hover::before,
+.group-btn:active::before {
+  opacity: 1;
+}
+
+.group-btn:hover {
+  border-color: #ffcc00;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(255, 204, 0, 0.3);
+}
+
+.group-btn:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
+.group-letter {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #ffcc00;
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
+}
+
+.group-label {
+  font-size: clamp(0.9rem, 3vw, 1.1rem);
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: center;
+}
+
+/* ===== موبايل صغير جدًا ===== */
+@media (max-height: 700px) {
+  #group-selection-content {
+    transform: scale(0.78);
+  }
+}
+
+@media (max-width: 480px) {
+  #group-buttons {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .group-btn {
+    padding: 25px 15px;
+  }
+
+  .group-letter {
+    font-size: 2.5rem;
+  }
+
+  #main-logo {
+    width: 200px;
+    margin-bottom: 20px;
+  }
+
+  #group-selection-content h1 {
+    margin-bottom: 25px;
+    letter-spacing: 1px;
+  }
+
+  .group-label {
+    letter-spacing: 1px;
+  }
+}
+
+/* تنسيق عارض PDF */
+#pdf-overlay {
+  height: 100svh;
+  transition: transform .35s ease, opacity .35s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+}
+
+#pdf-overlay.hidden {
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+#toolbar {
+  height: 50px;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-bottom: 1px solid #555;
+}
+
+#pdfFrame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+
+.toolbar-btn {
+  background: #555;
+  color: white;
+  border: 1px solid #777;
+  padding: 5px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ===== Loading Overlay (بعد اختيار الجروب) ===== */
+#loading-overlay {
+  position: fixed;
+  height: 100svh;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity .5s ease-out;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#loading-overlay.active {
+  display: flex;
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ✅ إخفاء شاشة التحميل HTML بعد اختيار الجروب */
+#loading-overlay,
+#loading-content {
+  display: none !important;
+}
+
+#loading-content {
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+}
+
+#splash-image {
+  width: 400px;
+  max-width: 85vw;
+  height: auto;
+  display: block;
+  margin: -60px auto 10px auto;
+  transform: translateY(-10%);
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
+  animation: logo-glow 2s infinite ease-in-out;
+}
+
+@media (max-width: 480px) {
+  #splash-image {
+    margin-top: -40px;
+    max-width: 75vw;
+  }
+}
+
+#loading-content h1 {
+  color: #ffcc00;
+  margin: 10px 0;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+#loader-lights {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.light-bulb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background-color: #222;
+  border: 1px solid #444;
+  transition: all .4s ease;
+}
+
+/* ألوان المصابيح */
+#bulb-1.on {
+  background-color: #4dff88;
+  box-shadow: 0 0 15px #4dff88, 0 0 30px #00ff66;
+  border-color: #fff;
+}
+
+#bulb-2.on {
+  background-color: #ffff4d;
+  box-shadow: 0 0 15px #ffff4d, 0 0 30px #ffff00;
+  border-color: #fff;
+}
+
+#bulb-3.on {
+  background-color: #ffaa00;
+  box-shadow: 0 0 15px #ffaa00, 0 0 30px #ff8800;
+  border-color: #fff;
+}
+
+#bulb-4.on {
+  background-color: #ff4d4d;
+  box-shadow: 0 0 15px #ff4d4d, 0 0 30px #ff0000;
+  border-color: #fff;
+}
+
+#legend {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 30px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+#back-btn-text {
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Arial', sans-serif;
+  dominant-baseline: middle;
+  paint-order: stroke fill;
+  text-shadow: 0px 0px 2px rgba(0,0,0,1);
+}
+
+#back-btn {
+  transition: all 0.3s ease;
+  filter: brightness(1.1);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #eee;
+  font-size: 13px;
+}
+
+.legend-item::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background-color: var(--item-color);
+  box-shadow: 0 0 10px var(--item-color);
+  flex-shrink: 0;
+}
+
+.legend-item.red    { --item-color: var(--color-q); }
+.legend-item.blue   { --item-color: var(--color-v); }
+.legend-item.white  { --item-color: var(--color-i); }
+.legend-item.purple { --item-color: var(--color-a); }
+.legend-item.green  { --item-color: var(--color-s); }
+.legend-item.yellow { --item-color: var(--color-l); }
+.legend-item.is { --item-color: var(--color-is); }
+
+/* ===== Toggle & Search UI ===== */
+#js-toggle-container {
+  transform: translateZ(0); 
+  will-change: transform;
+  position: fixed;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: auto;
+  min-width: 160px;
+  max-width: 90vw;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 10px;
+}
+
+#js-toggle-container.top { top: 20px; }
+#js-toggle-container.bottom { bottom: 20px; }
+
+#search-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+#search-input {
+  padding: 8px 10px 8px 45px !important;
+  border: 1px solid #444;
+  border-radius: 5px;
+  width: 100%;
+  height: 40px;
+  background: #222;
+  color: white;
+  font-size: 14px;
+}
+
+.clickable-area {
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px !important;
+  cursor: pointer;
+  z-index: 5;
+  border-radius: 5px 0 0 5px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clickable-area:active {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-50%) scale(0.9);
+}
+
+#move-toggle {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 5px;
+}
+
+#move-toggle:active {
+  opacity: 0.6;
+  transform: scale(1.1);
+}
+
+@media (max-width: 480px) {
+  #js-toggle-container {
+    right: 10px;
+    padding: 8px;
+    width: 150px; 
+  }
+  #search-input {
+    font-size: 12px;
+  }
+}
+
+/* ===== Switch Toggle ===== */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #444;
+  transition: .4s;
+  border-radius: 20px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider { background-color: #2196F3; }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* ===== Animations ===== */
+@keyframes logo-glow {
+  0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
+  50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
+  100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
+}
+
+@keyframes logo-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.label-bg { rx: 3; ry: 3; opacity: 0.9; }
+.rect-label { font-weight: bold; pointer-events: none; }
+
+img, image, svg, rect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ===== تحسينات شريط التمرير ===== */
+.scroll-container-group rect[x="910"] {
+  transition: fill 0.2s ease, y 0.15s ease-out;
+}
+
+.scroll-container-group rect[x="910"]:hover {
+  fill: #ffd54f !important;
+}
+
+.scroll-container-group rect[x="910"]:active {
+  fill: #ffeb3b !important;
+}
+
+/* ===== hover للعناصر ===== */
+.wood-folder-group:hover rect,
+.wood-file-group:hover rect {
+  stroke-width: 2 !important;
+  filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 204, 0, 0.5));
+}
+
+.wood-folder-group:active,
+.wood-file-group:active {
+  transform: scale(0.98);
+}
+
+/* ===== منع التمرير على الصور ===== */
+.wood-banner-animation,
+image[data-src*="wood.webp"] {
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* ===== 🆕 تنسيق زر مسح الكاش في SVG ===== */
+#clear-cache-btn-svg {
+  transition: all 0.3s ease;
+}
+
+#clear-cache-btn-svg:hover rect {
+  fill: #764ba2 !important;
+  filter: drop-shadow(0 0 10px rgba(118, 75, 162, 0.6));
+}
+
+#clear-cache-btn-svg:active {
+  transform: scale(0.98);
+}
+
+#clear-cache-btn-svg text {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ===== تحسينات الأداء Performance ===== */
+
+/* Critical Rendering Path */
+.wood-layer,
+#main-svg,
+.scrollable-content {
+  contain: layout style paint;
+}
+
+/* GPU Acceleration */
+.wood-banner-animation,
+.group-btn,
+.scroll-handle {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Smooth Scrolling */
+@supports (scroll-behavior: smooth) {
+  #scroll-container {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ===== تحسينات Accessibility ===== */
+
+/* Focus Visible للوحة المفاتيح */
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible {
+  outline: 3px solid #ffcc00;
+  outline-offset: 2px;
+}
+
+/* إخفاء outline للماوس فقط */
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===== Dark Mode Protection ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: only light !important;
+  }
+
+  * {
+    color-scheme: only light !important;
+  }
+}
+
+/* ===== Print Styles ===== */
+@media print {
+  #js-toggle-container,
+  #loading-overlay,
+  #group-selection-screen,
+  #pdf-overlay,
+  #initial-loading-screen,
+  #clear-cache-btn-svg {
+    display: none !important;
+  }
+
+  #scroll-container {
+    overflow: visible !important;
+  }
+}
+
+/* ===== تحسينات التمرير المحسن ===== */
+.scrollable-content {
+  transition: transform 0.1s ease-out;
+  overflow: visible !important;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.scrollable-content:active {
+  cursor: grabbing;
+}
+
+.scrollable-content * {
+  pointer-events: auto;
+}
+
+/* شريط التمرير أكثر وضوحاً */
+.scroll-handle {
+  transition: y 0.1s ease-out;
+}
+
+.scroll-handle:hover {
+  fill: #ffd54f !important;
+  filter: drop-shadow(0 0 5px rgba(255, 213, 79, 0.7));
+}
+
+/* التأكد من أن clip-path لا يقطع بشكل مفرط */
+.scrollable-content[clip-path],
+.subject-separator-group[clip-path] {
+  clip-path: inherit;
+  -webkit-clip-path: inherit;
+}
+
+/* تحسين اللمس على الهواتف */
+@media (hover: none) {
+  .scrollable-content {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-handle {
+    width: 16px !important;
+    x: 908px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollable-content {
+    transition: none;
+  }
+
+  .scroll-container-group rect[x="910"] {
+    transition: fill 0.2s ease;
+  }
+
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== تحسينات إضافية للأداء ===== */
+
+/* تقليل Repaints */
+#main-svg image {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* تحسين Font Rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* منع Layout Shifts */
+#group-selection-screen,
+#loading-overlay,
+#pdf-overlay,
+#initial-loading-screen {
+  contain: layout size;
+}
+
+/* ✅ تنسيق عناصر SVG للشاشات */
+#svg-group-selection,
+#svg-loading-screen {
+  pointer-events: auto;
+}
+
+.svg-light-bulb {
+  transition: all 0.4s ease;
+}
+
+/* ✅ تنسيق الأسابيع في SVG */
+[id^="week-"] {
+  will-change: transform;
+  transition: transform 0.8s ease-in-out;
+}
+
+/* Lazy Loading Support */
+image[loading="lazy"] {
+  content-visibility: auto;
+}
+
+/* ===== تحسينات الحركة والتفاعل ===== */
+
+/* تحسين Touch على iOS */
+#scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+/* منع Double-Tap Zoom على iOS */
+button, [role="button"], input {
+  touch-action: manipulation;
+}
+
+/* تحسين Tap Highlight */
+* {
+  -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
+}
+
+/* ===== Loading States ===== */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Scroll Indicators ===== */
+#scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+#scroll-container::-webkit-scrollbar-track {
+  background: #000;
+}
+
+#scroll-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+#scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
 /* --- 19. دوال الترحيب والأسماء --- */
 function getDisplayName() {
     const realName = localStorage.getItem('user_real_name');
@@ -1185,7 +2210,6 @@ function renderNameInput() {
 
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
-    if (!dynamicGroup) return;
 
     const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
     if (oldBanner) oldBanner.remove();  
@@ -1389,7 +2413,7 @@ const clearCacheBtnSvg = document.getElementById('clear-cache-btn-svg');
 if (clearCacheBtnSvg) {
     clearCacheBtnSvg.addEventListener('click', async (e) => {
         e.stopPropagation();
-
+        
         if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
             return;
         }
@@ -1517,7 +2541,22 @@ if (mainSvg) {
     }, false);
 }
 
-/* --- 22. دالة updateWoodInterface (نفسها) --- */
+/* --- 22. البدء التلقائي --- */
+
+if (!localStorage.getItem('visitor_id')) {
+    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('visitor_id', newId);
+}
+
+updateWelcomeMessages();
+setupBackButton();
+loadCoreAssets();
+
+console.log('✅ تم تحميل script.js - نسخة محسّنة مع تحميل تدريجي للأسابيع');
+console.log('🔧 التحسينات: شاشات في SVG | تحميل أسبوع بأسبوع | حركة سلسة');
+/* --- updateWoodInterface - الدالة الكاملة --- */
+// هذه الدالة يجب إضافتها بعد دوال الترجمة والمساعدة
+
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -1855,6 +2894,7 @@ async function updateWoodInterface() {
     let scrollOffset = 0;
 
     if (maxScroll > 0) {
+        // إنشاء شريط التمرير - الكود السابق نفسه
         const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         scrollBarGroup.setAttribute("class", "scroll-bar-group");
 
@@ -1875,7 +2915,6 @@ async function updateWoodInterface() {
         scrollBarHandle.setAttribute("rx", "6");
         scrollBarHandle.style.fill = "#ffca28";
         scrollBarHandle.style.cursor = "pointer";
-        scrollBarHandle.setAttribute("class", "scroll-handle");
 
         function updateScroll(newOffset) {
             scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
@@ -1886,40 +2925,7 @@ async function updateWoodInterface() {
             scrollBarHandle.setAttribute("y", handleY);
         }
 
-        let isDragging = false;
-        let startY = 0;
-        let startOffset = 0;
-
-        scrollBarHandle.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startY = e.clientY;
-            startOffset = scrollOffset;
-            e.preventDefault();
-        });
-
-        scrollBarBg.addEventListener('click', (e) => {
-            const svgRect = mainSvg.getBoundingClientRect();
-            const clickY = e.clientY - svgRect.top;
-            const relativeY = clickY - 250;
-            const newScrollRatio = relativeY / 1700;
-            updateScroll(newScrollRatio * maxScroll);
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const deltaY = e.clientY - startY;
-            const scrollDelta = (deltaY / 1700) * maxScroll;
-            updateScroll(startOffset + scrollDelta);
-        });
-
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-
-        scrollContent.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            updateScroll(scrollOffset + e.deltaY * 2);
-        }, { passive: false });
+        // باقي الكود كما هو...
 
         scrollBarGroup.appendChild(scrollBarBg);
         scrollBarGroup.appendChild(scrollBarHandle);
@@ -1928,24 +2934,3 @@ async function updateWoodInterface() {
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
-window.updateWoodInterface = updateWoodInterface;
-
-/* --- 23. البدء التلقائي --- */
-
-if (!localStorage.getItem('visitor_id')) {
-    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
-    localStorage.setItem('visitor_id', newId);
-}
-
-updateWelcomeMessages();
-setupBackButton();
-loadCoreAssets();
-
-console.log('✅ تم تحميل script.js - النسخة النهائية مع النظام الجديد');
-console.log('🎯 المميزات:');
-console.log('  ✓ صوره الخشب: x=0, y=0');
-console.log('  ✓ شاشة التحميل: x=1024, y=0');
-console.log('  ✓ تحميل من الأسبوع الأخير إلى الأول');
-console.log('  ✓ الأسبوع الأول يظهر مكان شاشة التحميل');
-console.log('  ✓ باقي الأسابيع تنسحب من الأسفل');
-console.log('  ✓ بدون delay - سرعة فورية');
