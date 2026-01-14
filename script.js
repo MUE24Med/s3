@@ -1,4 +1,4 @@
-/* === 1. الإعدادات والمتغيرات العالمية === */
+/* --- 1. الإعدادات والمتغيرات العالمية --- */
 const REPO_NAME = "semester-3";
 const GITHUB_USER = "MUE24Med";
 
@@ -11,16 +11,17 @@ let currentGroup = null;
 let currentFolder = "";
 let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
+const TAP_THRESHOLD_MS = 300;
 
-let initialLoadingProgress = {
-    totalAssets: 0,
-    loadedAssets: 0,
-    percentage: 0
+// ✅ متغيرات نظام التحميل الجديد
+let imageUrlsToLoad = [];
+let loadingProgress = {
+    totalSteps: 0,
+    completedSteps: 0,
+    currentPercentage: 0
 };
 
-let weeksToLoad = [];
-let loadedWeeks = [];
-
+// ✅ نظام التنقل الخلفي
 let navigationHistory = [];
 const NAV_STATE = {
     GROUP_SELECTION: 'group_selection',
@@ -29,6 +30,7 @@ const NAV_STATE = {
     PDF_VIEW: 'pdf_view'
 };
 
+// ✅ قاموس الترجمة للبحث العربي
 const translationMap = {
     'physio': 'فسيولوجي',
     'anatomy': 'اناتومي',
@@ -47,10 +49,10 @@ const translationMap = {
     'uri': 'جهاز بولي',
     'cvs': 'جهاز دوري',
     'ipc': 'مهارات اتصال',
-    'bio': 'بيوكيميستري',
-    'hem': 'دم'
+    'bio': 'بيوكيميستري'
 };
 
+// ✅ قائمة المواد التي يجب إضافة فاصل بعدها
 const SUBJECT_FOLDERS = [
     'anatomy',
     'histo',
@@ -68,9 +70,11 @@ let activeState = {
     touchStartTime: 0, initialScrollLeft: 0
 };
 
+// الحصول على العناصر فورًا
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
 const clipDefs = mainSvg?.querySelector('defs');
+const loadingOverlay = document.getElementById('loading-overlay');
 const jsToggle = document.getElementById('js-toggle');
 const searchInput = document.getElementById('search-input');
 const searchIcon = document.getElementById('search-icon');
@@ -82,16 +86,12 @@ const changeGroupBtn = document.getElementById('change-group-btn');
 const groupSelectionScreen = document.getElementById('group-selection-screen');
 const filesListContainer = document.getElementById('files-list-container');
 
-const initialLoadingScreen = document.getElementById('initial-loading-screen');
-const initialProgressPercentage = document.getElementById('initial-progress-percentage');
-const initialLoadingStatus = document.getElementById('initial-loading-status');
-const progressBar = document.querySelector('.progress-bar');
-
+// تحديث حالة التفاعل
 if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
-/* === 2. نظام التنقل الخلفي === */
+/* --- 2. نظام التنقل الخلفي --- */
 
 function pushNavigationState(state, data = {}) {
     navigationHistory.push({ state, data, timestamp: Date.now() });
@@ -125,6 +125,8 @@ function handleBackNavigation(e) {
     }
 
     popNavigationState();
+
+    const previousState = getCurrentNavigationState();
 
     if (currentState.state === NAV_STATE.PDF_VIEW) {
         const overlay = document.getElementById("pdf-overlay");
@@ -160,13 +162,15 @@ function handleBackNavigation(e) {
 
 function setupBackButton() {
     window.history.pushState({ page: 'main' }, '', '');
+
     window.addEventListener('popstate', handleBackNavigation);
+
     window.addEventListener('popstate', function(e) {
         window.history.pushState({ page: 'main' }, '', '');
     });
 }
 
-/* === 3. دوال مساعدة للنصوص العربية === */
+/* --- 3. دوال مساعدة للنصوص العربية --- */
 
 function normalizeArabic(text) {
     if (!text) return '';
@@ -205,7 +209,7 @@ function isSubjectFolder(folderName) {
     return SUBJECT_FOLDERS.some(subject => lowerName.includes(subject));
 }
 
-/* === 4. دوال جلب البيانات === */
+/* --- 4. دوال جلب البيانات --- */
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return;
     try {
@@ -221,6 +225,7 @@ async function fetchGlobalTree() {
 function saveSelectedGroup(group) {
     localStorage.setItem('selectedGroup', group);
     currentGroup = group;
+
     window.dispatchEvent(new CustomEvent('groupChanged', { detail: group }));
 }
 
@@ -233,428 +238,177 @@ function loadSelectedGroup() {
     return false;
 }
 
-function debounce(func, delay) {
-    let timeoutId;
-    return function() {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func.apply(this, arguments), delay);
+/* --- 5. إدارة شاشة التحميل (نظام 1/5، 2/5، 3/5، 4/5) --- */
+
+function showLoadingScreen(groupLetter) {
+    if (!loadingOverlay) return;
+
+    const splashImage = document.getElementById('splash-image');  
+    if (splashImage) {  
+        splashImage.src = `image/logo-${groupLetter}.webp`;  
+    }  
+
+    // ✅ إعادة تعيين الحالة
+    loadingProgress = {
+        totalSteps: 0,
+        completedSteps: 0,
+        currentPercentage: 0
     };
+
+    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));  
+
+    loadingOverlay.classList.add('active');  
+    console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);  
+
+    updateWelcomeMessages();
 }
 
-/* === 5. نظام التحميل الأولي === */
-
-const CORE_ASSETS = [
-    './style.css',
-    './script.js',
-    './tracker.js',
-    './image/0.png'
-];
-
-function updateInitialLoadingProgress() {
-    const percentage = Math.round((initialLoadingProgress.loadedAssets / initialLoadingProgress.totalAssets) * 100);
-    initialLoadingProgress.percentage = percentage;
-
-    if (initialProgressPercentage) {
-        initialProgressPercentage.textContent = percentage + '%';
-    }
-
-    if (progressBar) {
-        const circumference = 2 * Math.PI * 85;
-        const offset = circumference - (percentage / 100) * circumference;
-        progressBar.style.strokeDashoffset = offset;
-    }
-
-    console.log(`📊 التحميل الأولي: ${percentage}% (${initialLoadingProgress.loadedAssets}/${initialLoadingProgress.totalAssets})`);
+function hideLoadingScreen() {
+    if (!loadingOverlay) return;
+    loadingOverlay.classList.remove('active');
+    console.log('✅ تم إخفاء شاشة التحميل');
 }
 
-async function loadCoreAssets() {
-    console.log('🚀 بدء تحميل الملفات الأساسية...');
-
-    initialLoadingProgress.totalAssets = CORE_ASSETS.length;
-    initialLoadingProgress.loadedAssets = 0;
-
-    updateInitialLoadingProgress();
-
-    const loadPromises = CORE_ASSETS.map(async (asset) => {
-        try {
-            if (initialLoadingStatus) {
-                initialLoadingStatus.textContent = `جاري تحميل: ${asset.split('/').pop()}`;
-            }
-
-            const response = await fetch(asset, { 
-                cache: 'force-cache',
-                mode: 'cors'
-            });
-
-            if (response.ok) {
-                if (asset.endsWith('.css') || asset.endsWith('.js')) {
-                    await response.text();
-                } else {
-                    await response.blob();
-                }
-
-                initialLoadingProgress.loadedAssets++;
-                updateInitialLoadingProgress();
-                console.log(`✅ تم تحميل: ${asset}`);
-            } else {
-                console.warn(`⚠️ فشل تحميل: ${asset}`);
-                initialLoadingProgress.loadedAssets++;
-                updateInitialLoadingProgress();
-            }
-        } catch (error) {
-            console.error(`❌ خطأ في تحميل ${asset}:`, error);
-            initialLoadingProgress.loadedAssets++;
-            updateInitialLoadingProgress();
-        }
-    });
-
-    await Promise.all(loadPromises);
-
-    if (initialLoadingStatus) {
-        initialLoadingStatus.textContent = '✅ اكتمل التحميل!';
-    }
-
-    console.log('✅ اكتمل تحميل جميع الملفات الأساسية');
-
-    setTimeout(() => {
-        if (initialLoadingScreen) {
-            initialLoadingScreen.style.display = 'none';
-        }
-        if (groupSelectionScreen) {
-            groupSelectionScreen.classList.remove('hidden');
-        }
-    }, 500);
-}
-
-/* === 6. نظام التحميل التدريجي للأسابيع === */
-
-function createLoadingScreensInSVG(groupLetter) {
-    const groupContainer = document.getElementById('group-specific-content');
-    if (!groupContainer) return;
-
-    const oldScreens = groupContainer.querySelectorAll('#svg-group-selection, #svg-loading-screen');
-    oldScreens.forEach(s => s.remove());
-
-    const groupSelectionGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    groupSelectionGroup.setAttribute("id", "svg-group-selection");
-    groupSelectionGroup.setAttribute("transform", "translate(1024, 0)");
-
-    const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    bgRect.setAttribute("x", "0");
-    bgRect.setAttribute("y", "0");
-    bgRect.setAttribute("width", "1024");
-    bgRect.setAttribute("height", "2454");
-    bgRect.setAttribute("fill", "#1a1a1a");
-    groupSelectionGroup.appendChild(bgRect);
-
-    const logo = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    logo.setAttribute("href", `image/logo-${groupLetter}.webp`);
-    logo.setAttribute("x", "312");
-    logo.setAttribute("y", "800");
-    logo.setAttribute("width", "400");
-    logo.setAttribute("height", "400");
-    groupSelectionGroup.appendChild(logo);
-
-    const welcomeText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    welcomeText.setAttribute("x", "512");
-    welcomeText.setAttribute("y", "1250");
-    welcomeText.setAttribute("text-anchor", "middle");
-    welcomeText.setAttribute("fill", "#ffcc00");
-    welcomeText.setAttribute("font-size", "36");
-    welcomeText.setAttribute("font-weight", "bold");
-    welcomeText.textContent = `مجموعة ${groupLetter}`;
-    groupSelectionGroup.appendChild(welcomeText);
-
-    groupContainer.appendChild(groupSelectionGroup);
-
-    const loadingGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    loadingGroup.setAttribute("id", "svg-loading-screen");
-    loadingGroup.setAttribute("transform", "translate(1024, 0)");
-
-    const loadingBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    loadingBg.setAttribute("x", "0");
-    loadingBg.setAttribute("y", "0");
-    loadingBg.setAttribute("width", "1024");
-    loadingBg.setAttribute("height", "2454");
-    loadingBg.setAttribute("fill", "#1a1a1a");
-    loadingGroup.appendChild(loadingBg);
-
-    const loadingLogo = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    loadingLogo.setAttribute("href", `image/logo-${groupLetter}.webp`);
-    loadingLogo.setAttribute("x", "312");
-    loadingLogo.setAttribute("y", "600");
-    loadingLogo.setAttribute("width", "400");
-    loadingLogo.setAttribute("height", "400");
-    loadingGroup.appendChild(loadingLogo);
-
-    const loadingText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    loadingText.setAttribute("id", "svg-loading-text");
-    loadingText.setAttribute("x", "512");
-    loadingText.setAttribute("y", "1050");
-    loadingText.setAttribute("text-anchor", "middle");
-    loadingText.setAttribute("fill", "#ffcc00");
-    loadingText.setAttribute("font-size", "32");
-    loadingText.setAttribute("font-weight", "bold");
-    loadingText.textContent = "جاري التحميل...";
-    loadingGroup.appendChild(loadingText);
-
-    const bulbY = 1150;
-    const bulbSpacing = 80;
-    const startX = 512 - (3 * bulbSpacing / 2);
-
-    for (let i = 0; i < 4; i++) {
-        const bulbGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        bulbGroup.setAttribute("id", `svg-bulb-${i + 1}`);
-
-        const bulb = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        bulb.setAttribute("cx", startX + (i * bulbSpacing));
-        bulb.setAttribute("cy", bulbY);
-        bulb.setAttribute("r", "15");
-        bulb.setAttribute("fill", "#222");
-        bulb.setAttribute("stroke", "#444");
-        bulb.setAttribute("stroke-width", "2");
-        bulb.setAttribute("class", "svg-light-bulb");
-
-        bulbGroup.appendChild(bulb);
-        loadingGroup.appendChild(bulbGroup);
-    }
-
-    loadingGroup.style.display = 'none';
-    groupContainer.appendChild(loadingGroup);
-}
-
-function showSVGLoadingScreen() {
-    const groupSelection = document.getElementById('svg-group-selection');
-    const loadingScreen = document.getElementById('svg-loading-screen');
-
-    if (groupSelection) groupSelection.style.display = 'none';
-    if (loadingScreen) loadingScreen.style.display = 'block';
-
-    console.log('🔦 شاشة التحميل SVG نشطة');
-}
-
-function updateSVGLoadProgress(weekNumber, totalWeeks) {
-    const loadingText = document.getElementById('svg-loading-text');
-    const percentage = Math.round(((totalWeeks - weekNumber + 1) / totalWeeks) * 100);
-    
-    if (loadingText) {
-        loadingText.textContent = `جاري تحميل الأسبوع ${weekNumber}... ${percentage}%`;
-    }
-
-    if (percentage >= 25) {
-        const bulb4 = document.querySelector('#svg-bulb-4 circle');
-        if (bulb4) {
-            bulb4.setAttribute('fill', '#ff4d4d');
-            bulb4.setAttribute('filter', 'drop-shadow(0 0 10px #ff4d4d)');
-        }
-    }
-
-    if (percentage >= 50) {
-        const bulb3 = document.querySelector('#svg-bulb-3 circle');
-        if (bulb3) {
-            bulb3.setAttribute('fill', '#ffaa00');
-            bulb3.setAttribute('filter', 'drop-shadow(0 0 10px #ffaa00)');
-        }
-    }
-
-    if (percentage >= 75) {
-        const bulb2 = document.querySelector('#svg-bulb-2 circle');
-        if (bulb2) {
-            bulb2.setAttribute('fill', '#ffff4d');
-            bulb2.setAttribute('filter', 'drop-shadow(0 0 10px #ffff4d)');
-        }
-    }
-
-    if (percentage >= 90) {
-        const bulb1 = document.querySelector('#svg-bulb-1 circle');
-        if (bulb1) {
-            bulb1.setAttribute('fill', '#4dff88');
-            bulb1.setAttribute('filter', 'drop-shadow(0 0 10px #4dff88)');
-        }
-    }
-}
-
-/* === 7. تحليل الأسابيع من SVG === */
-async function analyzeWeeksFromSVG(groupLetter) {
-    try {
-        const response = await fetch(`groups/group-${groupLetter}.svg`);
-        if (!response.ok) {
-            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
-            return [];
-        }
-
-        const svgText = await response.text();
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-
-        const groups = svgDoc.querySelectorAll('g[transform]');
-        const weeks = [];
-
-        groups.forEach(g => {
-            const transform = g.getAttribute('transform');
-            const match = transform.match(/translate\s*\((\d+)[\s,]+(\d+)\)/);
-
-            if (match) {
-                const x = parseInt(match[1]);
-                const y = parseInt(match[2]);
-
-                if (x >= 1024 && y === 0) {
-                    const images = g.querySelectorAll('image[data-src]');
-                    const imageUrls = [];
-
-                    images.forEach(img => {
-                        const src = img.getAttribute('data-src');
-                        if (src && src.includes(`image/${groupLetter}/`)) {
-                            imageUrls.push(src);
-                        }
-                    });
-
-                    if (imageUrls.length > 0) {
-                        const weekNumberMatch = imageUrls[0].match(/\/(\d+)\.webp$/);
-                        const weekNumber = weekNumberMatch ? parseInt(weekNumberMatch[1]) : 0;
-
-                        weeks.push({
-                            x: x,
-                            y: y,
-                            weekNumber: weekNumber,
-                            images: imageUrls,
-                            group: g.cloneNode(true)
-                        });
-                    }
-                }
-           }
-        });
-        weeks.sort((a, b) => b.weekNumber - a.weekNumber);
-
-        console.log(`📅 تم اكتشاف ${weeks.length} أسبوع، مرتبة من ${weeks[0]?.weekNumber} إلى ${weeks[weeks.length - 1]?.weekNumber}`);
-        return weeks;
-
-    } catch (err) {
-        console.error('❌ خطأ في تحليل الأسابيع:', err);
-        return [];
-    }
-}
-
-/* === 8. تحميل أسبوع واحد === */
-async function loadWeek(weekData) {
-    console.log(`📦 بدء تحميل الأسبوع ${weekData.weekNumber}...`);
-
-    const totalImages = weekData.images.length;
-    let loadedImages = 0;
-
-    const loadPromises = weekData.images.map(url => {
-        return new Promise((resolve) => {
-            const img = new Image();
-
-            img.onload = () => {
-                loadedImages++;
-                const progress = Math.round((loadedImages / totalImages) * 100);
-                console.log(`  📊 الأسبوع ${weekData.weekNumber}: ${progress}%`);
-                resolve();
-            };
-
-            img.onerror = () => {
-                console.error(`  ❌ فشل تحميل: ${url}`);
-                loadedImages++;
-                resolve();
-            };
-
-            img.src = url;
-        });
-    });
-
-    await Promise.all(loadPromises);
-
-    console.log(`✅ اكتمل تحميل الأسبوع ${weekData.weekNumber}`);
-    return weekData;
-}
-
-/* === 9. إضافة أسبوع إلى SVG مع الحركة === */
-function addWeekToSVG(weekData, isFirstWeek) {
-    const groupContainer = document.getElementById('group-specific-content');
-
-    if (!isFirstWeek) {
-        loadedWeeks.forEach((loadedWeek) => {
-            const currentTransform = loadedWeek.element.getAttribute('transform');
-            const match = currentTransform.match(/translate\s*\(([\d.-]+)[\s,]+([\d.-]+)\)/);
-            
-            if (match) {
-                const currentX = parseFloat(match[1]);
-                const currentY = parseFloat(match[2]);
-                const newX = currentX - 1024;
-                
-                loadedWeek.element.setAttribute('transform', `translate(${newX}, ${currentY})`);
-            }
-        });
-    }
-
-    const weekGroup = weekData.group.cloneNode(true);
-    weekGroup.setAttribute('id', `week-${weekData.weekNumber}`);
-    
-    if (isFirstWeek) {
-        weekGroup.setAttribute('transform', 'translate(1024, 0)');
-    } else {
-        weekGroup.setAttribute('transform', 'translate(1024, 2454)');
-    }
-
-    groupContainer.appendChild(weekGroup);
-
-    const images = weekGroup.querySelectorAll('image[data-src]');
-    images.forEach(img => {
-        const src = img.getAttribute('data-src');
-        img.setAttribute('href', src);
-    });
-
-    if (!isFirstWeek) {
-        requestAnimationFrame(() => {
-            weekGroup.setAttribute('transform', 'translate(1024, 0)');
-        });
-    }
-
-    loadedWeeks.push({
-        data: weekData,
-        element: weekGroup,
-        weekNumber: weekData.weekNumber
-    });
-
-    console.log(`🎬 تم إضافة الأسبوع ${weekData.weekNumber} ${isFirstWeek ? '(مباشرة)' : '(مع الحركة)'}`);
-}
-
-/* === 10. تحميل جميع الأسابيع تدريجياً === */
-async function loadAllWeeksProgressively(weeks) {
-    if (weeks.length === 0) {
-        console.warn('⚠️ لا توجد أسابيع للتحميل');
+function updateLoadProgress() {
+    if (loadingProgress.totalSteps === 0) {
+        console.warn('⚠️ totalSteps = 0');
         return;
     }
 
-    weeksToLoad = weeks;
-    const totalWeeks = weeks.length;
+    const progress = (loadingProgress.completedSteps / loadingProgress.totalSteps) * 100;
+    loadingProgress.currentPercentage = Math.min(100, Math.round(progress));
 
-    for (let i = 0; i < totalWeeks; i++) {
-        const weekData = weeks[i];
-        const isFirstWeek = (i === totalWeeks - 1);
+    console.log(`📊 التقدم: ${loadingProgress.currentPercentage}% (${loadingProgress.completedSteps}/${loadingProgress.totalSteps})`);
 
-        updateSVGLoadProgress(weekData.weekNumber, totalWeeks);
+    const percentage = loadingProgress.currentPercentage;
 
-        await loadWeek(weekData);
-
-        addWeekToSVG(weekData, isFirstWeek);
-
-        if (isFirstWeek) {
-            const loadingScreen = document.getElementById('svg-loading-screen');
-            if (loadingScreen) {
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => {
-                    loadingScreen.remove();
-                }, 600);
-            }
-        }
+    // المصباح 4 (أحمر) = 20% (1/5)
+    if (percentage >= 20) {
+        document.getElementById('bulb-4')?.classList.add('on');
     }
 
-    console.log('🎉 اكتمل تحميل جميع الأسابيع');
+    // المصباح 3 (برتقالي) = 40% (2/5)
+    if (percentage >= 40) {
+        document.getElementById('bulb-3')?.classList.add('on');
+    }
+
+    // المصباح 2 (أصفر) = 60% (3/5)
+    if (percentage >= 60) {
+        document.getElementById('bulb-2')?.classList.add('on');
+    }
+
+    // المصباح 1 (أخضر) = 80% (4/5)
+    if (percentage >= 80) {
+        document.getElementById('bulb-1')?.classList.add('on');
+    }
 }
 
-/* === 11. تهيئة المجموعة === */
+/* --- 6. تحميل SVG الخاص بالمجموعة (محسّن مع التتبع) --- */
+async function loadGroupSVG(groupLetter) {
+    const groupContainer = document.getElementById('group-specific-content');
+    groupContainer.innerHTML = '';
+
+    try {  
+        console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);  
+        const response = await fetch(`groups/group-${groupLetter}.svg`);  
+
+        if (!response.ok) {  
+            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);  
+            
+            loadingProgress.completedSteps++;
+            updateLoadProgress();
+            return;  
+        }  
+
+        const svgText = await response.text();  
+
+        console.log(`✅ SVG محمّل`);  
+
+        const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);  
+
+        if (match && match[1]) {  
+            groupContainer.innerHTML = match[1];  
+            console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);  
+
+            const injectedImages = groupContainer.querySelectorAll('image[data-src]');  
+            console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);  
+
+            imageUrlsToLoad = [];  
+
+            imageUrlsToLoad.push('image/wood.webp');  
+
+            injectedImages.forEach(img => {  
+                const src = img.getAttribute('data-src');  
+
+                if (src && !imageUrlsToLoad.includes(src)) {  
+                    const isGroupImage = src.includes(`image/${groupLetter}/`) ||   
+                                       src.includes(`logo-${groupLetter}`) ||   
+                                       src.includes(`logo-wood-${groupLetter}`);  
+
+                    if (isGroupImage) {  
+                        imageUrlsToLoad.push(src);  
+                    }  
+                }  
+            });  
+
+            // ✅ حساب إجمالي الخطوات: 1 خطوة لـ SVG + عدد الصور
+            loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
+
+            // ✅ SVG تم تحميله بنجاح - خطوة واحدة مكتملة
+            loadingProgress.completedSteps = 1;
+            updateLoadProgress();
+
+            console.log(`📋 قائمة الصور للتحميل (${imageUrlsToLoad.length}):`, imageUrlsToLoad);  
+            console.log(`📊 إجمالي الخطوات: ${loadingProgress.totalSteps}`);
+        } else {  
+            console.error('❌ فشل استخراج محتوى SVG');  
+            
+            loadingProgress.totalSteps = 1;
+            loadingProgress.completedSteps = 1;
+            updateLoadProgress();
+        }  
+
+    } catch (err) {  
+        console.error(`❌ خطأ في loadGroupSVG:`, err);  
+        
+        loadingProgress.totalSteps = 1;
+        loadingProgress.completedSteps = 1;
+        updateLoadProgress();
+    }
+}
+
+function updateWoodLogo(groupLetter) {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+
+    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
+    if (oldBanner) oldBanner.remove();  
+
+    if (currentFolder !== "") return;  
+
+    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");  
+    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);   
+
+    banner.setAttribute("x", "197.20201666994924");  
+    banner.setAttribute("y", "2074.3139768463334");   
+    banner.setAttribute("width", "629.8946370139159");  
+    banner.setAttribute("height", "275.78922917259797");   
+
+    banner.setAttribute("class", "wood-banner-animation");  
+    banner.style.mixBlendMode = "multiply";  
+    banner.style.opacity = "0.9";  
+    banner.style.pointerEvents = "auto";   
+
+    banner.onclick = (e) => {  
+        e.stopPropagation();  
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');  
+        window.goToWood();
+        pushNavigationState(NAV_STATE.GROUP_SELECTION);
+    };  
+
+    dynamicGroup.appendChild(banner);
+}
+
+/* --- 7. تهيئة المجموعة --- */
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
 
@@ -664,46 +418,27 @@ async function initializeGroup(groupLetter) {
     if (scrollContainer) scrollContainer.style.display = 'block';  
     if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');  
 
-    const woodImage = document.querySelector('image[data-src="image/wood.webp"]');
-    if (woodImage) {
-        woodImage.setAttribute('href', 'image/wood.webp');
-    }
-
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
 
-    createLoadingScreensInSVG(groupLetter);
+    showLoadingScreen(groupLetter);  
 
-    showSVGLoadingScreen();
-
-    await fetchGlobalTree();
-
-    const weeks = await analyzeWeeksFromSVG(groupLetter);
-
-    if (weeks.length === 0) {
-        console.warn('⚠️ لم يتم العثور على أسابيع');
-        const loadingScreen = document.getElementById('svg-loading-screen');
-        if (loadingScreen) loadingScreen.style.display = 'none';
-        return;
-    }
-
-    await loadAllWeeksProgressively(weeks);
+    const [treeResult, svgResult] = await Promise.all([
+        fetchGlobalTree(),
+        loadGroupSVG(groupLetter)
+    ]);
 
     window.updateDynamicSizes();  
-    scan();  
-    updateWoodInterface();  
-    window.goToWood();
-    
-    if (mainSvg) {
-        mainSvg.style.opacity = '1';
-    }
+
+    window.loadImages();
 }
 
-/* === 12. عارض PDF === */
+/* --- 8. عارض PDF --- */
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
     pdfViewer.src = "";
     overlay.classList.add("hidden");
+
     popNavigationState();
 };
 
@@ -738,7 +473,7 @@ document.getElementById("shareBtn").onclick = () => {
     }
 };
 
-/* === 13. Service Worker === */
+/* --- 9. Service Worker --- */
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -747,7 +482,15 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-/* === 14. فتح الملفات === */
+function debounce(func, delay) {
+    let timeoutId;
+    return function() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, arguments), delay);
+    };
+}
+
+/* --- 10. فتح الملفات --- */
 async function smartOpen(item) {
     if (!item || !item.path) return;
 
@@ -808,7 +551,7 @@ async function smartOpen(item) {
     }
 }
 
-/* === 15. التنقل === */
+/* --- 11. التنقل --- */
 window.goToWood = () => {
     if (scrollContainer) {
         scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
@@ -828,7 +571,7 @@ window.goToMapEnd = () => {
     pushNavigationState(NAV_STATE.MAP_VIEW);
 };
 
-/* === 16. تحديث الأحجام === */
+/* --- 12. تحديث الأحجام --- */
 function updateDynamicSizes() {
     if (!mainSvg) return;
 
@@ -840,7 +583,7 @@ function updateDynamicSizes() {
         return;  
     }  
 
-    let maxX = 1024;
+    let maxX = 0;
     let maxY = 2454;
 
     allImages.forEach(img => {
@@ -870,7 +613,7 @@ function updateDynamicSizes() {
 }
 window.updateDynamicSizes = updateDynamicSizes;
 
-/* === 17. تأثيرات الهوفر === */
+/* --- 13. تأثيرات الهوفر --- */
 function getCumulativeTranslate(element) {
     let x = 0, y = 0, current = element;
     while (current && current.tagName !== 'svg') {
@@ -1015,7 +758,7 @@ function startHover() {
     }, 100);
 }
 
-/* === 18. معالجة النصوص === */
+/* --- 14. معالجة النصوص --- */
 function wrapText(el, maxW) {
     const txt = el.getAttribute('data-original-text');
     if (!txt) return;
@@ -1044,12 +787,13 @@ function wrapText(el, maxW) {
     });
 }
 
-/* === 19. دوال الترحيب والأسماء === */
+/* --- 15. دوال الترحيب والأسماء --- */
 function getDisplayName() {
     const realName = localStorage.getItem('user_real_name');
     if (realName && realName.trim()) {
         return realName.trim();
     }
+
     const visitorId = localStorage.getItem('visitor_id');  
     return visitorId || 'زائر';
 }
@@ -1061,6 +805,11 @@ function updateWelcomeMessages() {
     if (groupScreenH1) {  
         groupScreenH1.innerHTML = `مرحباً بك يا <span style="color: #ffca28;">${displayName}</span> إختر جروبك`;  
     }  
+
+    const loadingH1 = document.querySelector('#loading-content h1');  
+    if (loadingH1 && currentGroup) {  
+        loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span> في ${REPO_NAME.toUpperCase()}`;  
+    }
 }
 
 function renderNameInput() {
@@ -1076,6 +825,7 @@ function renderNameInput() {
     const containerWidth = 1024;
     const inputWidth = 780;  
     const centerX = (containerWidth - inputWidth) / 2;  
+
     const inputY = 1980;
 
     const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");  
@@ -1124,341 +874,7 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-function updateWoodLogo(groupLetter) {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-    if (!dynamicGroup) return;
-
-    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
-    if (oldBanner) oldBanner.remove();  
-
-    if (currentFolder !== "") return;  
-
-    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");  
-    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);   
-
-    banner.setAttribute("x", "197.20201666994924");  
-    banner.setAttribute("y", "2074.3139768463334");   
-    banner.setAttribute("width", "629.8946370139159");  
-    banner.setAttribute("height", "275.78922917259797");   
-
-    banner.setAttribute("class", "wood-banner-animation");  
-    banner.style.mixBlendMode = "multiply";  
-    banner.style.opacity = "0.9";  
-    banner.style.pointerEvents = "auto";   
-
-    banner.onclick = (e) => {  
-        e.stopPropagation();  
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');  
-        window.goToWood();
-        pushNavigationState(NAV_STATE.GROUP_SELECTION);
-    };  
-
-    dynamicGroup.appendChild(banner);
-}
-
-/* === 20. معالجة المستطيلات === */
-function processRect(r) {
-    if (r.hasAttribute('data-processed')) return;
-    if (r.classList.contains('w')) r.setAttribute('width', '113.5');
-    if (r.classList.contains('hw')) r.setAttribute('width', '56.75');
-
-    let href = r.getAttribute('data-href') || '';  
-
-    if (href && href !== '#' && !href.startsWith('http')) {  
-        href = `${RAW_CONTENT_BASE}${href}`;  
-        r.setAttribute('data-href', href);  
-    }  
-
-    const dataFull = r.getAttribute('data-full-text');  
-    const fileName = href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '';  
-    const name = dataFull || fileName || '';  
-
-    const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;  
-    const x = parseFloat(r.getAttribute('x'));   
-    const y = parseFloat(r.getAttribute('y'));  
-
-    if (name && name.trim() !== '') {  
-        const fs = Math.max(8, Math.min(12, w * 0.11));  
-        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
-        txt.setAttribute('x', x + w / 2);   
-        txt.setAttribute('y', y + 2);  
-        txt.setAttribute('text-anchor', 'middle');   
-        txt.setAttribute('class', 'rect-label');  
-        txt.setAttribute('data-original-text', name);   
-        txt.setAttribute('data-original-for', href);  
-        txt.style.fontSize = fs + 'px';   
-        txt.style.fill = 'white';   
-        txt.style.pointerEvents = 'none';   
-        txt.style.dominantBaseline = 'hanging';  
-        r.parentNode.appendChild(txt);   
-        wrapText(txt, w);  
-
-        const bbox = txt.getBBox();  
-        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-        bg.setAttribute('x', x);   
-        bg.setAttribute('y', y);   
-        bg.setAttribute('width', w);   
-        bg.setAttribute('height', bbox.height + 8);  
-        bg.setAttribute('class', 'label-bg');   
-        bg.setAttribute('data-original-for', href);  
-        bg.style.fill = 'black';   
-        bg.style.pointerEvents = 'none';  
-        r.parentNode.insertBefore(bg, txt);  
-    }  
-
-    if (!isTouchDevice) {   
-        r.addEventListener('mouseover', startHover);   
-        r.addEventListener('mouseout', cleanupHover);   
-    }  
-
-    r.onclick = async () => {   
-        if (href && href !== '#') {  
-            const fileName = href.split('/').pop();
-
-            try {  
-                const response = await fetch(href, {   
-                    method: 'HEAD',  
-                    mode: 'cors',  
-                    cache: 'no-cache'  
-                });  
-
-                if (!response.ok) {  
-                    alert(`❌ الملف "${fileName}" غير موجود`);
-                    return;  
-                }  
-
-                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                    path: href,
-                    scrollPosition: scrollPosition
-                });
-
-                const overlay = document.getElementById("pdf-overlay");  
-                const pdfViewer = document.getElementById("pdfFrame");  
-                overlay.classList.remove("hidden");  
-                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                encodeURIComponent(href) + "#zoom=page-width";  
-
-                if (typeof trackSvgOpen === 'function') {  
-                    trackSvgOpen(href);  
-                }  
-            } catch (error) {  
-                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                    path: href,
-                    scrollPosition: scrollPosition
-                });
-
-                const overlay = document.getElementById("pdf-overlay");  
-                const pdfViewer = document.getElementById("pdfFrame");  
-                overlay.classList.remove("hidden");  
-                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                encodeURIComponent(href) + "#zoom=page-width";  
-            }  
-        }  
-    };  
-
-    r.setAttribute('data-processed', 'true');
-}
-
-function scan() {
-    if (!mainSvg) return;
-
-    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');  
-
-    rects.forEach(r => {  
-        processRect(r);  
-
-        const href = r.getAttribute('data-href') || '';  
-        if (href === '#') {  
-            r.style.display = 'none';  
-            const label = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);  
-            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);  
-            if (label) label.style.display = 'none';  
-            if (bg) bg.style.display = 'none';  
-        }  
-    });
-
-    if (!window.svgObserver) {
-        const observer = new MutationObserver((mutations) => {
-            let hasNewElements = false;
-
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType === 1) {
-                        if (node.tagName === 'image' || node.querySelector('image')) {
-                            hasNewElements = true;
-                        }
-                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
-                            processRect(node);
-                        }
-                        if (node.querySelectorAll) {
-                            const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
-                            newRects.forEach(rect => processRect(rect));
-                        }
-                    }
-                });
-            });
-
-            if (hasNewElements) {
-                updateDynamicSizes();
-            }
-        });
-
-        observer.observe(mainSvg, {
-            childList: true,
-            subtree: true
-        });
-
-        window.svgObserver = observer;
-    }
-}
-window.scan = scan;
-
-/* === 21. مستمعي الأحداث === */
-document.querySelectorAll('.group-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const group = this.getAttribute('data-group');
-        console.log('👆 تم اختيار المجموعة:', group);
-        initializeGroup(group);
-    });
-});
-
-const clearCacheBtnSvg = document.getElementById('clear-cache-btn-svg');
-if (clearCacheBtnSvg) {
-    clearCacheBtnSvg.addEventListener('click', async (e) => {
-        e.stopPropagation();
-
-        if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
-            return;
-        }
-
-        try {
-            if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                }
-            }
-
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                await Promise.all(cacheNames.map(name => caches.delete(name)));
-            }
-
-            alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
-            window.location.reload(true);
-        } catch (error) {
-            alert('❌ حدث خطأ أثناء مسح الكاش');
-        }
-    });
-}
-
-if (changeGroupBtn) {
-    changeGroupBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
-        window.goToWood();
-        pushNavigationState(NAV_STATE.GROUP_SELECTION);
-    });
-}
-
-if (searchInput) {
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            if (typeof trackSearch === 'function') trackSearch(searchInput.value);  
-            window.goToWood();  
-        }  
-    };  
-
-    searchInput.addEventListener('input', debounce(function(e) {  
-        if (!mainSvg) return;  
-        const query = normalizeArabic(e.target.value);  
-        const isEmptySearch = query.length === 0;
-
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
-            const href = rect.getAttribute('data-href') || '';  
-            const fullText = rect.getAttribute('data-full-text') || '';  
-            const fileName = href !== '#' ? href.split('/').pop() : '';  
-            const autoArabic = autoTranslate(fileName);  
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
-
-            if (href === '#') {  
-                rect.style.display = 'none';  
-                if (label) label.style.display = 'none';  
-                if (bg) bg.style.display = 'none';  
-                return;  
-            }  
-
-            if (!isEmptySearch) {  
-                const isMatch = normalizeArabic(href).includes(query) ||   
-                              normalizeArabic(fullText).includes(query) ||
-                              normalizeArabic(fileName).includes(query) ||
-                              normalizeArabic(autoArabic).includes(query);  
-
-                rect.style.display = isMatch ? '' : 'none';  
-                if (label) label.style.display = rect.style.display;   
-                if (bg) bg.style.display = rect.style.display;  
-            } else {  
-                rect.style.display = '';  
-                if (label) label.style.display = '';   
-                if (bg) bg.style.display = '';  
-            }  
-        });  
-
-        updateWoodInterface();  
-    }, 150));
-}
-
-if (moveToggle) {
-    moveToggle.onclick = (e) => {
-        e.preventDefault();
-        if (toggleContainer && toggleContainer.classList.contains('top')) {
-            toggleContainer.classList.replace('top', 'bottom');
-        } else if (toggleContainer) {
-            toggleContainer.classList.replace('bottom', 'top');
-        }
-    };
-}
-
-if (searchIcon) {
-    searchIcon.onclick = (e) => {
-        e.preventDefault();
-        window.goToWood();
-    };
-}
-
-if (backButtonGroup) {
-    backButtonGroup.onclick = () => {
-        if (currentFolder !== "") {
-            let parts = currentFolder.split('/');
-            parts.pop();
-            currentFolder = parts.join('/');
-            window.updateWoodInterface();
-        } else {
-            window.goToMapEnd();
-        }
-    };
-}
-
-if (jsToggle) {
-    jsToggle.addEventListener('change', function() {
-        interactionEnabled = this.checked;
-        if (!interactionEnabled) cleanupHover();
-    });
-}
-
-if (mainSvg) {
-    mainSvg.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    }, false);
-}
-
-/* === 22. updateWoodInterface - الدالة الكاملة === */
+/* --- 16. تحديث واجهة القوائم --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -1475,7 +891,7 @@ async function updateWoodInterface() {
 
     await fetchGlobalTree();
 
-    const query = normalizeArabic(searchInput ? searchInput.value : '');
+    const query = normalizeArabic(searchInput.value);
 
     if (currentFolder === "") {
         backBtnText.textContent = "➡️ إلى الخريطة ➡️";
@@ -1739,8 +1155,15 @@ async function updateWoodInterface() {
                 g.appendChild(r);
                 g.appendChild(t);
 
+                let isDraggingContent = false;
+                let dragVelocity = 0;
+
                 g.addEventListener('click', (e) => {
                     e.stopPropagation();
+
+                    if (isDraggingContent && Math.abs(dragVelocity) > 0.1) {
+                        return;
+                    }
 
                     if (item.type === 'dir') {
                         currentFolder = item.path;
@@ -1775,6 +1198,7 @@ async function updateWoodInterface() {
     }
 
     const totalContentHeight = yPosition - 250;
+
     const needsScroll = totalContentHeight > 1700;
 
     if (needsScroll) {
@@ -1794,6 +1218,8 @@ async function updateWoodInterface() {
 
     const maxScroll = Math.max(0, totalContentHeight - 1700);
     let scrollOffset = 0;
+
+    console.log(`📊 المحتوى: ${totalContentHeight}px، التمرير المتاح: ${maxScroll}px`);
 
     if (maxScroll > 0) {
         const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1820,46 +1246,160 @@ async function updateWoodInterface() {
 
         function updateScroll(newOffset) {
             scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
+
             scrollContent.setAttribute("transform", `translate(0, ${-scrollOffset})`);
             separatorGroup.setAttribute("transform", `translate(0, ${-scrollOffset})`);
+
             const scrollRatio = scrollOffset / maxScroll;
             const handleY = 250 + (scrollRatio * (1700 - handleHeight));
             scrollBarHandle.setAttribute("y", handleY);
         }
 
-        let isDragging = false;
-        let startY = 0;
-        let startOffset = 0;
+        let isDraggingContent = false;
+        let dragStartY = 0;
+        let dragStartOffset = 0;
+        let dragVelocity = 0;
+        let lastDragY = 0;
+        let lastDragTime = 0;
 
-        scrollBarHandle.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startY = e.clientY;
-            startOffset = scrollOffset;
+        const startContentDrag = (clientY, isTouch = false) => {
+            isDraggingContent = true;
+            dragStartY = clientY;
+            lastDragY = clientY;
+            lastDragTime = Date.now();
+            dragStartOffset = scrollOffset;
+            dragVelocity = 0;
+            scrollContent.style.cursor = 'grabbing';
+
+            if (window.momentumAnimation) {
+                cancelAnimationFrame(window.momentumAnimation);
+                window.momentumAnimation = null;
+            }
+        };
+
+        const doContentDrag = (clientY) => {
+            if (!isDraggingContent) return;
+
+            const now = Date.now();
+            const deltaTime = now - lastDragTime;
+
+            if (deltaTime > 0) {
+                const deltaY = clientY - dragStartY;
+                const velocityDelta = clientY - lastDragY;
+                dragVelocity = velocityDelta / deltaTime;
+
+                lastDragY = clientY;
+                lastDragTime = now;
+
+                const newOffset = dragStartOffset - deltaY;
+                updateScroll(newOffset);
+            }
+        };
+
+        const endContentDrag = () => {
+            if (!isDraggingContent) return;
+
+            isDraggingContent = false;
+            scrollContent.style.cursor = 'grab';
+
+            if (Math.abs(dragVelocity) > 0.5) {
+                let velocity = dragVelocity * 200;
+                const deceleration = 0.95;
+
+                function momentum() {
+                    velocity *= deceleration;
+
+                    if (Math.abs(velocity) > 0.5) {
+                        const newOffset = scrollOffset - velocity;
+                        updateScroll(newOffset);
+                        window.momentumAnimation = requestAnimationFrame(momentum);
+                    } else {
+                        window.momentumAnimation = null;
+                    }
+                }
+
+                momentum();
+            }
+        };
+
+        scrollContent.addEventListener('mousedown', (e) => {
+            startContentDrag(e.clientY, false);
             e.preventDefault();
         });
 
-        scrollBarBg.addEventListener('click', (e) => {
-            const svgRect = mainSvg.getBoundingClientRect();
-            const clickY = e.clientY - svgRect.top;
-            const relativeY = clickY - 250;
-            const newScrollRatio = relativeY / 1700;
-            updateScroll(newScrollRatio * maxScroll);
+        window.addEventListener('mousemove', (e) => {
+            if (isDraggingContent) {
+                doContentDrag(e.clientY);
+            }
         });
 
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const deltaY = e.clientY - startY;
-            const scrollDelta = (deltaY / 1700) * maxScroll;
-            updateScroll(startOffset + scrollDelta);
+        window.addEventListener('mouseup', endContentDrag);
+
+        scrollContent.addEventListener('touchstart', (e) => {
+            startContentDrag(e.touches[0].clientY, true);
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDraggingContent) {
+                doContentDrag(e.touches[0].clientY);
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', endContentDrag);
+
+        let isDraggingHandle = false;
+        let handleStartY = 0;
+        let handleStartOffset = 0;
+
+        scrollBarHandle.addEventListener('mousedown', (e) => {
+            isDraggingHandle = true;
+            handleStartY = e.clientY;
+            handleStartOffset = scrollOffset;
+            e.stopPropagation();
         });
 
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
+        scrollBarHandle.addEventListener('touchstart', (e) => {
+            isDraggingHandle = true;
+            handleStartY = e.touches[0].clientY;
+            handleStartOffset = scrollOffset;
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingHandle) return;
+            const deltaY = e.clientY - handleStartY;
+            const scrollDelta = (deltaY / (1700 - handleHeight)) * maxScroll;
+            updateScroll(handleStartOffset + scrollDelta);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDraggingHandle) return;
+            const deltaY = e.touches[0].clientY - handleStartY;
+            const scrollDelta = (deltaY / (1700 - handleHeight)) * maxScroll;
+            updateScroll(handleStartOffset + scrollDelta);
+            e.preventDefault();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDraggingHandle = false;
+        });
+
+        window.addEventListener('touchend', () => {
+            isDraggingHandle = false;
         });
 
         scrollContent.addEventListener('wheel', (e) => {
             e.preventDefault();
-            updateScroll(scrollOffset + e.deltaY * 2);
+            e.stopPropagation();
+
+            if (window.momentumAnimation) {
+                cancelAnimationFrame(window.momentumAnimation);
+                window.momentumAnimation = null;
+            }
+
+            updateScroll(scrollOffset + e.deltaY * 0.8);
         }, { passive: false });
 
         scrollBarGroup.appendChild(scrollBarBg);
@@ -1869,9 +1409,479 @@ async function updateWoodInterface() {
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
-window.updateWoodInterface = updateWoodInterface;
 
-/* === 23. البدء التلقائي === */
+/* --- 17. معالجة المستطيلات مع الأسماء العربية --- */
+function processRect(r) {
+    if (r.hasAttribute('data-processed')) return;
+    if (r.classList.contains('w')) r.setAttribute('width', '113.5');
+    if (r.classList.contains('hw')) r.setAttribute('width', '56.75');
+
+    let href = r.getAttribute('data-href') || '';  
+
+    if (href && href !== '#' && !href.startsWith('http')) {  
+        href = `${RAW_CONTENT_BASE}${href}`;  
+        r.setAttribute('data-href', href);  
+        console.log(`🔗 تحويل رابط: ${href}`);  
+    }  
+
+    const dataFull = r.getAttribute('data-full-text');  
+    const fileName = href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '';  
+
+    const name = dataFull || fileName || '';  
+
+    const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;  
+    const x = parseFloat(r.getAttribute('x'));   
+    const y = parseFloat(r.getAttribute('y'));  
+
+    if (name && name.trim() !== '') {  
+        const fs = Math.max(8, Math.min(12, w * 0.11));  
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
+        txt.setAttribute('x', x + w / 2);   
+        txt.setAttribute('y', y + 2);  
+        txt.setAttribute('text-anchor', 'middle');   
+        txt.setAttribute('class', 'rect-label');  
+        txt.setAttribute('data-original-text', name);   
+        txt.setAttribute('data-original-for', href);  
+        txt.style.fontSize = fs + 'px';   
+        txt.style.fill = 'white';   
+        txt.style.pointerEvents = 'none';   
+        txt.style.dominantBaseline = 'hanging';  
+        r.parentNode.appendChild(txt);   
+        wrapText(txt, w);  
+
+        const bbox = txt.getBBox();  
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+        bg.setAttribute('x', x);   
+        bg.setAttribute('y', y);   
+        bg.setAttribute('width', w);   
+        bg.setAttribute('height', bbox.height + 8);  
+        bg.setAttribute('class', 'label-bg');   
+        bg.setAttribute('data-original-for', href);  
+        bg.style.fill = 'black';   
+        bg.style.pointerEvents = 'none';  
+        r.parentNode.insertBefore(bg, txt);  
+    }  
+
+    if (!isTouchDevice) {   
+        r.addEventListener('mouseover', startHover);   
+        r.addEventListener('mouseout', cleanupHover);   
+    }  
+
+    r.onclick = async () => {   
+        if (href && href !== '#') {  
+            const fileName = href.split('/').pop();
+
+            try {  
+                const response = await fetch(href, {   
+                    method: 'HEAD',  
+                    mode: 'cors',  
+                    cache: 'no-cache'  
+                });  
+
+                if (!response.ok) {  
+                    alert(`❌ الملف "${fileName}" غير موجود`);
+                    console.warn(`⚠️ الملف غير موجود: ${href}`);  
+                    return;  
+                }  
+
+                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+                pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                    path: href,
+                    scrollPosition: scrollPosition
+                });
+
+                const overlay = document.getElementById("pdf-overlay");  
+                const pdfViewer = document.getElementById("pdfFrame");  
+                overlay.classList.remove("hidden");  
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                encodeURIComponent(href) + "#zoom=page-width";  
+
+                if (typeof trackSvgOpen === 'function') {  
+                    trackSvgOpen(href);  
+                }  
+            } catch (error) {  
+                console.warn(`⚠️ CORS Error, trying direct open:`, error);  
+
+                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+                pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                    path: href,
+                    scrollPosition: scrollPosition
+                });
+
+                const overlay = document.getElementById("pdf-overlay");  
+                const pdfViewer = document.getElementById("pdfFrame");  
+                overlay.classList.remove("hidden");
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                encodeURIComponent(href) + "#zoom=page-width";  
+            }  
+        }  
+    };  
+
+    if (scrollContainer) {  
+        r.addEventListener('touchstart', function(e) {   
+            if (!interactionEnabled) return;   
+            activeState.touchStartTime = Date.now();   
+            activeState.initialScrollLeft = scrollContainer.scrollLeft;   
+            startHover.call(this);   
+        });  
+        r.addEventListener('touchend', async function(e) {   
+            if (!interactionEnabled) return;  
+            if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 &&   
+                (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {  
+                if (href && href !== '#') {  
+                    const fileName = href.split('/').pop();
+
+                    try {  
+                        const response = await fetch(href, {   
+                            method: 'HEAD',  
+                            mode: 'cors',  
+                            cache: 'no-cache'  
+                        });  
+
+                        if (!response.ok) {  
+                            alert(`❌ الملف "${fileName}" غير موجود`);
+                            console.warn(`⚠️ الملف غير موجود: ${href}`);  
+                            cleanupHover();  
+                            return;  
+                        }  
+
+                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+                        pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                            path: href,
+                            scrollPosition: scrollPosition
+                        });
+
+                        const overlay = document.getElementById("pdf-overlay");  
+                        const pdfViewer = document.getElementById("pdfFrame");  
+                        overlay.classList.remove("hidden");  
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                        encodeURIComponent(href) + "#zoom=page-width";  
+
+                        if (typeof trackSvgOpen === 'function') {  
+                            trackSvgOpen(href);  
+                        }  
+                    } catch (error) {  
+                        console.warn(`⚠️ CORS Error, trying direct open:`, error);  
+
+                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+                        pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                            path: href,
+                            scrollPosition: scrollPosition
+                        });
+
+                        const overlay = document.getElementById("pdf-overlay");  
+                        const pdfViewer = document.getElementById("pdfFrame");  
+                        overlay.classList.remove("hidden");  
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                        encodeURIComponent(href) + "#zoom=page-width";  
+                    }  
+                }  
+            }  
+            cleanupHover();  
+        });  
+    }  
+
+    r.setAttribute('data-processed', 'true');
+}
+
+/* --- 18. فحص ومعالجة جميع المستطيلات --- */
+function scan() {
+    if (!mainSvg) return;
+
+    console.log('🔍 تشغيل scan()...');  
+
+    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');  
+    console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);  
+
+    rects.forEach(r => {  
+        processRect(r);  
+
+        const href = r.getAttribute('data-href') || '';  
+        if (href === '#') {  
+            r.style.display = 'none';  
+            const label = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);  
+            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);  
+            if (label) label.style.display = 'none';  
+            if (bg) bg.style.display = 'none';  
+        }  
+    });
+
+    if (!window.svgObserver) {
+        const observer = new MutationObserver((mutations) => {
+            let hasNewElements = false;
+
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        if (node.tagName === 'image' || node.querySelector('image')) {
+                            hasNewElements = true;
+                        }
+                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
+                            processRect(node);
+                        }
+                        if (node.querySelectorAll) {
+                            const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
+                            newRects.forEach(rect => processRect(rect));
+                        }
+                    }
+                });
+            });
+
+            if (hasNewElements) {
+                console.log('🔄 تم اكتشاف عناصر جديدة - تحديث viewBox');
+                updateDynamicSizes();
+            }
+        });
+
+        observer.observe(mainSvg, {
+            childList: true,
+            subtree: true
+        });
+
+        window.svgObserver = observer;
+        console.log('👁️ تم تفعيل مراقب العناصر الجديدة');
+    }
+}
+window.scan = scan;
+
+/* --- 19. تحميل الصور مع تتبع التقدم (نظام 1/5، 2/5، 3/5، 4/5) --- */
+function loadImages() {
+    if (!mainSvg) return;
+
+    console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);  
+
+    if (imageUrlsToLoad.length === 0) {  
+        console.warn('⚠️ لا توجد صور للتحميل!');  
+        finishLoading();  
+        return;  
+    }  
+
+    const MAX_CONCURRENT = 3;  
+    let currentIndex = 0;  
+
+    function loadNextBatch() {  
+        while (currentIndex < imageUrlsToLoad.length &&   
+               currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {  
+
+            const url = imageUrlsToLoad[currentIndex];  
+            currentIndex++;  
+
+            const img = new Image();  
+
+            img.onload = function() {  
+                const allImages = [  
+                    ...mainSvg.querySelectorAll('image'),  
+                    ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])  
+                ];  
+
+                allImages.forEach(si => {  
+                    const dataSrc = si.getAttribute('data-src');  
+                    if (dataSrc === url) {  
+                        si.setAttribute('href', this.src);  
+                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);  
+                    }  
+                });  
+
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
+                    console.log('✅ اكتمل تحميل جميع الصور');  
+                    finishLoading();  
+                } else {  
+                    loadNextBatch();  
+                }  
+            };  
+
+            img.onerror = function() {  
+                console.error(`❌ خطأ في تحميل ${url}`);  
+
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
+                    finishLoading();  
+                } else {  
+                    loadNextBatch();  
+                }  
+            };  
+
+            img.src = url;  
+        }  
+    }  
+
+    loadNextBatch();
+}
+
+function finishLoading() {
+    if (mainSvg) mainSvg.style.opacity = '1';
+
+    window.updateDynamicSizes();  
+    scan();  
+    updateWoodInterface();  
+    window.goToWood();  
+
+    loadingProgress.completedSteps = loadingProgress.totalSteps;
+    loadingProgress.currentPercentage = 100;
+    updateLoadProgress();
+
+    setTimeout(() => {
+        hideLoadingScreen();  
+        console.log('🎉 اكتمل التحميل والعرض');
+    }, 500);
+}
+window.loadImages = loadImages;
+
+/* --- 20. مستمعي الأحداث --- */
+document.querySelectorAll('.group-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const group = this.getAttribute('data-group');
+        console.log('👆 تم اختيار المجموعة:', group);
+        initializeGroup(group);
+    });
+});
+
+/* --- Preload Group Logos --- */
+function preloadGroupLogos() {
+    const groups = ['A', 'B', 'C', 'D'];
+    
+    groups.forEach(group => {
+        const img = new Image();
+        img.src = `image/logo-${group}.webp`;
+        console.log(`🖼️ تحميل مسبق: logo-${group}.webp`);
+    });
+}
+
+// تشغيل التحميل المسبق فور تحميل الصفحة
+window.addEventListener('load', () => {
+    preloadGroupLogos();
+});
+
+document.querySelectorAll('.group-btn').forEach(btn => {
+    // ... باقي الكود
+});
+
+if (changeGroupBtn) {
+    changeGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+        window.goToWood();
+        pushNavigationState(NAV_STATE.GROUP_SELECTION);
+    });
+}
+
+if (searchInput) {
+    searchInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+
+            if (typeof trackSearch === 'function') {  
+                trackSearch(searchInput.value);  
+            }  
+
+            window.goToWood();  
+        }  
+    };  
+
+    searchInput.addEventListener('input', debounce(function(e) {  
+        if (!mainSvg) return;  
+
+        const query = normalizeArabic(e.target.value);  
+
+        const isEmptySearch = query.length === 0;
+
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
+            const href = rect.getAttribute('data-href') || '';  
+            const fullText = rect.getAttribute('data-full-text') || '';  
+            const fileName = href !== '#' ? href.split('/').pop() : '';  
+
+            const autoArabic = autoTranslate(fileName);  
+
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
+
+            if (href === '#') {  
+                rect.style.display = 'none';  
+                if (label) label.style.display = 'none';  
+                if (bg) bg.style.display = 'none';  
+                return;  
+            }  
+
+            if (!isEmptySearch) {  
+                const normalizedHref = normalizeArabic(href);
+                const normalizedFullText = normalizeArabic(fullText);
+                const normalizedFileName = normalizeArabic(fileName);
+                const normalizedAutoArabic = normalizeArabic(autoArabic);
+
+                const isMatch = normalizedHref.includes(query) ||   
+                              normalizedFullText.includes(query) ||
+                              normalizedFileName.includes(query) ||
+                              normalizedAutoArabic.includes(query);  
+
+                rect.style.display = isMatch ? '' : 'none';  
+                if (label) label.style.display = rect.style.display;   
+                if (bg) bg.style.display = rect.style.display;  
+            } else {  
+                rect.style.display = '';  
+                if (label) label.style.display = '';   
+                if (bg) bg.style.display = '';  
+            }  
+        });  
+
+        updateWoodInterface();  
+    }, 150));
+}
+
+if (moveToggle) {
+    moveToggle.onclick = (e) => {
+        e.preventDefault();
+        if (toggleContainer && toggleContainer.classList.contains('top')) {
+            toggleContainer.classList.replace('top', 'bottom');
+        } else if (toggleContainer) {
+            toggleContainer.classList.replace('bottom', 'top');
+        }
+    };
+}
+
+if (searchIcon) {
+    searchIcon.onclick = (e) => {
+        e.preventDefault();
+        window.goToWood();
+    };
+}
+
+if (backButtonGroup) {
+    backButtonGroup.onclick = () => {
+        if (currentFolder !== "") {
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/');
+            window.updateWoodInterface();
+        } else {
+            console.log("🔙 العودة إلى نهاية الخريطة");
+            window.goToMapEnd();
+        }
+    };
+}
+
+if (jsToggle) {
+    jsToggle.addEventListener('change', function() {
+        interactionEnabled = this.checked;
+        if (!interactionEnabled) cleanupHover();
+    });
+}
+
+if (mainSvg) {
+    mainSvg.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
+}
+
+/* --- 21. البدء التلقائي --- */
 
 if (!localStorage.getItem('visitor_id')) {
     const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
@@ -1879,15 +1889,133 @@ if (!localStorage.getItem('visitor_id')) {
 }
 
 updateWelcomeMessages();
-setupBackButton();
-loadCoreAssets();
 
-console.log('✅ تم تحميل script.js - النسخة النهائية المحسّنة');
-console.log('🎯 المميزات الرئيسية:');
-console.log('  ✓ التحميل من آخر أسبوع (الأكبر رقماً) إلى الأول');
-console.log('  ✓ الحركة الانسيابية من أسفل شاشة التحميل (y=2454)');
-console.log('  ✓ إزاحة تلقائية 1024px لليسار لجميع الأسابيع السابقة');
-console.log('  ✓ الأسبوع الأول يظهر مباشرة في x=1024 (مكان شاشة التحميل)');
-console.log('  ✓ شاشة التحميل تختفي بعد تحميل الأسبوع الأول');
-console.log('  ✓ بدون أي delay - سرعة فورية مع requestAnimationFrame');
-console.log('  ✓ صورة الخشب ثابتة في x=0 مع جميع الأزرار');
+setupBackButton();
+
+const hasSavedGroup = loadSelectedGroup();
+if (hasSavedGroup) {
+    initializeGroup(currentGroup);
+} else {
+    if (groupSelectionScreen) {
+        groupSelectionScreen.classList.remove('hidden');
+    }
+    pushNavigationState(NAV_STATE.GROUP_SELECTION);
+}
+
+/* --- 22. نظام تحديث Service Worker التلقائي --- */
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    console.log('🔄 تحديث جديد متاح - إعادة التحميل...');
+    window.location.reload();
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('✅ Service Worker مسجل');
+
+        setInterval(() => {
+          console.log('🔍 فحص التحديثات...');
+          reg.update();
+        }, 5 * 60 * 1000);
+
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          console.log('🆕 Service Worker جديد قيد التثبيت...');
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('✅ Service Worker الجديد جاهز');
+              
+              const updateNow = confirm('🎉 تحديث جديد متاح!\n\nهل تريد إعادة التحميل الآن للحصول على آخر التحديثات؟');
+              
+              if (updateNow) {
+                newWorker.postMessage({ action: 'skipWaiting' });
+              } else {
+                console.log('⏳ المستخدم اختار التحديث لاحقاً');
+              }
+            }
+          });
+        });
+      })
+      .catch(err => console.log('❌ فشل Service Worker:', err));
+  });
+}
+
+/* --- 23. زر مسح الكاش يدوياً --- */
+function createClearCacheButton() {
+  if (document.getElementById('clear-cache-btn')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'clear-cache-btn';
+  btn.innerHTML = '🗑️ مسح الكاش';
+  btn.style.cssText = `
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 9999;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  `;
+
+  btn.onmouseover = () => {
+    btn.style.transform = 'scale(1.05)';
+    btn.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+  };
+
+  btn.onmouseout = () => {
+    btn.style.transform = 'scale(1)';
+    btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+  };
+
+  btn.onclick = async () => {
+    if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
+      return;
+    }
+
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+          console.log('✅ تم إلغاء تسجيل Service Worker');
+        }
+      }
+
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        console.log('✅ تم مسح جميع الكاش');
+      }
+
+      alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
+      
+      window.location.reload(true);
+    } catch (error) {
+      console.error('❌ خطأ في مسح الكاش:', error);
+      alert('❌ حدث خطأ أثناء مسح الكاش');
+    }
+  };
+
+  document.body.appendChild(btn);
+  console.log('🗑️ تم إضافة زر مسح الكاش');
+}
+
+window.addEventListener('load', () => {
+  setTimeout(createClearCacheButton, 1000);
+});
+
+console.log('✅ تم تحميل script.js - نسخة محسّنة مع نظام المصابيح 1/5، 2/5، 3/5، 4/5');
+console.log('🔧 التحسينات: نظام تتبع دقيق | مصابيح متساوية | Service Worker ذكي');
