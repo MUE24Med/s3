@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- ✅ رقم الإصدار (يساعد في تتبع التحديثات) -->
-<meta name="version" content="2025.01.14.001">
+<meta name="version" content="2025.01.13.002">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -17,7 +17,7 @@
   <!-- ✅ منع Samsung Dark Mode -->
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#000000"
   <!-- ✅ SEO -->
   <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
   <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
@@ -26,33 +26,23 @@
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link rel="dns-prefetch" href="https://mozilla.github.io">
-  
+  <!-- ✅ Preload للصور المهمة -->
+  <link rel="preload" href="image/wood.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/0.png" as="image" type="image/png">
   <!-- ✅ Favicon -->
   <link rel="icon" type="image/png" href="image/0.png">
   <link rel="apple-touch-icon" href="image/0.png">
-
+<link rel="preload" href="image/logo-A.webp" as="image" type="image/webp">
+<link rel="preload" href="image/logo-B.webp" as="image" type="image/webp">
+<link rel="preload" href="image/logo-C.webp" as="image" type="image/webp">
+<link rel="preload" href="image/logo-D.webp" as="image" type="image/webp">
   <!-- ✅ CSS الرئيسي -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- شاشة التحميل الأولية -->
-<div id="initial-loading-screen">
-  <div id="initial-loading-content">
-    <img src="image/0.png" alt="شعار الكلية" class="initial-logo" loading="eager" />
-    <h1>جاري تحميل النظام...</h1>
-    <div id="initial-progress-container">
-      <div id="initial-progress-bar">
-        <div id="initial-progress-fill"></div>
-      </div>
-      <p id="initial-progress-text">0%</p>
-      <p id="initial-progress-status">تهيئة النظام...</p>
-    </div>
-  </div>
-</div>
-
 <!-- شاشة اختيار الجروب -->
-<div id="group-selection-screen" class="hidden">
+<div id="group-selection-screen">
   <div id="group-selection-content">
     <img id="main-logo" src="image/0.png" alt="شعار الكلية" loading="eager" />
     <h1>اختر مجموعتك</h1>
@@ -118,6 +108,7 @@
       alt="شعار التحميل"
       loading="eager"
     />
+    <!-- ✅ تم تغيير h1 ليتم تحديثه ديناميكيًا -->
     <h1 id="project-loading-title">جاري التحميل...</h1>
     <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
       <div class="light-bulb" id="bulb-1"></div>
@@ -174,21 +165,8 @@
         aria-hidden="true"
       />
 
-      <g id="clear-cache-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="654" y="100" width="250" height="50" rx="10" fill="#764ba2" stroke="#fff" stroke-width="2"/>
-        <text 
-          id="clear-cache-text" 
-          x="779" 
-          y="130" 
-          text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
-          font-size="18"
-        >🗑️ Clear Cache</text>
-      </g>
-
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff" stroke-width="2"/>
+        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff"/>
         <text 
           id="group-btn-text" 
           x="245" 
@@ -196,7 +174,6 @@
           text-anchor="middle" 
           fill="white" 
           font-weight="bold"
-          font-size="18"
         >Change Group 🔄</text>
       </g>
 
