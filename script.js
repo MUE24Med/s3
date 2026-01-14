@@ -1043,13 +1043,7 @@ function wrapText(el, maxW) {
         }
     });
 }
-```
 
----
-
-## 4️⃣ `script.js` (الجزء 3/4)
-
-```javascript
 /* === 19. دوال الترحيب والأسماء === */
 function getDisplayName() {
     const realName = localStorage.getItem('user_real_name');
