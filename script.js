@@ -2,7 +2,6 @@
 const REPO_NAME = "semester-3";
 const GITHUB_USER = "MUE24Med";
 
-const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
@@ -20,8 +19,9 @@ let initialLoadingProgress = {
 };
 
 // ✅ نظام الأسابيع
-let weeksToLoad = [];
+let weeksData = [];
 let loadedWeeks = [];
+let isFirstWeekLoaded = false;
 
 // ✅ نظام التنقل الخلفي
 let navigationHistory = [];
@@ -68,8 +68,7 @@ const SUBJECT_FOLDERS = [
 
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-    baseText: null, baseBg: null, animationId: null, clipPathId: null,
-    touchStartTime: 0, initialScrollLeft: 0
+    baseText: null, baseBg: null, animationId: null, clipPathId: null
 };
 
 // الحصول على العناصر فورًا
@@ -85,7 +84,6 @@ const backButtonGroup = document.getElementById('back-button-group');
 const backBtnText = document.getElementById('back-btn-text');
 const changeGroupBtn = document.getElementById('change-group-btn');
 const groupSelectionScreen = document.getElementById('group-selection-screen');
-const filesListContainer = document.getElementById('files-list-container');
 
 // ✅ عناصر شاشة التحميل الأولية
 const initialLoadingScreen = document.getElementById('initial-loading-screen');
@@ -327,9 +325,6 @@ async function loadCoreAssets() {
         if (initialLoadingScreen) {
             initialLoadingScreen.style.display = 'none';
         }
-        if (groupSelectionScreen) {
-            groupSelectionScreen.classList.remove('hidden');
-        }
     }, 500);
 }
 
@@ -451,15 +446,13 @@ function showSVGLoadingScreen() {
     console.log('🔦 شاشة التحميل SVG نشطة');
 }
 
-function updateSVGLoadProgress(weekNumber, totalWeeks) {
+function updateSVGLoadProgress(percentage) {
     const loadingText = document.getElementById('svg-loading-text');
-    const percentage = Math.round(((totalWeeks - weekNumber + 1) / totalWeeks) * 100);
-    
     if (loadingText) {
-        loadingText.textContent = `جاري تحميل الأسبوع ${weekNumber}... ${percentage}%`;
+        loadingText.textContent = `جاري التحميل... ${percentage}%`;
     }
 
-    // تحديث المصابيح بناءً على التقدم
+    // تحديث المصابيح
     if (percentage >= 25) {
         const bulb4 = document.querySelector('#svg-bulb-4 circle');
         if (bulb4) {
@@ -519,7 +512,7 @@ async function analyzeWeeksFromSVG(groupLetter) {
                 const y = parseInt(match[2]);
 
                 // الأسابيع تبدأ من x=1024 وما بعده
-                if (x >= 1024 && y === 0) {
+                if (x >= 1024) {
                     const images = g.querySelectorAll('image[data-src]');
                     const imageUrls = [];
 
@@ -540,7 +533,8 @@ async function analyzeWeeksFromSVG(groupLetter) {
                             y: y,
                             weekNumber: weekNumber,
                             images: imageUrls,
-                            group: g.cloneNode(true)
+                            group: g.cloneNode(true),
+                            transformX: x
                         });
                     }
                 }
@@ -548,9 +542,9 @@ async function analyzeWeeksFromSVG(groupLetter) {
         });
 
         // ✅ ترتيب الأسابيع من الأكبر رقماً (آخر أسبوع) إلى الأصغر (الأسبوع الأول)
-        weeks.sort((a, b) => b.weekNumber - a.weekNumber);
+        weeks.sort((a, b) => b.x - a.x);
 
-        console.log(`📅 تم اكتشاف ${weeks.length} أسبوع، مرتبة من ${weeks[0]?.weekNumber} إلى ${weeks[weeks.length - 1]?.weekNumber}`);
+        console.log(`📅 تم اكتشاف ${weeks.length} أسبوع، مرتبة من x=${weeks[0]?.x} إلى x=${weeks[weeks.length - 1]?.x}`);
         return weeks;
 
     } catch (err) {
@@ -597,8 +591,32 @@ async function loadWeek(weekData) {
 function addWeekToSVG(weekData, isFirstWeek) {
     const groupContainer = document.getElementById('group-specific-content');
 
-    // ✅ إذا لم يكن الأسبوع الأول، نزيح جميع الأسابيع السابقة 1024px لليسار
-    if (!isFirstWeek) {
+    // ✅ إذا كان هذا هو الأسبوع الأول (الأخير في الترتيب - أصغر رقم)
+    if (isFirstWeek) {
+        // ✅ الأسبوع الأول يظهر مباشرة في x=1024 (مكان شاشة التحميل)
+        const weekGroup = weekData.group.cloneNode(true);
+        weekGroup.setAttribute('id', `week-${weekData.weekNumber}`);
+        weekGroup.setAttribute('transform', 'translate(1024, 0)');
+        
+        groupContainer.appendChild(weekGroup);
+
+        // ✅ تحديث صور الأسبوع
+        const images = weekGroup.querySelectorAll('image[data-src]');
+        images.forEach(img => {
+            const src = img.getAttribute('data-src');
+            img.setAttribute('href', src);
+        });
+
+        loadedWeeks.push({
+            data: weekData,
+            element: weekGroup,
+            weekNumber: weekData.weekNumber
+        });
+
+        console.log(`🎬 تم إضافة الأسبوع ${weekData.weekNumber} (الأول - مباشرة في x=1024)`);
+
+    } else {
+        // ✅ إذا لم يكن الأسبوع الأول، نزيح جميع الأسابيع السابقة 1024px لليسار
         loadedWeeks.forEach((loadedWeek) => {
             const currentTransform = loadedWeek.element.getAttribute('transform');
             const match = currentTransform.match(/translate\s*\(([\d.-]+)[\s,]+([\d.-]+)\)/);
@@ -611,44 +629,47 @@ function addWeekToSVG(weekData, isFirstWeek) {
                 loadedWeek.element.setAttribute('transform', `translate(${newX}, ${currentY})`);
             }
         });
-    }
 
-    // ✅ إنشاء عنصر الأسبوع الجديد
-    const weekGroup = weekData.group.cloneNode(true);
-    weekGroup.setAttribute('id', `week-${weekData.weekNumber}`);
-    
-    // ✅ الأسبوع الأول يظهر مباشرة في x=1024 (مكان شاشة التحميل)
-    // باقي الأسابيع تبدأ من x=1024, y=2454 (أسفل الشاشة) ثم تنزلق للأعلى
-    if (isFirstWeek) {
-        weekGroup.setAttribute('transform', 'translate(1024, 0)');
-    } else {
+        // ✅ إنشاء عنصر الأسبوع الجديد
+        const weekGroup = weekData.group.cloneNode(true);
+        weekGroup.setAttribute('id', `week-${weekData.weekNumber}`);
+        
+        // ✅ باقي الأسابيع تبدأ من x=1024, y=2454 (أسفل الشاشة) ثم تنزلق للأعلى
         weekGroup.setAttribute('transform', 'translate(1024, 2454)');
-    }
+        groupContainer.appendChild(weekGroup);
 
-    groupContainer.appendChild(weekGroup);
+        // ✅ تحديث صور الأسبوع
+        const images = weekGroup.querySelectorAll('image[data-src]');
+        images.forEach(img => {
+            const src = img.getAttribute('data-src');
+            img.setAttribute('href', src);
+        });
 
-    // ✅ تحديث صور الأسبوع
-    const images = weekGroup.querySelectorAll('image[data-src]');
-    images.forEach(img => {
-        const src = img.getAttribute('data-src');
-        img.setAttribute('href', src);
-    });
-
-    // ✅ إذا لم يكن الأسبوع الأول، نحركه من الأسفل إلى الأعلى
-    if (!isFirstWeek) {
+        // ✅ حركة انزلاق من الأسفل إلى الأعلى
         requestAnimationFrame(() => {
             weekGroup.setAttribute('transform', 'translate(1024, 0)');
         });
+
+        // حفظ الأسبوع في القائمة
+        loadedWeeks.push({
+            data: weekData,
+            element: weekGroup,
+            weekNumber: weekData.weekNumber
+        });
+
+        console.log(`🎬 تم إضافة الأسبوع ${weekData.weekNumber} (مع الحركة من الأسفل)`);
     }
 
-    // حفظ الأسبوع في القائمة
-    loadedWeeks.push({
-        data: weekData,
-        element: weekGroup,
-        weekNumber: weekData.weekNumber
-    });
-
-    console.log(`🎬 تم إضافة الأسبوع ${weekData.weekNumber} ${isFirstWeek ? '(مباشرة)' : '(مع الحركة)'}`);
+    // ✅ إخفاء شاشة التحميل بعد إضافة الأسبوع الأول
+    if (isFirstWeek) {
+        const loadingScreen = document.getElementById('svg-loading-screen');
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.remove();
+            }, 600);
+        }
+    }
 }
 
 /* --- 10. تحميل جميع الأسابيع تدريجياً --- */
@@ -658,17 +679,16 @@ async function loadAllWeeksProgressively(weeks) {
         return;
     }
 
-    weeksToLoad = weeks;
     const totalWeeks = weeks.length;
 
-    // ✅ التحميل من آخر أسبوع (الأكبر رقماً) إلى الأول
+    // ✅ التحميل من آخر أسبوع (الأكبر x) إلى الأول (الأصغر x)
     for (let i = 0; i < totalWeeks; i++) {
         const weekData = weeks[i];
-        const isFirstWeek = (i === totalWeeks - 1); // آخر عنصر في المصفوفة = الأسبوع الأول
-        const isLastWeek = (i === 0); // أول عنصر في المصفوفة = آخر أسبوع
+        const isFirstWeek = (i === totalWeeks - 1); // آخر عنصر في المصفوفة = الأسبوع الأول (x=1024)
 
         // تحديث نص التحميل
-        updateSVGLoadProgress(weekData.weekNumber, totalWeeks);
+        const overallProgress = Math.round(((i + 1) / totalWeeks) * 100);
+        updateSVGLoadProgress(overallProgress);
 
         // تحميل الأسبوع
         await loadWeek(weekData);
@@ -676,15 +696,9 @@ async function loadAllWeeksProgressively(weeks) {
         // إضافة الأسبوع إلى SVG
         addWeekToSVG(weekData, isFirstWeek);
 
-        // ✅ إخفاء شاشة التحميل بعد إضافة الأسبوع الأول (آخر أسبوع يتم تحميله)
-        if (isFirstWeek) {
-            const loadingScreen = document.getElementById('svg-loading-screen');
-            if (loadingScreen) {
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => {
-                    loadingScreen.remove();
-                }, 600);
-            }
+        // ✅ انتظار قصير للحركة (إلا إذا كان هذا هو الأسبوع الأول)
+        if (!isFirstWeek) {
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
     }
 
@@ -728,7 +742,7 @@ async function initializeGroup(groupLetter) {
         return;
     }
 
-    // ✅ تحميل الأسابيع تدريجياً (من الآخر إلى الأول)
+    // ✅ تحميل الأسابيع تدريجياً (من الأكبر x إلى الأصغر x)
     await loadAllWeeksProgressively(weeks);
 
     // ✅ تحديث الأحجام والواجهة
@@ -885,7 +899,7 @@ function updateDynamicSizes() {
         return;  
     }  
 
-    let maxX = 1024; // على الأقل صورة الخشب
+    let maxX = 1024; // على الأقل صورة الخشب + شاشة التحميل
     let maxY = 2454;
 
     allImages.forEach(img => {
@@ -1503,7 +1517,7 @@ if (mainSvg) {
     }, false);
 }
 
-/* --- 22. updateWoodInterface - الدالة الكاملة --- */
+/* --- 22. دالة updateWoodInterface (نفسها) --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -1927,10 +1941,11 @@ updateWelcomeMessages();
 setupBackButton();
 loadCoreAssets();
 
-console.log('✅ تم تحميل script.js - النسخة النهائية');
+console.log('✅ تم تحميل script.js - النسخة النهائية مع النظام الجديد');
 console.log('🎯 المميزات:');
-console.log('  ✓ التحميل من آخر أسبوع إلى الأول');
-console.log('  ✓ الحركة الانسيابية من أسفل شاشة التحميل');
-console.log('  ✓ إزاحة تلقائية للأسابيع السابقة');
+console.log('  ✓ صوره الخشب: x=0, y=0');
+console.log('  ✓ شاشة التحميل: x=1024, y=0');
+console.log('  ✓ تحميل من الأسبوع الأخير إلى الأول');
 console.log('  ✓ الأسبوع الأول يظهر مكان شاشة التحميل');
-console.log('  ✓ بدون أي delay - سرعة فورية');
+console.log('  ✓ باقي الأسابيع تنسحب من الأسفل');
+console.log('  ✓ بدون delay - سرعة فورية');
