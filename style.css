@@ -1,5 +1,3 @@
-/* --- 1. الإعدادات والمتغيرات العالمية --- */
-
 /* ===== منع Samsung Dark Mode ===== */
 html {
   color-scheme: only light !important;
@@ -13,13 +11,11 @@ body {
   background-color: #000000 !important;
 }
 
-/* منع الفلاتر على جميع العناصر */
 * {
   color-scheme: only light !important;
   -webkit-color-scheme: only light !important;
 }
 
-/* منع Samsung من تطبيق الفلاتر */
 html, body, div, svg, image, img {
   filter: none !important;
   -webkit-filter: none !important;
@@ -39,7 +35,6 @@ html, body, div, svg, image, img {
     z-index: 100;
 }
 
-/* الحالة العادية */
 .wood-banner-animation {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
@@ -50,7 +45,6 @@ html, body, div, svg, image, img {
   transform: scale(1) translateY(0);
 }
 
-/* حالة الـ Hover */
 .wood-banner-animation:hover {
   animation: none !important; 
   transform: translateY(-15px) scale(1.15) !important; 
@@ -59,7 +53,6 @@ html, body, div, svg, image, img {
   z-index: 100;
 }
 
-/* أنيميشن تأرجح التوهج */
 @keyframes glow-oscillation {
   0%, 100% {
     filter: brightness(1.1) drop-shadow(0 10px 20px rgba(255, 204, 0, 0.4));
@@ -71,19 +64,16 @@ html, body, div, svg, image, img {
   }
 }
 
-/* أنيميشن النبض العادي */
 @keyframes wood-pulse-soft {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.03); }
 }
 
-/* عند الضغط */
 .wood-banner-animation:active {
   transform: translateY(-4px) scale(1.05) !important;
   animation: none !important;
 }
 
-/* ===== تنسيق زر تغيير الاسم ===== */
 .name-input-group {
   transition: all 0.3s ease;
   cursor: pointer;
@@ -104,7 +94,6 @@ html, body, div, svg, image, img {
   user-select: none;
 }
 
-/* ===== تنسيق شريط التمرير ===== */
 .scroll-container-group {
   pointer-events: auto;
 }
@@ -113,14 +102,12 @@ html, body, div, svg, image, img {
   transition: transform 0.2s ease-out;
 }
 
-/* تنسيق العناصر في قائمة الخشب  */
 .list-item {
     stroke-width: 1px !important;
     rx: 5;
     ry: 5;
 }
 
-/* 2. إعدادات توحيد الرؤية */
 *, *::before, *::after {
   box-sizing: border-box !important;
   -webkit-tap-highlight-color: transparent;
@@ -193,7 +180,7 @@ html, body {
 .l  { stroke: var(--color-l); }
 .is { stroke: var(--color-is); }
 
-/* ===== 🆕 شاشة التحميل الأولية (قبل اختيار الجروب) ===== */
+/* ===== شاشة التحميل الأولية ===== */
 #initial-loading-screen {
   position: fixed;
   height: 100svh;
@@ -206,7 +193,8 @@ html, body {
   transition: opacity .5s ease-out, transform .5s ease-out;
 }
 
-#initial-loading-screen.hidden {
+#initial-loading-screen.hidden,
+#initial-loading-screen[style*="display: none"] {
   opacity: 0;
   transform: scale(0.9);
   pointer-events: none;
@@ -245,7 +233,7 @@ html, body {
   min-height: 20px;
 }
 
-/* ===== 🆕 دائرة النسبة المئوية ===== */
+/* ===== دائرة النسبة المئوية ===== */
 .circular-progress-container {
   position: relative;
   width: 200px;
@@ -268,7 +256,7 @@ html, body {
   stroke: #ffcc00;
   stroke-width: 15;
   stroke-linecap: round;
-  stroke-dasharray: 534.07; /* 2 * π * 85 */
+  stroke-dasharray: 534.07;
   stroke-dashoffset: 534.07;
   transition: stroke-dashoffset 0.3s ease;
   filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
@@ -291,11 +279,15 @@ html, body {
   position: fixed;
   inset: 0;
   background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 10000;
   transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#group-selection-screen:not(.hidden) {
+  display: flex;
 }
 
 body {
@@ -306,6 +298,7 @@ body {
   opacity: 0;
   transform: scale(0.9);
   pointer-events: none;
+  display: none !important;
 }
 
 #group-selection-content {
@@ -407,7 +400,6 @@ body {
   text-align: center;
 }
 
-/* ===== موبايل صغير جدًا ===== */
 @media (max-height: 700px) {
   #group-selection-content {
     transform: scale(0.78);
@@ -443,7 +435,7 @@ body {
   }
 }
 
-/* تنسيق عارض PDF */
+/* ===== عارض PDF ===== */
 #pdf-overlay {
   height: 100svh;
   transition: transform .35s ease, opacity .35s ease;
@@ -490,152 +482,20 @@ body {
   font-size: 14px;
 }
 
-/* ===== Loading Overlay (بعد اختيار الجروب) ===== */
-#loading-overlay {
-  position: fixed;
-  height: 100svh;
-  inset: 0;
-  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  transition: opacity .5s ease-out;
-  opacity: 0;
-  pointer-events: none;
+.toolbar-btn:hover {
+  background: #666;
 }
 
-#loading-overlay.active {
-  display: flex;
-  opacity: 1;
-  pointer-events: all;
+.toolbar-btn:active {
+  transform: scale(0.95);
 }
+```
 
-#loading-content {
-  text-align: center;
-  width: 90%;
-  max-width: 600px;
-}
+---
 
-#splash-image {
-  width: 400px;
-  max-width: 85vw;
-  height: auto;
-  display: block;
-  margin: -60px auto 10px auto;
-  transform: translateY(-10%);
-  border-radius: 15px;
-  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
-  animation: logo-glow 2s infinite ease-in-out;
-}
+## 3️⃣ `style.css` (الجزء 2/3)
 
-@media (max-width: 480px) {
-  #splash-image {
-    margin-top: -40px;
-    max-width: 75vw;
-  }
-}
-
-#loading-content h1 {
-  color: #ffcc00;
-  margin: 10px 0;
-  font-size: 1.8rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-#loader-lights {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin: 20px 0;
-}
-
-.light-bulb {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  background-color: #222;
-  border: 1px solid #444;
-  transition: all .4s ease;
-}
-
-/* ألوان المصابيح */
-#bulb-1.on {
-  background-color: #4dff88;
-  box-shadow: 0 0 15px #4dff88, 0 0 30px #00ff66;
-  border-color: #fff;
-}
-
-#bulb-2.on {
-  background-color: #ffff4d;
-  box-shadow: 0 0 15px #ffff4d, 0 0 30px #ffff00;
-  border-color: #fff;
-}
-
-#bulb-3.on {
-  background-color: #ffaa00;
-  box-shadow: 0 0 15px #ffaa00, 0 0 30px #ff8800;
-  border-color: #fff;
-}
-
-#bulb-4.on {
-  background-color: #ff4d4d;
-  box-shadow: 0 0 15px #ff4d4d, 0 0 30px #ff0000;
-  border-color: #fff;
-}
-
-#legend {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 30px;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-#back-btn-text {
-  pointer-events: none;
-  user-select: none;
-  font-family: 'Arial', sans-serif;
-  dominant-baseline: middle;
-  paint-order: stroke fill;
-  text-shadow: 0px 0px 2px rgba(0,0,0,1);
-}
-
-#back-btn {
-  transition: all 0.3s ease;
-  filter: brightness(1.1);
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #eee;
-  font-size: 13px;
-}
-
-.legend-item::before {
-  content: "";
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  background-color: var(--item-color);
-  box-shadow: 0 0 10px var(--item-color);
-  flex-shrink: 0;
-}
-
-.legend-item.red    { --item-color: var(--color-q); }
-.legend-item.blue   { --item-color: var(--color-v); }
-.legend-item.white  { --item-color: var(--color-i); }
-.legend-item.purple { --item-color: var(--color-a); }
-.legend-item.green  { --item-color: var(--color-s); }
-.legend-item.yellow { --item-color: var(--color-l); }
-.legend-item.is { --item-color: var(--color-is); }
-
+```css
 /* ===== Toggle & Search UI ===== */
 #js-toggle-container {
   transform: translateZ(0); 
@@ -816,7 +676,7 @@ image[data-src*="wood.webp"] {
   touch-action: none;
 }
 
-/* ===== 🆕 تنسيق زر مسح الكاش في SVG ===== */
+/* ===== تنسيق زر مسح الكاش في SVG ===== */
 #clear-cache-btn-svg {
   transition: all 0.3s ease;
 }
@@ -837,14 +697,12 @@ image[data-src*="wood.webp"] {
 
 /* ===== تحسينات الأداء Performance ===== */
 
-/* Critical Rendering Path */
 .wood-layer,
 #main-svg,
 .scrollable-content {
   contain: layout style paint;
 }
 
-/* GPU Acceleration */
 .wood-banner-animation,
 .group-btn,
 .scroll-handle {
@@ -852,7 +710,6 @@ image[data-src*="wood.webp"] {
   transform: translateZ(0);
 }
 
-/* Smooth Scrolling */
 @supports (scroll-behavior: smooth) {
   #scroll-container {
     scroll-behavior: smooth;
@@ -861,7 +718,6 @@ image[data-src*="wood.webp"] {
 
 /* ===== تحسينات Accessibility ===== */
 
-/* Focus Visible للوحة المفاتيح */
 button:focus-visible,
 [role="button"]:focus-visible,
 input:focus-visible {
@@ -869,7 +725,6 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* إخفاء outline للماوس فقط */
 button:focus:not(:focus-visible),
 input:focus:not(:focus-visible) {
   outline: none;
@@ -889,7 +744,6 @@ input:focus:not(:focus-visible) {
 /* ===== Print Styles ===== */
 @media print {
   #js-toggle-container,
-  #loading-overlay,
   #group-selection-screen,
   #pdf-overlay,
   #initial-loading-screen,
@@ -919,7 +773,6 @@ input:focus:not(:focus-visible) {
   pointer-events: auto;
 }
 
-/* شريط التمرير أكثر وضوحاً */
 .scroll-handle {
   transition: y 0.1s ease-out;
 }
@@ -929,14 +782,12 @@ input:focus:not(:focus-visible) {
   filter: drop-shadow(0 0 5px rgba(255, 213, 79, 0.7));
 }
 
-/* التأكد من أن clip-path لا يقطع بشكل مفرط */
 .scrollable-content[clip-path],
 .subject-separator-group[clip-path] {
   clip-path: inherit;
   -webkit-clip-path: inherit;
 }
 
-/* تحسين اللمس على الهواتف */
 @media (hover: none) {
   .scrollable-content {
     -webkit-overflow-scrolling: touch;
@@ -966,7 +817,104 @@ input:focus:not(:focus-visible) {
 
 /* ===== تحسينات إضافية للأداء ===== */
 
-/* تقليل Repaints */
 #main-svg image {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#group-selection-screen,
+#pdf-overlay,
+#initial-loading-screen {
+  contain: layout size;
+}
+
+/* ===== تنسيق عناصر SVG للشاشات ===== */
+#svg-group-selection,
+#svg-loading-screen {
+  pointer-events: auto;
+  transition: opacity 0.5s ease-out;
+}
+
+.svg-light-bulb {
+  transition: all 0.3s ease;
+}
+
+/* ===== تنسيق الأسابيع في SVG ===== */
+[id^="week-"] {
+  will-change: transform;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+image[loading="lazy"] {
+  content-visibility: auto;
+}
+
+/* ===== تحسينات الحركة والتفاعل ===== */
+
+#scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+button, [role="button"], input {
+  touch-action: manipulation;
+}
+
+* {
+  -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
+}
+
+/* ===== Loading States ===== */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Scroll Indicators ===== */
+#scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+#scroll-container::-webkit-scrollbar-track {
+  background: #000;
+}
+
+#scroll-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+#scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+#back-btn-text {
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Arial', sans-serif;
+  dominant-baseline: middle;
+  paint-order: stroke fill;
+  text-shadow: 0px 0px 2px rgba(0,0,0,1);
+}
+
+#back-btn {
+  transition: all 0.3s ease;
+  filter: brightness(1.1);
+}
