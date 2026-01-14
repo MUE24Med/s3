@@ -473,13 +473,7 @@ function updateSVGLoadProgress(weekNumber, totalWeeks) {
         }
     }
 }
-```
 
----
-
-## 4️⃣ `script.js` (الجزء 2/4)
-
-```javascript
 /* === 7. تحليل الأسابيع من SVG === */
 async function analyzeWeeksFromSVG(groupLetter) {
     try {
