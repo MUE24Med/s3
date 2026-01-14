@@ -1,3 +1,5 @@
+/* --- 1. الإعدادات والمتغيرات العالمية --- */
+
 /* ===== منع Samsung Dark Mode ===== */
 html {
   color-scheme: only light !important;
@@ -118,7 +120,7 @@ html, body, div, svg, image, img {
     ry: 5;
 }
 
-/* 1. إعدادات توحيد الرؤية */
+/* 2. إعدادات توحيد الرؤية */
 *, *::before, *::after {
   box-sizing: border-box !important;
   -webkit-tap-highlight-color: transparent;
@@ -191,17 +193,114 @@ html, body {
 .l  { stroke: var(--color-l); }
 .is { stroke: var(--color-is); }
 
+/* ===== 🆕 شاشة التحميل الأولية (قبل اختيار الجروب) ===== */
+#initial-loading-screen {
+  position: fixed;
+  height: 100svh;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#initial-loading-screen.hidden,
+#initial-loading-screen[style*="display: none"] {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+}
+
+#initial-loading-content {
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+}
+
+#initial-logo {
+  width: 250px;
+  max-width: 70vw;
+  height: auto;
+  display: block;
+  margin: 0 auto 30px auto;
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
+  animation: logo-pulse 2s infinite ease-in-out;
+}
+
+#initial-loading-content h1 {
+  color: #ffcc00;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  margin-bottom: 30px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+#initial-loading-status {
+  color: #aaa;
+  font-size: 14px;
+  margin-top: 20px;
+  min-height: 20px;
+}
+
+/* ===== 🆕 دائرة النسبة المئوية ===== */
+.circular-progress-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 20px auto;
+}
+
+.circular-progress {
+  transform: rotate(-90deg);
+}
+
+.progress-bg {
+  fill: none;
+  stroke: #222;
+  stroke-width: 15;
+}
+
+.progress-bar {
+  fill: none;
+  stroke: #ffcc00;
+  stroke-width: 15;
+  stroke-linecap: round;
+  stroke-dasharray: 534.07; /* 2 * π * 85 */
+  stroke-dashoffset: 534.07;
+  transition: stroke-dashoffset 0.3s ease;
+  filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffcc00;
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.8);
+}
+
 /* ===== شاشة اختيار الجروب ===== */
 #group-selection-screen {
   height: 100svh;
   position: fixed;
   inset: 0;
   background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 10000;
   transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#group-selection-screen:not(.hidden) {
+  display: flex;
 }
 
 body {
@@ -212,6 +311,7 @@ body {
   opacity: 0;
   transform: scale(0.9);
   pointer-events: none;
+  display: none !important;
 }
 
 #group-selection-content {
@@ -396,7 +496,7 @@ body {
   font-size: 14px;
 }
 
-/* ===== Loading Overlay ===== */
+/* ===== Loading Overlay (بعد اختيار الجروب) ===== */
 #loading-overlay {
   position: fixed;
   height: 100svh;
@@ -415,6 +515,12 @@ body {
   display: flex;
   opacity: 1;
   pointer-events: all;
+}
+
+/* ✅ إخفاء شاشة التحميل HTML بعد اختيار الجروب */
+#loading-overlay,
+#loading-content {
+  display: none !important;
 }
 
 #loading-content {
@@ -722,6 +828,25 @@ image[data-src*="wood.webp"] {
   touch-action: none;
 }
 
+/* ===== 🆕 تنسيق زر مسح الكاش في SVG ===== */
+#clear-cache-btn-svg {
+  transition: all 0.3s ease;
+}
+
+#clear-cache-btn-svg:hover rect {
+  fill: #764ba2 !important;
+  filter: drop-shadow(0 0 10px rgba(118, 75, 162, 0.6));
+}
+
+#clear-cache-btn-svg:active {
+  transform: scale(0.98);
+}
+
+#clear-cache-btn-svg text {
+  pointer-events: none;
+  user-select: none;
+}
+
 /* ===== تحسينات الأداء Performance ===== */
 
 /* Critical Rendering Path */
@@ -779,7 +904,8 @@ input:focus:not(:focus-visible) {
   #loading-overlay,
   #group-selection-screen,
   #pdf-overlay,
-  #clear-cache-btn {
+  #initial-loading-screen,
+  #clear-cache-btn-svg {
     display: none !important;
   }
 
@@ -850,51 +976,6 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* ===== أنماط زر مسح الكاش ===== */
-#clear-cache-btn {
-  position: fixed;
-  top: 100px;
-  left: 120px;
-  z-index: 9999;
-  padding: 10px 15px;
-  width: 250px;
-  height: 50px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 14px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  transition: all 0.3s ease;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#clear-cache-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-}
-
-#clear-cache-btn:active {
-  transform: scale(0.95);
-}
-
-/* تحسين زر مسح الكاش على الشاشات الصغيرة */
-@media (max-width: 768px) {
-  #clear-cache-btn {
-    font-size: 12px !important;
-    padding: 8px 12px !important;
-    top: 95px !important;
-    left: 120px !important;
-    width: 250px !important;
-    height: 50px !important;
-  }
-}
-
 /* ===== تحسينات إضافية للأداء ===== */
 
 /* تقليل Repaints */
@@ -913,8 +994,25 @@ body {
 /* منع Layout Shifts */
 #group-selection-screen,
 #loading-overlay,
-#pdf-overlay {
+#pdf-overlay,
+#initial-loading-screen {
   contain: layout size;
+}
+
+/* ✅ تنسيق عناصر SVG للشاشات */
+#svg-group-selection,
+#svg-loading-screen {
+  pointer-events: auto;
+}
+
+.svg-light-bulb {
+  transition: all 0.4s ease;
+}
+
+/* ✅ تنسيق الأسابيع في SVG */
+[id^="week-"] {
+  will-change: transform;
+  transition: transform 0.8s ease-in-out;
 }
 
 /* Lazy Loading Support */
