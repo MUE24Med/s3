@@ -1,15 +1,16 @@
+
 // ✅ نظام versioning ذكي - غيّر الرقم عند كل تحديث مهم
-const VERSION = '2025.01.13.005';
+const VERSION = '2025.01.13.004';
 const CACHE_NAME = 'interactive-map-' + VERSION;
 
-// ✅ الملفات الأساسية المشتركة (تحميل أولي)
-const CORE_ASSETS = [
+const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './script.js',
   './tracker.js',
-  './image/0.png'
+  './image/wood.webp',
+  './image/0.png',
 ];
 
 // ✅ تثبيت Service Worker
@@ -21,8 +22,8 @@ self.addEventListener('install', (event) => {
 
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('📦 Service Worker: حفظ الملفات الأساسية في الكاش');
-      return cache.addAll(CORE_ASSETS);
+      console.log('📦 Service Worker: حفظ الملفات في الكاش');
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
 });
