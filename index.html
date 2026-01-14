@@ -22,6 +22,11 @@
   <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
   <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
 
+  <!-- ✅ Preconnect لـ GitHub (تسريع التحميل) -->
+  <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+  <link rel="preconnect" href="https://api.github.com" crossorigin>
+  <link rel="dns-prefetch" href="https://mozilla.github.io">
+
   <!-- ✅ Favicon -->
   <link rel="icon" type="image/png" href="image/0.png">
   <link rel="apple-touch-icon" href="image/0.png">
@@ -31,33 +36,29 @@
 </head>
 <body>
 
-<!-- شاشة التحميل الأولية للملفات المشتركة -->
+<!-- ✅ شاشة التحميل الأولية (قبل اختيار الجروب) -->
 <div id="initial-loading-screen">
   <div id="initial-loading-content">
     <img id="initial-logo" src="image/0.png" alt="شعار الكلية" />
-    <h1>جاري تحميل الملفات الأساسية</h1>
-    <div id="circular-progress">
-      <svg viewBox="0 0 200 200" class="progress-ring">
-        <defs>
-          <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#ffcc00;stop-opacity:1" />
-            <stop offset="50%" style="stop-color:#ffd54f;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#ffcc00;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <circle class="progress-ring-bg" cx="100" cy="100" r="90" />
-        <circle class="progress-ring-circle" cx="100" cy="100" r="90" />
-        <text x="100" y="100" class="progress-text" text-anchor="middle" dominant-baseline="central">
-          <tspan id="progress-percentage">0%</tspan>
-        </text>
+    <h1>جاري تحميل الملفات الأساسية...</h1>
+
+    <!-- ✅ دائرة النسبة المئوية -->
+    <div class="circular-progress-container">
+      <svg class="circular-progress" width="200" height="200">
+        <circle class="progress-bg" cx="100" cy="100" r="85"></circle>
+        <circle class="progress-bar" cx="100" cy="100" r="85"></circle>
       </svg>
+      <div class="progress-text">
+        <span id="initial-progress-percentage">0%</span>
+      </div>
     </div>
-    <p id="loading-status">جاري التحميل...</p>
+
+    <p id="initial-loading-status">جاري التحضير...</p>
   </div>
 </div>
 
 <!-- شاشة اختيار الجروب -->
-<div id="group-selection-screen">
+<div id="group-selection-screen" class="hidden">
   <div id="group-selection-content">
     <img id="main-logo" src="image/0.png" alt="شعار الكلية" />
     <h1>اختر مجموعتك</h1>
@@ -86,7 +87,7 @@
 </div>
 
 <!-- أدوات التحكم -->
-<div id="js-toggle-container" class="top">
+<div id="js-toggle-container" class="top" style="display: none;">
   <div id="search-container">
     <input 
       type="text" 
@@ -114,15 +115,14 @@
   </div>
 </div>
 
-<!-- شاشة التحميل -->
-<div id="loading-overlay">
+<!-- شاشة التحميل (بعد اختيار الجروب) -->
+<div id="loading-overlay" class="hidden">
   <div id="loading-content">
     <img 
       id="splash-image" 
       src="image/0.png" 
       alt="شعار التحميل"
     />
-    <!-- ✅ تم تغيير h1 ليتم تحديثه ديناميكيًا -->
     <h1 id="project-loading-title">جاري التحميل...</h1>
     <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
       <div class="light-bulb" id="bulb-1"></div>
@@ -151,13 +151,14 @@
   <iframe 
     id="pdfFrame" 
     src="" 
+    loading="lazy"
     title="عارض PDF"
     sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
   ></iframe>
 </div>
 
 <!-- SVG الرئيسي -->
-<div id="scroll-container">
+<div id="scroll-container" style="display: none;">
   <svg 
     id="main-svg" 
     xmlns="http://www.w3.org/2000/svg" 
@@ -178,6 +179,18 @@
         aria-hidden="true"
       />
 
+      <!-- ✅ زر مسح الكاش (سيميتري مع زر تغيير الجروب) -->
+      <g id="clear-cache-btn-svg" style="cursor: pointer;" role="button" tabindex="0">
+        <rect x="654" y="100" width="250" height="50" rx="10" fill="#667eea" stroke="#fff"/>
+        <text 
+          x="779" 
+          y="130" 
+          text-anchor="middle" 
+          fill="white" 
+          font-weight="bold"
+        >Clear Cache 🗑️</text>
+      </g>
+
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff"/>
         <text 
@@ -188,17 +201,6 @@
           fill="white" 
           font-weight="bold"
         >Change Group 🔄</text>
-      </g>
-
-      <g id="clear-cache-btn-svg" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="654" y="100" width="250" height="50" rx="10" fill="#764ba2" stroke="#fff"/>
-        <text 
-          x="779" 
-          y="130" 
-          text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
-        >🗑️ Clear Cache</text>
       </g>
 
       <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
