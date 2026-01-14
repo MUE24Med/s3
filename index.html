@@ -1,50 +1,46 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<!-- ✅ منع التخزين المؤقت للصفحة الرئيسية -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.14.002">
+<!-- ✅ رقم الإصدار (يساعد في تتبع التحديثات) -->
+<meta name="version" content="2025.01.13.002">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
+  <!-- ✅ PWA Support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <!-- ✅ منع Samsung Dark Mode -->
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#000000"
+  <!-- ✅ SEO -->
   <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
   <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
+
+  <!-- ✅ Preconnect لـ GitHub (تسريع التحميل) -->
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link rel="dns-prefetch" href="https://mozilla.github.io">
+  <!-- ✅ Preload للصور المهمة -->
+  <link rel="preload" href="image/wood.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/0.png" as="image" type="image/png">
+  <!-- ✅ Favicon -->
   <link rel="icon" type="image/png" href="image/0.png">
   <link rel="apple-touch-icon" href="image/0.png">
+  <!-- ✅ CSS الرئيسي -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="initial-loading-screen">
-  <div id="initial-loading-content">
-    <img id="initial-logo" src="image/0.png" alt="شعار الكلية" />
-    <h1>جاري تحميل الملفات الأساسية...</h1>
-    <div class="circular-progress-container">
-      <svg class="circular-progress" width="200" height="200">
-        <circle class="progress-bg" cx="100" cy="100" r="85"></circle>
-        <circle class="progress-bar" cx="100" cy="100" r="85"></circle>
-      </svg>
-      <div class="progress-text">
-        <span id="initial-progress-percentage">0%</span>
-      </div>
-    </div>
-    <p id="initial-loading-status">جاري التحضير...</p>
-  </div>
-</div>
-
-<div id="group-selection-screen" class="hidden">
+<!-- شاشة اختيار الجروب -->
+<div id="group-selection-screen">
   <div id="group-selection-content">
-    <img id="main-logo" src="image/0.png" alt="شعار الكلية" />
+    <img id="main-logo" src="image/0.png" alt="شعار الكلية" loading="eager" />
     <h1>اختر مجموعتك</h1>
     <div id="group-buttons">
       <button class="group-btn" data-group="A" aria-label="اختر المجموعة A">
@@ -70,7 +66,8 @@
   </div>
 </div>
 
-<div id="js-toggle-container" class="top" style="display: none;">
+<!-- أدوات التحكم -->
+<div id="js-toggle-container" class="top">
   <div id="search-container">
     <input 
       type="text" 
@@ -98,6 +95,35 @@
   </div>
 </div>
 
+<!-- شاشة التحميل -->
+<div id="loading-overlay">
+  <div id="loading-content">
+    <img 
+      id="splash-image" 
+      src="image/0.png" 
+      alt="شعار التحميل"
+      loading="eager"
+    />
+    <!-- ✅ تم تغيير h1 ليتم تحديثه ديناميكيًا -->
+    <h1 id="project-loading-title">جاري التحميل...</h1>
+    <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
+      <div class="light-bulb" id="bulb-1"></div>
+      <div class="light-bulb" id="bulb-2"></div>
+      <div class="light-bulb" id="bulb-3"></div>
+      <div class="light-bulb" id="bulb-4"></div>
+    </div>
+    <div id="legend">
+      <div class="legend-item red">أسئلة</div>
+      <div class="legend-item yellow">محاضرات</div>
+      <div class="legend-item white">مواد أخرى</div>
+      <div class="legend-item purple">إجابات</div>
+      <div class="legend-item green">سكاشن العملي</div>
+      <div class="legend-item blue">فيديو شرح</div>
+    </div>
+  </div>
+</div>
+
+<!-- عارض PDF -->
 <div id="pdf-overlay" class="hidden">
   <div id="toolbar">
     <button id="closePdfBtn" class="toolbar-btn" aria-label="إغلاق">❌ إغلاق</button>
@@ -113,6 +139,7 @@
   ></iframe>
 </div>
 
+<!-- SVG الرئيسي -->
 <div id="scroll-container">
   <svg 
     id="main-svg" 
@@ -133,17 +160,6 @@
         height="2454"
         aria-hidden="true"
       />
-
-      <g id="clear-cache-btn-svg" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="654" y="100" width="250" height="50" rx="10" fill="#667eea" stroke="#fff"/>
-        <text 
-          x="779" 
-          y="130" 
-          text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
-        >Clear Cache 🗑️</text>
-      </g>
 
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff"/>
@@ -186,6 +202,7 @@
   </svg>
 </div>
 
+<!-- ✅ Scripts مع defer للأداء الأفضل -->
 <script defer src="script.js"></script>
 <script defer src="tracker.js"></script>
 
