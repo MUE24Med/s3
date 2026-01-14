@@ -1100,3 +1100,923 @@ async function updateWoodInterface() {
             } else {
                 r.style.fill = "rgba(0,0,0,0.85)";
                 r.style.stroke = "#fff";
+                       r.style.strokeWidth = "2";
+            }
+
+            const cleanName = item.name.replace(/\.[^/.]+$/, "");
+
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("x", x + (width / 2));
+            t.setAttribute("y", y + 42);
+            t.setAttribute("text-anchor", "middle");
+            t.setAttribute("fill", "white");
+            t.style.fontWeight = "bold";
+            t.style.fontSize = item.type === 'dir' ? "20px" : "18px";
+            t.style.fontFamily = "Arial, sans-serif";
+            t.style.pointerEvents = "none";
+
+            let shouldDisplay = true;
+
+            if (item.type === 'dir') {
+                const filteredCount = globalFileTree.filter(f => {
+                    const isInsideFolder = f.path.startsWith(item.path + '/');
+                    const isPdf = f.path.toLowerCase().endsWith('.pdf');
+                    if (query === "") return isInsideFolder && isPdf;
+
+                    const fileName = f.path.split('/').pop().toLowerCase();
+                    const fileArabic = autoTranslate(fileName);
+
+                    return isInsideFolder && isPdf && (
+                        normalizeArabic(fileName).includes(query) ||
+                        normalizeArabic(fileArabic).includes(query)
+                    );
+                }).length;
+
+                const maxLength = width === 780 ? 45 : 25;
+                const displayName = cleanName.length > maxLength ? 
+                    cleanName.substring(0, maxLength - 3) + "..." : cleanName;
+                t.textContent = `📁 (${filteredCount}) ${displayName}`;
+
+                if (query !== "" && filteredCount === 0) {
+                    shouldDisplay = false;
+                }
+            } else {
+                const displayName = cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName;
+                t.textContent = "📄 " + displayName;
+
+                const arabicName = autoTranslate(cleanName);
+                if (query !== "" &&
+                    !normalizeArabic(cleanName).includes(query) &&
+                    !normalizeArabic(arabicName).includes(query)) {
+                    shouldDisplay = false;
+                }
+            }
+
+            if (shouldDisplay) {
+                g.appendChild(r);
+                g.appendChild(t);
+
+                let isDraggingContent = false;
+                let dragVelocity = 0;
+
+                g.addEventListener('click', (e) => {
+                    e.stopPropagation();
+
+                    if (isDraggingContent && Math.abs(dragVelocity) > 0.1) {
+                        return;
+                    }
+
+                    if (item.type === 'dir') {
+                        currentFolder = item.path;
+                        updateWoodInterface();
+                    } else {
+                        smartOpen(item);
+                    }
+                });
+
+                scrollContent.appendChild(g);
+                itemsAdded++;
+            }
+
+            if (item.type === 'dir') {
+                yPosition += 90;
+                fileRowCounter = 0;
+            } else {
+                fileRowCounter++;
+
+                if (fileRowCounter % 2 === 0) {
+                    yPosition += 90;
+                }
+            }
+        }
+
+        subjectIndex++;
+
+        if (fileRowCounter % 2 === 1) {
+            yPosition += 90;
+            fileRowCounter = 0;
+        }
+    }
+
+    const totalContentHeight = yPosition - 250;
+
+    const needsScroll = totalContentHeight > 1700;
+
+    if (needsScroll) {
+        const woodBanner = dynamicGroup.querySelector('.wood-banner-animation');
+        const nameInputGroup = dynamicGroup.querySelector('.name-input-group');
+        if (woodBanner) woodBanner.style.display = 'none';
+        if (nameInputGroup) nameInputGroup.style.display = 'none';
+    } else {
+        renderNameInput();
+        if (currentFolder === "" && currentGroup) {
+            updateWoodLogo(currentGroup);
+        }
+    }
+
+    scrollContainerGroup.appendChild(separatorGroup);
+    scrollContainerGroup.appendChild(scrollContent);
+
+    const maxScroll = Math.max(0, totalContentHeight - 1700);
+    let scrollOffset = 0;
+
+    console.log(`📊 المحتوى: ${totalContentHeight}px، التمرير المتاح: ${maxScroll}px`);
+
+    if (maxScroll > 0) {
+        const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        scrollBarGroup.setAttribute("class", "scroll-bar-group");
+
+        const scrollBarBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        scrollBarBg.setAttribute("x", "910");
+        scrollBarBg.setAttribute("y", "250");
+        scrollBarBg.setAttribute("width", "12");
+        scrollBarBg.setAttribute("height", "1700");
+        scrollBarBg.setAttribute("rx", "6");
+        scrollBarBg.style.fill = "rgba(255,255,255,0.1)";
+
+        const scrollBarHandle = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        scrollBarHandle.setAttribute("x", "910");
+        scrollBarHandle.setAttribute("y", "250");
+        scrollBarHandle.setAttribute("width", "12");
+        const handleHeight = Math.max(80, (1700 / totalContentHeight) * 1700);
+        scrollBarHandle.setAttribute("height", handleHeight);
+        scrollBarHandle.setAttribute("rx", "6");
+        scrollBarHandle.style.fill = "#ffca28";
+        scrollBarHandle.style.cursor = "pointer";
+        scrollBarHandle.setAttribute("class", "scroll-handle");
+
+        function updateScroll(newOffset) {
+            scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
+
+            scrollContent.setAttribute("transform", `translate(0, ${-scrollOffset})`);
+            separatorGroup.setAttribute("transform", `translate(0, ${-scrollOffset})`);
+
+            const scrollRatio = scrollOffset / maxScroll;
+            const handleY = 250 + (scrollRatio * (1700 - handleHeight));
+            scrollBarHandle.setAttribute("y", handleY);
+        }
+
+        let isDraggingContent = false;
+        let dragStartY = 0;
+        let dragStartOffset = 0;
+        let dragVelocity = 0;
+        let lastDragY = 0;
+        let lastDragTime = 0;
+
+        const startContentDrag = (clientY, isTouch = false) => {
+            isDraggingContent = true;
+            dragStartY = clientY;
+            lastDragY = clientY;
+            lastDragTime = Date.now();
+            dragStartOffset = scrollOffset;
+            dragVelocity = 0;
+            scrollContent.style.cursor = 'grabbing';
+
+            if (window.momentumAnimation) {
+                cancelAnimationFrame(window.momentumAnimation);
+                window.momentumAnimation = null;
+            }
+        };
+
+        const doContentDrag = (clientY) => {
+            if (!isDraggingContent) return;
+
+            const now = Date.now();
+            const deltaTime = now - lastDragTime;
+
+            if (deltaTime > 0) {
+                const deltaY = clientY - dragStartY;
+                const velocityDelta = clientY - lastDragY;
+                dragVelocity = velocityDelta / deltaTime;
+
+                lastDragY = clientY;
+                lastDragTime = now;
+
+                const newOffset = dragStartOffset - deltaY;
+                updateScroll(newOffset);
+            }
+        };
+
+        const endContentDrag = () => {
+            if (!isDraggingContent) return;
+
+            isDraggingContent = false;
+            scrollContent.style.cursor = 'grab';
+
+            if (Math.abs(dragVelocity) > 0.5) {
+                let velocity = dragVelocity * 200;
+                const deceleration = 0.95;
+
+                function momentum() {
+                    velocity *= deceleration;
+
+                    if (Math.abs(velocity) > 0.5) {
+                        const newOffset = scrollOffset - velocity;
+                        updateScroll(newOffset);
+                        window.momentumAnimation = requestAnimationFrame(momentum);
+                    } else {
+                        window.momentumAnimation = null;
+                    }
+                }
+
+                momentum();
+            }
+        };
+
+        scrollContent.addEventListener('mousedown', (e) => {
+            startContentDrag(e.clientY, false);
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDraggingContent) {
+                doContentDrag(e.clientY);
+            }
+        });
+
+        window.addEventListener('mouseup', endContentDrag);
+
+        scrollContent.addEventListener('touchstart', (e) => {
+            startContentDrag(e.touches[0].clientY, true);
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDraggingContent) {
+                doContentDrag(e.touches[0].clientY);
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', endContentDrag);
+
+        let isDraggingHandle = false;
+        let handleStartY = 0;
+        let handleStartOffset = 0;
+
+        scrollBarHandle.addEventListener('mousedown', (e) => {
+            isDraggingHandle = true;
+            handleStartY = e.clientY;
+            handleStartOffset = scrollOffset;
+            e.stopPropagation();
+        });
+
+        scrollBarHandle.addEventListener('touchstart', (e) => {
+            isDraggingHandle = true;
+            handleStartY = e.touches[0].clientY;
+            handleStartOffset = scrollOffset;
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingHandle) return;
+            const deltaY = e.clientY - handleStartY;
+            const scrollDelta = (deltaY / (1700 - handleHeight)) * maxScroll;
+            updateScroll(handleStartOffset + scrollDelta);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDraggingHandle) return;
+            const deltaY = e.touches[0].clientY - handleStartY;
+            const scrollDelta = (deltaY / (1700 - handleHeight)) * maxScroll;
+            updateScroll(handleStartOffset + scrollDelta);
+            e.preventDefault();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDraggingHandle = false;
+        });
+
+        window.addEventListener('touchend', () => {
+            isDraggingHandle = false;
+        });
+
+        scrollContent.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (window.momentumAnimation) {
+                cancelAnimationFrame(window.momentumAnimation);
+                window.momentumAnimation = null;
+            }
+
+            updateScroll(scrollOffset + e.deltaY * 0.8);
+        }, { passive: false });
+
+        scrollBarGroup.appendChild(scrollBarBg);
+        scrollBarGroup.appendChild(scrollBarHandle);
+        scrollContainerGroup.appendChild(scrollBarGroup);
+    }
+
+    dynamicGroup.appendChild(scrollContainerGroup);
+}
+
+/* --- 17. معالجة المستطيلات مع الأسماء العربية --- */
+function processRect(r) {
+    if (r.hasAttribute('data-processed')) return;
+    if (r.classList.contains('w')) r.setAttribute('width', '113.5');
+    if (r.classList.contains('hw')) r.setAttribute('width', '56.75');
+
+    let href = r.getAttribute('data-href') || '';  
+
+    if (href && href !== '#' && !href.startsWith('http')) {  
+        href = `${RAW_CONTENT_BASE}${href}`;  
+        r.setAttribute('data-href', href);  
+        console.log(`🔗 تحويل رابط: ${href}`);  
+    }  
+
+    const dataFull = r.getAttribute('data-full-text');  
+    const fileName = href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '';  
+
+    const name = dataFull || fileName || '';  
+
+    const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;  
+    const x = parseFloat(r.getAttribute('x'));   
+    const y = parseFloat(r.getAttribute('y'));  
+
+    if (name && name.trim() !== '') {  
+        const fs = Math.max(8, Math.min(12, w * 0.11));  
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
+        txt.setAttribute('x', x + w / 2);   
+        txt.setAttribute('y', y + 2);  
+        txt.setAttribute('text-anchor', 'middle');   
+        txt.setAttribute('class', 'rect-label');  
+        txt.setAttribute('data-original-text', name);   
+        txt.setAttribute('data-original-for', href);  
+        txt.style.fontSize = fs + 'px';   
+        txt.style.fill = 'white';   
+        txt.style.pointerEvents = 'none';   
+        txt.style.dominantBaseline = 'hanging';  
+        r.parentNode.appendChild(txt);   
+        wrapText(txt, w);  
+
+        const bbox = txt.getBBox();  
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+        bg.setAttribute('x', x);   
+        bg.setAttribute('y', y);   
+        bg.setAttribute('width', w);   
+        bg.setAttribute('height', bbox.height + 8);  
+        bg.setAttribute('class', 'label-bg');   
+        bg.setAttribute('data-original-for', href);  
+        bg.style.fill = 'black';   
+        bg.style.pointerEvents = 'none';  
+        r.parentNode.insertBefore(bg, txt);  
+    }  
+
+    if (!isTouchDevice) {   
+        r.addEventListener('mouseover', startHover);   
+        r.addEventListener('mouseout', cleanupHover);   
+    }  
+
+    r.onclick = async () => {   
+        if (href && href !== '#') {  
+            const fileName = href.split('/').pop();
+
+            try {  
+                const response = await fetch(href, {   
+                    method: 'HEAD',  
+                    mode: 'cors',  
+                    cache: 'no-cache'  
+                });  
+
+                if (!response.ok) {  
+                    alert(`❌ الملف "${fileName}" غير موجود`);
+                    console.warn(`⚠️ الملف غير موجود: ${href}`);  
+                    return;  
+                }  
+
+                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+                pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                    path: href,
+                    scrollPosition: scrollPosition
+                });
+
+                const overlay = document.getElementById("pdf-overlay");  
+                const pdfViewer = document.getElementById("pdfFrame");  
+                overlay.classList.remove("hidden");  
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                encodeURIComponent(href) + "#zoom=page-width";  
+
+                if (typeof trackSvgOpen === 'function') {  
+                    trackSvgOpen(href);  
+                }  
+            } catch (error) {  
+                console.warn(`⚠️ CORS Error, trying direct open:`, error);  
+
+                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+                pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                    path: href,
+                    scrollPosition: scrollPosition
+                });
+
+                const overlay = document.getElementById("pdf-overlay");  
+                const pdfViewer = document.getElementById("pdfFrame");  
+                overlay.classList.remove("hidden");
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                encodeURIComponent(href) + "#zoom=page-width";  
+            }  
+        }  
+    };  
+
+    if (scrollContainer) {  
+        r.addEventListener('touchstart', function(e) {   
+            if (!interactionEnabled) return;   
+            activeState.touchStartTime = Date.now();   
+            activeState.initialScrollLeft = scrollContainer.scrollLeft;   
+            startHover.call(this);   
+        });  
+        r.addEventListener('touchend', async function(e) {   
+            if (!interactionEnabled) return;  
+            if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 &&   
+                (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {  
+                if (href && href !== '#') {  
+                    const fileName = href.split('/').pop();
+
+                    try {  
+                        const response = await fetch(href, {   
+                            method: 'HEAD',  
+                            mode: 'cors',  
+                            cache: 'no-cache'  
+                        });  
+
+                        if (!response.ok) {  
+                            alert(`❌ الملف "${fileName}" غير موجود`);
+                            console.warn(`⚠️ الملف غير موجود: ${href}`);  
+                            cleanupHover();  
+                            return;  
+                        }  
+
+                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+                        pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                            path: href,
+                            scrollPosition: scrollPosition
+                        });
+
+                        const overlay = document.getElementById("pdf-overlay");  
+                        const pdfViewer = document.getElementById("pdfFrame");  
+                        overlay.classList.remove("hidden");  
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                        encodeURIComponent(href) + "#zoom=page-width";  
+
+                        if (typeof trackSvgOpen === 'function') {  
+                            trackSvgOpen(href);  
+                        }  
+                    } catch (error) {  
+                        console.warn(`⚠️ CORS Error, trying direct open:`, error);  
+
+                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+                        pushNavigationState(NAV_STATE.PDF_VIEW, { 
+                            path: href,
+                            scrollPosition: scrollPosition
+                        });
+
+                        const overlay = document.getElementById("pdf-overlay");  
+                        const pdfViewer = document.getElementById("pdfFrame");  
+                        overlay.classList.remove("hidden");  
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
+                                        encodeURIComponent(href) + "#zoom=page-width";  
+                    }  
+                }  
+            }  
+            cleanupHover();  
+        });  
+    }  
+
+    r.setAttribute('data-processed', 'true');
+}
+
+/* --- 18. فحص ومعالجة جميع المستطيلات --- */
+function scan() {
+    if (!mainSvg) return;
+
+    console.log('🔍 تشغيل scan()...');  
+
+    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');  
+    console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);  
+
+    rects.forEach(r => {  
+        processRect(r);  
+
+        const href = r.getAttribute('data-href') || '';  
+        if (href === '#') {  
+            r.style.display = 'none';  
+            const label = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);  
+            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);  
+            if (label) label.style.display = 'none';  
+            if (bg) bg.style.display = 'none';  
+        }  
+    });
+
+    if (!window.svgObserver) {
+        const observer = new MutationObserver((mutations) => {
+            let hasNewElements = false;
+
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        if (node.tagName === 'image' || node.querySelector('image')) {
+                            hasNewElements = true;
+                        }
+                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
+                            processRect(node);
+                        }
+                        if (node.querySelectorAll) {
+                            const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
+                            newRects.forEach(rect => processRect(rect));
+                        }
+                    }
+                });
+            });
+
+            if (hasNewElements) {
+                console.log('🔄 تم اكتشاف عناصر جديدة - تحديث viewBox');
+                updateDynamicSizes();
+            }
+        });
+
+        observer.observe(mainSvg, {
+            childList: true,
+            subtree: true
+        });
+
+        window.svgObserver = observer;
+        console.log('👁️ تم تفعيل مراقب العناصر الجديدة');
+    }
+}
+window.scan = scan;
+
+/* --- 19. تحميل الصور مع تتبع التقدم (نظام 1/5، 2/5، 3/5، 4/5) --- */
+function loadImages() {
+    if (!mainSvg) return;
+
+    console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);  
+
+    if (imageUrlsToLoad.length === 0) {  
+        console.warn('⚠️ لا توجد صور للتحميل!');  
+        finishLoading();  
+        return;  
+    }  
+
+    const MAX_CONCURRENT = 3;  
+    let currentIndex = 0;  
+
+    function loadNextBatch() {  
+        while (currentIndex < imageUrlsToLoad.length &&   
+               currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {  
+
+            const url = imageUrlsToLoad[currentIndex];  
+            currentIndex++;  
+
+            const img = new Image();  
+
+            img.onload = function() {  
+                const allImages = [  
+                    ...mainSvg.querySelectorAll('image'),  
+                    ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])  
+                ];  
+
+                allImages.forEach(si => {  
+                    const dataSrc = si.getAttribute('data-src');  
+                    if (dataSrc === url) {  
+                        si.setAttribute('href', this.src);  
+                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);  
+                    }  
+                });  
+
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
+                    console.log('✅ اكتمل تحميل جميع الصور');  
+                    finishLoading();  
+                } else {  
+                    loadNextBatch();  
+                }  
+            };  
+
+            img.onerror = function() {  
+                console.error(`❌ خطأ في تحميل ${url}`);  
+
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
+                    finishLoading();  
+                } else {  
+                    loadNextBatch();  
+                }  
+            };  
+
+            img.src = url;  
+        }  
+    }  
+
+    loadNextBatch();
+}
+
+function finishLoading() {
+    if (mainSvg) mainSvg.style.opacity = '1';
+
+    window.updateDynamicSizes();  
+    scan();  
+    updateWoodInterface();  
+    window.goToWood();  
+
+    loadingProgress.completedSteps = loadingProgress.totalSteps;
+    loadingProgress.currentPercentage = 100;
+    updateLoadProgress();
+
+    setTimeout(() => {
+        hideLoadingScreen();  
+        console.log('🎉 اكتمل التحميل والعرض');
+    }, 500);
+}
+window.loadImages = loadImages;
+
+/* --- 20. مستمعي الأحداث --- */
+document.querySelectorAll('.group-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const group = this.getAttribute('data-group');
+        console.log('👆 تم اختيار المجموعة:', group);
+        initializeGroup(group);
+    });
+});
+
+/* --- Preload Group Logos --- */
+function preloadGroupLogos() {
+    const groups = ['A', 'B', 'C', 'D'];
+
+    groups.forEach(group => {
+        const img = new Image();
+        img.src = `image/logo-${group}.webp`;
+        console.log(`🖼️ تحميل مسبق: logo-${group}.webp`);
+    });
+}
+
+// تشغيل التحميل المسبق فور تحميل الصفحة
+window.addEventListener('load', () => {
+    preloadGroupLogos();
+});
+
+document.querySelectorAll('.group-btn').forEach(btn => {
+    // ... باقي الكود
+});
+
+if (changeGroupBtn) {
+    changeGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+        window.goToWood();
+        pushNavigationState(NAV_STATE.GROUP_SELECTION);
+    });
+}
+
+if (searchInput) {
+    searchInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+
+            if (typeof trackSearch === 'function') {  
+                trackSearch(searchInput.value);  
+            }  
+
+            window.goToWood();  
+        }  
+    };  
+
+    searchInput.addEventListener('input', debounce(function(e) {  
+        if (!mainSvg) return;  
+
+        const query = normalizeArabic(e.target.value);  
+
+        const isEmptySearch = query.length === 0;
+
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
+            const href = rect.getAttribute('data-href') || '';  
+            const fullText = rect.getAttribute('data-full-text') || '';  
+            const fileName = href !== '#' ? href.split('/').pop() : '';  
+
+            const autoArabic = autoTranslate(fileName);  
+
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
+
+            if (href === '#') {  
+                rect.style.display = 'none';  
+                if (label) label.style.display = 'none';  
+                if (bg) bg.style.display = 'none';  
+                return;  
+            }  
+
+            if (!isEmptySearch) {  
+                const normalizedHref = normalizeArabic(href);
+                const normalizedFullText = normalizeArabic(fullText);
+                const normalizedFileName = normalizeArabic(fileName);
+                const normalizedAutoArabic = normalizeArabic(autoArabic);
+
+                const isMatch = normalizedHref.includes(query) ||   
+                              normalizedFullText.includes(query) ||
+                              normalizedFileName.includes(query) ||
+                              normalizedAutoArabic.includes(query);  
+
+                rect.style.display = isMatch ? '' : 'none';  
+                if (label) label.style.display = rect.style.display;   
+                if (bg) bg.style.display = rect.style.display;  
+            } else {  
+                rect.style.display = '';  
+                if (label) label.style.display = '';   
+                if (bg) bg.style.display = '';  
+            }  
+        });  
+
+        updateWoodInterface();  
+    }, 150));
+}
+
+if (moveToggle) {
+    moveToggle.onclick = (e) => {
+        e.preventDefault();
+        if (toggleContainer && toggleContainer.classList.contains('top')) {
+            toggleContainer.classList.replace('top', 'bottom');
+        } else if (toggleContainer) {
+            toggleContainer.classList.replace('bottom', 'top');
+        }
+    };
+}
+
+if (searchIcon) {
+    searchIcon.onclick = (e) => {
+        e.preventDefault();
+        window.goToWood();
+    };
+}
+
+if (backButtonGroup) {
+    backButtonGroup.onclick = () => {
+        if (currentFolder !== "") {
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/');
+            window.updateWoodInterface();
+        } else {
+            console.log("🔙 العودة إلى نهاية الخريطة");
+            window.goToMapEnd();
+        }
+    };
+}
+
+if (jsToggle) {
+    jsToggle.addEventListener('change', function() {
+        interactionEnabled = this.checked;
+        if (!interactionEnabled) cleanupHover();
+    });
+}
+
+if (mainSvg) {
+    mainSvg.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
+}
+
+/* --- 21. البدء التلقائي --- */
+
+if (!localStorage.getItem('visitor_id')) {
+    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('visitor_id', newId);
+}
+
+updateWelcomeMessages();
+
+setupBackButton();
+
+const hasSavedGroup = loadSelectedGroup();
+if (hasSavedGroup) {
+    initializeGroup(currentGroup);
+} else {
+    if (groupSelectionScreen) {
+        groupSelectionScreen.classList.remove('hidden');
+    }
+    pushNavigationState(NAV_STATE.GROUP_SELECTION);
+}
+
+/* --- 22. نظام تحديث Service Worker التلقائي --- */
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    console.log('🔄 تحديث جديد متاح - إعادة التحميل...');
+    window.location.reload();
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('✅ Service Worker مسجل');
+
+        setInterval(() => {
+          console.log('🔍 فحص التحديثات...');
+          reg.update();
+        }, 5 * 60 * 1000);
+
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          console.log('🆕 Service Worker جديد قيد التثبيت...');
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('✅ Service Worker الجديد جاهز');
+
+              const updateNow = confirm('🎉 تحديث جديد متاح!\n\nهل تريد إعادة التحميل الآن للحصول على آخر التحديثات؟');
+
+              if (updateNow) {
+                newWorker.postMessage({ action: 'skipWaiting' });
+              } else {
+                console.log('⏳ المستخدم اختار التحديث لاحقاً');
+              }
+            }
+          });
+        });
+      })
+      .catch(err => console.log('❌ فشل Service Worker:', err));
+  });
+}
+
+/* --- 23. زر مسح الكاش يدوياً --- */
+function createClearCacheButton() {
+  if (document.getElementById('clear-cache-btn')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'clear-cache-btn';
+  btn.innerHTML = '🗑️ مسح الكاش';
+  btn.style.cssText = `
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 9999;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  `;
+
+  btn.onmouseover = () => {
+    btn.style.transform = 'scale(1.05)';
+    btn.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+  };
+
+  btn.onmouseout = () => {
+    btn.style.transform = 'scale(1)';
+    btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+  };
+
+  btn.onclick = async () => {
+    if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
+      return;
+    }
+
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+          console.log('✅ تم إلغاء تسجيل Service Worker');
+        }
+      }
+
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        console.log('✅ تم مسح جميع الكاش');
+      }
+
+      alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
+
+      window.location.reload(true);
+    } catch (error) {
+      console.error('❌ خطأ في مسح الكاش:', error);
+      alert('❌ حدث خطأ أثناء مسح الكاش');
+    }
+  };
+
+  document.body.appendChild(btn);
+  console.log('🗑️ تم إضافة زر مسح الكاش');
+}
+
+window.addEventListener('load', () => {
+  setTimeout(createClearCacheButton, 1000);
+});
+
+console.log('✅ تم تحميل script.js - نسخة محسّنة مع نظام المصابيح 1/5، 2/5، 3/5، 4/5');
+console.log('🔧 التحسينات: نظام تتبع دقيق | مصابيح متساوية | Service Worker ذكي');
