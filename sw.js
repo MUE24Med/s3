@@ -68,7 +68,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request));
     return;
   }
-// ✅ HTML/CSS/JS: Network First مع timeout (دائماً محدّث)
+
+  // ✅ HTML/CSS/JS: Network First مع timeout (دائماً محدّث)
   if (url.pathname.match(/\.(html|css|js)$/i) || url.pathname === '/' || url.pathname === './') {
     event.respondWith(
       Promise.race([
