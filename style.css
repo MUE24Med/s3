@@ -24,13 +24,71 @@ body {
   color-scheme: only light !important;
 }
 
-/* ===== منع الفلاتر على جميع العناصر ===== */
-html, body, div, svg, image, img {
-  filter: none !important;
-  -webkit-filter: none !important;
+/* ===== 🔵 شاشة التحميل الأولى (الدائرة) ===== */
+#initial-loading-overlay {
+  position: fixed;
+  height: 100svh;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 15000;
+  transition: opacity .5s ease-out;
+  opacity: 0;
+  pointer-events: none;
 }
 
-/* ===== شاشة اختيار الجروب ===== */
+#initial-loading-overlay.active {
+  display: flex;
+  opacity: 1;
+  pointer-events: all;
+}
+
+#initial-loading-content {
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+}
+
+#initial-logo {
+  width: 200px;
+  max-width: 70vw;
+  height: auto;
+  margin-bottom: 30px;
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
+  animation: logo-pulse 2s infinite ease-in-out;
+}
+
+#initial-loading-content h1 {
+  color: #ffcc00;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  margin: 20px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+/* ===== دائرة التقدم ===== */
+.circular-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30px 0;
+}
+
+#progress-circle {
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+#loading-status {
+  color: #aaa;
+  font-size: 14px;
+  margin-top: 20px;
+}
+
+/* ===== 🟢 شاشة اختيار الجروب ===== */
 #group-selection-screen {
   height: 100svh;
   position: fixed;
@@ -54,7 +112,6 @@ html, body, div, svg, image, img {
   width: 90%;
   max-width: 600px;
   transform: scale(0.85);
-  transform-origin: center center;
 }
 
 #main-logo {
@@ -74,9 +131,6 @@ html, body, div, svg, image, img {
   text-transform: uppercase;
   letter-spacing: 3px;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 #group-buttons {
@@ -84,8 +138,6 @@ html, body, div, svg, image, img {
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   padding: 0 20px;
-  box-sizing: border-box;
-  direction: ltr;
 }
 
 .group-btn {
@@ -123,10 +175,6 @@ html, body, div, svg, image, img {
   box-shadow: 0 10px 30px rgba(255, 204, 0, 0.3);
 }
 
-.group-btn:active {
-  transform: translateY(-2px) scale(0.98);
-}
-
 .group-letter {
   font-size: 3rem;
   font-weight: bold;
@@ -139,15 +187,9 @@ html, body, div, svg, image, img {
   color: #ccc;
   text-transform: uppercase;
   letter-spacing: 2px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  text-align: center;
 }
 
-/* ===== شاشة التحميل ===== */
+/* ===== 🟡 شاشة التحميل الثانية (المصابيح) ===== */
 #loading-overlay {
   position: fixed;
   height: 100svh;
@@ -178,9 +220,7 @@ html, body, div, svg, image, img {
   width: 400px;
   max-width: 85vw;
   height: auto;
-  display: block;
   margin: -60px auto 10px auto;
-  transform: translateY(-10%);
   border-radius: 15px;
   box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
   animation: logo-glow 2s infinite ease-in-out;
@@ -188,6 +228,13 @@ html, body, div, svg, image, img {
 
 #loading-content h1 {
   color: #ffcc00;
+  margin: 10px 0;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+#loading-content h2 {
+  color: #white;
   margin: 10px 0;
   font-size: 1.8rem;
   text-transform: uppercase;
@@ -242,7 +289,6 @@ html, body, div, svg, image, img {
   padding: 15px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .legend-item {
@@ -270,176 +316,24 @@ html, body, div, svg, image, img {
 .legend-item.green  { --item-color: green; }
 .legend-item.yellow { --item-color: yellow; }
 
-/* ===== شريط البحث العائم - ✅ التعديل الرئيسي هنا ===== */
-#js-toggle-container {
-  transform: translateZ(0); 
-  will-change: transform;
-  position: fixed;
-  right: 20px;
-  z-index: 10000;
-  display: flex !important; /* ✅ هنا التغيير - كان none */
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
-  padding: 15px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  width: auto;
-  min-width: 160px;
-  max-width: 90vw;
+/* ===== أزرار SVG ===== */
+#change-group-btn:hover rect,
+#clear-cache-svg-btn:hover rect {
+  filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
 }
 
-.controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  padding-top: 10px;
+#change-group-btn:active,
+#clear-cache-svg-btn:active {
+  transform: scale(0.95);
 }
 
-#js-toggle-container.top { top: 20px; }
-#js-toggle-container.bottom { bottom: 20px; }
-
-#search-container {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: center;
-}
-
-#search-input {
-  padding: 8px 10px 8px 45px !important;
-  border: 1px solid #444;
-  border-radius: 5px;
-  width: 100%;
-  height: 40px;
-  background: #222;
-  color: white;
-  font-size: 14px;
-}
-
-.clickable-area {
-  position: absolute;
-  left: 2px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px !important;
-  cursor: pointer;
-  z-index: 5;
-  border-radius: 5px 0 0 5px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.clickable-area:active {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-50%) scale(0.9);
-}
-
-#move-toggle {
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  padding: 5px;
-}
-
-#move-toggle:active {
-  opacity: 0.6;
-  transform: scale(1.1);
-}
-
-/* ===== Switch Toggle ===== */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-}
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #444;
-  transition: .4s;
-  border-radius: 20px;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-input:checked + .slider { background-color: #2196F3; }
-input:checked + .slider:before { transform: translateX(20px); }
-
-/* ===== عارض PDF ===== */
-#pdf-overlay {
-  height: 100svh;
-  transition: transform .35s ease, opacity .35s ease;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #000;
-  z-index: 20000;
-  display: flex;
-  flex-direction: column;
-}
-
-#pdf-overlay.hidden {
-  transform: translateY(100%);
-  pointer-events: none;
-}
-
-#toolbar {
-  height: 50px;
-  background: #333;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  border-bottom: 1px solid #555;
-}
-
-#pdfFrame {
-  flex: 1;
-  width: 100%;
-  border: none;
-  background: #fff;
-}
-
-.toolbar-btn {
-  background: #555;
-  color: white;
-  border: 1px solid #777;
-  padding: 5px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-/* ===== الخريطة الرئيسية ===== */
+/* ===== باقي الأنماط ===== */
 #scroll-container {
   width: 100vw;
   height: 100svh;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-behavior: smooth; 
+  scroll-behavior: smooth;
   direction: ltr;
   scrollbar-width: thin;
   scrollbar-color: #444 black;
@@ -450,169 +344,14 @@ input:checked + .slider:before { transform: translateX(20px); }
   width: auto;
   display: block;
   transition: opacity .3s ease-out;
-  opacity: 0; 
+  opacity: 0;
 }
 
-/* ===== المستطيلات ===== */
-:root {
-  --color-q: red;
-  --color-v: blue;
-  --color-i: white;
-  --color-a: purple;
-  --color-s: green;
-  --color-l: yellow;
+.hidden {
+  display: none !important;
 }
 
-.m {
-  fill: transparent;
-  stroke: transparent;
-  stroke-width: 2px;
-  transform-origin: center center;
-  transition: filter .3s ease, stroke-width .3s ease;
-  cursor: pointer;
-}
-
-.q { stroke: var(--color-q); }
-.v { stroke: var(--color-v); }
-.i { stroke: var(--color-i); }
-.a { stroke: var(--color-a); }
-.s { stroke: var(--color-s); }
-.l { stroke: var(--color-l); }
-
-.label-bg { rx: 3; ry: 3; opacity: 0.9; }
-.rect-label { font-weight: bold; pointer-events: none; }
-
-#back-btn-text {
-  pointer-events: none;
-  user-select: none;
-  font-family: 'Arial', sans-serif;
-  dominant-baseline: middle;
-  paint-order: stroke fill;
-  text-shadow: 0px 0px 2px rgba(0,0,0,1);
-}
-
-#back-btn {
-  transition: all 0.3s ease;
-  filter: brightness(1.1);
-}
-
-/* ===== أزرار SVG ===== */
-#change-group-btn:hover rect {
-  filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
-}
-
-#change-group-btn:active {
-  transform: scale(0.95);
-}
-
-/* ===== اللوجو المتحرك ===== */
-.wood-banner-animation {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  cursor: pointer;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: wood-pulse-soft 3s infinite ease-in-out;
-  will-change: transform, filter;
-  transform: scale(1) translateY(0);
-}
-
-.wood-banner-animation:hover {
-  animation: none !important;
-  transform: translateY(-15px) scale(1.15) !important;
-  animation: glow-oscillation 1.5s infinite ease-in-out !important;
-  filter: brightness(1.2);
-  z-index: 100;
-}
-
-.wood-banner-animation:active {
-  transform: translateY(-4px) scale(1.05) !important;
-  animation: none !important;
-}
-
-@keyframes glow-oscillation {
-  0%, 100% {
-    filter: brightness(1.1) drop-shadow(0 10px 20px rgba(255, 204, 0, 0.4));
-  }
-  50% {
-    filter: brightness(1.3) 
-            drop-shadow(0 15px 40px rgba(255, 204, 0, 0.8)) 
-            drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
-  }
-}
-
-@keyframes wood-pulse-soft {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
-
-/* ===== حقل إدخال الاسم ===== */
-.name-input-group {
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.name-input-group:hover rect {
-  stroke: #ffd54f !important;
-  stroke-width: 3 !important;
-  filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
-}
-
-.name-input-group:active {
-  transform: scale(0.98);
-}
-
-.name-input-group text {
-  pointer-events: none;
-  user-select: none;
-}
-
-/* ===== قائمة الخشب ===== */
-.scroll-container-group {
-  pointer-events: auto;
-}
-
-.scrollable-content {
-  transition: transform 0.2s ease-out;
-}
-
-.list-item {
-  stroke-width: 1px !important;
-  rx: 5;
-  ry: 5;
-}
-
-.wood-folder-group:hover rect,
-.wood-file-group:hover rect {
-  stroke-width: 2 !important;
-  filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 204, 0, 0.5));
-}
-
-.wood-folder-group:active,
-.wood-file-group:active {
-  transform: scale(0.98);
-}
-
-/* ===== شريط التمرير ===== */
-.scroll-container-group rect[x="910"] {
-  transition: fill 0.2s ease, y 0.15s ease-out;
-}
-
-.scroll-container-group rect[x="910"]:hover {
-  fill: #ffd54f !important;
-}
-
-.scroll-container-group rect[x="910"]:active {
-  fill: #ffeb3b !important;
-}
-
-/* ===== منع التحديد والسحب ===== */
-img, image, svg, rect {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* ===== الأنيميشن ===== */
+/* ===== Animations ===== */
 @keyframes logo-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -625,12 +364,6 @@ img, image, svg, rect {
 }
 
 /* ===== Responsive ===== */
-@media (max-height: 700px) {
-  #group-selection-content {
-    transform: scale(0.78);
-  }
-}
-
 @media (max-width: 480px) {
   #group-buttons {
     grid-template-columns: 1fr;
@@ -645,47 +378,8 @@ img, image, svg, rect {
     font-size: 2.5rem;
   }
 
-  #main-logo {
-    width: 200px;
-    margin-bottom: 20px;
-  }
-
-  #group-selection-content h1 {
-    margin-bottom: 25px;
-    letter-spacing: 1px;
-  }
-
-  .group-label {
-    letter-spacing: 1px;
-  }
-
-  #splash-image {
+  #splash-image,
+  #initial-logo {
     margin-top: -40px;
-    max-width: 75vw;
-  }
-
-  #js-toggle-container {
-    right: 10px;
-    padding: 8px;
-    width: 150px; 
-  }
-
-  #search-input {
-    font-size: 12px;
-  }
-}
-
-/* ===== تحسينات الأداء ===== */
-.scrollable-content * {
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .scrollable-content {
-    transition: none;
-  }
-
-  .scroll-container-group rect[x="910"] {
-    transition: fill 0.2s ease;
   }
 }
