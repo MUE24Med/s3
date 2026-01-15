@@ -1,61 +1,103 @@
-/* ===== 1. الأساسيات (Global Styles) ===== */
+/* ===== 1. General Styles (الأساسيات) ===== */
 html, body {
   margin: 0;
   padding: 0;
   height: 100svh;
   width: 100vw;
   overflow: hidden;
-  background-color: #000; /* الخلفية الأساسية سوداء لتناسب مود الخشب */
+  background-color: #000000;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 *, *::before, *::after {
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ===== 2. الحاوية و SVG (Main View) ===== */
-#scroll-container {
-  width: 100vw;
+/* ===== 2. Loading Screens (شاشات التحميل) ===== */
+#initial-loading-overlay,
+#loading-overlay,
+#group-selection-screen {
+  position: fixed;
   height: 100svh;
-  overflow-x: auto;
-  overflow-y: hidden;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
   display: flex;
-  background-color: #000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-#main-svg {
-  height: 100%;
-  width: auto;
-  display: block;
-  opacity: 0; /* يتم إظهاره عبر JS بعد التحميل */
-  transition: opacity 0.5s ease;
+#initial-loading-overlay { z-index: 15000; display: none; }
+#initial-loading-overlay.active { display: flex; opacity: 1; }
+
+.hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  display: none !important;
 }
 
-/* تخصيص التفاعل مع عناصر SVG */
-#main-svg g[role="button"] {
+/* محتوى شاشة التحميل */
+#initial-loading-content, #loading-content {
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+}
+
+/* دائرة التقدم */
+.circular-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+
+/* ===== 3. Group Selection Buttons (أزرار الجروبات) ===== */
+#group-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  padding: 20px;
+}
+
+.group-btn {
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #444;
+  border-radius: 15px;
+  padding: 20px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
 }
 
-#main-svg g[role="button"]:active {
-  transform: scale(0.98);
+.group-btn:hover {
+  border-color: #ffcc00;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3);
 }
 
-/* ===== 3. شريط البحث وأدوات التحكم (Controls) ===== */
+.group-letter { font-size: 2.5rem; font-weight: bold; color: #ffcc00; }
+.group-label { color: #ccc; font-size: 0.9rem; text-transform: uppercase; }
+
+/* ===== 4. Floating Search Bar (شريط البحث المصغر) ===== */
 #js-toggle-container {
   position: fixed;
-  z-index: 2000;
+  z-index: 5000;
   right: 15px;
-  display: none; /* يظهر عبر JS */
+  display: none;
   flex-direction: column;
   gap: 8px;
-  background: rgba(20, 20, 20, 0.9);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
   padding: 10px;
   border-radius: 12px;
-  border: 1px solid #333;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  border: 1px solid #444;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 #js-toggle-container.top { top: 15px; }
@@ -64,127 +106,100 @@ html, body {
 #search-container {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #2a2a2a;
-  padding: 5px 10px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 6px 10px;
   border-radius: 8px;
+  border: 1px solid #555;
 }
 
-/* عرض البحث المصغر جداً كما طلبت */
 #search-input {
   background: transparent;
   border: none;
-  color: #fff;
+  color: white;
   font-size: 13px;
-  width: 110px; /* تم تقليل العرض هنا */
   outline: none;
+  width: 120px; /* العرض المصغر المطلوب */
 }
 
-#search-icon {
-  font-size: 16px;
-  cursor: pointer;
-}
+#search-icon { font-size: 16px; cursor: pointer; }
 
 .controls-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 4px;
 }
 
-/* ===== 4. شاشات التحميل واختيار المجموعة ===== */
-.overlay-screen {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  transition: opacity 0.4s ease;
+/* ===== 5. SVG Layout (الخريطة التفاعلية) ===== */
+#scroll-container {
+  width: 100vw;
+  height: 100svh;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background-color: #000;
 }
 
-.overlay-screen.hidden {
+#main-svg {
+  height: 100%;
+  width: auto;
+  display: block;
   opacity: 0;
-  pointer-events: none;
-  display: none !important;
+  transition: opacity 0.5s ease;
 }
 
-.group-btn {
-  background: #1a1a1a;
-  color: #ffcc00;
-  border: 2px solid #444;
-  padding: 20px 30px;
-  border-radius: 12px;
-  font-weight: bold;
+/* التفاعل مع أزرار SVG */
+#change-group-btn, #clear-cache-svg-btn, #back-button-group {
   cursor: pointer;
-  transition: 0.3s;
 }
 
-.group-btn:hover {
-  border-color: #ffcc00;
-  background: #222;
+#change-group-btn:hover rect, #clear-cache-svg-btn:hover rect {
+  fill: rgba(255, 255, 255, 0.1);
 }
 
-/* ===== 5. عارض PDF (PDF Overlay) ===== */
+/* ===== 6. PDF Overlay (عارض الملفات) ===== */
 #pdf-overlay {
   position: fixed;
   inset: 0;
   background: #000;
-  z-index: 30000;
+  z-index: 20000;
   display: flex;
   flex-direction: column;
 }
 
-#pdf-overlay.hidden { display: none; }
-
 #toolbar {
-  background: #111;
-  padding: 10px;
   display: flex;
   justify-content: space-around;
+  padding: 10px;
+  background: #111;
   border-bottom: 1px solid #333;
 }
 
 .toolbar-btn {
-  background: #333;
-  color: white;
-  border: none;
+  background: #222;
+  color: #fff;
+  border: 1px solid #444;
   padding: 8px 15px;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
 }
 
-/* ===== 6. التبديل (Switch) ===== */
-.switch {
-  position: relative;
-  width: 34px;
-  height: 18px;
-}
-
+/* ===== 7. Toggle Switch (زر التبديل) ===== */
+.switch { position: relative; width: 40px; height: 20px; }
 .switch input { opacity: 0; width: 0; height: 0; }
-
 .slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #555;
-  border-radius: 34px;
-  transition: .3s;
+  position: absolute; cursor: pointer; inset: 0;
+  background-color: #444; border-radius: 20px; transition: 0.4s;
 }
-
 .slider:before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  border-radius: 50%;
-  transition: .3s;
+  position: absolute; content: ""; height: 14px; width: 14px;
+  left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.4s;
 }
+input:checked + .slider { background-color: #4caf50; }
+input:checked + .slider:before { transform: translateX(20px); }
 
-input:checked + .slider { background-color: #2e7d32; }
-input:checked + .slider:before { transform: translateX(16px); }
+/* Animation */
+@keyframes logo-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
