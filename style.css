@@ -985,8 +985,6 @@ button, [role="button"], input {
   background: #666;
 }
 
-/* ===== أضف هذا في نهاية ملف style.css ===== */
-
 /* ===== تنسيق زر مسح الكاش وزر تغيير الجروب (متطابقين تماماً) ===== */
 
 #clear-cache-btn rect,
