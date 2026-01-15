@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.14.001">
+<meta name="version" content="2025.01.15.001">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -15,8 +15,7 @@
   <meta name="supported-color-schemes" content="light">
   <meta name="theme-color" content="#000000">
   <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
-  <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
-
+  
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link rel="dns-prefetch" href="https://mozilla.github.io">
@@ -28,46 +27,63 @@
 </head>
 <body>
 
-<!-- 🆕 شاشة التحميل الأولية (قبل اختيار الجروب) -->
-<div id="initial-loading-screen">
+<!-- 🔵 شاشة التحميل الأولى (قبل اختيار الجروب) -->
+<div id="initial-loading-overlay" class="active">
   <div id="initial-loading-content">
-    <img id="initial-logo" src="image/0.png" alt="شعار المشروع" />
-    <h1>جاري تحميل المشروع...</h1>
+    <img id="initial-logo" src="image/0.png" alt="شعار الكلية" />
+    <h1>جاري تحميل الموارد الأساسية...</h1>
     
-    <!-- 🆕 النسبة المئوية الدائرية -->
+    <!-- دائرة التقدم -->
     <div class="circular-progress">
-      <svg viewBox="0 0 200 200">
-        <circle class="progress-bg" cx="100" cy="100" r="85"></circle>
-        <circle class="progress-bar" cx="100" cy="100" r="85" id="initial-progress-circle"></circle>
+      <svg width="150" height="150" viewBox="0 0 150 150">
+        <circle cx="75" cy="75" r="65" stroke="#333" stroke-width="10" fill="none"/>
+        <circle 
+          id="progress-circle" 
+          cx="75" 
+          cy="75" 
+          r="65" 
+          stroke="#ffcc00" 
+          stroke-width="10" 
+          fill="none"
+          stroke-linecap="round"
+          transform="rotate(-90 75 75)"
+          style="stroke-dasharray: 408.4; stroke-dashoffset: 408.4; transition: stroke-dashoffset 0.3s ease;"
+        />
+        <text 
+          id="progress-text" 
+          x="75" 
+          y="85" 
+          text-anchor="middle" 
+          fill="#ffcc00" 
+          font-size="28" 
+          font-weight="bold"
+        >0%</text>
       </svg>
-      <div class="progress-text">
-        <span id="initial-progress-percent">0</span>%
-      </div>
     </div>
     
-    <p id="initial-loading-status">جاري تحميل الموارد الأساسية...</p>
+    <p id="loading-status" style="color: #aaa; margin-top: 20px;">جاري التهيئة...</p>
   </div>
 </div>
 
-<!-- شاشة اختيار الجروب -->
+<!-- 🟢 شاشة اختيار الجروب -->
 <div id="group-selection-screen" class="hidden">
   <div id="group-selection-content">
-    <img id="main-logo" src="image/0.png" alt="شعار الكلية" />
+    <img id="main-logo" src="image/0.png" alt="شعار الكلية" loading="eager" />
     <h1>اختر مجموعتك</h1>
     <div id="group-buttons">
-      <button class="group-btn" data-group="A">
+      <button class="group-btn" data-group="A" aria-label="اختر المجموعة A">
         <span class="group-letter">A</span>
         <span class="group-label">Group A</span>
       </button>
-      <button class="group-btn" data-group="B">
+      <button class="group-btn" data-group="B" aria-label="اختر المجموعة B">
         <span class="group-letter">B</span>
         <span class="group-label">Group B</span>
       </button>
-      <button class="group-btn" data-group="C">
+      <button class="group-btn" data-group="C" aria-label="اختر المجموعة C">
         <span class="group-letter">C</span>
         <span class="group-label">Group C</span>
       </button>
-      <button class="group-btn" data-group="D">
+      <button class="group-btn" data-group="D" aria-label="اختر المجموعة D">
         <span class="group-letter">D</span>
         <span class="group-label">Group D</span>
       </button>
@@ -78,30 +94,17 @@
   </div>
 </div>
 
-<!-- 🆕 شاشة تحميل الجروب (بعد الاختيار) -->
-<div id="group-loading-screen" class="hidden">
-  <div id="group-loading-content">
-    <img id="group-splash-image" src="image/0.png" alt="شعار المجموعة" />
-    <h1 id="group-loading-title">جاري تحميل المجموعة...</h1>
-    
-    <!-- النسبة المئوية الدائرية -->
-    <div class="circular-progress">
-      <svg viewBox="0 0 200 200">
-        <circle class="progress-bg" cx="100" cy="100" r="85"></circle>
-        <circle class="progress-bar" cx="100" cy="100" r="85" id="group-progress-circle"></circle>
-      </svg>
-      <div class="progress-text">
-        <span id="group-progress-percent">0</span>%
-      </div>
-    </div>
-    
-    <div id="loader-lights">
+<!-- 🟡 شاشة التحميل الثانية (بعد اختيار الجروب) -->
+<div id="loading-overlay" class="hidden">
+  <div id="loading-content">
+    <img id="splash-image" src="image/0.png" alt="شعار التحميل" />
+    <h1 id="project-loading-title">جاري التحميل...</h1>
+    <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
       <div class="light-bulb" id="bulb-1"></div>
       <div class="light-bulb" id="bulb-2"></div>
       <div class="light-bulb" id="bulb-3"></div>
       <div class="light-bulb" id="bulb-4"></div>
     </div>
-    
     <div id="legend">
       <div class="legend-item red">أسئلة</div>
       <div class="legend-item yellow">محاضرات</div>
@@ -114,22 +117,28 @@
 </div>
 
 <!-- أدوات التحكم -->
-<div id="js-toggle-container" class="top" style="display: none;">
+<div id="js-toggle-container" class="top">
   <div id="search-container">
     <input 
       type="text" 
       id="search-input" 
       placeholder="ابحث باسم الملف..."
       autocomplete="off"
+      aria-label="حقل البحث"
     >
-    <span id="search-icon" class="clickable-area">🔙</span>
+    <span id="search-icon" class="clickable-area" role="button" aria-label="بحث">🔙</span>
   </div>
   <div class="controls-row">
-    <span id="move-toggle">↕️</span>
+    <span 
+      id="move-toggle" 
+      role="button" 
+      aria-label="تحريك شريط الأدوات"
+      tabindex="0"
+    >↕️</span>
     <div style="display: flex; align-items: center; gap: 8px;">
       <span style="font-size: 12px; opacity: 0.8;">Interaction</span>
       <label class="switch">
-        <input type="checkbox" id="js-toggle" checked>
+        <input type="checkbox" id="js-toggle" checked aria-label="تفعيل التفاعل">
         <span class="slider round"></span>
       </label>
     </div>
@@ -139,20 +148,28 @@
 <!-- عارض PDF -->
 <div id="pdf-overlay" class="hidden">
   <div id="toolbar">
-    <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
-    <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
-    <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
+    <button id="closePdfBtn" class="toolbar-btn" aria-label="إغلاق">❌ إغلاق</button>
+    <button id="downloadBtn" class="toolbar-btn" aria-label="تحميل">⬇ تحميل</button>
+    <button id="shareBtn" class="toolbar-btn" aria-label="مشاركة">🔗 مشاركة</button>
   </div>
-  <iframe id="pdfFrame" src=""></iframe>
+  <iframe 
+    id="pdfFrame" 
+    src="" 
+    loading="lazy"
+    title="عارض PDF"
+    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+  ></iframe>
 </div>
 
 <!-- SVG الرئيسي -->
-<div id="scroll-container" style="display: none;">
+<div id="scroll-container">
   <svg 
     id="main-svg" 
     xmlns="http://www.w3.org/2000/svg" 
     xmlns:xlink="http://www.w3.org/1999/xlink" 
     preserveAspectRatio="xMinYMin meet"
+    role="img"
+    aria-label="الخريطة التفاعلية"
   >
     <defs></defs>
 
@@ -163,23 +180,12 @@
         y="0" 
         width="1024" 
         height="2454"
+        aria-hidden="true"
       />
 
-      <!-- 🆕 زر مسح الكاش (متماثل مع زر تغيير الجروب) -->
-      <g id="clear-cache-svg-btn" style="cursor: pointer;">
-        <rect x="654" y="100" width="250" height="50" rx="10" fill="#764ba2" stroke="#fff"/>
-        <text 
-          x="779" 
-          y="130" 
-          text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
-          font-size="18"
-        >🗑️ مسح الكاش</text>
-      </g>
-
-      <g id="change-group-btn" style="cursor: pointer;">
-        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff"/>
+      <!-- ✅ زر تغيير الجروب -->
+      <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
+        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff" stroke-width="2"/>
         <text 
           id="group-btn-text" 
           x="245" 
@@ -187,11 +193,25 @@
           text-anchor="middle" 
           fill="white" 
           font-weight="bold"
-          font-size="18"
+          font-size="16"
         >Change Group 🔄</text>
       </g>
 
-      <g id="back-button-group" style="cursor: pointer;">
+      <!-- ✅ زر مسح الكاش (متماثل) -->
+      <g id="clear-cache-svg-btn" style="cursor: pointer;" role="button" tabindex="0">
+        <rect x="654" y="100" width="250" height="50" rx="10" fill="#764ba2" stroke="#fff" stroke-width="2"/>
+        <text 
+          x="779" 
+          y="130" 
+          text-anchor="middle" 
+          fill="white" 
+          font-weight="bold"
+          font-size="16"
+        >مسح الكاش 🗑️</text>
+      </g>
+
+      <!-- ✅ زر الرجوع -->
+      <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
         <rect 
           id="back-btn" 
           x="112" 
