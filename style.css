@@ -51,16 +51,6 @@ body {
   max-width: 500px;
 }
 
-#initial-logo {
-  width: 200px;
-  max-width: 70vw;
-  height: auto;
-  margin-bottom: 30px;
-  border-radius: 15px;
-  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
-  animation: logo-pulse 2s infinite ease-in-out;
-}
-
 #initial-loading-content h1 {
   color: #ffcc00;
   font-size: clamp(1.2rem, 4vw, 1.8rem);
@@ -233,8 +223,9 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
 }
+
 #loading-content h2 {
-  color: #white;
+  color: white;
   margin: 10px 0;
   font-size: 1.8rem;
   text-transform: uppercase;
@@ -316,6 +307,131 @@ body {
 .legend-item.green  { --item-color: green; }
 .legend-item.yellow { --item-color: yellow; }
 
+/* ===== أدوات التحكم العائمة ===== */
+#js-toggle-container {
+  position: fixed;
+  z-index: 1000;
+  right: 20px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 15px;
+  border-radius: 15px;
+  border: 2px solid #444;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+  max-width: 90vw;
+}
+
+#js-toggle-container.top {
+  top: 20px;
+}
+
+#js-toggle-container.bottom {
+  bottom: 20px;
+}
+
+#search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #666;
+}
+
+#search-input {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  width: 200px;
+  font-family: inherit;
+}
+
+#search-input::placeholder {
+  color: #999;
+}
+
+#search-icon {
+  font-size: 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+#search-icon:hover {
+  transform: scale(1.2);
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+#move-toggle {
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+#move-toggle:hover {
+  transform: scale(1.2);
+}
+
+/* ===== Toggle Switch ===== */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #4caf50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
 /* ===== أزرار SVG ===== */
 #change-group-btn:hover rect,
 #clear-cache-svg-btn:hover rect {
@@ -325,6 +441,53 @@ body {
 #change-group-btn:active,
 #clear-cache-svg-btn:active {
   transform: scale(0.95);
+}
+
+/* ===== عارض PDF ===== */
+#pdf-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+}
+
+#pdf-overlay.hidden {
+  display: none;
+}
+
+#toolbar {
+  display: flex;
+  justify-content: space-around;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.9);
+  border-bottom: 1px solid #444;
+}
+
+.toolbar-btn {
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #444;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.toolbar-btn:hover {
+  border-color: #ffcc00;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3);
+}
+
+#pdfFrame {
+  flex: 1;
+  border: none;
+  width: 100%;
+  height: 100%;
 }
 
 /* ===== باقي الأنماط ===== */
@@ -378,8 +541,11 @@ body {
     font-size: 2.5rem;
   }
 
-  #splash-image,
-  #initial-logo {
+  #splash-image {
     margin-top: -40px;
+  }
+  
+  #search-input {
+    width: 150px;
   }
 }
