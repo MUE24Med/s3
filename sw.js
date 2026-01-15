@@ -1,4 +1,3 @@
-
 // ✅ نظام versioning ذكي - غيّر الرقم عند كل تحديث مهم
 const VERSION = '2025.01.13.004';
 const CACHE_NAME = 'interactive-map-' + VERSION;
@@ -16,10 +15,10 @@ const ASSETS_TO_CACHE = [
 // ✅ تثبيت Service Worker
 self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker: تثبيت الإصدار', CACHE_NAME);
-
+  
   // ✅ تخطي مرحلة الانتظار وتفعيل مباشرة
   self.skipWaiting();
-
+  
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('📦 Service Worker: حفظ الملفات في الكاش');
@@ -31,7 +30,7 @@ self.addEventListener('install', (event) => {
 // ✅ تنظيف الكاش القديم فوراً
 self.addEventListener('activate', (event) => {
   console.log('🔄 Service Worker: تفعيل الإصدار', CACHE_NAME);
-
+  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
