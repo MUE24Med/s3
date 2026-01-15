@@ -1881,6 +1881,74 @@ if (mainSvg) {
     }, false);
 }
 
+/* ===== إضافة هذا الكود في ملف script.js ===== */
+
+/* في قسم معالجة الأحداث (حوالي السطر 1800+) أضف هذا الكود: */
+
+// ✅ تفعيل زر مسح الكاش
+const clearCacheBtn = document.getElementById('clear-cache-btn');
+if (clearCacheBtn) {
+    clearCacheBtn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        
+        if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
+            return;
+        }
+
+        try {
+            // إلغاء تسجيل Service Worker
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                    console.log('✅ تم إلغاء تسجيل Service Worker');
+                }
+            }
+
+            // مسح جميع الكاش
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                console.log('✅ تم مسح جميع الكاش');
+            }
+
+            // مسح Local Storage (اختياري - احذف إذا كنت تريد الاحتفاظ بالمجموعة المحفوظة)
+            // localStorage.clear();
+
+            alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
+            window.location.reload(true);
+        } catch (error) {
+            console.error('❌ خطأ في مسح الكاش:', error);
+            alert('❌ حدث خطأ أثناء مسح الكاش');
+        }
+    });
+
+    // ✅ تأثير الهوفر لزر مسح الكاش
+    const clearCacheRect = clearCacheBtn.querySelector('rect');
+    if (clearCacheRect) {
+        clearCacheBtn.addEventListener('mouseenter', function() {
+            clearCacheRect.style.transition = 'all 0.3s ease';
+            clearCacheRect.style.fill = '#764ba2';
+            clearCacheRect.style.filter = 'drop-shadow(0 0 10px rgba(102, 126, 234, 0.6))';
+        });
+
+        clearCacheBtn.addEventListener('mouseleave', function() {
+            clearCacheRect.style.fill = '#667eea';
+            clearCacheRect.style.filter = 'none';
+        });
+
+        clearCacheBtn.addEventListener('mousedown', function() {
+            clearCacheRect.style.transform = 'scale(0.95)';
+            clearCacheRect.style.transformOrigin = 'center';
+        });
+
+        clearCacheBtn.addEventListener('mouseup', function() {
+            clearCacheRect.style.transform = 'scale(1)';
+        });
+    }
+}
+
+
 /* --- 21. البدء التلقائي --- */
 
 if (!localStorage.getItem('visitor_id')) {
