@@ -233,6 +233,13 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
 }
+#loading-content h2 {
+  color: #white;
+  margin: 10px 0;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
 
 #loader-lights {
   display: flex;
