@@ -1,72 +1,48 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<!-- ✅ منع التخزين المؤقت للصفحة الرئيسية -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.15.002">
+<!-- ✅ رقم الإصدار (يساعد في تتبع التحديثات) -->
+<meta name="version" content="2025.01.13.002">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
+  <!-- ✅ PWA Support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <!-- ✅ منع Samsung Dark Mode -->
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#000000"
+  <!-- ✅ SEO -->
   <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
+  <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
 
+  <!-- ✅ Preconnect لـ GitHub (تسريع التحميل) -->
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link rel="dns-prefetch" href="https://mozilla.github.io">
-
+  <!-- ✅ Preload للصور المهمة -->
+  <link rel="preload" href="image/wood.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/0.png" as="image" type="image/png">
+  <!-- ✅ Favicon -->
   <link rel="icon" type="image/png" href="image/0.png">
   <link rel="apple-touch-icon" href="image/0.png">
-
+<link rel="preload" href="image/logo-A.webp" as="image" type="image/webp">
+<link rel="preload" href="image/logo-B.webp" as="image" type="image/webp">
+<link rel="preload" href="image/logo-C.webp" as="image" type="image/webp">
+<link rel="preload" href="image/logo-D.webp" as="image" type="image/webp">
+  <!-- ✅ CSS الرئيسي -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- 🔵 شاشة التحميل الأولى (قبل اختيار الجروب) -->
-<div id="initial-loading-overlay" class="active">
-  <div id="initial-loading-content">
-    <h1>جاري تحميل الموارد الأساسية...</h1>
-    <h2 style="font-size: 1rem; color: #aaa; font-weight: normal;">(هذا التحميل يتم لمرة واحدة فقط)</h2>
-
-    <!-- دائرة التقدم -->
-    <div class="circular-progress">
-      <svg width="150" height="150" viewBox="0 0 150 150">
-        <circle cx="75" cy="75" r="65" stroke="#333" stroke-width="10" fill="none"/>
-        <circle 
-          id="progress-circle" 
-          cx="75" 
-          cy="75" 
-          r="65" 
-          stroke="#ffcc00" 
-          stroke-width="10" 
-          fill="none"
-          stroke-linecap="round"
-          transform="rotate(-90 75 75)"
-          style="stroke-dasharray: 408.4; stroke-dashoffset: 408.4; transition: stroke-dashoffset 0.3s ease;"
-        />
-        <text 
-          id="progress-text" 
-          x="75" 
-          y="85" 
-          text-anchor="middle" 
-          fill="#ffcc00" 
-          font-size="28" 
-          font-weight="bold"
-        >0%</text>
-      </svg>
-    </div>
-
-    <p id="loading-status" style="color: #aaa; margin-top: 20px;">جاري التهيئة...</p>
-  </div>
-</div>
-
-<!-- 🟢 شاشة اختيار الجروب -->
-<div id="group-selection-screen" class="hidden">
+<!-- شاشة اختيار الجروب -->
+<div id="group-selection-screen">
   <div id="group-selection-content">
     <img id="main-logo" src="image/0.png" alt="شعار الكلية" loading="eager" />
     <h1>اختر مجموعتك</h1>
@@ -91,28 +67,6 @@
     <p style="color: #888; font-size: 12px; margin-top: 20px;">
       💡 يمكنك تغيير المجموعة لاحقاً من زر "🔄 Change Group"
     </p>
-  </div>
-</div>
-
-<!-- 🟡 شاشة التحميل الثانية (بعد اختيار الجروب) -->
-<div id="loading-overlay" class="hidden">
-  <div id="loading-content">
-    <img id="splash-image" src="image/0.png" alt="شعار التحميل" />
-    <h1 id="project-loading-title">جاري التحميل...</h1>
-    <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
-      <div class="light-bulb" id="bulb-1"></div>
-      <div class="light-bulb" id="bulb-2"></div>
-      <div class="light-bulb" id="bulb-3"></div>
-      <div class="light-bulb" id="bulb-4"></div>
-    </div>
-    <div id="legend">
-      <div class="legend-item red">أسئلة</div>
-      <div class="legend-item yellow">محاضرات</div>
-      <div class="legend-item white">مواد أخرى</div>
-      <div class="legend-item purple">إجابات</div>
-      <div class="legend-item green">سكاشن العملي</div>
-      <div class="legend-item blue">فيديو شرح</div>
-    </div>
   </div>
 </div>
 
@@ -141,6 +95,34 @@
         <input type="checkbox" id="js-toggle" checked aria-label="تفعيل التفاعل">
         <span class="slider round"></span>
       </label>
+    </div>
+  </div>
+</div>
+
+<!-- شاشة التحميل -->
+<div id="loading-overlay">
+  <div id="loading-content">
+    <img 
+      id="splash-image" 
+      src="image/0.png" 
+      alt="شعار التحميل"
+      loading="eager"
+    />
+    <!-- ✅ تم تغيير h1 ليتم تحديثه ديناميكيًا -->
+    <h1 id="project-loading-title">جاري التحميل...</h1>
+    <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
+      <div class="light-bulb" id="bulb-1"></div>
+      <div class="light-bulb" id="bulb-2"></div>
+      <div class="light-bulb" id="bulb-3"></div>
+      <div class="light-bulb" id="bulb-4"></div>
+    </div>
+    <div id="legend">
+      <div class="legend-item red">أسئلة</div>
+      <div class="legend-item yellow">محاضرات</div>
+      <div class="legend-item white">مواد أخرى</div>
+      <div class="legend-item purple">إجابات</div>
+      <div class="legend-item green">سكاشن العملي</div>
+      <div class="legend-item blue">فيديو شرح</div>
     </div>
   </div>
 </div>
@@ -183,36 +165,18 @@
         aria-hidden="true"
       />
 
-      <!-- ✅ زر تغيير الجروب -->
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="120" y="100" width="250" height="50" rx="10" 
-              fill="none" stroke="#2e7d32" stroke-width="3"/>
+        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff"/>
         <text 
           id="group-btn-text" 
           x="245" 
           y="130" 
           text-anchor="middle" 
-          fill="#2e7d32" 
+          fill="white" 
           font-weight="bold"
-          font-size="16"
         >Change Group 🔄</text>
       </g>
 
-      <!-- ✅ زر مسح الكاش -->
-      <g id="clear-cache-svg-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="654" y="100" width="250" height="50" rx="10" 
-              fill="none" stroke="#764ba2" stroke-width="3"/>
-        <text 
-          x="779" 
-          y="130" 
-          text-anchor="middle" 
-          fill="#764ba2" 
-          font-weight="bold"
-          font-size="16"
-        >مسح الكاش 🗑️</text>
-      </g>
-
-      <!-- ✅ زر الرجوع -->
       <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
         <rect 
           id="back-btn" 
@@ -221,16 +185,16 @@
           width="800" 
           height="70" 
           rx="15" 
-          fill="none"
-          stroke="#3e2723" 
-          stroke-width="3" 
+          fill="#3e2723" 
+          stroke="#fff" 
+          stroke-width="2" 
         />
         <text 
           x="512" 
           y="205" 
           id="back-btn-text" 
           text-anchor="middle" 
-          fill="#3e2723" 
+          fill="white" 
           font-size="22" 
           font-weight="bold"
         >➡️ إلى الخريطة ➡️</text>
@@ -242,6 +206,7 @@
   </svg>
 </div>
 
+<!-- ✅ Scripts مع defer للأداء الأفضل -->
 <script defer src="script.js"></script>
 <script defer src="tracker.js"></script>
 
