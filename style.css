@@ -1,4 +1,4 @@
-/* ===== \u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u0637\u0628\u0642\u0627\u062a \u0627\u0644\u062e\u0634\u0628\u064a\u0629 ===== */
+/* ===== تنسيق الطبقات الخشبية ===== */
 .wood-layer {
     pointer-events: none;
     shape-rendering: crispEdges;
@@ -12,7 +12,7 @@
     z-index: 100;
 }
 
-/* \u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u0639\u0627\u062f\u064a\u0629 */
+/* الحالة العادية */
 .wood-banner-animation {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
@@ -23,7 +23,7 @@
   transform: scale(1) translateY(0);
 }
 
-/* \u062d\u0627\u0644\u0629 \u0627\u0644\u0640 Hover */
+/* حالة الـ Hover */
 .wood-banner-animation:hover {
   animation: none !important; 
   transform: translateY(-15px) scale(1.15) !important; 
@@ -32,7 +32,7 @@
   z-index: 100;
 }
 
-/* \u0623\u0646\u064a\u0645\u064a\u0634\u0646 \u062a\u0623\u0631\u062c\u062d \u0627\u0644\u062a\u0648\u0647\u062c */
+/* أنيميشن تأرجح التوهج */
 @keyframes glow-oscillation {
   0%, 100% {
     filter: brightness(1.1) drop-shadow(0 10px 20px rgba(255, 204, 0, 0.4));
@@ -44,19 +44,19 @@
   }
 }
 
-/* \u0623\u0646\u064a\u0645\u064a\u0634\u0646 \u0627\u0644\u0646\u0628\u0636 \u0627\u0644\u0639\u0627\u062f\u064a */
+/* أنيميشن النبض العادي */
 @keyframes wood-pulse-soft {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.03); }
 }
 
-/* \u0639\u0646\u062f \u0627\u0644\u0636\u063a\u0637 */
+/* عند الضغط */
 .wood-banner-animation:active {
   transform: translateY(-4px) scale(1.05) !important;
   animation: none !important;
 }
 
-/* ===== \u062a\u0646\u0633\u064a\u0642 \u0632\u0631 \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0627\u0633\u0645 ===== */
+/* ===== تنسيق زر تغيير الاسم ===== */
 .name-input-group {
   transition: all 0.3s ease;
   cursor: pointer;
@@ -77,7 +77,7 @@
   user-select: none;
 }
 
-/* ===== \u062a\u0646\u0633\u064a\u0642 \u0634\u0631\u064a\u0637 \u0627\u0644\u062a\u0645\u0631\u064a\u0631 ===== */
+/* ===== تنسيق شريط التمرير ===== */
 .scroll-container-group {
   pointer-events: auto;
 }
@@ -86,14 +86,14 @@
   transition: transform 0.2s ease-out;
 }
 
-/* \u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u0639\u0646\u0627\u0635\u0631 \u0641\u064a \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u062e\u0634\u0628  */
+/* تنسيق العناصر في قائمة الخشب  */
 .list-item {
     stroke-width: 1px !important;
     rx: 5;
     ry: 5;
 }
 
-/* 1. \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u062a\u0648\u062d\u064a\u062f \u0627\u0644\u0631\u0624\u064a\u0629 */
+/* 1. إعدادات توحيد الرؤية */
 *, *::before, *::after {
   box-sizing: border-box !important;
   -webkit-tap-highlight-color: transparent;
@@ -166,7 +166,7 @@ html, body {
 .l  { stroke: var(--color-l); }
 .is { stroke: var(--color-is); }
 
-/* ===== \u0634\u0627\u0634\u0629 \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u062c\u0631\u0648\u0628 ===== */
+/* ===== شاشة اختيار الجروب ===== */
 #group-selection-screen {
   height: 100svh;
   position: fixed;
@@ -288,7 +288,7 @@ body {
   text-align: center;
 }
 
-/* ===== \u0645\u0648\u0628\u0627\u064a\u0644 \u0635\u063a\u064a\u0631 \u062c\u062f\u064b\u0627 ===== */
+/* ===== موبايل صغير جدًا ===== */
 @media (max-height: 700px) {
   #group-selection-content {
     transform: scale(0.78);
@@ -324,7 +324,7 @@ body {
   }
 }
 
-/* \u062a\u0646\u0633\u064a\u0642 \u0639\u0627\u0631\u0636 PDF */
+/* تنسيق عارض PDF */
 #pdf-overlay {
   height: 100svh;
   transition: transform .35s ease, opacity .35s ease;
@@ -441,7 +441,7 @@ body {
   transition: all .4s ease;
 }
 
-/* \u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0645\u0635\u0627\u0628\u064a\u062d */
+/* ألوان المصابيح */
 #bulb-1.on {
   background-color: #4dff88;
   box-shadow: 0 0 15px #4dff88, 0 0 30px #00ff66;
@@ -604,19 +604,6 @@ body {
   transform: scale(1.1);
 }
 
-@media (max-width: 480px) {
-  #js-toggle-container {
-    right: 10px;
-    padding: 8px;
-    min-width: 160px !important;
-    max-width: 180px !important;
-  }
-  #search-input {
-    font-size: 12px;
-    max-width: 170px !important;
-  }
-}
-
 /* ===== Switch Toggle ===== */
 .switch {
   position: relative;
@@ -668,7 +655,7 @@ img, image, svg, rect {
   user-select: none;
 }
 
-/* ===== \u062a\u062d\u0633\u064a\u0646\u0627\u062a \u0634\u0631\u064a\u0637 \u0627\u0644\u062a\u0645\u0631\u064a\u0631 ===== */
+/* ===== تحسينات شريط التمرير ===== */
 .scroll-container-group rect[x="910"] {
   transition: fill 0.2s ease, y 0.15s ease-out;
 }
@@ -681,7 +668,7 @@ img, image, svg, rect {
   fill: #ffeb3b !important;
 }
 
-/* ===== hover \u0644\u0644\u0639\u0646\u0627\u0635\u0631 ===== */
+/* ===== hover للعناصر ===== */
 .wood-folder-group:hover rect,
 .wood-file-group:hover rect {
   stroke-width: 2 !important;
@@ -693,14 +680,14 @@ img, image, svg, rect {
   transform: scale(0.98);
 }
 
-/* ===== \u0645\u0646\u0639 \u0627\u0644\u062a\u0645\u0631\u064a\u0631 \u0639\u0644\u0649 \u0627\u0644\u0635\u0648\u0631 ===== */
+/* ===== منع التمرير على الصور ===== */
 .wood-banner-animation,
 image[data-src*="wood.webp"] {
   pointer-events: auto;
   touch-action: none;
 }
 
-/* ===== \u062a\u062d\u0633\u064a\u0646\u0627\u062a \u0627\u0644\u0623\u062f\u0627\u0621 Performance ===== */
+/* ===== تحسينات الأداء Performance ===== */
 
 /* Critical Rendering Path */
 .wood-layer,
@@ -724,9 +711,9 @@ image[data-src*="wood.webp"] {
   }
 }
 
-/* ===== \u062a\u062d\u0633\u064a\u0646\u0627\u062a Accessibility ===== */
+/* ===== تحسينات Accessibility ===== */
 
-/* Focus Visible \u0644\u0644\u0648\u062d\u0629 \u0627\u0644\u0645\u0641\u0627\u062a\u064a\u062d */
+/* Focus Visible للوحة المفاتيح */
 button:focus-visible,
 [role="button"]:focus-visible,
 input:focus-visible {
@@ -734,7 +721,7 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* \u0625\u062e\u0641\u0627\u0621 outline \u0644\u0644\u0645\u0627\u0648\u0633 \u0641\u0642\u0637 */
+/* إخفاء outline للماوس فقط */
 button:focus:not(:focus-visible),
 input:focus:not(:focus-visible) {
   outline: none;
@@ -766,7 +753,7 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* ===== \u062a\u062d\u0633\u064a\u0646\u0627\u062a \u0627\u0644\u062a\u0645\u0631\u064a\u0631 \u0627\u0644\u0645\u062d\u0633\u0646 ===== */
+/* ===== تحسينات التمرير المحسن ===== */
 .scrollable-content {
   transition: transform 0.1s ease-out;
   overflow: visible !important;
@@ -783,7 +770,7 @@ input:focus:not(:focus-visible) {
   pointer-events: auto;
 }
 
-/* \u0634\u0631\u064a\u0637 \u0627\u0644\u062a\u0645\u0631\u064a\u0631 \u0623\u0643\u062b\u0631 \u0648\u0636\u0648\u062d\u0627\u064b */
+/* شريط التمرير أكثر وضوحاً */
 .scroll-handle {
   transition: y 0.1s ease-out;
 }
@@ -793,14 +780,14 @@ input:focus:not(:focus-visible) {
   filter: drop-shadow(0 0 5px rgba(255, 213, 79, 0.7));
 }
 
-/* \u0627\u0644\u062a\u0623\u0643\u062f \u0645\u0646 \u0623\u0646 clip-path \u0644\u0627 \u064a\u0642\u0637\u0639 \u0628\u0634\u0643\u0644 \u0645\u0641\u0631\u0637 */
+/* التأكد من أن clip-path لا يقطع بشكل مفرط */
 .scrollable-content[clip-path],
 .subject-separator-group[clip-path] {
   clip-path: inherit;
   -webkit-clip-path: inherit;
 }
 
-/* \u062a\u062d\u0633\u064a\u0646 \u0627\u0644\u0644\u0645\u0633 \u0639\u0644\u0649 \u0627\u0644\u0647\u0648\u0627\u062a\u0641 */
+/* تحسين اللمس على الهواتف */
 @media (hover: none) {
   .scrollable-content {
     -webkit-overflow-scrolling: touch;
@@ -828,11 +815,172 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* ===== \u0632\u0631 \u0645\u0633\u062d \u0627\u0644\u0643\u0627\u0634 - \u0645\u062a\u0637\u0627\u0628\u0642 \u0645\u0639 \u0632\u0631 \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u062c\u0631\u0648\u0628 ===== */
+/* ===== زر مسح الكاش - متطابق مع زر تغيير الجروب ===== */
 #clear-cache-btn {
   position: fixed;
   top: 10px;
   left: 10px;
   z-index: 9999;
   
-  /*
+  /* نفس أبعاد زر تغيير الجروب */
+  width: 180px;
+  height: 60px;
+  
+  /* نفس التدرج اللوني */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  
+  /* نفس النص */
+  font-weight: bold;
+  font-size: 16px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#clear-cache-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+#clear-cache-btn:active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* ===== تحسينات للشاشات الصغيرة ===== */
+@media (max-width: 768px) {
+  #clear-cache-btn {
+    width: 140px;
+    height: 50px;
+    font-size: 13px;
+    top: 8px;
+    left: 8px;
+  }
+  
+  #js-toggle-container {
+    min-width: 180px !important;
+    max-width: 220px !important;
+    right: 8px;
+  }
+  
+  #search-input {
+    font-size: 13px;
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  #clear-cache-btn {
+    width: 120px;
+    height: 45px;
+    font-size: 11px;
+    padding: 8px;
+  }
+  
+  #js-toggle-container {
+    min-width: 160px !important;
+    max-width: 180px !important;
+    right: 10px;
+    padding: 8px;
+  }
+  
+  #search-input {
+    font-size: 12px;
+    max-width: 170px;
+  }
+}
+
+/* ===== تحسينات إضافية للأداء ===== */
+
+/* تقليل Repaints */
+#main-svg image {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* تحسين Font Rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* منع Layout Shifts */
+#group-selection-screen,
+#loading-overlay,
+#pdf-overlay {
+  contain: layout size;
+}
+
+/* Lazy Loading Support */
+image[loading="lazy"] {
+  content-visibility: auto;
+}
+
+/* ===== تحسينات الحركة والتفاعل ===== */
+
+/* تحسين Touch على iOS */
+#scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+/* منع Double-Tap Zoom على iOS */
+button, [role="button"], input {
+  touch-action: manipulation;
+}
+
+/* تحسين Tap Highlight */
+* {
+  -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
+}
+
+/* ===== Loading States ===== */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Scroll Indicators ===== */
+#scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+#scroll-container::-webkit-scrollbar-track {
+  background: #000;
+}
+
+#scroll-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+#scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
