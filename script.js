@@ -1946,39 +1946,13 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* --- 23. زر مسح الكاش يدوياً --- */
+/* --- 23. زر مسح الكاش يدوياً - الدالة المحدثة --- */
 function createClearCacheButton() {
   if (document.getElementById('clear-cache-btn')) return;
 
   const btn = document.createElement('button');
   btn.id = 'clear-cache-btn';
   btn.innerHTML = '🗑️ مسح الكاش';
-  btn.style.cssText = `
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 9999;
-    padding: 10px 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 14px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
-  `;
-
-  btn.onmouseover = () => {
-    btn.style.transform = 'scale(1.05)';
-    btn.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
-  };
-
-  btn.onmouseout = () => {
-    btn.style.transform = 'scale(1)';
-    btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
-  };
 
   btn.onclick = async () => {
     if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
@@ -1986,6 +1960,7 @@ function createClearCacheButton() {
     }
 
     try {
+      // إلغاء تسجيل Service Worker
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (let registration of registrations) {
@@ -1994,6 +1969,7 @@ function createClearCacheButton() {
         }
       }
 
+      // مسح جميع الكاش
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map(name => caches.delete(name)));
@@ -2001,7 +1977,6 @@ function createClearCacheButton() {
       }
 
       alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
-      
       window.location.reload(true);
     } catch (error) {
       console.error('❌ خطأ في مسح الكاش:', error);
@@ -2016,6 +1991,3 @@ function createClearCacheButton() {
 window.addEventListener('load', () => {
   setTimeout(createClearCacheButton, 1000);
 });
-
-console.log('✅ تم تحميل script.js - نسخة محسّنة مع نظام المصابيح 1/5، 2/5، 3/5، 4/5');
-console.log('🔧 التحسينات: نظام تتبع دقيق | مصابيح متساوية | Service Worker ذكي');
