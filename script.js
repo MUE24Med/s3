@@ -1859,23 +1859,95 @@ if (searchInput) {
 
       if (!isEmptySearch) {
         const normalizedHref = normalizeArabic(href);
-        const normalizedFullText = normalizeArabic
+        const normalizedFullText = normalizeArabic(fullText);
+        const normalizedFileName = normalizeArabic(fileName);
+        const normalizedAutoArabic = normalizeArabic(autoArabic);
 
+        const isMatch = normalizedHref.includes(query) ||
+                      normalizedFullText.includes(query) ||
+                      normalizedFileName.includes(query) ||
+                      normalizedAutoArabic.includes(query);
 
+        rect.style.display = isMatch ? '' : 'none';
+        if (label) label.style.display = rect.style.display;
+        if (bg) bg.style.display = rect.style.display;
+      } else {
+        rect.style.display = '';
+        if (label) label.style.display = '';
+        if (bg) bg.style.display = '';
+      }
+    });
 
+    updateWoodInterface();
+  }, 150));
+}
 
+if (moveToggle) {
+  moveToggle.onclick = (e) => {
+    e.preventDefault();
+    if (toggleContainer && toggleContainer.classList.contains('top')) {
+      toggleContainer.classList.replace('top', 'bottom');
+    } else if (toggleContainer) {
+      toggleContainer.classList.replace('bottom', 'top');
+    }
+  };
+}
 
+if (searchIcon) {
+  searchIcon.onclick = (e) => {
+    e.preventDefault();
+    window.goToWood();
+  };
+}
 
+if (backButtonGroup) {
+  backButtonGroup.onclick = () => {
+    if (currentFolder !== "") {
+      let parts = currentFolder.split('/');
+      parts.pop();
+      currentFolder = parts.join('/');
+      window.updateWoodInterface();
+    } else {
+      console.log("🔙 العودة إلى نهاية الخريطة");
+      window.goToMapEnd();
+    }
+  };
+}
 
+if (jsToggle) {
+  jsToggle.addEventListener('change', function() {
+    interactionEnabled = this.checked;
+    if (!interactionEnabled) cleanupHover();
+  });
+}
 
+if (mainSvg) {
+  mainSvg.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+  }, false);
+}
 
+function debounce(func, delay) {
+  let timeoutId;
+  return function() {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, arguments), delay);
+  };
+}
 
+/* ===== 20. البدء التلقائي ===== */
 
+if (!localStorage.getItem('visitor_id')) {
+  const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+  localStorage.setItem('visitor_id', newId);
+}
 
+setupBackButton();
 
+// 🆕 البدء بالتحميل الأولي فوراً
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 بدء التحميل الأولي...');
+  loadInitialResources();
+});
 
-
-
-
-
-
+console.log('✅ تم تحميل script.js - نسخة محسّنة مع شاشتي تحميل منفصلتين');
