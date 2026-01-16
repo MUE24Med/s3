@@ -982,3 +982,85 @@ button, [role="button"], input {
 /* زر Change Group - أخضر */
 #change-group-btn rect {
     fill: #2e7d32;
+}
+
+#change-group-btn:hover rect {
+    fill: #43a047;
+}
+
+/* ===== تأثير النبض للزرين (اختياري) ===== */
+@keyframes button-glow {
+    0%, 100% {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+    50% {
+        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)) 
+                drop-shadow(0 0 25px currentColor);
+    }
+}
+
+/* يمكن إضافة كلاس .glow للزر عند الحاجة */
+#reset-btn.glow rect,
+#change-group-btn.glow rect {
+    animation: button-glow 2s infinite;
+}
+
+/* ===== Focus للوحة المفاتيح (Accessibility) ===== */
+#reset-btn:focus,
+#change-group-btn:focus {
+    outline: 3px solid #ffca28;
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
+#reset-btn:focus:not(:focus-visible),
+#change-group-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* ===== استجابة للشاشات الصغيرة ===== */
+@media (max-width: 768px) {
+    #reset-btn rect,
+    #change-group-btn rect {
+        rx: 8;
+        stroke-width: 1.5;
+    }
+
+    #reset-btn text,
+    #change-group-btn text {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #reset-btn text,
+    #change-group-btn text {
+        font-size: 13px;
+    }
+
+    /* يمكن تصغير الزرين أكثر */
+    #reset-btn rect,
+    #change-group-btn rect {
+        rx: 6;
+    }
+}
+
+/* ===== حالة Disabled (اختياري) ===== */
+#reset-btn.disabled rect,
+#change-group-btn.disabled rect {
+    fill: #666 !important;
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+
+#reset-btn.disabled text,
+#change-group-btn.disabled text {
+    opacity: 0.5;
+}
+
+/* ===== تحسينات الأداء ===== */
+#reset-btn rect,
+#change-group-btn rect {
+    will-change: transform, filter;
+    transform: translateZ(0);
+}
