@@ -320,7 +320,7 @@ async function loadGroupSVG(groupLetter) {
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');  
             console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);  
 
-            imageUrlsToLoad = ['image/wood.webp'];  
+            imageUrlsToLoad = ['image/wood.webp', 'image/Upper_wood.webp'];  
 
             injectedImages.forEach(img => {  
                 const src = img.getAttribute('data-src');  
