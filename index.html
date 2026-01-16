@@ -1,42 +1,33 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<!-- ✅ منع التخزين المؤقت للصفحة الرئيسية -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- ✅ رقم الإصدار (يساعد في تتبع التحديثات) -->
-<meta name="version" content="2025.01.13.002">
+<meta name="version" content="2025.01.16.002">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
-  <!-- ✅ PWA Support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <!-- ✅ منع Samsung Dark Mode -->
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
-  <meta name="theme-color" content="#000000"
-  <!-- ✅ SEO -->
+  <meta name="theme-color" content="#000000">
   <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
   <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
 
-  <!-- ✅ Preconnect لـ GitHub (تسريع التحميل) -->
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link rel="dns-prefetch" href="https://mozilla.github.io">
-  <!-- ✅ Preload للصور المهمة -->
   <link rel="preload" href="image/wood.webp" as="image" type="image/webp">
   <link rel="preload" href="image/0.png" as="image" type="image/png">
-  <!-- ✅ Favicon -->
   <link rel="icon" type="image/png" href="image/0.png">
   <link rel="apple-touch-icon" href="image/0.png">
-<link rel="preload" href="image/logo-A.webp" as="image" type="image/webp">
-<link rel="preload" href="image/logo-B.webp" as="image" type="image/webp">
-<link rel="preload" href="image/logo-C.webp" as="image" type="image/webp">
-<link rel="preload" href="image/logo-D.webp" as="image" type="image/webp">
-  <!-- ✅ CSS الرئيسي -->
+  <link rel="preload" href="image/logo-A.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/logo-B.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/logo-C.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/logo-D.webp" as="image" type="image/webp">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -83,12 +74,21 @@
     <span id="search-icon" class="clickable-area" role="button" aria-label="بحث">🔙</span>
   </div>
   <div class="controls-row">
-    <span 
-      id="move-toggle" 
-      role="button" 
-      aria-label="تحريك شريط الأدوات"
-      tabindex="0"
-    >↕️</span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span 
+        id="eye-toggle" 
+        role="button" 
+        aria-label="إخفاء/إظهار شريط البحث"
+        tabindex="0"
+        title="إخفاء/إظهار البحث"
+      >👁️</span>
+      <span 
+        id="move-toggle" 
+        role="button" 
+        aria-label="تحريك شريط الأدوات"
+        tabindex="0"
+      >↕️</span>
+    </div>
     <div style="display: flex; align-items: center; gap: 8px;">
       <span style="font-size: 12px; opacity: 0.8;">Interaction</span>
       <label class="switch">
@@ -108,7 +108,6 @@
       alt="شعار التحميل"
       loading="eager"
     />
-    <!-- ✅ تم تغيير h1 ليتم تحديثه ديناميكيًا -->
     <h1 id="project-loading-title">جاري التحميل...</h1>
     <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
       <div class="light-bulb" id="bulb-1"></div>
@@ -165,7 +164,6 @@
         aria-hidden="true"
       />
 
-      <!-- ✅ زر Reset - على الشمال (مرآة لزر Change Group) -->
       <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="654" y="100" width="250" height="50" rx="10" fill="#d32f2f" stroke="#fff" stroke-width="2"/>
         <text 
@@ -179,7 +177,6 @@
         >🔄 Reset</text>
       </g>
 
-      <!-- ✅ زر تغيير الجروب - على اليمين (كما هو) -->
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff" stroke-width="2"/>
         <text 
@@ -193,7 +190,6 @@
         >Change Group 🔄</text>
       </g>
 
-      <!-- ✅ زر الرجوع -->
       <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
         <rect 
           id="back-btn" 
@@ -223,7 +219,6 @@
   </svg>
 </div>
 
-<!-- ✅ Scripts مع defer للأداء الأفضل -->
 <script defer src="script.js"></script>
 <script defer src="tracker.js"></script>
 
