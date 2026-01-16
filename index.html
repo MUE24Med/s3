@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.16.002">
+<meta name="version" content="2025.01.16.003">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -63,40 +63,44 @@
 
 <!-- أدوات التحكم -->
 <div id="js-toggle-container" class="top">
-  <div id="search-container">
-    <input 
-      type="text" 
-      id="search-input" 
-      placeholder="ابحث باسم الملف..."
-      autocomplete="off"
-      aria-label="حقل البحث"
-    >
-    <span id="search-icon" class="clickable-area" role="button" aria-label="بحث">🔙</span>
-  </div>
-  <div class="controls-row">
-    <div style="display: flex; align-items: center; gap: 8px;">
-     <span 
-        id="move-toggle" 
-        role="button" 
-        aria-label="تحريك شريط الأدوات"
-        tabindex="0"
-      >↕️</span>
-      <span 
-        id="eye-toggle" 
-        role="button" 
-        aria-label="إخفاء/إظهار شريط البحث"
-        tabindex="0"
-        title="إخفاء/إظهار البحث"
-      >👁️</span>
+  <div id="controls-content">
+    <div id="search-container">
+      <input 
+        type="text" 
+        id="search-input" 
+        placeholder="ابحث باسم الملف..."
+        autocomplete="off"
+        aria-label="حقل البحث"
+      >
+      <span id="search-icon" class="clickable-area" role="button" aria-label="بحث">🔙</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="font-size: 12px; opacity: 0.8;">Hover</span>
-      <label class="switch">
-        <input type="checkbox" id="js-toggle" checked aria-label="تفعيل التفاعل">
-        <span class="slider round"></span>
-      </label>
+    <div class="controls-row">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span 
+          id="move-toggle" 
+          role="button" 
+          aria-label="تحريك شريط الأدوات"
+          tabindex="0"
+        >↕️</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 12px; opacity: 0.8;">Hover</span>
+        <label class="switch">
+          <input type="checkbox" id="js-toggle" checked aria-label="تفعيل التفاعل">
+          <span class="slider round"></span>
+        </label>
+      </div>
     </div>
   </div>
+  
+  <!-- ✅ زر العين ثابت -->
+  <span 
+    id="eye-toggle" 
+    role="button" 
+    aria-label="إخفاء/إظهار شريط البحث"
+    tabindex="0"
+    title="إخفاء/إظهار البحث"
+  >👁️</span>
 </div>
 
 <!-- شاشة التحميل -->
@@ -108,7 +112,8 @@
       alt="شعار التحميل"
       loading="eager"
     />
-    <h1 id="project-loading-title">جاري التحميل...</h1>
+    <h1 id="project-loading-title">أهلاً بك يا <span style="color: #ffca28;">زائر</span><br>
+في semester-3</h1>
     <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
       <div class="light-bulb" id="bulb-1"></div>
       <div class="light-bulb" id="bulb-2"></div>
@@ -152,7 +157,12 @@
     role="img"
     aria-label="الخريطة التفاعلية"
   >
-    <defs></defs>
+    <defs>
+      <!-- ✅ Clip-path للأزرار الثلاثة -->
+      <clipPath id="buttons-clip">
+        <rect x="120" y="250" width="780" height="1700" rx="15"/>
+      </clipPath>
+    </defs>
 
     <g transform="translate(0,0)" id="files-list-container">
       <image 
@@ -164,7 +174,7 @@
         aria-hidden="true"
       />
 
-      <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0">
+      <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0" clip-path="url(#buttons-clip)">
         <rect x="654" y="100" width="250" height="50" rx="10" fill="#d32f2f" stroke="#fff" stroke-width="2"/>
         <text 
           id="reset-btn-text" 
@@ -177,7 +187,7 @@
         >🔄 Reset</text>
       </g>
 
-      <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
+      <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0" clip-path="url(#buttons-clip)">
         <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff" stroke-width="2"/>
         <text 
           id="group-btn-text" 
@@ -190,7 +200,7 @@
         >Change Group 🔄</text>
       </g>
 
-      <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
+      <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0" clip-path="url(#buttons-clip)">
         <rect 
           id="back-btn" 
           x="112" 
