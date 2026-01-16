@@ -1,4 +1,7 @@
-/* ===== تنسيق الطبقات الخشبية ===== */
+/* ========================================
+   [001] الطبقات الخشبية والحاويات
+   ======================================== */
+
 .wood-layer {
     pointer-events: none;
     shape-rendering: crispEdges;
@@ -26,10 +29,6 @@
   animation: none !important; 
   transform: translateY(-15px) scale(1.15) !important; 
   animation: glow-oscillation 1.5s infinite ease-in-out !important;
-  filter: brightness(1.2);
-  z-index: 100;
-}
-
   filter: brightness(1.2);
   z-index: 100;
 }
@@ -85,6 +84,10 @@
     ry: 5;
 }
 
+/* ========================================
+   [002] الإعدادات الأساسية
+   ======================================== */
+
 *, *::before, *::after {
   box-sizing: border-box !important;
   -webkit-tap-highlight-color: transparent;
@@ -121,6 +124,10 @@ html, body {
   color-scheme: light !important;
 }
 
+/* ========================================
+   [003] حاوية التمرير الرئيسية
+   ======================================== */
+
 #scroll-container {
   width: 100vw;
   height: 100svh;
@@ -140,6 +147,10 @@ html, body {
   opacity: 0; 
 }
 
+/* ========================================
+   [004] المستطيلات التفاعلية
+   ======================================== */
+
 .m {
   fill: transparent;
   stroke: transparent;
@@ -156,6 +167,10 @@ html, body {
 .s  { stroke: var(--color-s); }
 .l  { stroke: var(--color-l); }
 .is { stroke: var(--color-is); }
+
+/* ========================================
+   [005] شاشة اختيار المجموعة
+   ======================================== */
 
 #group-selection-screen {
   height: 100svh;
@@ -313,6 +328,10 @@ body {
   }
 }
 
+/* ========================================
+   [006] عارض PDF
+   ======================================== */
+
 #pdf-overlay {
   height: 100svh;
   transition: transform .35s ease, opacity .35s ease;
@@ -358,6 +377,10 @@ body {
   cursor: pointer;
   font-size: 14px;
 }
+
+/* ========================================
+   [007] شاشة التحميل
+   ======================================== */
 
 #loading-overlay {
   position: fixed;
@@ -410,7 +433,6 @@ body {
   font-size: 1.8rem;
   text-transform: uppercase;
   letter-spacing: 2px;
-  line-height: 1.5;
 }
 
 #loader-lights {
@@ -504,10 +526,13 @@ body {
 .legend-item.yellow { --item-color: var(--color-l); }
 .legend-item.is { --item-color: var(--color-is); }
 
-/* ===== Toggle & Search UI ===== */
+/* ========================================
+   [008] شريط الأدوات والبحث - محسّن
+   ======================================== */
+
 #js-toggle-container {
   transform: translateZ(0); 
-  will-change: transform, opacity;
+  will-change: transform;
   position: fixed;
   right: 20px;
   z-index: 10000;
@@ -524,7 +549,16 @@ body {
   width: auto;
   min-width: 220px !important;
   max-width: 280px !important;
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+/* ✅ حالة الانكماش - الحاوية تتقلص وتعرض زر العين فقط */
+#js-toggle-container.collapsed {
+  min-width: auto !important;
+  max-width: auto !important;
+  width: auto !important;
+  padding: 8px 12px !important;
+  gap: 0 !important;
 }
 
 .controls-row {
@@ -534,6 +568,12 @@ body {
   width: 100%;
   border-top: 1px solid rgba(255,255,255,0.1);
   padding-top: 10px;
+  transition: all 0.3s ease;
+}
+
+/* ✅ إخفاء controls-row في حالة الانكماش */
+#js-toggle-container.collapsed .controls-row {
+  display: none;
 }
 
 #js-toggle-container.top { top: 20px; }
@@ -547,6 +587,15 @@ body {
   transition: all 0.3s ease;
   max-height: 500px;
   overflow: hidden;
+}
+
+/* ✅ حالة إخفاء البحث */
+#search-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
 }
 
 #search-input {
@@ -583,7 +632,10 @@ body {
   transform: translateY(-50%) scale(0.9);
 }
 
-/* ===== تنسيق زر العين ===== */
+/* ========================================
+   [009] زر العين - محسّن
+   ======================================== */
+
 #eye-toggle {
   cursor: pointer;
   user-select: none;
@@ -592,6 +644,7 @@ body {
   font-size: 20px;
   transition: all 0.3s ease;
   opacity: 0.8;
+  display: inline-block;
 }
 
 #eye-toggle:hover {
@@ -601,6 +654,12 @@ body {
 
 #eye-toggle:active {
   transform: scale(0.9);
+}
+
+/* ✅ زر العين يظل ظاهراً دائماً */
+#js-toggle-container.collapsed #eye-toggle {
+  display: inline-block !important;
+  opacity: 1;
 }
 
 #move-toggle {
@@ -622,6 +681,10 @@ body {
   opacity: 0.6;
   transform: scale(0.9);
 }
+
+/* ========================================
+   [010] Switch Toggle
+   ======================================== */
 
 .switch {
   position: relative;
@@ -652,6 +715,10 @@ body {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(20px); }
 
+/* ========================================
+   [011] الرسوم المتحركة
+   ======================================== */
+
 @keyframes logo-glow {
   0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
   50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
@@ -671,6 +738,10 @@ img, image, svg, rect {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* ========================================
+   [012] شريط التمرير
+   ======================================== */
 
 .scroll-container-group rect[x="910"] {
   transition: fill 0.2s ease, y 0.15s ease-out;
@@ -700,6 +771,10 @@ image[data-src*="wood.webp"] {
   pointer-events: auto;
   touch-action: none;
 }
+
+/* ========================================
+   [013] التحسينات الأدائية
+   ======================================== */
 
 .wood-layer,
 #main-svg,
@@ -755,6 +830,10 @@ input:focus:not(:focus-visible) {
     overflow: visible !important;
   }
 }
+
+/* ========================================
+   [014] تحسينات التمرير
+   ======================================== */
 
 .scrollable-content {
   transition: transform 0.1s ease-out;
@@ -841,6 +920,124 @@ input:focus:not(:focus-visible) {
   }
 }
 
+/* ========================================
+   [015] أزرار التحكم الثابتة مع Clip Path
+   ======================================== */
+
+#reset-btn,
+#change-group-btn {
+    cursor: pointer;
+    position: relative;
+    z-index: 200;
+}
+
+#reset-btn rect,
+#change-group-btn rect {
+    transition: filter 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    stroke-width: 2;
+}
+
+#reset-btn:hover rect,
+#change-group-btn:hover rect {
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)) 
+            drop-shadow(0 0 20px currentColor);
+}
+
+#reset-btn:active rect,
+#change-group-btn:active rect {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+#reset-btn text,
+#change-group-btn text {
+    pointer-events: none;
+    user-select: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#reset-btn rect {
+    fill: #d32f2f;
+}
+
+#reset-btn:hover rect {
+    fill: #f44336;
+}
+
+#change-group-btn rect {
+    fill: #2e7d32;
+}
+
+#change-group-btn:hover rect {
+    fill: #43a047;
+}
+
+#reset-btn:focus,
+#change-group-btn:focus {
+    outline: 3px solid #ffca28;
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
+#reset-btn:focus:not(:focus-visible),
+#change-group-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* ✅ إضافة clipPath للأزرار الثابتة */
+#reset-btn,
+#change-group-btn,
+#back-button-group {
+    clip-path: url(#fixed-buttons-clip);
+}
+
+@media (max-width: 768px) {
+    #reset-btn rect,
+    #change-group-btn rect {
+        rx: 8;
+        stroke-width: 1.5;
+    }
+
+    #reset-btn text,
+    #change-group-btn text {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #reset-btn text,
+    #change-group-btn text {
+        font-size: 13px;
+    }
+
+    #reset-btn rect,
+    #change-group-btn rect {
+        rx: 6;
+    }
+}
+
+#reset-btn.disabled rect,
+#change-group-btn.disabled rect {
+    fill: #666 !important;
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+
+#reset-btn.disabled text,
+#change-group-btn.disabled text {
+    opacity: 0.5;
+}
+
+#reset-btn rect,
+#change-group-btn rect {
+    will-change: filter;
+    transform: translateZ(0);
+}
+
+/* ========================================
+   [016] تحسينات إضافية
+   ======================================== */
+
 #main-svg image {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
@@ -906,105 +1103,4 @@ button, [role="button"], input {
 
 #scroll-container::-webkit-scrollbar-thumb:hover {
   background: #666;
-}
-
-#reset-btn,
-#change-group-btn {
-    cursor: pointer;
-}
-
-#reset-btn rect,
-#change-group-btn rect {
-    transition: filter 0.3s ease;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    stroke-width: 2;
-}
-
-#reset-btn:hover rect,
-#change-group-btn:hover rect {
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)) 
-            drop-shadow(0 0 20px currentColor);
-}
-
-#reset-btn:active rect,
-#change-group-btn:active rect {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-#reset-btn text,
-#change-group-btn text {
-    pointer-events: none;
-    user-select: none;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-#reset-btn rect {
-    fill: #d32f2f;
-}
-
-#reset-btn:hover rect {
-    fill: #f44336;
-}
-
-#change-group-btn rect {
-    fill: #2e7d32;
-}
-
-#change-group-btn:hover rect {
-    fill: #43a047;
-}
-
-#reset-btn:focus,
-#change-group-btn:focus {
-    outline: 3px solid #ffca28;
-    outline-offset: 4px;
-    border-radius: 12px;
-}
-
-#reset-btn:focus:not(:focus-visible),
-#change-group-btn:focus:not(:focus-visible) {
-    outline: none;
-}
-
-@media (max-width: 768px) {
-    #reset-btn rect,
-    #change-group-btn rect {
-        rx: 8;
-        stroke-width: 1.5;
-    }
-
-    #reset-btn text,
-    #change-group-btn text {
-        font-size: 15px;
-    }
-}
-
-@media (max-width: 480px) {
-    #reset-btn text,
-    #change-group-btn text {
-        font-size: 13px;
-    }
-
-    #reset-btn rect,
-    #change-group-btn rect {
-        rx: 6;
-    }
-}
-
-#reset-btn.disabled rect,
-#change-group-btn.disabled rect {
-    fill: #666 !important;
-    opacity: 0.5;
-    cursor: not-allowed !important;
-}
-
-#reset-btn.disabled text,
-#change-group-btn.disabled text {
-    opacity: 0.5;
-}
-
-#reset-btn rect,
-#change-group-btn rect {
-    will-change: filter;
-    transform: translateZ(0);
 }
