@@ -558,7 +558,6 @@ body {
   transition: all 0.3s ease;
 }
 
-/* ✅ حالة الانكماش - الحاوية تتحول لدائرة حول العين */
 #js-toggle-container.collapsed {
   min-width: 50px !important;
   max-width: 50px !important;
@@ -572,7 +571,6 @@ body {
   justify-content: center !important;
 }
 
-/* ✅ إخفاء البحث في حالة الانكماش */
 #js-toggle-container.collapsed #search-container {
   display: none !important;
 }
@@ -580,14 +578,14 @@ body {
 .controls-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 15px;
   width: 100%;
   border-top: 1px solid rgba(255,255,255,0.1);
   padding-top: 10px;
   transition: all 0.3s ease;
 }
 
-/* ✅ إخفاء controls-row في حالة الانكماش */
 #js-toggle-container.collapsed .controls-row {
   display: none !important;
 }
@@ -605,7 +603,6 @@ body {
   overflow: hidden;
 }
 
-/* ✅ حالة إخفاء البحث */
 #search-container.hidden {
   opacity: 0;
   pointer-events: none;
@@ -649,33 +646,37 @@ body {
 }
 
 /* ========================================
-   [009] زر العين - محسّن
+   [009] أزرار التحكم (السهم + العين + Hover)
    ======================================== */
 
 #eye-toggle {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  padding: 5px;
+  padding: 8px;
   font-size: 20px;
   transition: all 0.3s ease;
   opacity: 0.8;
   display: flex;
   align-items: center;
   justify-content: center;
-  order: -1;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  min-width: 36px;
+  min-height: 36px;
+  order: 2;
 }
 
 #eye-toggle:hover {
   opacity: 1;
   transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 #eye-toggle:active {
   transform: scale(0.9);
 }
 
-/* ✅ زر العين يظل ظاهراً دائماً ومركزياً في حالة الانكماش */
 #js-toggle-container.collapsed #eye-toggle {
   display: flex !important;
   align-items: center !important;
@@ -684,6 +685,8 @@ body {
   font-size: 24px;
   padding: 0;
   margin: 0;
+  background: transparent;
+  border-radius: 0;
   order: 0;
 }
 
@@ -691,20 +694,36 @@ body {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  padding: 5px;
+  padding: 8px;
   font-size: 18px;
   transition: all 0.3s ease;
   opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  min-width: 36px;
+  min-height: 36px;
+  order: 1;
 }
 
 #move-toggle:hover {
   opacity: 1;
   transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 #move-toggle:active {
   opacity: 0.6;
   transform: scale(0.9);
+}
+
+.hover-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  order: 3;
 }
 
 /* ========================================
@@ -1009,7 +1028,6 @@ input:focus:not(:focus-visible) {
     outline: none;
 }
 
-/* ✅ إضافة clipPath للأزرار الثابتة */
 #reset-btn,
 #change-group-btn,
 #back-button-group {
