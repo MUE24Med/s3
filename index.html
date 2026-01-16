@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.16.003">
+<meta name="version" content="2025.01.17.001">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -154,14 +154,12 @@
     aria-label="الخريطة التفاعلية"
   >
     <defs>
-      <!-- Clip Path للأزرار الثابتة -->
       <clipPath id="fixed-buttons-clip">
         <rect x="0" y="0" width="1024" height="250"/>
       </clipPath>
     </defs>
 
     <g transform="translate(0,0)" id="files-list-container">
-      <!-- الطبقة الخلفية الأساسية -->
       <image 
         data-src="image/wood.webp" 
         x="0" 
@@ -175,18 +173,6 @@
     <g id="dynamic-links-group"></g>
     <g id="group-specific-content"></g>
 
-    <!-- صورة Upper_wood فوق المحتوى الديناميكي وتحت الأزرار -->
-    <image 
-      data-src="image/Upper_wood.webp" 
-      x="0" 
-      y="0" 
-      width="1024" 
-      height="auto"
-      style="pointer-events: none;"
-      aria-hidden="true"
-    />
-
-    <!-- الأزرار الثابتة في الأعلى -->
     <g id="fixed-controls-layer">
       <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="654" y="100" width="250" height="50" rx="10" fill="#d32f2f" stroke="#fff" stroke-width="2"/>
@@ -237,6 +223,16 @@
         >➡️ إلى الخريطة ➡️</text>
       </g>
     </g>
+
+    <image 
+      data-src="image/Upper_wood.webp" 
+      x="0" 
+      y="0" 
+      width="1024" 
+      height="250"
+      style="pointer-events: none;"
+      aria-hidden="true"
+    />
   </svg>
 </div>
 
