@@ -1,4 +1,6 @@
-/* 1️⃣ الجزء 1: الإعدادات والمتغيرات العالمية */
+/* ========================================
+   [001] الإعدادات والمتغيرات العالمية
+   ======================================== */
 
 const REPO_NAME = "semester-3";
 const GITHUB_USER = "MUE24Med";
@@ -77,12 +79,16 @@ const backBtnText = document.getElementById('back-btn-text');
 const changeGroupBtn = document.getElementById('change-group-btn');
 const groupSelectionScreen = document.getElementById('group-selection-screen');
 const filesListContainer = document.getElementById('files-list-container');
+const eyeToggle = document.getElementById('eye-toggle');
+const searchContainer = document.getElementById('search-container');
 
 if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
-/* 2️⃣ الجزء 2: نظام التنقل الخلفي */
+/* ========================================
+   [002] نظام التنقل الخلفي
+   ======================================== */
 
 function pushNavigationState(state, data = {}) {
     navigationHistory.push({ state, data, timestamp: Date.now() });
@@ -154,7 +160,9 @@ function setupBackButton() {
     });
 }
 
-/* 3️⃣ الجزء 3: دوال مساعدة للنصوص */
+/* ========================================
+   [003] دوال مساعدة للنصوص
+   ======================================== */
 
 function normalizeArabic(text) {
     if (!text) return '';
@@ -203,7 +211,9 @@ function debounce(func, delay) {
     };
 }
 
-/* 4️⃣ الجزء 4: دوال جلب البيانات */
+/* ========================================
+   [004] دوال جلب البيانات
+   ======================================== */
 
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return;
@@ -232,7 +242,9 @@ function loadSelectedGroup() {
     return false;
 }
 
-/* 5️⃣ الجزء 5: إدارة شاشة التحميل */
+/* ========================================
+   [005] إدارة شاشة التحميل
+   ======================================== */
 
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
@@ -279,7 +291,9 @@ function updateLoadProgress() {
     if (percentage >= 80) document.getElementById('bulb-1')?.classList.add('on');
 }
 
-/* 6️⃣ الجزء 6: تحميل SVG الخاص بالمجموعة */
+/* ========================================
+   [006] تحميل SVG الخاص بالمجموعة
+   ======================================== */
 
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
@@ -381,7 +395,9 @@ async function initializeGroup(groupLetter) {
     window.loadImages();
 }
 
-/* 7️⃣ الجزء 7: عارض PDF ودوال مساعدة */
+/* ========================================
+   [007] عارض PDF ودوال مساعدة
+   ======================================== */
 
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
@@ -686,7 +702,7 @@ function startHover() {
         h = (h + 10) % 360;    
         step += 0.2;           
         const glowPower = 10 + Math.sin(step) * 5;   
-        const color = `hsl(${h},100%,60%)`; 
+        const color = `hsl(${h},100%,60%)`;  
         rect.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;    
         if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;  
         if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;    
@@ -739,7 +755,7 @@ function updateWelcomeMessages() {
     }  
 
     const loadingH1 = document.querySelector('#loading-content h1');  
-    if (loadingH1 && currentGroup) {
+    if (loadingH1 && currentGroup) {  
         loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span><br>في ${REPO_NAME.toUpperCase()}`;  
     }
 }
@@ -805,7 +821,9 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-/* 8️⃣ الجزء 8: updateWoodInterface مع التمرير المحسن والـ ClipPath */
+/* ========================================
+   [008] updateWoodInterface مع التمرير المحسن
+   ======================================== */
 
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
@@ -924,7 +942,7 @@ async function updateWoodInterface() {
     const scrollContainerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     scrollContainerGroup.setAttribute("class", "scroll-container-group");
 
-    const oldClips = mainSvg.querySelectorAll('clipPath[id^="window-clip"], clipPath[id^="buttons-clip"]');
+    const oldClips = mainSvg.querySelectorAll('clipPath[id^="window-clip"]');
     oldClips.forEach(clip => clip.remove());
 
     const clipPathId = "window-clip-" + Date.now();
@@ -940,24 +958,6 @@ async function updateWoodInterface() {
 
     clipPath.appendChild(clipRect);
     mainSvg.querySelector('defs').appendChild(clipPath);
-
-    const buttonsClipPathId = "buttons-clip-" + Date.now();
-    const buttonsClipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
-    buttonsClipPath.setAttribute("id", buttonsClipPathId);
-
-    const buttonsClipRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    buttonsClipRect.setAttribute("x", "112");
-    buttonsClipRect.setAttribute("y", "100");
-    buttonsClipRect.setAttribute("width", "800");
-    buttonsClipRect.setAttribute("height", "130");
-    buttonsClipRect.setAttribute("rx", "15");
-
-    buttonsClipPath.appendChild(buttonsClipRect);
-    mainSvg.querySelector('defs').appendChild(buttonsClipPath);
-
-    if (resetBtn) resetBtn.setAttribute("clip-path", `url(#${buttonsClipPathId})`);
-    if (changeGroupBtn) changeGroupBtn.setAttribute("clip-path", `url(#${buttonsClipPathId})`);
-    if (backButtonGroup) backButtonGroup.setAttribute("clip-path", `url(#${buttonsClipPathId})`);
 
     const scrollContent = document.createElementNS("http://www.w3.org/2000/svg", "g");
     scrollContent.setAttribute("class", "scrollable-content");
@@ -1266,30 +1266,31 @@ async function updateWoodInterface() {
             }
         };
 
-        const woodImage = filesListContainer?.querySelector('image[data-src="image/wood.webp"]');
-        if (woodImage) {
-            woodImage.addEventListener('mousedown', (e) => {
-                startContentDrag(e.clientY, false);
-                e.preventDefault();
-            });
+        const woodViewRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        woodViewRect.setAttribute("x", "120");
+        woodViewRect.setAttribute("y", "250");
+        woodViewRect.setAttribute("width", "780");
+        woodViewRect.setAttribute("height", "1700");
+        woodViewRect.style.fill = "transparent";
+        woodViewRect.style.pointerEvents = "all";
+        woodViewRect.style.cursor = "grab";
 
-            woodImage.addEventListener('touchstart', (e) => {
-                startContentDrag(e.touches[0].clientY, true);
-            }, { passive: true });
-        }
-
-        scrollContainerGroup.addEventListener('mousedown', (e) => {
+        woodViewRect.addEventListener('mousedown', (e) => {
             const target = e.target;
-            if (target.classList && (target.classList.contains('scroll-handle') || target.classList.contains('list-item'))) return;
+            if (target.classList && target.classList.contains('scroll-handle')) return;
+            if (target.closest('.wood-folder-group, .wood-file-group')) return;
             startContentDrag(e.clientY, false);
             e.preventDefault();
         });
 
-        scrollContainerGroup.addEventListener('touchstart', (e) => {
+        woodViewRect.addEventListener('touchstart', (e) => {
             const target = e.target;
-            if (target.classList && (target.classList.contains('scroll-handle') || target.classList.contains('list-item'))) return;
+            if (target.classList && target.classList.contains('scroll-handle')) return;
+            if (target.closest('.wood-folder-group, .wood-file-group')) return;
             startContentDrag(e.touches[0].clientY, true);
         }, { passive: true });
+
+        scrollContainerGroup.insertBefore(woodViewRect, scrollContent);
 
         window.addEventListener('mousemove', (e) => {
             if (isDraggingContent) {
@@ -1350,7 +1351,7 @@ async function updateWoodInterface() {
             isDraggingHandle = false;
         });
 
-        scrollContent.addEventListener('wheel', (e) => {
+        woodViewRect.addEventListener('wheel', (e) => {
             e.preventDefault();
             e.stopPropagation();
 
@@ -1370,7 +1371,9 @@ async function updateWoodInterface() {
     dynamicGroup.appendChild(scrollContainerGroup);
 }
 
-/* 9️⃣ الجزء 9: معالجة المستطيلات والأحداث */
+/* ========================================
+   [009] معالجة المستطيلات والأحداث
+   ======================================== */
 
 function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
@@ -1645,7 +1648,9 @@ function finishLoading() {
 }
 window.loadImages = loadImages;
 
-/* 🔟 الجزء 10: معالجات الأحداث الرئيسية */
+/* ========================================
+   [010] معالجات الأحداث والتفاعل
+   ======================================== */
 
 document.querySelectorAll('.group-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -1730,34 +1735,28 @@ if (searchInput) {
     }, 150));
 }
 
-/* 1️⃣1️⃣ الجزء 11: زر العين لإخفاء/إظهار الحاوية */
+if (eyeToggle && searchContainer) {
+    const searchVisible = localStorage.getItem('searchVisible') !== 'false';
 
-const eyeToggle = document.getElementById('eye-toggle');
-
-if (eyeToggle && toggleContainer) {
-    const containerVisible = localStorage.getItem('containerVisible') !== 'false';
-
-    if (!containerVisible) {
-        toggleContainer.style.opacity = '0';
-        toggleContainer.style.pointerEvents = 'none';
+    if (!searchVisible) {
+        searchContainer.classList.add('hidden');
+        toggleContainer.classList.add('collapsed');
+        eyeToggle.textContent = '👁️';
     }
 
     eyeToggle.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
-        const isVisible = toggleContainer.style.opacity !== '0';
-        
-        if (isVisible) {
-            toggleContainer.style.opacity = '0';
-            toggleContainer.style.pointerEvents = 'none';
-        } else {
-            toggleContainer.style.opacity = '1';
-            toggleContainer.style.pointerEvents = 'auto';
-        }
-        
-        localStorage.setItem('containerVisible', !isVisible);
-        console.log(isVisible ? '👁️ تم إخفاء الحاوية' : '👁️ تم إظهار الحاوية');
+        searchContainer.classList.toggle('hidden');
+        toggleContainer.classList.toggle('collapsed');
+
+        const isHidden = searchContainer.classList.contains('hidden');
+        localStorage.setItem('searchVisible', !isHidden);
+
+        eyeToggle.textContent = isHidden ? '👁️' : '👁️';
+
+        console.log(isHidden ? '👁️ تم إخفاء البحث' : '👁️ تم إظهار البحث');
     });
 
     eyeToggle.addEventListener('keydown', function(e) {
@@ -1813,8 +1812,6 @@ if (mainSvg) {
     }, false);
 }
 
-/* 1️⃣2️⃣ الجزء 12: زر Reset - إعادة تحميل الصفحة */
-
 const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
     resetBtn.addEventListener('click', function(e) {
@@ -1838,7 +1835,9 @@ if (resetBtn) {
 
 console.log('✅ تم تفعيل زر Reset');
 
-/* 1️⃣3️⃣ الجزء 13: البدء التلقائي */
+/* ========================================
+   [011] البدء التلقائي
+   ======================================== */
 
 if (!localStorage.getItem('visitor_id')) {
     const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
@@ -1858,7 +1857,9 @@ if (hasSavedGroup) {
     pushNavigationState(NAV_STATE.GROUP_SELECTION);
 }
 
-/* 1️⃣4️⃣ الجزء 14: Service Worker التلقائي */
+/* ========================================
+   [012] Service Worker التلقائي
+   ======================================== */
 
 if ('serviceWorker' in navigator) {
   let refreshing = false;
