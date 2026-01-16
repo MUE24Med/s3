@@ -1,4 +1,4 @@
-/* ===== تنسيق الطبقات الخشبية ===== */
+/* ===== الجزء 1: تنسيق الطبقات الخشبية ===== */
 .wood-layer {
     pointer-events: none;
     shape-rendering: crispEdges;
@@ -67,6 +67,7 @@
   user-select: none;
 }
 
+/* ===== الجزء 2: تنسيق التمرير والقوائم ===== */
 .scroll-container-group {
   pointer-events: auto;
 }
@@ -100,6 +101,7 @@
   --color-is: #c8ff8e;
 }
 
+/* ===== الجزء 3: تنسيق الصفحة الأساسية ===== */
 html, body {
   margin: 0;
   padding: 0;
@@ -136,6 +138,7 @@ html, body {
   opacity: 0; 
 }
 
+/* ===== الجزء 4: تنسيق المستطيلات التفاعلية ===== */
 .m {
   fill: transparent;
   stroke: transparent;
@@ -153,6 +156,7 @@ html, body {
 .l  { stroke: var(--color-l); }
 .is { stroke: var(--color-is); }
 
+/* ===== الجزء 5: شاشة اختيار الجروب ===== */
 #group-selection-screen {
   height: 100svh;
   position: fixed;
@@ -309,6 +313,7 @@ body {
   }
 }
 
+/* ===== الجزء 6: عارض PDF ===== */
 #pdf-overlay {
   height: 100svh;
   transition: transform .35s ease, opacity .35s ease;
@@ -355,6 +360,7 @@ body {
   font-size: 14px;
 }
 
+/* ===== الجزء 7: شاشة التحميل ===== */
 #loading-overlay {
   position: fixed;
   height: 100svh;
@@ -406,6 +412,7 @@ body {
   font-size: 1.8rem;
   text-transform: uppercase;
   letter-spacing: 2px;
+  line-height: 1.6;
 }
 
 #loader-lights {
@@ -459,6 +466,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
+/* ===== الجزء 8: أزرار التنقل ===== */
 #back-btn-text {
   pointer-events: none;
   user-select: none;
@@ -499,13 +507,25 @@ body {
 .legend-item.yellow { --item-color: var(--color-l); }
 .legend-item.is { --item-color: var(--color-is); }
 
-/* ===== Toggle & Search UI ===== */
+/* ===== الجزء 9: الحاوية العائمة وزر العين ===== */
 #js-toggle-container {
   transform: translateZ(0); 
   will-change: transform;
   position: fixed;
   right: 20px;
   z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  transition: all 0.3s ease;
+}
+
+#js-toggle-container.top { top: 20px; }
+#js-toggle-container.bottom { bottom: 20px; }
+
+/* ✅ المحتوى القابل للإخفاء */
+#controls-content {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -520,6 +540,16 @@ body {
   min-width: 220px !important;
   max-width: 280px !important;
   transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+#controls-content.hidden {
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
 }
 
 .controls-row {
@@ -531,26 +561,11 @@ body {
   padding-top: 10px;
 }
 
-#js-toggle-container.top { top: 20px; }
-#js-toggle-container.bottom { bottom: 20px; }
-
 #search-container {
   position: relative;
   width: 100%;
   display: flex;
   align-items: center;
-  transition: all 0.3s ease;
-  max-height: 500px;
-  overflow: hidden;
-}
-
-/* ✅ حالة إخفاء البحث */
-#search-container.hidden {
-  opacity: 0;
-  pointer-events: none;
-  max-height: 0;
-  margin: 0;
-  padding: 0;
 }
 
 #search-input {
@@ -587,24 +602,35 @@ body {
   transform: translateY(-50%) scale(0.9);
 }
 
-/* ===== تنسيق زر العين ===== */
+/* ✅ زر العين - ثابت دائماً */
 #eye-toggle {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  padding: 5px;
-  font-size: 20px;
+  padding: 8px 12px;
+  font-size: 22px;
   transition: all 0.3s ease;
-  opacity: 0.8;
+  opacity: 0.9;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
 }
 
 #eye-toggle:hover {
   opacity: 1;
   transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
 }
 
 #eye-toggle:active {
-  transform: scale(0.9);
+  transform: scale(0.95);
 }
 
 #move-toggle {
@@ -627,6 +653,7 @@ body {
   transform: scale(0.9);
 }
 
+/* ===== الجزء 10: Switch Toggle ===== */
 .switch {
   position: relative;
   display: inline-block;
@@ -656,6 +683,7 @@ body {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(20px); }
 
+/* ===== الجزء 11: الأنيميشن ===== */
 @keyframes logo-glow {
   0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
   50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
@@ -676,6 +704,7 @@ img, image, svg, rect {
   user-select: none;
 }
 
+/* ===== الجزء 12: شريط التمرير ===== */
 .scroll-container-group rect[x="910"] {
   transition: fill 0.2s ease, y 0.15s ease-out;
 }
@@ -705,6 +734,7 @@ image[data-src*="wood.webp"] {
   touch-action: none;
 }
 
+/* ===== الجزء 13: تحسينات الأداء ===== */
 .wood-layer,
 #main-svg,
 .scrollable-content {
@@ -724,6 +754,7 @@ image[data-src*="wood.webp"] {
   }
 }
 
+/* ===== الجزء 14: إمكانية الوصول ===== */
 button:focus-visible,
 [role="button"]:focus-visible,
 input:focus-visible {
@@ -760,6 +791,7 @@ input:focus:not(:focus-visible) {
   }
 }
 
+/* ===== الجزء 15: تفاعلات المحتوى القابل للتمرير ===== */
 .scrollable-content {
   transition: transform 0.1s ease-out;
   overflow: visible !important;
@@ -818,11 +850,15 @@ input:focus:not(:focus-visible) {
   }
 }
 
+/* ===== الجزء 16: استجابة الشاشات ===== */
 @media (max-width: 768px) {
   #js-toggle-container {
+    right: 8px;
+  }
+
+  #controls-content {
     min-width: 180px !important;
     max-width: 220px !important;
-    right: 8px;
   }
 
   #search-input {
@@ -833,9 +869,12 @@ input:focus:not(:focus-visible) {
 
 @media (max-width: 480px) {
   #js-toggle-container {
+    right: 10px;
+  }
+
+  #controls-content {
     min-width: 160px !important;
     max-width: 180px !important;
-    right: 10px;
     padding: 8px;
   }
 
@@ -843,8 +882,15 @@ input:focus:not(:focus-visible) {
     font-size: 12px;
     max-width: 170px;
   }
+
+  #eye-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
 }
 
+/* ===== الجزء 17: تحسينات الرسومات ===== */
 #main-svg image {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
@@ -879,6 +925,7 @@ button, [role="button"], input {
   -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
 }
 
+/* ===== الجزء 18: Loading Shimmer ===== */
 .loading-shimmer {
   background: linear-gradient(
     90deg,
@@ -895,6 +942,7 @@ button, [role="button"], input {
   100% { background-position: 200% 0; }
 }
 
+/* ===== الجزء 19: Scrollbar ===== */
 #scroll-container::-webkit-scrollbar {
   height: 8px;
 }
@@ -912,6 +960,7 @@ button, [role="button"], input {
   background: #666;
 }
 
+/* ===== الجزء 20: أزرار Reset و Change Group ===== */
 #reset-btn,
 #change-group-btn {
     cursor: pointer;
