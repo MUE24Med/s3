@@ -12,7 +12,6 @@
     z-index: 100;
 }
 
-/* الحالة العادية */
 .wood-banner-animation {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
@@ -23,7 +22,6 @@
   transform: scale(1) translateY(0);
 }
 
-/* حالة الـ Hover */
 .wood-banner-animation:hover {
   animation: none !important; 
   transform: translateY(-15px) scale(1.15) !important; 
@@ -32,7 +30,6 @@
   z-index: 100;
 }
 
-/* أنيميشن تأرجح التوهج */
 @keyframes glow-oscillation {
   0%, 100% {
     filter: brightness(1.1) drop-shadow(0 10px 20px rgba(255, 204, 0, 0.4));
@@ -44,19 +41,16 @@
   }
 }
 
-/* أنيميشن النبض العادي */
 @keyframes wood-pulse-soft {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.03); }
 }
 
-/* عند الضغط */
 .wood-banner-animation:active {
   transform: translateY(-4px) scale(1.05) !important;
   animation: none !important;
 }
 
-/* ===== تنسيق زر تغيير الاسم ===== */
 .name-input-group {
   transition: all 0.3s ease;
   cursor: pointer;
@@ -73,7 +67,6 @@
   user-select: none;
 }
 
-/* ===== تنسيق شريط التمرير ===== */
 .scroll-container-group {
   pointer-events: auto;
 }
@@ -82,14 +75,12 @@
   transition: transform 0.2s ease-out;
 }
 
-/* تنسيق العناصر في قائمة الخشب  */
 .list-item {
     stroke-width: 1px !important;
     rx: 5;
     ry: 5;
 }
 
-/* 1. إعدادات توحيد الرؤية */
 *, *::before, *::after {
   box-sizing: border-box !important;
   -webkit-tap-highlight-color: transparent;
@@ -162,7 +153,6 @@ html, body {
 .l  { stroke: var(--color-l); }
 .is { stroke: var(--color-is); }
 
-/* ===== شاشة اختيار الجروب ===== */
 #group-selection-screen {
   height: 100svh;
   position: fixed;
@@ -284,7 +274,6 @@ body {
   text-align: center;
 }
 
-/* ===== موبايل صغير جدًا ===== */
 @media (max-height: 700px) {
   #group-selection-content {
     transform: scale(0.78);
@@ -320,7 +309,6 @@ body {
   }
 }
 
-/* تنسيق عارض PDF */
 #pdf-overlay {
   height: 100svh;
   transition: transform .35s ease, opacity .35s ease;
@@ -367,7 +355,6 @@ body {
   font-size: 14px;
 }
 
-/* ===== Loading Overlay ===== */
 #loading-overlay {
   position: fixed;
   height: 100svh;
@@ -437,7 +424,6 @@ body {
   transition: all .4s ease;
 }
 
-/* ألوان المصابيح */
 #bulb-1.on {
   background-color: #4dff88;
   box-shadow: 0 0 15px #4dff88, 0 0 30px #00ff66;
@@ -533,6 +519,7 @@ body {
   width: auto;
   min-width: 220px !important;
   max-width: 280px !important;
+  transition: all 0.3s ease;
 }
 
 .controls-row {
@@ -552,6 +539,18 @@ body {
   width: 100%;
   display: flex;
   align-items: center;
+  transition: all 0.3s ease;
+  max-height: 500px;
+  overflow: hidden;
+}
+
+/* ✅ حالة إخفاء البحث */
+#search-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
 }
 
 #search-input {
@@ -588,19 +587,46 @@ body {
   transform: translateY(-50%) scale(0.9);
 }
 
+/* ===== تنسيق زر العين ===== */
+#eye-toggle {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 5px;
+  font-size: 20px;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+#eye-toggle:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+#eye-toggle:active {
+  transform: scale(0.9);
+}
+
 #move-toggle {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   padding: 5px;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+#move-toggle:hover {
+  opacity: 1;
+  transform: scale(1.15);
 }
 
 #move-toggle:active {
   opacity: 0.6;
-  transform: scale(1.1);
+  transform: scale(0.9);
 }
 
-/* ===== Switch Toggle ===== */
 .switch {
   position: relative;
   display: inline-block;
@@ -630,7 +656,6 @@ body {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* ===== Animations ===== */
 @keyframes logo-glow {
   0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
   50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
@@ -651,7 +676,6 @@ img, image, svg, rect {
   user-select: none;
 }
 
-/* ===== تحسينات شريط التمرير ===== */
 .scroll-container-group rect[x="910"] {
   transition: fill 0.2s ease, y 0.15s ease-out;
 }
@@ -664,7 +688,6 @@ img, image, svg, rect {
   fill: #ffeb3b !important;
 }
 
-/* ===== hover للعناصر ===== */
 .wood-folder-group:hover rect,
 .wood-file-group:hover rect {
   stroke-width: 2 !important;
@@ -676,23 +699,18 @@ img, image, svg, rect {
   transform: scale(0.98);
 }
 
-/* ===== منع التمرير على الصور ===== */
 .wood-banner-animation,
 image[data-src*="wood.webp"] {
   pointer-events: auto;
   touch-action: none;
 }
 
-/* ===== تحسينات الأداء Performance ===== */
-
-/* Critical Rendering Path */
 .wood-layer,
 #main-svg,
 .scrollable-content {
   contain: layout style paint;
 }
 
-/* GPU Acceleration */
 .wood-banner-animation,
 .group-btn,
 .scroll-handle {
@@ -700,16 +718,12 @@ image[data-src*="wood.webp"] {
   transform: translateZ(0);
 }
 
-/* Smooth Scrolling */
 @supports (scroll-behavior: smooth) {
   #scroll-container {
     scroll-behavior: smooth;
   }
 }
 
-/* ===== تحسينات Accessibility ===== */
-
-/* Focus Visible للوحة المفاتيح */
 button:focus-visible,
 [role="button"]:focus-visible,
 input:focus-visible {
@@ -717,13 +731,11 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* إخفاء outline للماوس فقط */
 button:focus:not(:focus-visible),
 input:focus:not(:focus-visible) {
   outline: none;
 }
 
-/* ===== Dark Mode Protection ===== */
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: only light !important;
@@ -734,7 +746,6 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* ===== Print Styles ===== */
 @media print {
   #js-toggle-container,
   #loading-overlay,
@@ -749,7 +760,6 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* ===== تحسينات التمرير المحسن ===== */
 .scrollable-content {
   transition: transform 0.1s ease-out;
   overflow: visible !important;
@@ -766,7 +776,6 @@ input:focus:not(:focus-visible) {
   pointer-events: auto;
 }
 
-/* شريط التمرير أكثر وضوحاً */
 .scroll-handle {
   transition: y 0.1s ease-out;
 }
@@ -776,14 +785,12 @@ input:focus:not(:focus-visible) {
   filter: drop-shadow(0 0 5px rgba(255, 213, 79, 0.7));
 }
 
-/* التأكد من أن clip-path لا يقطع بشكل مفرط */
 .scrollable-content[clip-path],
 .subject-separator-group[clip-path] {
   clip-path: inherit;
   -webkit-clip-path: inherit;
 }
 
-/* تحسين اللمس على الهواتف */
 @media (hover: none) {
   .scrollable-content {
     -webkit-overflow-scrolling: touch;
@@ -811,16 +818,7 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* ===== تحسينات للشاشات الصغيرة ===== */
 @media (max-width: 768px) {
-  #clear-cache-btn {
-    width: 140px;
-    height: 50px;
-    font-size: 13px;
-    top: 8px;
-    left: 8px;
-  }
-
   #js-toggle-container {
     min-width: 180px !important;
     max-width: 220px !important;
@@ -834,13 +832,6 @@ input:focus:not(:focus-visible) {
 }
 
 @media (max-width: 480px) {
-  #clear-cache-btn {
-    width: 120px;
-    height: 45px;
-    font-size: 11px;
-    padding: 8px;
-  }
-
   #js-toggle-container {
     min-width: 160px !important;
     max-width: 180px !important;
@@ -854,52 +845,40 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* ===== تحسينات إضافية للأداء ===== */
-
-/* تقليل Repaints */
 #main-svg image {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
 }
 
-/* تحسين Font Rendering */
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* منع Layout Shifts */
 #group-selection-screen,
 #loading-overlay,
 #pdf-overlay {
   contain: layout size;
 }
 
-/* Lazy Loading Support */
 image[loading="lazy"] {
   content-visibility: auto;
 }
 
-/* ===== تحسينات الحركة والتفاعل ===== */
-
-/* تحسين Touch على iOS */
 #scroll-container {
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
 }
 
-/* منع Double-Tap Zoom على iOS */
 button, [role="button"], input {
   touch-action: manipulation;
 }
 
-/* تحسين Tap Highlight */
 * {
   -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
 }
 
-/* ===== Loading States ===== */
 .loading-shimmer {
   background: linear-gradient(
     90deg,
@@ -916,7 +895,6 @@ button, [role="button"], input {
   100% { background-position: 200% 0; }
 }
 
-/* ===== Scroll Indicators ===== */
 #scroll-container::-webkit-scrollbar {
   height: 8px;
 }
@@ -934,17 +912,14 @@ button, [role="button"], input {
   background: #666;
 }
 
-/* ===== تنسيق أزرار Change Group و Reset (متطابقة تماماً) ===== */
-
 #reset-btn,
 #change-group-btn {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 
 #reset-btn rect,
 #change-group-btn rect {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: filter 0.3s ease;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     stroke-width: 2;
 }
@@ -965,12 +940,8 @@ button, [role="button"], input {
     pointer-events: none;
     user-select: none;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    transition: all 0.2s ease;
 }
 
-/* ===== ألوان مميزة لكل زر ===== */
-
-/* زر Reset - أحمر */
 #reset-btn rect {
     fill: #d32f2f;
 }
@@ -979,7 +950,6 @@ button, [role="button"], input {
     fill: #f44336;
 }
 
-/* زر Change Group - أخضر */
 #change-group-btn rect {
     fill: #2e7d32;
 }
@@ -988,24 +958,6 @@ button, [role="button"], input {
     fill: #43a047;
 }
 
-/* ===== تأثير النبض للزرين (اختياري) ===== */
-@keyframes button-glow {
-    0%, 100% {
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    }
-    50% {
-        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)) 
-                drop-shadow(0 0 25px currentColor);
-    }
-}
-
-/* يمكن إضافة كلاس .glow للزر عند الحاجة */
-#reset-btn.glow rect,
-#change-group-btn.glow rect {
-    animation: button-glow 2s infinite;
-}
-
-/* ===== Focus للوحة المفاتيح (Accessibility) ===== */
 #reset-btn:focus,
 #change-group-btn:focus {
     outline: 3px solid #ffca28;
@@ -1018,7 +970,6 @@ button, [role="button"], input {
     outline: none;
 }
 
-/* ===== استجابة للشاشات الصغيرة ===== */
 @media (max-width: 768px) {
     #reset-btn rect,
     #change-group-btn rect {
@@ -1038,14 +989,12 @@ button, [role="button"], input {
         font-size: 13px;
     }
 
-    /* يمكن تصغير الزرين أكثر */
     #reset-btn rect,
     #change-group-btn rect {
         rx: 6;
     }
 }
 
-/* ===== حالة Disabled (اختياري) ===== */
 #reset-btn.disabled rect,
 #change-group-btn.disabled rect {
     fill: #666 !important;
@@ -1058,9 +1007,8 @@ button, [role="button"], input {
     opacity: 0.5;
 }
 
-/* ===== تحسينات الأداء ===== */
 #reset-btn rect,
 #change-group-btn rect {
-    will-change: transform, filter;
+    will-change: filter;
     transform: translateZ(0);
 }
