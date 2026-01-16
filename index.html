@@ -20,9 +20,14 @@
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link rel="dns-prefetch" href="https://mozilla.github.io">
+  <link rel="preload" href="image/wood.webp" as="image" type="image/webp">
   <link rel="preload" href="image/0.png" as="image" type="image/png">
   <link rel="icon" type="image/png" href="image/0.png">
   <link rel="apple-touch-icon" href="image/0.png">
+  <link rel="preload" href="image/logo-A.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/logo-B.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/logo-C.webp" as="image" type="image/webp">
+  <link rel="preload" href="image/logo-D.webp" as="image" type="image/webp">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -71,18 +76,18 @@
   <div class="controls-row">
     <div style="display: flex; align-items: center; gap: 8px;">
       <span 
-        id="move-toggle" 
-        role="button" 
-        aria-label="تحريك شريط الأدوات"
-        tabindex="0"
-      >↕️</span>
-      <span 
         id="eye-toggle" 
         role="button" 
         aria-label="إخفاء/إظهار شريط البحث"
         tabindex="0"
         title="إخفاء/إظهار البحث"
       >👁️</span>
+      <span 
+        id="move-toggle" 
+        role="button" 
+        aria-label="تحريك شريط الأدوات"
+        tabindex="0"
+      >↕️</span>
     </div>
     <div style="display: flex; align-items: center; gap: 8px;">
       <span style="font-size: 12px; opacity: 0.8;">Hover</span>
