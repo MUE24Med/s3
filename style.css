@@ -815,53 +815,6 @@ input:focus:not(:focus-visible) {
   }
 }
 
-/* ===== زر مسح الكاش - متطابق مع زر تغيير الجروب ===== */
-#clear-cache-btn {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 9999;
-  
-  /* نفس أبعاد زر تغيير الجروب */
-  width: 180px;
-  height: 60px;
-  
-  /* نفس التدرج اللوني */
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  
-  /* نفس النص */
-  font-weight: bold;
-  font-size: 16px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-#clear-cache-btn:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-#clear-cache-btn:active {
-  transform: translateY(-1px) scale(0.98);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
 /* ===== تحسينات للشاشات الصغيرة ===== */
 @media (max-width: 768px) {
   #clear-cache-btn {
