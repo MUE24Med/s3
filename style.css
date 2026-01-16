@@ -1,3 +1,35 @@
+/* ===== تنسيق الطبقات الخشبية ===== */
+.wood-layer {
+    pointer-events: none;
+    shape-rendering: crispEdges;
+}
+
+.scroll-container-group {
+    cursor: grab;
+}
+
+#back-button-group, #js-toggle-container {
+    z-index: 100;
+}
+
+.wood-banner-animation {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wood-pulse-soft 3s infinite ease-in-out;
+  will-change: transform, filter;
+  transform: scale(1) translateY(0);
+}
+
+.wood-banner-animation:hover {
+  animation: none !important; 
+  transform: translateY(-15px) scale(1.15) !important; 
+  animation: glow-oscillation 1.5s infinite ease-in-out !important;
+  filter: brightness(1.2);
+  z-index: 100;
+}
+
   filter: brightness(1.2);
   z-index: 100;
 }
