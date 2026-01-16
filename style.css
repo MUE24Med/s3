@@ -985,69 +985,131 @@ button, [role="button"], input {
   background: #666;
 }
 
-/* ===== تنسيق زر مسح الكاش وزر تغيير الجروب (متطابقين تماماً) ===== */
+/* ===== أضف هذا في نهاية ملف style.css ===== */
 
-#clear-cache-btn rect,
+/* ===== تنسيق أزرار Change Group و Reset (متطابقة تماماً) ===== */
+
+#reset-btn rect,
 #change-group-btn rect {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    stroke-width: 2;
 }
 
-#clear-cache-btn:hover rect,
+#reset-btn:hover rect,
 #change-group-btn:hover rect {
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)) 
-            drop-shadow(0 0 15px currentColor);
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)) 
+            drop-shadow(0 0 20px currentColor);
     transform: translateY(-2px);
 }
 
-#clear-cache-btn:active rect,
+#reset-btn:active rect,
 #change-group-btn:active rect {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(0) scale(0.95);
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-#clear-cache-btn text,
+#reset-btn text,
 #change-group-btn text {
     pointer-events: none;
     user-select: none;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 18px;
+    transition: all 0.2s ease;
+}
+
+/* ===== ألوان مميزة لكل زر ===== */
+
+/* زر Reset - أحمر */
+#reset-btn rect {
+    fill: #d32f2f;
+}
+
+#reset-btn:hover rect {
+    fill: #f44336;
+}
+
+/* زر Change Group - أخضر */
+#change-group-btn rect {
+    fill: #2e7d32;
+}
+
+#change-group-btn:hover rect {
+    fill: #43a047;
 }
 
 /* ===== تأثير النبض للزرين (اختياري) ===== */
-@keyframes button-pulse {
+@keyframes button-glow {
     0%, 100% {
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     }
     50% {
-        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)) 
-                drop-shadow(0 0 20px currentColor);
+        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)) 
+                drop-shadow(0 0 25px currentColor);
     }
 }
 
-/* يمكن إضافة كلاس .pulse للزر عند الحاجة */
-#clear-cache-btn.pulse rect,
-#change-group-btn.pulse rect {
-    animation: button-pulse 2s infinite;
+/* يمكن إضافة كلاس .glow للزر عند الحاجة */
+#reset-btn.glow rect,
+#change-group-btn.glow rect {
+    animation: button-glow 2s infinite;
+}
+
+/* ===== Focus للوحة المفاتيح (Accessibility) ===== */
+#reset-btn:focus,
+#change-group-btn:focus {
+    outline: 3px solid #ffca28;
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
+#reset-btn:focus:not(:focus-visible),
+#change-group-btn:focus:not(:focus-visible) {
+    outline: none;
 }
 
 /* ===== استجابة للشاشات الصغيرة ===== */
 @media (max-width: 768px) {
-    #clear-cache-btn rect,
+    #reset-btn rect,
     #change-group-btn rect {
         rx: 8;
+        stroke-width: 1.5;
     }
     
-    #clear-cache-btn text,
+    #reset-btn text,
     #change-group-btn text {
-        font-size: 14px;
+        font-size: 15px;
     }
 }
 
 @media (max-width: 480px) {
-    /* يمكن تصغير الزرين أو إخفاء أحدهما على الشاشات الصغيرة جداً */
-    #clear-cache-btn text,
+    #reset-btn text,
     #change-group-btn text {
-        font-size: 12px;
+        font-size: 13px;
     }
+    
+    /* يمكن تصغير الزرين أكثر */
+    #reset-btn rect,
+    #change-group-btn rect {
+        rx: 6;
+    }
+}
+
+/* ===== حالة Disabled (اختياري) ===== */
+#reset-btn.disabled rect,
+#change-group-btn.disabled rect {
+    fill: #666 !important;
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+
+#reset-btn.disabled text,
+#change-group-btn.disabled text {
+    opacity: 0.5;
+}
+
+/* ===== تحسينات الأداء ===== */
+#reset-btn rect,
+#change-group-btn rect {
+    will-change: transform, filter;
+    transform: translateZ(0);
 }
