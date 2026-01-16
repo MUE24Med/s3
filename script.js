@@ -1,4 +1,6 @@
-/* --- 1. الإعدادات والمتغيرات العالمية --- */
+/* ==================== script.js - الملف الكامل ==================== */
+/* --- الجزء 1: الإعدادات والمتغيرات العالمية --- */
+
 const REPO_NAME = "semester-3";
 const GITHUB_USER = "MUE24Med";
 
@@ -13,7 +15,6 @@ let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
 
-// ✅ متغيرات نظام التحميل الجديد
 let imageUrlsToLoad = [];
 let loadingProgress = {
     totalSteps: 0,
@@ -21,7 +22,6 @@ let loadingProgress = {
     currentPercentage: 0
 };
 
-// ✅ نظام التنقل الخلفي
 let navigationHistory = [];
 const NAV_STATE = {
     GROUP_SELECTION: 'group_selection',
@@ -30,7 +30,6 @@ const NAV_STATE = {
     PDF_VIEW: 'pdf_view'
 };
 
-// ✅ قاموس الترجمة للبحث العربي
 const translationMap = {
     'physio': 'فسيولوجي',
     'anatomy': 'اناتومي',
@@ -49,19 +48,15 @@ const translationMap = {
     'uri': 'جهاز بولي',
     'cvs': 'جهاز دوري',
     'ipc': 'مهارات اتصال',
-    'bio': 'بيوكيميستري'
+    'bio': 'بيوكيميستري',
+    // ✅ إضافة الأرقام العربية
+    '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+    '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9'
 };
 
-// ✅ قائمة المواد التي يجب إضافة فاصل بعدها
 const SUBJECT_FOLDERS = [
-    'anatomy',
-    'histo',
-    'physio',
-    'bio',
-    'micro',
-    'para',
-    'pharma',
-    'patho'
+    'anatomy', 'histo', 'physio', 'bio',
+    'micro', 'para', 'pharma', 'patho'
 ];
 
 let activeState = {
@@ -70,7 +65,6 @@ let activeState = {
     touchStartTime: 0, initialScrollLeft: 0
 };
 
-// الحصول على العناصر فورًا
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
 const clipDefs = mainSvg?.querySelector('defs');
@@ -86,12 +80,11 @@ const changeGroupBtn = document.getElementById('change-group-btn');
 const groupSelectionScreen = document.getElementById('group-selection-screen');
 const filesListContainer = document.getElementById('files-list-container');
 
-// تحديث حالة التفاعل
 if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
-/* --- 2. نظام التنقل الخلفي --- */
+/* --- نظام التنقل الخلفي --- */
 
 function pushNavigationState(state, data = {}) {
     navigationHistory.push({ state, data, timestamp: Date.now() });
@@ -115,7 +108,6 @@ function getCurrentNavigationState() {
 
 function handleBackNavigation(e) {
     e.preventDefault();
-
     const currentState = getCurrentNavigationState();
     console.log('🔙 زر الرجوع - الحالة الحالية:', currentState);
 
@@ -125,8 +117,6 @@ function handleBackNavigation(e) {
     }
 
     popNavigationState();
-
-    const previousState = getCurrentNavigationState();
 
     if (currentState.state === NAV_STATE.PDF_VIEW) {
         const overlay = document.getElementById("pdf-overlay");
@@ -148,9 +138,7 @@ function handleBackNavigation(e) {
         updateWoodInterface();
 
     } else if (currentState.state === NAV_STATE.WOOD_VIEW) {
-        if (groupSelectionScreen) {
-            groupSelectionScreen.classList.remove('hidden');
-        }
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
         if (toggleContainer) toggleContainer.style.display = 'none';
         if (scrollContainer) scrollContainer.style.display = 'none';
         navigationHistory = [];
@@ -162,19 +150,21 @@ function handleBackNavigation(e) {
 
 function setupBackButton() {
     window.history.pushState({ page: 'main' }, '', '');
-
     window.addEventListener('popstate', handleBackNavigation);
-
     window.addEventListener('popstate', function(e) {
         window.history.pushState({ page: 'main' }, '', '');
     });
 }
 
-/* --- 3. دوال مساعدة للنصوص العربية --- */
+/* --- دوال مساعدة للنصوص --- */
 
 function normalizeArabic(text) {
     if (!text) return '';
     text = String(text);
+    
+    // ✅ تحويل الأرقام العربية إلى إنجليزية
+    text = text.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    
     return text
         .replace(/[أإآ]/g, 'ا')
         .replace(/[ىي]/g, 'ي')
@@ -186,21 +176,20 @@ function normalizeArabic(text) {
 
 function autoTranslate(filename) {
     if (!filename) return '';
-
     let arabic = filename.toLowerCase();  
-
+    
     for (let [en, ar] of Object.entries(translationMap)) {  
         const regex = new RegExp(en, 'gi');  
         arabic = arabic.replace(regex, ar);  
     }  
-
+    
     arabic = arabic  
         .replace(/\.pdf$/i, '')  
         .replace(/\.webp$/i, '')  
         .replace(/-/g, ' ')  
         .replace(/_/g, ' ')  
         .trim();  
-
+    
     return arabic;
 }
 
@@ -209,7 +198,16 @@ function isSubjectFolder(folderName) {
     return SUBJECT_FOLDERS.some(subject => lowerName.includes(subject));
 }
 
-/* --- 4. دوال جلب البيانات --- */
+function debounce(func, delay) {
+    let timeoutId;
+    return function() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, arguments), delay);
+    };
+}
+
+/* --- دوال جلب البيانات --- */
+
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return;
     try {
@@ -225,7 +223,6 @@ async function fetchGlobalTree() {
 function saveSelectedGroup(group) {
     localStorage.setItem('selectedGroup', group);
     currentGroup = group;
-
     window.dispatchEvent(new CustomEvent('groupChanged', { detail: group }));
 }
 
@@ -238,7 +235,7 @@ function loadSelectedGroup() {
     return false;
 }
 
-/* --- 5. إدارة شاشة التحميل (نظام 1/5، 2/5، 3/5، 4/5) --- */
+/* --- إدارة شاشة التحميل --- */
 
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
@@ -248,7 +245,6 @@ function showLoadingScreen(groupLetter) {
         splashImage.src = `image/logo-${groupLetter}.webp`;  
     }  
 
-    // ✅ إعادة تعيين الحالة
     loadingProgress = {
         totalSteps: 0,
         completedSteps: 0,
@@ -256,10 +252,8 @@ function showLoadingScreen(groupLetter) {
     };
 
     document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));  
-
     loadingOverlay.classList.add('active');  
     console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);  
-
     updateWelcomeMessages();
 }
 
@@ -282,28 +276,14 @@ function updateLoadProgress() {
 
     const percentage = loadingProgress.currentPercentage;
 
-    // المصباح 4 (أحمر) = 20% (1/5)
-    if (percentage >= 20) {
-        document.getElementById('bulb-4')?.classList.add('on');
-    }
-
-    // المصباح 3 (برتقالي) = 40% (2/5)
-    if (percentage >= 40) {
-        document.getElementById('bulb-3')?.classList.add('on');
-    }
-
-    // المصباح 2 (أصفر) = 60% (3/5)
-    if (percentage >= 60) {
-        document.getElementById('bulb-2')?.classList.add('on');
-    }
-
-    // المصباح 1 (أخضر) = 80% (4/5)
-    if (percentage >= 80) {
-        document.getElementById('bulb-1')?.classList.add('on');
-    }
+    if (percentage >= 20) document.getElementById('bulb-4')?.classList.add('on');
+    if (percentage >= 40) document.getElementById('bulb-3')?.classList.add('on');
+    if (percentage >= 60) document.getElementById('bulb-2')?.classList.add('on');
+    if (percentage >= 80) document.getElementById('bulb-1')?.classList.add('on');
 }
 
-/* --- 6. تحميل SVG الخاص بالمجموعة (محسّن مع التتبع) --- */
+/* --- تحميل SVG الخاص بالمجموعة --- */
+
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
     groupContainer.innerHTML = '';
@@ -314,16 +294,12 @@ async function loadGroupSVG(groupLetter) {
 
         if (!response.ok) {  
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);  
-
             loadingProgress.completedSteps++;
             updateLoadProgress();
             return;  
         }  
 
         const svgText = await response.text();  
-
-        console.log(`✅ SVG محمّل`);  
-
         const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);  
 
         if (match && match[1]) {  
@@ -333,36 +309,25 @@ async function loadGroupSVG(groupLetter) {
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');  
             console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);  
 
-            imageUrlsToLoad = [];  
-
-            imageUrlsToLoad.push('image/wood.webp');  
+            imageUrlsToLoad = ['image/wood.webp'];  
 
             injectedImages.forEach(img => {  
                 const src = img.getAttribute('data-src');  
-
                 if (src && !imageUrlsToLoad.includes(src)) {  
                     const isGroupImage = src.includes(`image/${groupLetter}/`) ||   
                                        src.includes(`logo-${groupLetter}`) ||   
                                        src.includes(`logo-wood-${groupLetter}`);  
-
-                    if (isGroupImage) {  
-                        imageUrlsToLoad.push(src);  
-                    }  
+                    if (isGroupImage) imageUrlsToLoad.push(src);  
                 }  
             });  
 
-            // ✅ حساب إجمالي الخطوات: 1 خطوة لـ SVG + عدد الصور
             loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
-
-            // ✅ SVG تم تحميله بنجاح - خطوة واحدة مكتملة
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
 
             console.log(`📋 قائمة الصور للتحميل (${imageUrlsToLoad.length}):`, imageUrlsToLoad);  
-            console.log(`📊 إجمالي الخطوات: ${loadingProgress.totalSteps}`);
         } else {  
             console.error('❌ فشل استخراج محتوى SVG');  
-
             loadingProgress.totalSteps = 1;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
@@ -370,7 +335,6 @@ async function loadGroupSVG(groupLetter) {
 
     } catch (err) {  
         console.error(`❌ خطأ في loadGroupSVG:`, err);  
-
         loadingProgress.totalSteps = 1;
         loadingProgress.completedSteps = 1;
         updateLoadProgress();
@@ -379,20 +343,16 @@ async function loadGroupSVG(groupLetter) {
 
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
-
     const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
     if (oldBanner) oldBanner.remove();  
-
     if (currentFolder !== "") return;  
 
     const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");  
     banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);   
-
     banner.setAttribute("x", "197.20201666994924");  
     banner.setAttribute("y", "2074.3139768463334");   
     banner.setAttribute("width", "629.8946370139159");  
     banner.setAttribute("height", "275.78922917259797");   
-
     banner.setAttribute("class", "wood-banner-animation");  
     banner.style.mixBlendMode = "multiply";  
     banner.style.opacity = "0.9";  
@@ -408,10 +368,8 @@ function updateWoodLogo(groupLetter) {
     dynamicGroup.appendChild(banner);
 }
 
-/* --- 7. تهيئة المجموعة --- */
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
-
     saveSelectedGroup(groupLetter);  
 
     if (toggleContainer) toggleContainer.style.display = 'flex';  
@@ -419,26 +377,19 @@ async function initializeGroup(groupLetter) {
     if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');  
 
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
-
     showLoadingScreen(groupLetter);  
 
-    const [treeResult, svgResult] = await Promise.all([
-        fetchGlobalTree(),
-        loadGroupSVG(groupLetter)
-    ]);
-
+    await Promise.all([fetchGlobalTree(), loadGroupSVG(groupLetter)]);
     window.updateDynamicSizes();  
-
     window.loadImages();
 }
+/* --- الجزء 2: عارض PDF ودوال مساعدة --- */
 
-/* --- 8. عارض PDF --- */
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
     pdfViewer.src = "";
     overlay.classList.add("hidden");
-
     popNavigationState();
 };
 
@@ -473,7 +424,6 @@ document.getElementById("shareBtn").onclick = () => {
     }
 };
 
-/* --- 9. Service Worker --- */
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -482,15 +432,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-function debounce(func, delay) {
-    let timeoutId;
-    return function() {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func.apply(this, arguments), delay);
-    };
-}
-
-/* --- 10. فتح الملفات --- */
 async function smartOpen(item) {
     if (!item || !item.path) return;
 
@@ -551,7 +492,6 @@ async function smartOpen(item) {
     }
 }
 
-/* --- 11. التنقل --- */
 window.goToWood = () => {
     if (scrollContainer) {
         scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
@@ -567,11 +507,9 @@ window.goToMapEnd = () => {
     if (!scrollContainer) return;
     const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
     scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' });
-
     pushNavigationState(NAV_STATE.MAP_VIEW);
 };
 
-/* --- 12. تحديث الأحجام --- */
 function updateDynamicSizes() {
     if (!mainSvg) return;
 
@@ -613,7 +551,6 @@ function updateDynamicSizes() {
 }
 window.updateDynamicSizes = updateDynamicSizes;
 
-/* --- 13. تأثيرات الهوفر --- */
 function getCumulativeTranslate(element) {
     let x = 0, y = 0, current = element;
     while (current && current.tagName !== 'svg') {
@@ -758,7 +695,6 @@ function startHover() {
     }, 100);
 }
 
-/* --- 14. معالجة النصوص --- */
 function wrapText(el, maxW) {
     const txt = el.getAttribute('data-original-text');
     if (!txt) return;
@@ -787,13 +723,11 @@ function wrapText(el, maxW) {
     });
 }
 
-/* --- 15. دوال الترحيب والأسماء --- */
 function getDisplayName() {
     const realName = localStorage.getItem('user_real_name');
     if (realName && realName.trim()) {
         return realName.trim();
     }
-
     const visitorId = localStorage.getItem('visitor_id');  
     return visitorId || 'زائر';
 }
@@ -825,7 +759,6 @@ function renderNameInput() {
     const containerWidth = 1024;
     const inputWidth = 780;  
     const centerX = (containerWidth - inputWidth) / 2;  
-
     const inputY = 1980;
 
     const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");  
@@ -873,8 +806,8 @@ function renderNameInput() {
 
     dynamicGroup.appendChild(inputGroup);
 }
+/* --- الجزء 3: updateWoodInterface مع التمرير المحسن --- */
 
-/* --- 16. تحديث واجهة القوائم (مع تحسينات التمرير) --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -1013,8 +946,7 @@ async function updateWoodInterface() {
     scrollContent.setAttribute("class", "scrollable-content");
     scrollContent.setAttribute("clip-path", `url(#${clipPathId})`);
 
-    // ✅ إضافة padding وهمي في الأسفل لمنع تغطية زر الرجوع
-    const BOTTOM_PADDING = 100; // مساحة وهمية أسفل المحتوى
+    const BOTTOM_PADDING = 100;
 
     const separatorGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     separatorGroup.setAttribute("class", "subject-separator-group");
@@ -1192,7 +1124,6 @@ async function updateWoodInterface() {
         }
     }
 
-    // ✅ إضافة padding وهمي في النهاية
     yPosition += BOTTOM_PADDING;
 
     const totalContentHeight = yPosition - 250;
@@ -1244,10 +1175,8 @@ async function updateWoodInterface() {
 
         function updateScroll(newOffset) {
             scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
-
             scrollContent.setAttribute("transform", `translate(0, ${-scrollOffset})`);
             separatorGroup.setAttribute("transform", `translate(0, ${-scrollOffset})`);
-
             const scrollRatio = scrollOffset / maxScroll;
             const handleY = 250 + (scrollRatio * (1700 - handleHeight));
             scrollBarHandle.setAttribute("y", handleY);
@@ -1320,12 +1249,9 @@ async function updateWoodInterface() {
             }
         };
 
-        // ✅ تفعيل السحب من أي مكان في الحاوية بأكملها
         scrollContainerGroup.addEventListener('mousedown', (e) => {
-            // تجاهل إذا كان الضغط على شريط التمرير نفسه
             const target = e.target;
             if (target.classList && target.classList.contains('scroll-handle')) return;
-            
             startContentDrag(e.clientY, false);
             e.preventDefault();
         });
@@ -1333,11 +1259,10 @@ async function updateWoodInterface() {
         scrollContainerGroup.addEventListener('touchstart', (e) => {
             const target = e.target;
             if (target.classList && target.classList.contains('scroll-handle')) return;
-            
             startContentDrag(e.touches[0].clientY, true);
         }, { passive: true });
 
-window.addEventListener('mousemove', (e) => {
+        window.addEventListener('mousemove', (e) => {
             if (isDraggingContent) {
                 doContentDrag(e.clientY);
             }
@@ -1354,7 +1279,6 @@ window.addEventListener('mousemove', (e) => {
 
         window.addEventListener('touchend', endContentDrag);
 
-        // ✅ معالجة شريط التمرير
         let isDraggingHandle = false;
         let handleStartY = 0;
         let handleStartOffset = 0;
@@ -1416,8 +1340,7 @@ window.addEventListener('mousemove', (e) => {
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
-
-/* --- باقي الدوال من الكود الأصلي --- */
+/* --- الجزء 4: معالجة المستطيلات والأحداث --- */
 
 function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
@@ -1433,9 +1356,7 @@ function processRect(r) {
 
     const dataFull = r.getAttribute('data-full-text');  
     const fileName = href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '';  
-
     const name = dataFull || fileName || '';  
-
     const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;  
     const x = parseFloat(r.getAttribute('x'));   
     const y = parseFloat(r.getAttribute('y'));  
@@ -1479,49 +1400,31 @@ function processRect(r) {
             const fileName = href.split('/').pop();
 
             try {  
-                const response = await fetch(href, {   
-                    method: 'HEAD',  
-                    mode: 'cors',  
-                    cache: 'no-cache'  
-                });  
+                const response = await fetch(href, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });  
 
                 if (!response.ok) {  
                     alert(`❌ الملف "${fileName}" غير موجود`);
-                    console.warn(`⚠️ الملف غير موجود: ${href}`);  
                     return;  
                 }  
 
                 const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
 
-                pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                    path: href,
-                    scrollPosition: scrollPosition
-                });
+                pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
 
                 const overlay = document.getElementById("pdf-overlay");  
                 const pdfViewer = document.getElementById("pdfFrame");  
                 overlay.classList.remove("hidden");  
-                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                encodeURIComponent(href) + "#zoom=page-width";  
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";  
 
-                if (typeof trackSvgOpen === 'function') {  
-                    trackSvgOpen(href);  
-                }  
+                if (typeof trackSvgOpen === 'function') trackSvgOpen(href);  
             } catch (error) {  
-                console.warn(`⚠️ CORS Error, trying direct open:`, error);  
-
                 const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                    path: href,
-                    scrollPosition: scrollPosition
-                });
+                pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
 
                 const overlay = document.getElementById("pdf-overlay");  
                 const pdfViewer = document.getElementById("pdfFrame");  
                 overlay.classList.remove("hidden");
-                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                encodeURIComponent(href) + "#zoom=page-width";  
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";  
             }  
         }  
     };  
@@ -1541,50 +1444,31 @@ function processRect(r) {
                     const fileName = href.split('/').pop();
 
                     try {  
-                        const response = await fetch(href, {   
-                            method: 'HEAD',  
-                            mode: 'cors',  
-                            cache: 'no-cache'  
-                        });  
+                        const response = await fetch(href, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });  
 
                         if (!response.ok) {  
                             alert(`❌ الملف "${fileName}" غير موجود`);
-                            console.warn(`⚠️ الملف غير موجود: ${href}`);  
                             cleanupHover();  
                             return;  
                         }  
 
                         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                        pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                            path: href,
-                            scrollPosition: scrollPosition
-                        });
+                        pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
 
                         const overlay = document.getElementById("pdf-overlay");  
                         const pdfViewer = document.getElementById("pdfFrame");  
                         overlay.classList.remove("hidden");  
-                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                        encodeURIComponent(href) + "#zoom=page-width";  
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";  
 
-                        if (typeof trackSvgOpen === 'function') {  
-                            trackSvgOpen(href);  
-                        }  
+                        if (typeof trackSvgOpen === 'function') trackSvgOpen(href);  
                     } catch (error) {  
-                        console.warn(`⚠️ CORS Error, trying direct open:`, error);  
-
                         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-                        pushNavigationState(NAV_STATE.PDF_VIEW, { 
-                            path: href,
-                            scrollPosition: scrollPosition
-                        });
+                        pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
 
                         const overlay = document.getElementById("pdf-overlay");  
                         const pdfViewer = document.getElementById("pdfFrame");  
                         overlay.classList.remove("hidden");  
-                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +   
-                                        encodeURIComponent(href) + "#zoom=page-width";  
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";  
                     }  
                 }  
             }  
@@ -1643,11 +1527,7 @@ function scan() {
             }
         });
 
-        observer.observe(mainSvg, {
-            childList: true,
-            subtree: true
-        });
-
+        observer.observe(mainSvg, { childList: true, subtree: true });
         window.svgObserver = observer;
         console.log('👁️ تم تفعيل مراقب العناصر الجديدة');
     }
@@ -1669,19 +1549,14 @@ function loadImages() {
     let currentIndex = 0;  
 
     function loadNextBatch() {  
-        while (currentIndex < imageUrlsToLoad.length &&   
-               currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {  
-
+        while (currentIndex < imageUrlsToLoad.length && currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {  
             const url = imageUrlsToLoad[currentIndex];  
             currentIndex++;  
 
             const img = new Image();  
 
             img.onload = function() {  
-                const allImages = [  
-                    ...mainSvg.querySelectorAll('image'),  
-                    ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])  
-                ];  
+                const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];  
 
                 allImages.forEach(si => {  
                     const dataSrc = si.getAttribute('data-src');  
@@ -1704,7 +1579,6 @@ function loadImages() {
 
             img.onerror = function() {  
                 console.error(`❌ خطأ في تحميل ${url}`);  
-
                 loadingProgress.completedSteps++;
                 updateLoadProgress();
 
@@ -1741,7 +1615,8 @@ function finishLoading() {
 }
 window.loadImages = loadImages;
 
-/* --- مستمعي الأحداث --- */
+/* --- معالجات الأحداث --- */
+
 document.querySelectorAll('.group-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const group = this.getAttribute('data-group');
@@ -1752,7 +1627,6 @@ document.querySelectorAll('.group-btn').forEach(btn => {
 
 function preloadGroupLogos() {
     const groups = ['A', 'B', 'C', 'D'];
-
     groups.forEach(group => {
         const img = new Image();
         img.src = `image/logo-${group}.webp`;
@@ -1777,11 +1651,7 @@ if (searchInput) {
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
-
-            if (typeof trackSearch === 'function') {  
-                trackSearch(searchInput.value);  
-            }  
-
+            if (typeof trackSearch === 'function') trackSearch(searchInput.value);  
             window.goToWood();  
         }  
     };  
@@ -1790,14 +1660,12 @@ if (searchInput) {
         if (!mainSvg) return;  
 
         const query = normalizeArabic(e.target.value);  
-
         const isEmptySearch = query.length === 0;
 
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
             const href = rect.getAttribute('data-href') || '';  
             const fullText = rect.getAttribute('data-full-text') || '';  
             const fileName = href !== '#' ? href.split('/').pop() : '';  
-
             const autoArabic = autoTranslate(fileName);  
 
             const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
@@ -1816,10 +1684,7 @@ if (searchInput) {
                 const normalizedFileName = normalizeArabic(fileName);
                 const normalizedAutoArabic = normalizeArabic(autoArabic);
 
-                const isMatch = normalizedHref.includes(query) ||   
-                              normalizedFullText.includes(query) ||
-                              normalizedFileName.includes(query) ||
-                              normalizedAutoArabic.includes(query);  
+                const isMatch = normalizedHref.includes(query) || normalizedFullText.includes(query) || normalizedFileName.includes(query) || normalizedAutoArabic.includes(query);  
 
                 rect.style.display = isMatch ? '' : 'none';  
                 if (label) label.style.display = rect.style.display;   
@@ -1833,6 +1698,42 @@ if (searchInput) {
 
         updateWoodInterface();  
     }, 150));
+}
+
+/* ===== زر العين لإخفاء/إظهار البحث ===== */
+
+const eyeToggle = document.getElementById('eye-toggle');
+const searchContainer = document.getElementById('search-container');
+
+if (eyeToggle && searchContainer) {
+    // حفظ حالة البحث في localStorage
+    const searchVisible = localStorage.getItem('searchVisible') !== 'false';
+    
+    if (!searchVisible) {
+        searchContainer.classList.add('hidden');
+        eyeToggle.textContent = '👁️';
+    }
+
+    eyeToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        searchContainer.classList.toggle('hidden');
+        
+        const isHidden = searchContainer.classList.contains('hidden');
+        localStorage.setItem('searchVisible', !isHidden);
+        
+        // تغيير رمز العين
+        eyeToggle.textContent = isHidden ? '👁️' : '👁️';
+        
+        console.log(isHidden ? '👁️ تم إخفاء البحث' : '👁️ تم إظهار البحث');
+    });
+
+    // دعم لوحة المفاتيح
+    eyeToggle.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            eyeToggle.click();
+        }
+    });
 }
 
 if (moveToggle) {
@@ -1880,23 +1781,21 @@ if (mainSvg) {
     }, false);
 }
 
-/* ===== زر Reset - إعادة تحميل الصفحة (F5) ===== */
+/* ===== زر Reset - إعادة تحميل الصفحة ===== */
 
 const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
     resetBtn.addEventListener('click', function(e) {
         e.stopPropagation();
 
-        // رسالة تأكيد
         const confirmReset = confirm('🔄 سيتم إعادة تحميل الصفحة بالكامل.\n\nهل أنت متأكد؟');
 
         if (confirmReset) {
-            console.log('🔄 تشغيل Reset - إعادة التحميل...');
+            console.log('🔄 إعادة التحميل...');
             window.location.reload();
         }
     });
 
-    // ✅ دعم لوحة المفاتيح (Accessibility)
     resetBtn.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -1915,7 +1814,6 @@ if (!localStorage.getItem('visitor_id')) {
 }
 
 updateWelcomeMessages();
-
 setupBackButton();
 
 const hasSavedGroup = loadSelectedGroup();
@@ -1928,7 +1826,7 @@ if (hasSavedGroup) {
     pushNavigationState(NAV_STATE.GROUP_SELECTION);
 }
 
-/* --- نظام تحديث Service Worker التلقائي --- */
+/* --- Service Worker التلقائي --- */
 if ('serviceWorker' in navigator) {
   let refreshing = false;
 
@@ -1971,3 +1869,5 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('❌ فشل Service Worker:', err));
   });
 }
+
+console.log('✅ script.js تم تحميله بالكامل');
