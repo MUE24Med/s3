@@ -1630,21 +1630,29 @@ function loadImages() {
 }
 
 function finishLoading() {
-    if (mainSvg) mainSvg.style.opacity = '1';
-
-    window.updateDynamicSizes();  
-    scan();  
-    updateWoodInterface();  
-    window.goToWood();  
-
     loadingProgress.completedSteps = loadingProgress.totalSteps;
     loadingProgress.currentPercentage = 100;
     updateLoadProgress();
 
+    console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
+
     setTimeout(() => {
-        hideLoadingScreen();  
-        console.log('🎉 اكتمل التحميل والعرض');
-    }, 500);
+        window.updateDynamicSizes();  
+        scan();  
+        updateWoodInterface();  
+        window.goToWood();  
+
+        if (mainSvg) {
+            mainSvg.style.opacity = '1';
+            mainSvg.style.visibility = 'visible';
+            mainSvg.classList.add('loaded');
+        }
+
+        setTimeout(() => {
+            hideLoadingScreen();  
+            console.log('🎉 اكتمل التحميل والعرض');
+        }, 300);
+    }, 200);
 }
 window.loadImages = loadImages;
 
