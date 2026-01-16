@@ -314,7 +314,7 @@ async function loadGroupSVG(groupLetter) {
 
         if (!response.ok) {  
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);  
-            
+
             loadingProgress.completedSteps++;
             updateLoadProgress();
             return;  
@@ -362,7 +362,7 @@ async function loadGroupSVG(groupLetter) {
             console.log(`📊 إجمالي الخطوات: ${loadingProgress.totalSteps}`);
         } else {  
             console.error('❌ فشل استخراج محتوى SVG');  
-            
+
             loadingProgress.totalSteps = 1;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
@@ -370,7 +370,7 @@ async function loadGroupSVG(groupLetter) {
 
     } catch (err) {  
         console.error(`❌ خطأ في loadGroupSVG:`, err);  
-        
+
         loadingProgress.totalSteps = 1;
         loadingProgress.completedSteps = 1;
         updateLoadProgress();
@@ -874,7 +874,7 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-/* --- 16. تحديث واجهة القوائم --- */
+/* --- 16. تحديث واجهة القوائم (مع تحسينات التمرير) --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -1012,7 +1012,9 @@ async function updateWoodInterface() {
     const scrollContent = document.createElementNS("http://www.w3.org/2000/svg", "g");
     scrollContent.setAttribute("class", "scrollable-content");
     scrollContent.setAttribute("clip-path", `url(#${clipPathId})`);
-    scrollContent.style.cursor = "grab";
+
+    // ✅ إضافة padding وهمي في الأسفل لمنع تغطية زر الرجوع
+    const BOTTOM_PADDING = 100; // مساحة وهمية أسفل المحتوى
 
     const separatorGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     separatorGroup.setAttribute("class", "subject-separator-group");
@@ -1155,15 +1157,8 @@ async function updateWoodInterface() {
                 g.appendChild(r);
                 g.appendChild(t);
 
-                let isDraggingContent = false;
-                let dragVelocity = 0;
-
                 g.addEventListener('click', (e) => {
                     e.stopPropagation();
-
-                    if (isDraggingContent && Math.abs(dragVelocity) > 0.1) {
-                        return;
-                    }
 
                     if (item.type === 'dir') {
                         currentFolder = item.path;
@@ -1196,6 +1191,9 @@ async function updateWoodInterface() {
             fileRowCounter = 0;
         }
     }
+
+    // ✅ إضافة padding وهمي في النهاية
+    yPosition += BOTTOM_PADDING;
 
     const totalContentHeight = yPosition - 250;
 
@@ -1322,22 +1320,30 @@ async function updateWoodInterface() {
             }
         };
 
-        scrollContent.addEventListener('mousedown', (e) => {
+        // ✅ تفعيل السحب من أي مكان في الحاوية بأكملها
+        scrollContainerGroup.addEventListener('mousedown', (e) => {
+            // تجاهل إذا كان الضغط على شريط التمرير نفسه
+            const target = e.target;
+            if (target.classList && target.classList.contains('scroll-handle')) return;
+            
             startContentDrag(e.clientY, false);
             e.preventDefault();
         });
 
-        window.addEventListener('mousemove', (e) => {
+        scrollContainerGroup.addEventListener('touchstart', (e) => {
+            const target = e.target;
+            if (target.classList && target.classList.contains('scroll-handle')) return;
+            
+            startContentDrag(e.touches[0].clientY, true);
+        }, { passive: true });
+
+window.addEventListener('mousemove', (e) => {
             if (isDraggingContent) {
                 doContentDrag(e.clientY);
             }
         });
 
         window.addEventListener('mouseup', endContentDrag);
-
-        scrollContent.addEventListener('touchstart', (e) => {
-            startContentDrag(e.touches[0].clientY, true);
-        }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
             if (isDraggingContent) {
@@ -1348,6 +1354,7 @@ async function updateWoodInterface() {
 
         window.addEventListener('touchend', endContentDrag);
 
+        // ✅ معالجة شريط التمرير
         let isDraggingHandle = false;
         let handleStartY = 0;
         let handleStartOffset = 0;
@@ -1410,7 +1417,8 @@ async function updateWoodInterface() {
     dynamicGroup.appendChild(scrollContainerGroup);
 }
 
-/* --- 17. معالجة المستطيلات مع الأسماء العربية --- */
+/* --- باقي الدوال من الكود الأصلي --- */
+
 function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
     if (r.classList.contains('w')) r.setAttribute('width', '113.5');
@@ -1421,7 +1429,6 @@ function processRect(r) {
     if (href && href !== '#' && !href.startsWith('http')) {  
         href = `${RAW_CONTENT_BASE}${href}`;  
         r.setAttribute('data-href', href);  
-        console.log(`🔗 تحويل رابط: ${href}`);  
     }  
 
     const dataFull = r.getAttribute('data-full-text');  
@@ -1588,7 +1595,6 @@ function processRect(r) {
     r.setAttribute('data-processed', 'true');
 }
 
-/* --- 18. فحص ومعالجة جميع المستطيلات --- */
 function scan() {
     if (!mainSvg) return;
 
@@ -1648,7 +1654,6 @@ function scan() {
 }
 window.scan = scan;
 
-/* --- 19. تحميل الصور مع تتبع التقدم (نظام 1/5، 2/5، 3/5، 4/5) --- */
 function loadImages() {
     if (!mainSvg) return;
 
@@ -1736,7 +1741,7 @@ function finishLoading() {
 }
 window.loadImages = loadImages;
 
-/* --- 20. مستمعي الأحداث --- */
+/* --- مستمعي الأحداث --- */
 document.querySelectorAll('.group-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const group = this.getAttribute('data-group');
@@ -1745,10 +1750,9 @@ document.querySelectorAll('.group-btn').forEach(btn => {
     });
 });
 
-/* --- Preload Group Logos --- */
 function preloadGroupLogos() {
     const groups = ['A', 'B', 'C', 'D'];
-    
+
     groups.forEach(group => {
         const img = new Image();
         img.src = `image/logo-${group}.webp`;
@@ -1756,13 +1760,8 @@ function preloadGroupLogos() {
     });
 }
 
-// تشغيل التحميل المسبق فور تحميل الصفحة
 window.addEventListener('load', () => {
     preloadGroupLogos();
-});
-
-document.querySelectorAll('.group-btn').forEach(btn => {
-    // ... باقي الكود
 });
 
 if (changeGroupBtn) {
@@ -1881,74 +1880,22 @@ if (mainSvg) {
     }, false);
 }
 
-/* ===== أضف هذا الكود في نهاية ملف script.js ===== */
-
-/* --- زر Reset - العودة للصفحة الرئيسية --- */
+/* ===== زر Reset - إعادة تحميل الصفحة (F5) ===== */
 
 const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
     resetBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        
+
         // رسالة تأكيد
-        const confirmReset = confirm('🔄 هل تريد العودة لشاشة اختيار المجموعة؟\n\nسيتم إعادة ضبط العرض الحالي.');
-        
+        const confirmReset = confirm('🔄 سيتم إعادة تحميل الصفحة بالكامل.\n\nهل أنت متأكد؟');
+
         if (confirmReset) {
-            console.log('🔄 تشغيل Reset...');
-            
-            // إخفاء الـ SVG والكونترولز
-            if (toggleContainer) toggleContainer.style.display = 'none';
-            if (scrollContainer) scrollContainer.style.display = 'none';
-            
-            // إظهار شاشة اختيار الجروب
-            if (groupSelectionScreen) {
-                groupSelectionScreen.classList.remove('hidden');
-            }
-            
-            // إعادة ضبط المتغيرات
-            currentFolder = "";
-            navigationHistory = [];
-            
-            // إعادة التمرير للبداية
-            if (scrollContainer) {
-                scrollContainer.scrollLeft = 0;
-            }
-            
-            // إضافة حالة جديدة للتنقل
-            pushNavigationState(NAV_STATE.GROUP_SELECTION);
-            
-            console.log('✅ تم Reset بنجاح');
+            console.log('🔄 تشغيل Reset - إعادة التحميل...');
+            window.location.reload();
         }
     });
 
-    // ✅ تأثيرات الهوفر لزر Reset
-    const resetRect = resetBtn.querySelector('rect');
-    const resetText = resetBtn.querySelector('text');
-    
-    if (resetRect) {
-        resetBtn.addEventListener('mouseenter', function() {
-            resetRect.style.transition = 'all 0.3s ease';
-            resetRect.style.fill = '#f44336';
-            resetRect.style.filter = 'drop-shadow(0 0 15px rgba(211, 47, 47, 0.7))';
-            resetRect.style.transform = 'translateY(-2px)';
-            resetRect.style.transformOrigin = 'center';
-        });
-
-        resetBtn.addEventListener('mouseleave', function() {
-            resetRect.style.fill = '#d32f2f';
-            resetRect.style.filter = 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))';
-            resetRect.style.transform = 'translateY(0)';
-        });
-
-        resetBtn.addEventListener('mousedown', function() {
-            resetRect.style.transform = 'translateY(0) scale(0.95)';
-        });
-
-        resetBtn.addEventListener('mouseup', function() {
-            resetRect.style.transform = 'translateY(-2px) scale(1)';
-        });
-    }
-    
     // ✅ دعم لوحة المفاتيح (Accessibility)
     resetBtn.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -1960,8 +1907,7 @@ if (resetBtn) {
 
 console.log('✅ تم تفعيل زر Reset');
 
-
-/* --- 21. البدء التلقائي --- */
+/* --- البدء التلقائي --- */
 
 if (!localStorage.getItem('visitor_id')) {
     const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
@@ -1982,7 +1928,7 @@ if (hasSavedGroup) {
     pushNavigationState(NAV_STATE.GROUP_SELECTION);
 }
 
-/* --- 22. نظام تحديث Service Worker التلقائي --- */
+/* --- نظام تحديث Service Worker التلقائي --- */
 if ('serviceWorker' in navigator) {
   let refreshing = false;
 
@@ -2010,9 +1956,9 @@ if ('serviceWorker' in navigator) {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               console.log('✅ Service Worker الجديد جاهز');
-              
+
               const updateNow = confirm('🎉 تحديث جديد متاح!\n\nهل تريد إعادة التحميل الآن للحصول على آخر التحديثات؟');
-              
+
               if (updateNow) {
                 newWorker.postMessage({ action: 'skipWaiting' });
               } else {
@@ -2025,49 +1971,3 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('❌ فشل Service Worker:', err));
   });
 }
-
-/* --- 23. زر مسح الكاش يدوياً - الدالة المحدثة --- */
-function createClearCacheButton() {
-  if (document.getElementById('clear-cache-btn')) return;
-
-  const btn = document.createElement('button');
-  btn.id = 'clear-cache-btn';
-  btn.innerHTML = '🗑️ مسح الكاش';
-
-  btn.onclick = async () => {
-    if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
-      return;
-    }
-
-    try {
-      // إلغاء تسجيل Service Worker
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (let registration of registrations) {
-          await registration.unregister();
-          console.log('✅ تم إلغاء تسجيل Service Worker');
-        }
-      }
-
-      // مسح جميع الكاش
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
-        console.log('✅ تم مسح جميع الكاش');
-      }
-
-      alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
-      window.location.reload(true);
-    } catch (error) {
-      console.error('❌ خطأ في مسح الكاش:', error);
-      alert('❌ حدث خطأ أثناء مسح الكاش');
-    }
-  };
-
-  document.body.appendChild(btn);
-  console.log('🗑️ تم إضافة زر مسح الكاش');
-}
-
-window.addEventListener('load', () => {
-  setTimeout(createClearCacheButton, 1000);
-});
