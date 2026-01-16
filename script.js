@@ -1881,72 +1881,84 @@ if (mainSvg) {
     }, false);
 }
 
-/* ===== إضافة هذا الكود في ملف script.js ===== */
+/* ===== أضف هذا الكود في نهاية ملف script.js ===== */
 
-/* في قسم معالجة الأحداث (حوالي السطر 1800+) أضف هذا الكود: */
+/* --- زر Reset - العودة للصفحة الرئيسية --- */
 
-// ✅ تفعيل زر مسح الكاش
-const clearCacheBtn = document.getElementById('clear-cache-btn');
-if (clearCacheBtn) {
-    clearCacheBtn.addEventListener('click', async function(e) {
+const resetBtn = document.getElementById('reset-btn');
+if (resetBtn) {
+    resetBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         
-        if (!confirm('⚠️ سيتم مسح جميع البيانات المحفوظة وإعادة تحميل الصفحة.\n\nهل أنت متأكد؟')) {
-            return;
-        }
-
-        try {
-            // إلغاء تسجيل Service Worker
-            if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                    console.log('✅ تم إلغاء تسجيل Service Worker');
-                }
+        // رسالة تأكيد
+        const confirmReset = confirm('🔄 هل تريد العودة لشاشة اختيار المجموعة؟\n\nسيتم إعادة ضبط العرض الحالي.');
+        
+        if (confirmReset) {
+            console.log('🔄 تشغيل Reset...');
+            
+            // إخفاء الـ SVG والكونترولز
+            if (toggleContainer) toggleContainer.style.display = 'none';
+            if (scrollContainer) scrollContainer.style.display = 'none';
+            
+            // إظهار شاشة اختيار الجروب
+            if (groupSelectionScreen) {
+                groupSelectionScreen.classList.remove('hidden');
             }
-
-            // مسح جميع الكاش
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                await Promise.all(cacheNames.map(name => caches.delete(name)));
-                console.log('✅ تم مسح جميع الكاش');
+            
+            // إعادة ضبط المتغيرات
+            currentFolder = "";
+            navigationHistory = [];
+            
+            // إعادة التمرير للبداية
+            if (scrollContainer) {
+                scrollContainer.scrollLeft = 0;
             }
-
-            // مسح Local Storage (اختياري - احذف إذا كنت تريد الاحتفاظ بالمجموعة المحفوظة)
-            // localStorage.clear();
-
-            alert('✅ تم مسح الكاش بنجاح!\n\nجاري إعادة التحميل...');
-            window.location.reload(true);
-        } catch (error) {
-            console.error('❌ خطأ في مسح الكاش:', error);
-            alert('❌ حدث خطأ أثناء مسح الكاش');
+            
+            // إضافة حالة جديدة للتنقل
+            pushNavigationState(NAV_STATE.GROUP_SELECTION);
+            
+            console.log('✅ تم Reset بنجاح');
         }
     });
 
-    // ✅ تأثير الهوفر لزر مسح الكاش
-    const clearCacheRect = clearCacheBtn.querySelector('rect');
-    if (clearCacheRect) {
-        clearCacheBtn.addEventListener('mouseenter', function() {
-            clearCacheRect.style.transition = 'all 0.3s ease';
-            clearCacheRect.style.fill = '#764ba2';
-            clearCacheRect.style.filter = 'drop-shadow(0 0 10px rgba(102, 126, 234, 0.6))';
+    // ✅ تأثيرات الهوفر لزر Reset
+    const resetRect = resetBtn.querySelector('rect');
+    const resetText = resetBtn.querySelector('text');
+    
+    if (resetRect) {
+        resetBtn.addEventListener('mouseenter', function() {
+            resetRect.style.transition = 'all 0.3s ease';
+            resetRect.style.fill = '#f44336';
+            resetRect.style.filter = 'drop-shadow(0 0 15px rgba(211, 47, 47, 0.7))';
+            resetRect.style.transform = 'translateY(-2px)';
+            resetRect.style.transformOrigin = 'center';
         });
 
-        clearCacheBtn.addEventListener('mouseleave', function() {
-            clearCacheRect.style.fill = '#667eea';
-            clearCacheRect.style.filter = 'none';
+        resetBtn.addEventListener('mouseleave', function() {
+            resetRect.style.fill = '#d32f2f';
+            resetRect.style.filter = 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))';
+            resetRect.style.transform = 'translateY(0)';
         });
 
-        clearCacheBtn.addEventListener('mousedown', function() {
-            clearCacheRect.style.transform = 'scale(0.95)';
-            clearCacheRect.style.transformOrigin = 'center';
+        resetBtn.addEventListener('mousedown', function() {
+            resetRect.style.transform = 'translateY(0) scale(0.95)';
         });
 
-        clearCacheBtn.addEventListener('mouseup', function() {
-            clearCacheRect.style.transform = 'scale(1)';
+        resetBtn.addEventListener('mouseup', function() {
+            resetRect.style.transform = 'translateY(-2px) scale(1)';
         });
     }
+    
+    // ✅ دعم لوحة المفاتيح (Accessibility)
+    resetBtn.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            resetBtn.click();
+        }
+    });
 }
+
+console.log('✅ تم تفعيل زر Reset');
 
 
 /* --- 21. البدء التلقائي --- */
