@@ -575,17 +575,6 @@ body {
   display: none !important;
 }
 
-.controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  width: 100%;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  padding-top: 10px;
-  transition: all 0.3s ease;
-}
-
 #js-toggle-container.collapsed .controls-row {
   display: none !important;
 }
@@ -645,50 +634,20 @@ body {
   transform: translateY(-50%) scale(0.9);
 }
 
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 10px;
+  transition: all 0.3s ease;
+}
+
 /* ========================================
    [009] أزرار التحكم (السهم + العين + Hover)
    ======================================== */
-
-#eye-toggle {
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  padding: 8px;
-  font-size: 20px;
-  transition: all 0.3s ease;
-  opacity: 0.8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  min-width: 36px;
-  min-height: 36px;
-  order: 2;
-}
-
-#eye-toggle:hover {
-  opacity: 1;
-  transform: scale(1.15);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-#eye-toggle:active {
-  transform: scale(0.9);
-}
-
-#js-toggle-container.collapsed #eye-toggle {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  opacity: 1;
-  font-size: 24px;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  border-radius: 0;
-  order: 0;
-}
 
 #move-toggle {
   cursor: pointer;
@@ -705,7 +664,7 @@ body {
   border-radius: 8px;
   min-width: 36px;
   min-height: 36px;
-  order: 1;
+  flex-shrink: 0;
 }
 
 #move-toggle:hover {
@@ -719,11 +678,58 @@ body {
   transform: scale(0.9);
 }
 
+#eye-toggle {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 8px;
+  font-size: 20px;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+#eye-toggle:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#eye-toggle:active {
+  transform: scale(0.9);
+}
+
+#js-toggle-container.collapsed #eye-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  font-size: 24px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  min-width: unset !important;
+  min-height: unset !important;
+}
+
 .hover-toggle-container {
   display: flex;
   align-items: center;
   gap: 8px;
-  order: 3;
+  margin-left: auto;
+}
+
+#js-toggle-container.collapsed #move-toggle,
+#js-toggle-container.collapsed .hover-toggle-container {
+  display: none !important;
 }
 
 /* ========================================
