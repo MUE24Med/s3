@@ -1447,26 +1447,527 @@ function processRect(r) {
     const x = parseFloat(r.getAttribute('x'));   
     const y = parseFloat(r.getAttribute('y'));  
 
-    if (name && name.trim
+    if (name && name.trim() !== '') {  
+        const fs = Math.max(8, Math.min(12, w * 0.11));  
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
+        txt.setAttribute('x', x + w / 2);   
+        txt.setAttribute('y', y + 2);  
+        txt.setAttribute('text-anchor', 'middle');   
+        txt.setAttribute('class', 'rect-label');  
+        txt.setAttribute('data-original-text', name);   
+        txt.setAttribute('data-original-for', href);  
+        txt.style.fontSize = fs + 'px';   
+        txt.style.fill = 'white';   
+        txt.style.pointerEvents = 'none';   
+        txt.style.dominantBaseline = 'hanging';  
+        r.parentNode.appendChild(txt);   
+        wrapText(txt, w);  
 
+        const bbox = txt.getBBox();  
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+        bg.setAttribute('x', x);   
+        bg.setAttribute('y', y);   
+        bg.setAttribute('width', w);   
+        bg.setAttribute('height', bbox.height + 8);  
+        bg.setAttribute('class', 'label-bg');   
+        bg.setAttribute('data-original-for', href);  
+        bg.style.fill = 'black';   
+        bg.style.pointerEvents = 'none';  
+        r.parentNode.insertBefore(bg, txt);  
+    }  
 
+    if (!isTouchDevice) {   
+        r.addEventListener('mouseover', startHover);   
+        r.addEventListener('mouseout', cleanupHover);   
+    }  
 
+    r.onclick = async () => {   
+        if (href && href !== '#') {  
+            const fileName = href.split('/').pop();
 
+            try {  
+                const response = await fetch(href, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });  
 
+                if (!response.ok) {  
+                    alert(`❌ الملف "${fileName}" غير موجود`);
+                    return;  
+                }  
 
+                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
 
+                pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
 
+                const overlay = document.getElementById("pdf-overlay");  
+                const pdfViewer = document.getElementById("pdfFrame");  
+                overlay.classList.remove("hidden");  
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";  
 
+                if (typeof trackSvgOpen === 'function') trackSvgOpen(href);  
+            } catch (error) {  
+                const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+                pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
 
+                const overlay = document.getElementById("pdf-overlay");  
+                const pdfViewer = document.getElementById("pdfFrame");  
+                overlay.classList.remove("hidden");
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";  
+            }  
+        }  
+    };  
 
+    if (scrollContainer) {  
+        r.addEventListener('touchstart', function(e) {   
+            if (!interactionEnabled) return;   
+            activeState.touchStartTime = Date.now();   
+            activeState.initialScrollLeft = scrollContainer.scrollLeft;   
+            startHover.call(this);   
+        });  
+        r.addEventListener('touchend', async function(e) {   
+            if (!interactionEnabled) return;  
+            if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 &&   
+                (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {  
+                if (href && href !== '#') {  
+                    const fileName = href.split('/').pop();
 
+                    try {  
+                        const response = await fetch(href, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });  
 
+                        if (!response.ok) {  
+                            alert(`❌ الملف "${fileName}" غير موجود`);
+                            cleanupHover();  
+                            return;  
+                        }  
 
+                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+                        pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
 
+                        const overlay = document.getElementById("pdf-overlay");  
+                        const pdfViewer = document.getElementById("pdfFrame");  
+                        overlay.classList.remove("hidden");  
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";  
 
+                        if (typeof trackSvgOpen === 'function') trackSvgOpen(href);  
+                    } catch (error) {  
+                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+                        pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
 
+                        const overlay = document.getElementById("pdf-overlay");  
+                        const pdfViewer = document.getElementById("pdfFrame");  
+                        overlay.classList.remove("hidden");  
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";  
+                    }  
+                }  
+            }  
+            cleanupHover();  
+        });  
+    }  
 
+    r.setAttribute('data-processed', 'true');
+}
 
+function scan() {
+    if (!mainSvg) return;
 
+    console.log('🔍 تشغيل scan()...');  
 
+    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');  
+    console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);  
 
+    rects.forEach(r => {  
+        processRect(r);  
+
+        const href = r.getAttribute('data-href') || '';  
+        if (href === '#') {  
+            r.style.display = 'none';  
+            const label = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);  
+            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);  
+            if (label) label.style.display = 'none';  
+            if (bg) bg.style.display = 'none';  
+        }  
+    });
+
+    if (!window.svgObserver) {
+        const observer = new MutationObserver((mutations) => {
+            let hasNewElements = false;
+
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        if (node.tagName === 'image' || node.querySelector('image')) {
+                            hasNewElements = true;
+                        }
+                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
+                            processRect(node);
+                        }
+                        if (node.querySelectorAll) {
+                            const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
+                            newRects.forEach(rect => processRect(rect));
+                        }
+                    }
+                });
+            });
+
+            if (hasNewElements) {
+                console.log('🔄 تم اكتشاف عناصر جديدة - تحديث viewBox');
+                updateDynamicSizes();
+            }
+        });
+
+        observer.observe(mainSvg, { childList: true, subtree: true });
+        window.svgObserver = observer;
+        console.log('👁️ تم تفعيل مراقب العناصر الجديدة');
+    }
+}
+window.scan = scan;
+
+function loadImages() {
+    if (!mainSvg) return;
+
+    console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);  
+
+    if (imageUrlsToLoad.length === 0) {  
+        console.warn('⚠️ لا توجد صور للتحميل!');  
+        finishLoading();  
+        return;  
+    }  
+
+    const MAX_CONCURRENT = 3;  
+    let currentIndex = 0;  
+
+    function loadNextBatch() {  
+        while (currentIndex < imageUrlsToLoad.length && currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {  
+            const url = imageUrlsToLoad[currentIndex];  
+            currentIndex++;  
+
+            const img = new Image();  
+
+            img.onload = function() {  
+                const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];  
+
+                allImages.forEach(si => {  
+                    const dataSrc = si.getAttribute('data-src');  
+                    if (dataSrc === url) {  
+                        si.setAttribute('href', this.src);  
+                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);  
+                    }  
+                });  
+
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
+                    console.log('✅ اكتمل تحميل جميع الصور');  
+                    finishLoading();  
+                } else {  
+                    loadNextBatch();  
+                }  
+            };  
+
+            img.onerror = function() {  
+                console.error(`❌ خطأ في تحميل ${url}`);  
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {  
+                    finishLoading();  
+                } else {  
+                    loadNextBatch();  
+                }  
+            };  
+
+            img.src = url;  
+        }  
+    }  
+
+    loadNextBatch();
+}
+
+function finishLoading() {
+    loadingProgress.completedSteps = loadingProgress.totalSteps;
+    loadingProgress.currentPercentage = 100;
+    updateLoadProgress();
+
+    console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
+
+    setTimeout(() => {
+        window.updateDynamicSizes();  
+        scan();  
+        updateWoodInterface();  
+        window.goToWood();  
+
+        if (mainSvg) {
+            mainSvg.style.opacity = '1';
+            mainSvg.style.visibility = 'visible';
+            mainSvg.classList.add('loaded');
+        }
+
+        setTimeout(() => {
+            hideLoadingScreen();  
+            console.log('🎉 اكتمل التحميل والعرض');
+        }, 300);
+    }, 200);
+}
+window.loadImages = loadImages;
+
+/* ========================================
+   [010] معالجات الأحداث والتفاعل
+   ======================================== */
+
+document.querySelectorAll('.group-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const group = this.getAttribute('data-group');
+        console.log('👆 تم اختيار المجموعة:', group);
+        initializeGroup(group);
+    });
+});
+
+function preloadGroupLogos() {
+    const groups = ['A', 'B', 'C', 'D'];
+    groups.forEach(group => {
+        const img = new Image();
+        img.src = `image/logo-${group}.webp`;
+        console.log(`🖼️ تحميل مسبق: logo-${group}.webp`);
+    });
+}
+
+window.addEventListener('load', () => {
+    preloadGroupLogos();
+});
+
+if (changeGroupBtn) {
+    changeGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+        window.goToWood();
+        pushNavigationState(NAV_STATE.GROUP_SELECTION);
+    });
+}
+
+if (searchInput) {
+    searchInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (typeof trackSearch === 'function') trackSearch(searchInput.value);  
+            window.goToWood();  
+        }  
+    };  
+
+    searchInput.addEventListener('input', debounce(function(e) {  
+        if (!mainSvg) return;  
+
+        const query = normalizeArabic(e.target.value);  
+        const isEmptySearch = query.length === 0;
+
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
+            const href = rect.getAttribute('data-href') || '';  
+            const fullText = rect.getAttribute('data-full-text') || '';  
+            const fileName = href !== '#' ? href.split('/').pop() : '';  
+            const autoArabic = autoTranslate(fileName);  
+
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
+
+            if (href === '#') {  
+                rect.style.display = 'none';  
+                if (label) label.style.display = 'none';  
+                if (bg) bg.style.display = 'none';  
+                return;  
+            }  
+
+            if (!isEmptySearch) {  
+                const normalizedHref = normalizeArabic(href);
+                const normalizedFullText = normalizeArabic(fullText);
+                const normalizedFileName = normalizeArabic(fileName);
+                const normalizedAutoArabic = normalizeArabic(autoArabic);
+
+                const isMatch = normalizedHref.includes(query) || normalizedFullText.includes(query) || normalizedFileName.includes(query) || normalizedAutoArabic.includes(query);  
+
+                rect.style.display = isMatch ? '' : 'none';  
+                if (label) label.style.display = rect.style.display;   
+                if (bg) bg.style.display = rect.style.display;  
+            } else {  
+                rect.style.display = '';  
+                if (label) label.style.display = '';   
+                if (bg) bg.style.display = '';  
+            }  
+        });  
+
+        updateWoodInterface();  
+    }, 150));
+}
+
+if (eyeToggle && searchContainer) {
+    const searchVisible = localStorage.getItem('searchVisible') !== 'false';
+
+    if (!searchVisible) {
+        searchContainer.classList.add('hidden');
+        toggleContainer.classList.add('collapsed');
+        eyeToggle.textContent = '👁️';
+    }
+
+    eyeToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        searchContainer.classList.toggle('hidden');
+        toggleContainer.classList.toggle('collapsed');
+
+        const isHidden = searchContainer.classList.contains('hidden');
+        localStorage.setItem('searchVisible', !isHidden);
+
+        eyeToggle.textContent = isHidden ? '👁️' : '👁️';
+
+        console.log(isHidden ? '👁️ تم إخفاء البحث' : '👁️ تم إظهار البحث');
+    });
+
+    eyeToggle.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            eyeToggle.click();
+        }
+    });
+}
+
+if (moveToggle) {
+    moveToggle.onclick = (e) => {
+        e.preventDefault();
+        if (toggleContainer && toggleContainer.classList.contains('top')) {
+            toggleContainer.classList.replace('top', 'bottom');
+        } else if (toggleContainer) {
+            toggleContainer.classList.replace('bottom', 'top');
+        }
+    };
+}
+
+if (searchIcon) {
+    searchIcon.onclick = (e) => {
+        e.preventDefault();
+        window.goToWood();
+    };
+}
+
+if (backButtonGroup) {
+    backButtonGroup.onclick = (e) => {
+        e.stopPropagation();
+        
+        // ✅ إذا كنا في مجلد، ارجع للمجلد الأب
+        if (currentFolder !== "") {
+            console.log('📂 زر SVG: العودة للمجلد الأب');
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/');
+            updateWoodInterface();
+        } else {
+            // ✅ إذا كنا في الصفحة الرئيسية، اذهب لنهاية الخريطة
+            console.log('🗺️ زر SVG: الذهاب لنهاية الخريطة');
+            window.goToMapEnd();
+        }
+    };
+}
+
+if (jsToggle) {
+    jsToggle.addEventListener('change', function() {
+        interactionEnabled = this.checked;
+        if (!interactionEnabled) cleanupHover();
+    });
+}
+
+if (mainSvg) {
+    mainSvg.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
+}
+
+const resetBtn = document.getElementById('reset-btn');
+if (resetBtn) {
+    resetBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        const confirmReset = confirm('🔄 سيتم إعادة تحميل الصفحة بالكامل.\n\nهل أنت متأكد؟');
+
+        if (confirmReset) {
+            console.log('🔄 إعادة التحميل...');
+            window.location.reload();
+        }
+    });
+
+    resetBtn.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            resetBtn.click();
+        }
+    });
+}
+
+console.log('✅ تم تفعيل زر Reset');
+
+/* ========================================
+   [011] البدء التلقائي
+   ======================================== */
+
+if (!localStorage.getItem('visitor_id')) {
+    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('visitor_id', newId);
+}
+
+updateWelcomeMessages();
+setupBackButton();
+
+const hasSavedGroup = loadSelectedGroup();
+if (hasSavedGroup) {
+    initializeGroup(currentGroup);
+} else {
+    if (groupSelectionScreen) {
+        groupSelectionScreen.classList.remove('hidden');
+    }
+    pushNavigationState(NAV_STATE.GROUP_SELECTION);
+}
+
+/* ========================================
+   [012] Service Worker التلقائي
+   ======================================== */
+
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    console.log('🔄 تحديث جديد متاح - إعادة التحميل...');
+    window.location.reload();
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('✅ Service Worker مسجل');
+
+        setInterval(() => {
+          console.log('🔍 فحص التحديثات...');
+          reg.update();
+        }, 5 * 60 * 1000);
+
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          console.log('🆕 Service Worker جديد قيد التثبيت...');
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('✅ Service Worker الجديد جاهز');
+
+              const updateNow = confirm('🎉 تحديث جديد متاح!\n\nهل تريد إعادة التحميل الآن للحصول على آخر التحديثات؟');
+
+              if (updateNow) {
+                newWorker.postMessage({ action: 'skipWaiting' });
+              } else {
+                console.log('⏳ المستخدم اختار التحديث لاحقاً');
+              }
+            }
+          });
+        });
+      })
+      .catch(err => console.log('❌ فشل Service Worker:', err));
+  });
+}
+
+console.log('✅ script.js تم تحميله بالكامل');
