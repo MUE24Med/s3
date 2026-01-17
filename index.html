@@ -24,13 +24,11 @@
   <link rel="apple-touch-icon" href="image/0.png">
   <link rel="stylesheet" href="style.css">
   
-  <script>
-    // ✅ فحص إذا كانت أول زيارة
-    if (!localStorage.getItem('has_visited')) {
-      localStorage.setItem('has_visited', 'true');
-      window.location.href = 'preload.html';
-    }
-  </script>
+<script>
+  if (!localStorage.getItem("preload_done")) {
+    location.href = "preload.html";
+  }
+</script>
 </head>
 <body>
 
