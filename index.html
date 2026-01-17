@@ -243,49 +243,86 @@
 </html>
 <script>
 /* ========================================
-   نظام التحديث التلقائي من GitHub
+   نظام التحديث التلقائي من GitHub - محسّن
    ======================================== */
 
 async function checkForUpdates() {
   try {
+    console.log('🔍 فحص التحديثات...');
+    
     // فحص آخر commit من GitHub
-    const response = await fetch('https://api.github.com/repos/MUE24Med/semester-3/commits/main');
+    const response = await fetch('https://api.github.com/repos/MUE24Med/semester-3/commits/main', {
+      cache: 'no-store' // ✅ عدم استخدام الكاش للحصول على آخر نسخة
+    });
+    
+    if (!response.ok) {
+      console.log('⚠️ فشل الاتصال بـ GitHub');
+      return;
+    }
+
     const data = await response.json();
+    const latestCommitSha = data.sha.substring(0, 7); // أول 7 أحرف من SHA
     const latestCommitDate = new Date(data.commit.author.date).getTime();
-    
-    // الحصول على آخر تاريخ تحديث محلي
+
+    // ✅ الحصول على آخر SHA محفوظ محلياً
+    const lastCommitSha = localStorage.getItem('last_commit_sha');
     const lastUpdate = localStorage.getItem('last_update');
-    
-    if (!lastUpdate || latestCommitDate > parseInt(lastUpdate)) {
-      console.log('🆕 تحديث جديد متاح!');
-      
-      // حذف الكاش القديم
+
+    // ✅ التحقق من وجود تحديث (بناءً على SHA أو التاريخ)
+    const hasUpdate = !lastCommitSha || 
+                      lastCommitSha !== latestCommitSha || 
+                      (lastUpdate && latestCommitDate > parseInt(lastUpdate));
+
+    if (hasUpdate) {
+      console.log(`🆕 تحديث جديد متاح! (${latestCommitSha})`);
+
+      // ✅ حذف الكاش القديم
       if ('caches' in window) {
         const cacheNames = await caches.keys();
+        console.log('🗑️ حذف الكاش القديم...');
         await Promise.all(cacheNames.map(name => caches.delete(name)));
       }
-      
-      // تحديث التاريخ
+
+      // ✅ تحديث البيانات المحلية
+      localStorage.setItem('last_commit_sha', latestCommitSha);
       localStorage.setItem('last_update', latestCommitDate.toString());
-      
-      // إعادة تحميل الصفحة
-      const shouldUpdate = confirm('🎉 يوجد تحديث جديد!\n\nهل تريد تحديث الموقع الآن؟');
+
+      // ✅ سؤال المستخدم عن التحديث
+      const commitMessage = data.commit.message.split('\n')[0]; // أول سطر من رسالة الـ commit
+      const shouldUpdate = confirm(
+        `🎉 يوجد تحديث جديد!\n\n` +
+        `📝 ${commitMessage}\n\n` +
+        `هل تريد تحديث الموقع الآن للحصول على آخر التحسينات؟`
+      );
+
       if (shouldUpdate) {
+        console.log('🔄 إعادة تحميل الصفحة...');
+        // ✅ إعادة تحميل قوية (تجاهل الكاش)
         window.location.reload(true);
+      } else {
+        console.log('⏳ المستخدم اختار التحديث لاحقاً');
       }
     } else {
-      console.log('✅ الموقع محدث');
+      console.log(`✅ الموقع محدث (${latestCommitSha})`);
     }
   } catch (error) {
-    console.log('⚠️ فشل فحص التحديثات:', error);
+    console.log('⚠️ خطأ في فحص التحديثات:', error);
   }
 }
 
-// فحص التحديثات عند فتح الموقع
+// ✅ فحص التحديثات عند فتح الموقع (بعد 3 ثواني)
 window.addEventListener('load', () => {
-  setTimeout(checkForUpdates, 2000);
+  setTimeout(checkForUpdates, 3000);
 });
 
-// فحص دوري كل 5 دقائق
-setInterval(checkForUpdates, 5 * 60 * 1000);
+// ✅ فحص دوري كل 10 دقائق
+setInterval(checkForUpdates, 10 * 60 * 1000);
+
+// ✅ فحص عند العودة للصفحة (إذا كان المستخدم في تاب آخر)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    console.log('👁️ المستخدم عاد للصفحة - فحص التحديثات');
+    setTimeout(checkForUpdates, 2000);
+  }
+});
 </script>
