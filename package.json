@@ -1,0 +1,66 @@
+{
+  "name": "medical-curriculum-map",
+  "version": "2.0.0",
+  "description": "خريطة المنهج الطبي التفاعلية - نظام تعليمي متكامل للطلاب",
+  "keywords": [
+    "medical",
+    "education",
+    "interactive",
+    "curriculum",
+    "map",
+    "arabic",
+    "svg",
+    "pdf-viewer",
+    "students",
+    "learning",
+    "responsive"
+  ],
+  "homepage": "https://github.com/MUE24Med/semester-3#readme",
+  "bugs": {
+    "url": "https://github.com/MUE24Med/semester-3/issues",
+    "email": "dr.george.r.n@gmail.com"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "MUE24Med",
+    "email": "dr.george.r.n@gmail.com",
+    "url": "https://github.com/MUE24Med"
+  },
+  "contributors": [
+    {
+      "name": "طلاب الطب",
+      "url": "https://github.com/MUE24Med/semester-3/graphs/contributors"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MUE24Med/semester-3.git"
+  },
+  "main": "index.html",
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ],
+  "engines": {
+    "browser": ">= Chrome 80, Firefox 75, Safari 13, Edge 80"
+  },
+  "scripts": {
+    "start": "echo '✅ افتح index.html مباشرة في المتصفح' && exit 0",
+    "dev": "echo '🚀 لتشغيل سيرفر تطوير: npx serve . أو npx live-server'",
+    "test": "echo '⚠️ لا توجد اختبارات حالياً - قيد التطوير'",
+    "lint": "echo '🔍 يمكن إضافة ESLint لاحقاً'",
+    "format": "echo '🎨 يمكن إضافة Prettier لاحقاً'",
+    "deploy": "echo '🌐 رفع إلى GitHub Pages: git push origin main'",
+    "clean": "echo '🧹 تنظيف ملفات مؤقتة'",
+    "help": "echo '📚 راجع README.md للحصول على المساعدة الكاملة'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "private": true,
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/MUE24Med"
+  }
+}
