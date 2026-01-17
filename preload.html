@@ -66,7 +66,6 @@ h1 {
   margin-bottom: 15px;
 }
 
-/* Progress Bar */
 .progress-container {
   background: #222;
   border-radius: 10px;
@@ -100,7 +99,6 @@ h1 {
   justify-content: center;
 }
 
-/* Continue Button */
 .continue-btn {
   display: none;
   margin: 15px 0;
@@ -126,7 +124,6 @@ h1 {
   transform: translateY(0);
 }
 
-/* Game Container */
 .game-container {
   background: linear-gradient(180deg, #1a1a2e, #0f0f1e);
   height: 280px;
@@ -137,7 +134,6 @@ h1 {
   border: 2px solid rgba(52, 152, 219, 0.3);
 }
 
-/* Game Stats داخل اللعبة */
 .game-stats {
   position: absolute;
   top: 10px;
@@ -177,7 +173,6 @@ h1 {
   transition: left 0.2s ease;
 }
 
-/* Game Over Overlay */
 .game-overlay {
   position: absolute;
   inset: 0;
@@ -215,7 +210,6 @@ h1 {
   transform: scale(1.2);
 }
 
-/* Controls */
 .controls {
   display: flex;
   gap: 10px;
@@ -241,7 +235,6 @@ h1 {
   box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
 }
 
-/* Top 5 Leaderboard - في الأسفل */
 .leaderboard {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
@@ -347,7 +340,6 @@ h1 {
   <button class="continue-btn" id="continueBtn">متابعة إلى الموقع ➡️</button>
 
   <div class="game-container" id="gameContainer">
-    <!-- Stats داخل اللعبة -->
     <div class="game-stats">
       <div class="game-stat">❤️ <span id="heartsDisplay">0</span></div>
       <div class="game-stat">⭐ <span id="scoreDisplay">0</span></div>
@@ -367,7 +359,6 @@ h1 {
     <button class="control-btn" id="rightBtn">⬅️</button>
   </div>
 
-  <!-- Top 5 Leaderboard - في الأسفل -->
   <div class="leaderboard">
     <h3>🏆 أفضل 5 لاعبين</h3>
     <ul class="leaderboard-list" id="leaderboardList">
@@ -415,7 +406,7 @@ function loadFile(url, index) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       const isImage = url.match(/\.(webp|png|jpg|jpeg|gif)$/i);
-      
+
       if (isImage) {
         const img = new Image();
         img.onload = () => {
@@ -454,14 +445,16 @@ async function startLoading() {
   for (let i = 0; i < filesToLoad.length; i++) {
     await loadFile(filesToLoad[i], i);
   }
-  
+
   fileStatus.textContent = '🎉 اكتمل التحميل!';
   continueBtn.style.display = 'block';
 }
 
 startLoading();
 
+// ✅ تعديل زر المتابعة - عدم إعادة التحميل
 continueBtn.addEventListener('click', () => {
+  localStorage.setItem('preload_done', 'true');
   window.location.href = 'index.html';
 });
 
@@ -484,18 +477,20 @@ let runnerPosition = 0;
 let hearts = 0;
 let score = 0;
 let gameActive = true;
-let fallSpeed = 3;
+let fallSpeed = 1.5; // ✅ بداية أبطأ
 let activeItems = [];
 let waveCounter = 0;
+let usedLanesInWave = [];
+let spawnInterval = 1800; // ✅ بداية أبطأ في التوليد
 
 const lanes = [20, 50, 80];
 
 function moveRunner(direction) {
   if (!gameActive) return;
-  
+
   runnerPosition += direction;
   runnerPosition = Math.max(-1, Math.min(1, runnerPosition));
-  
+
   runner.style.left = lanes[runnerPosition + 1] + '%';
 }
 
@@ -509,10 +504,11 @@ document.addEventListener('keydown', (e) => {
 
 function spawnWave() {
   if (!gameActive) return;
-  
+
   waveCounter++;
+  usedLanesInWave = [];
   const itemsInWave = 2;
-  
+
   for (let i = 0; i < itemsInWave; i++) {
     setTimeout(() => {
       spawnItem();
@@ -523,49 +519,59 @@ function spawnWave() {
 function spawnItem() {
   const rand = Math.random();
   let emoji, type;
-  
-  if (rand < 0.35) {
+
+  // ✅ الأدوية أكثر ندرة: 15% فقط
+  if (rand < 0.15) {
     emoji = '💊';
     type = 'pill';
-  } else if (rand < 0.65) {
+  } else if (rand < 0.60) {
     emoji = '🦠';
     type = 'bacteria';
   } else {
     emoji = '👾';
     type = 'virus';
   }
+
+  // ✅ اختيار عمود غير مستخدم في هذه الموجة
+  let availableLanes = [0, 1, 2].filter(lane => !usedLanesInWave.includes(lane));
   
-  const laneIndex = Math.floor(Math.random() * 3);
-  
+  if (availableLanes.length === 0) {
+    availableLanes = [0, 1, 2];
+    usedLanesInWave = [];
+  }
+
+  const laneIndex = availableLanes[Math.floor(Math.random() * availableLanes.length)];
+  usedLanesInWave.push(laneIndex);
+
   const item = document.createElement('div');
   item.className = 'falling-item';
   item.textContent = emoji;
   item.dataset.type = type;
   item.dataset.lane = laneIndex;
   item.style.left = lanes[laneIndex] + '%';
-  
+
   gameContainer.appendChild(item);
-  
+
   const itemData = {
     element: item,
     y: -40,
     lane: laneIndex,
     type: type
   };
-  
+
   activeItems.push(itemData);
 }
 
 function updateGame() {
   if (!gameActive) return;
-  
+
   activeItems.forEach((itemData, index) => {
     itemData.y += fallSpeed;
     itemData.element.style.top = itemData.y + 'px';
-    
+
     if (itemData.y > 200 && itemData.y < 250) {
       const playerLane = runnerPosition + 1;
-      
+
       if (itemData.lane === playerLane) {
         if (itemData.type === 'pill') {
           hearts++;
@@ -574,18 +580,18 @@ function updateGame() {
         } else if (itemData.type === 'virus') {
           hearts -= 2;
         }
-        
+
         heartsDisplay.textContent = hearts;
-        
+
         itemData.element.remove();
         activeItems.splice(index, 1);
-        
+
         if (hearts < 0) {
           endGame();
         }
       }
     }
-    
+
     if (itemData.y > 300) {
       score++;
       scoreDisplay.textContent = score;
@@ -593,36 +599,10 @@ function updateGame() {
       activeItems.splice(index, 1);
     }
   });
-  
+
   if (gameActive) {
     requestAnimationFrame(updateGame);
   }
-}
-
-/* ========================================
-   [3] Leaderboard System مع تحديث من السيرفر
-   ======================================== */
-
-const LEADERBOARD_URL = 'https://api.jsonbin.io/v3/b/YOUR_BIN_ID';
-const API_KEY = 'YOUR_API_KEY';
-
-async function fetchLeaderboardFromServer() {
-  try {
-    const response = await fetch(LEADERBOARD_URL, {
-      headers: {
-        'X-Master-Key': API_KEY
-      }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      return data.record.leaderboard || [];
-    }
-  } catch (error) {
-    console.log('استخدام Leaderboard المحلي');
-  }
-  
-  return getLocalLeaderboard();
 }
 
 function getLocalLeaderboard() {
@@ -635,24 +615,24 @@ function saveLocalLeaderboard(leaderboard) {
 }
 
 async function updateLeaderboard(playerName, playerScore) {
-  let leaderboard = await fetchLeaderboardFromServer();
-  
+  let leaderboard = getLocalLeaderboard();
+
   leaderboard.push({
     name: playerName,
     score: playerScore,
     date: new Date().toLocaleDateString('ar-EG')
   });
-  
+
   leaderboard.sort((a, b) => b.score - a.score);
   leaderboard = leaderboard.slice(0, 5);
-  
+
   saveLocalLeaderboard(leaderboard);
   displayLeaderboard();
 }
 
 function displayLeaderboard() {
   const leaderboard = getLocalLeaderboard();
-  
+
   if (leaderboard.length === 0) {
     leaderboardList.innerHTML = `
       <li class="leaderboard-item">
@@ -663,11 +643,11 @@ function displayLeaderboard() {
     `;
     return;
   }
-  
+
   leaderboardList.innerHTML = leaderboard.map((entry, index) => {
     const topClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-    
+
     return `
       <li class="leaderboard-item ${topClass}">
         <span class="leaderboard-rank">${medal} #${index + 1}</span>
@@ -682,32 +662,34 @@ function endGame() {
   gameActive = false;
   finalScore.textContent = `النقاط النهائية: ${score}`;
   gameOverlay.style.display = 'flex';
-  
+
   let playerName = localStorage.getItem('user_real_name');
   if (!playerName || playerName === 'زائر' || playerName === 'زائر مجهول') {
     playerName = localStorage.getItem('visitor_id') || 'لاعب مجهول';
   }
-  
+
   updateLeaderboard(playerName, score);
 }
 
 function restartGame() {
   activeItems.forEach(item => item.element.remove());
   activeItems = [];
-  
+
   hearts = 0;
   score = 0;
   runnerPosition = 0;
-  fallSpeed = 3;
+  fallSpeed = 1.5; // ✅ إعادة للسرعة البطيئة
   waveCounter = 0;
+  spawnInterval = 1800; // ✅ إعادة لفترة بطيئة
   gameActive = true;
-  
+
   heartsDisplay.textContent = hearts;
   scoreDisplay.textContent = score;
   runner.style.left = lanes[1] + '%';
   gameOverlay.style.display = 'none';
-  
+
   updateGame();
+  startSpawning(); // ✅ إعادة تشغيل التوليد
 }
 
 restartBtn.addEventListener('click', restartGame);
@@ -715,15 +697,38 @@ restartBtn.addEventListener('click', restartGame);
 displayLeaderboard();
 updateGame();
 
-setInterval(() => {
-  if (gameActive) {
-    spawnWave();
-    
-    if (waveCounter % 5 === 0) {
-      fallSpeed += 0.3;
-    }
+// ✅ نظام التسارع التدريجي المحسّن
+let spawnerIntervalId;
+
+function startSpawning() {
+  if (spawnerIntervalId) {
+    clearInterval(spawnerIntervalId);
   }
-}, 1200);
+
+  spawnerIntervalId = setInterval(() => {
+    if (gameActive) {
+      spawnWave();
+      waveCounter++;
+
+      // ✅ زيادة السرعة تدريجياً كل 3 موجات (أبطأ من قبل)
+      if (waveCounter % 3 === 0) {
+        fallSpeed += 0.15; // ✅ زيادة أقل
+        
+        // ✅ تقليل فترة التوليد تدريجياً (أسرع في الظهور)
+        if (spawnInterval > 800) {
+          spawnInterval -= 100;
+          clearInterval(spawnerIntervalId);
+          startSpawning();
+        }
+        
+        console.log(`⚡ المستوى ${Math.floor(waveCounter / 3)}: السرعة = ${fallSpeed.toFixed(2)}, الفترة = ${spawnInterval}ms`);
+      }
+    }
+  }, spawnInterval);
+}
+
+// بدء اللعبة
+startSpawning();
 </script>
 
 </body>
