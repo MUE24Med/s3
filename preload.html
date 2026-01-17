@@ -8,7 +8,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
-  font-family:Tahomap,Arial;
+  font-family:Arial;
   background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
   min-height:100vh;
   display:flex;
@@ -21,11 +21,11 @@ body{
   max-width:450px;
   background:rgba(0,0,0,.75);
   border-radius:20px;
-  padding:20px;
+  padding:18px;
   text-align:center;
 }
-.logo{font-size:45px}
-h1{font-size:22px;margin:5px 0}
+.logo{font-size:42px}
+h1{font-size:22px;margin:6px 0}
 .subtitle{font-size:13px;opacity:.8;margin-bottom:10px}
 
 /* progress */
@@ -39,44 +39,52 @@ h1{font-size:22px;margin:5px 0}
 .file{
   font-size:13px;
   background:rgba(255,255,255,.1);
-  padding:7px;
+  padding:6px;
   border-radius:8px;
-  margin-bottom:10px
+  margin-bottom:8px
+}
+
+/* continue */
+.continue{
+  display:none;
+  margin:10px 0;
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:25px;
+  background:#2ecc71;
+  font-weight:bold
 }
 
 /* game */
 .game{
   background:#111;
-  height:180px;
+  height:190px;
   border-radius:12px;
   position:relative;
   overflow:hidden;
   margin-bottom:10px
 }
 .runner{
-  width:28px;height:28px;
-  background:#2ecc71;
+  width:30px;height:30px;
   position:absolute;
   bottom:10px;
   left:50%;
   transform:translateX(-50%);
-  border-radius:6px
+  font-size:28px;
 }
-.enemy,.pill{
-  width:26px;height:26px;
+.item{
   position:absolute;
   top:-30px;
-  border-radius:50%
+  font-size:26px;
 }
-.enemy{background:#e74c3c}
-.pill{background:#3498db}
 
 /* ui */
 .stats{
   display:flex;
   justify-content:space-between;
   font-size:14px;
-  margin-bottom:8px
+  margin-bottom:6px
 }
 .controls{
   display:flex;
@@ -91,52 +99,44 @@ h1{font-size:22px;margin:5px 0}
   color:#fff;
   font-weight:bold
 }
-.continue{
-  display:none;
-  margin-top:12px;
-  padding:12px;
-  width:100%;
-  border:none;
-  border-radius:25px;
-  background:#2ecc71;
-  font-weight:bold
-}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-  <div class="logo">🧬</div>
+  <div class="logo">👨‍⚕️</div>
   <h1>جاري التحميل</h1>
-  <div class="subtitle">تجنب الميكروبات واجمع العلاج</div>
+  <div class="subtitle">احمِ المريض من العدوى</div>
 
   <div class="progress"><span id="bar"></span></div>
   <div class="percent" id="percent">0%</div>
   <div class="file" id="file">بدء التحميل...</div>
 
+  <!-- زر المتابعة فوق اللعبة -->
+  <button class="continue" id="continue" onclick="go()">متابعة ➡️</button>
+
   <div class="stats">
-    <div>❤️ القلوب: <span id="hearts">3</span></div>
-    <div>⭐ السكور: <span id="score">0</span></div>
+    <div>❤️ <span id="hearts">5</span></div>
+    <div>⭐ <span id="score">0</span></div>
   </div>
 
   <div class="game" id="game">
-    <div class="runner" id="runner"></div>
+    <div class="runner" id="runner">👨‍⚕️</div>
   </div>
 
+  <!-- عكس الأزرار -->
   <div class="controls">
-    <button onclick="move(-1)">◀</button>
-    <button onclick="move(1)">▶</button>
+    <button onclick="move(1)">◀</button>
+    <button onclick="move(-1)">▶</button>
   </div>
-
-  <button class="continue" id="continue" onclick="go()">متابعة ➡️</button>
 </div>
 
 <script>
 /* loading */
 const files=[
- "image/wood.webp","image/logo-A.webp","image/logo-B.webp",
- "style.css","script.js","tracker.js"
+ "doctor.png","virus.svg","bacteria.svg",
+ "antibiotic.svg","style.css","script.js"
 ];
 let i=0,prog=0;
 const bar=document.getElementById("bar");
@@ -163,17 +163,38 @@ const runner=document.getElementById("runner");
 const heartsEl=document.getElementById("hearts");
 const scoreEl=document.getElementById("score");
 
-let pos=0,hearts=3,score=0;
+let pos=0,hearts=5,score=0;
+
+function resetGame(){
+  hearts=5; score=0; pos=0;
+  heartsEl.innerText=hearts;
+  scoreEl.innerText=score;
+  runner.style.left="50%";
+}
 
 function move(d){
   pos=Math.max(-1,Math.min(1,pos+d));
   runner.style.left=50+pos*30+"%";
 }
 
+/* keyboard */
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"||e.key==="a") move(1);
+  if(e.key==="ArrowRight"||e.key==="d") move(-1);
+});
+
 function spawn(){
-  const isPill=Math.random()<0.25;
+  const r=Math.random();
+  let emoji,type;
+
+  if(r<0.25){emoji="💊";type="pill"}
+  else if(r<0.55){emoji="🦠";type="bacteria"}
+  else{emoji="👾";type="virus"}
+
   const el=document.createElement("div");
-  el.className=isPill?"pill":"enemy";
+  el.className="item";
+  el.innerText=emoji;
+  el.dataset.type=type;
   el.style.left=[20,50,80][Math.floor(Math.random()*3)]+"%";
   game.appendChild(el);
 
@@ -182,28 +203,25 @@ function spawn(){
     y+=4;
     el.style.top=y+"px";
 
-    if(y>130){
+    if(y>135){
       const lane=parseInt(el.style.left);
       const playerLane=[20,50,80][pos+1];
 
       if(lane===playerLane){
-        if(isPill){
-          hearts++;
-        }else{
-          hearts=Math.max(0,hearts-1);
-        }
+        if(type==="pill") hearts++;
+        if(type==="bacteria") hearts--;
+        if(type==="virus") hearts-=2;
+
         heartsEl.innerText=hearts;
+        if(hearts<=0){
+          resetGame();
+        }
       }
 
       clearInterval(fall);
       el.remove();
       score++;
       scoreEl.innerText=score;
-    }
-
-    if(y>180){
-      clearInterval(fall);
-      el.remove();
     }
   },30);
 }
