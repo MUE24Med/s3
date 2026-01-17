@@ -13,7 +13,7 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -22,7 +22,7 @@
       position: relative;
     }
 
-    /* خلفية متحركة */
+    /* خلفية متحركة - قطار سريع */
     .bg-animation {
       position: fixed;
       width: 100%;
@@ -30,21 +30,75 @@
       top: 0;
       left: 0;
       z-index: 0;
-      opacity: 0.3;
+      overflow: hidden;
     }
 
-    .bubble {
+    .train-track {
       position: absolute;
-      bottom: -100px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      animation: rise 15s infinite ease-in;
+      bottom: 20%;
+      width: 100%;
+      height: 15px;
+      background: linear-gradient(to right, #444, #777, #444);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     }
 
-    @keyframes rise {
-      to {
-        bottom: 110%;
-        transform: translateX(100px);
+    .train {
+      position: absolute;
+      bottom: 21%;
+      width: 180px;
+      height: 70px;
+      background: linear-gradient(to right, #e74c3c, #c0392b);
+      border-radius: 10px 10px 0 0;
+      animation: trainMove 12s linear infinite;
+      transform: translateX(100vw);
+    }
+
+    .train::before {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: #f1c40f;
+      border-radius: 50%;
+      top: -20px;
+      left: 15px;
+      box-shadow: 60px 0 0 #f1c40f, 120px 0 0 #f1c40f;
+    }
+
+    .train-window {
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      background: #3498db;
+      border-radius: 50%;
+      top: 15px;
+      left: 20px;
+      box-shadow: 40px 0 0 #3498db, 80px 0 0 #3498db, 120px 0 0 #3498db;
+    }
+
+    @keyframes trainMove {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-180px); }
+    }
+
+    .coin {
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
+      border-radius: 50%;
+      animation: floatUp 15s infinite linear;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+    }
+
+    @keyframes floatUp {
+      0% { 
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% { 
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
       }
     }
 
@@ -54,11 +108,12 @@
       z-index: 1;
       text-align: center;
       padding: 40px;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 30px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      background: rgba(20, 30, 40, 0.85);
+      backdrop-filter: blur(15px);
+      border-radius: 25px;
+      border: 2px solid rgba(52, 152, 219, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
       max-width: 500px;
       width: 90%;
     }
@@ -67,33 +122,63 @@
     .logo {
       width: 120px;
       height: 120px;
-      margin: 0 auto 30px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0 auto 25px;
+      background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
       border-radius: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 60px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 
+                  inset 0 4px 10px rgba(255, 255, 255, 0.2);
       animation: float 3s ease-in-out infinite;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: rotate(30deg);
+      animation: shine 3s infinite;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(30deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(30deg); }
     }
 
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
+      50% { transform: translateY(-15px); }
     }
 
     h1 {
       color: white;
       font-size: 32px;
       margin-bottom: 15px;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(to right, #3498db, #2ecc71);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 700;
     }
 
     .subtitle {
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.85);
       font-size: 16px;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
       line-height: 1.6;
     }
 
@@ -122,16 +207,36 @@
       font-size: 36px;
       font-weight: bold;
       color: white;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
-    /* اللعبة - Memory Game */
+    /* لعبة Subway Surfers */
     .game-container {
       margin-top: 30px;
       padding: 20px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(30, 40, 50, 0.7);
       border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(52, 152, 219, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 20px,
+          rgba(52, 152, 219, 0.05) 20px,
+          rgba(52, 152, 219, 0.05) 40px
+        );
+      z-index: 0;
     }
 
     .game-title {
@@ -142,65 +247,143 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
+      position: relative;
+      z-index: 1;
     }
 
-    .game-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      max-width: 320px;
-      margin: 0 auto;
-    }
-
-    .card {
-      aspect-ratio: 1;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
-      border: 2px solid rgba(255, 255, 255, 0.3);
+    .game-area {
+      width: 100%;
+      height: 180px;
+      background: linear-gradient(to bottom, #1a2530, #2c3e50);
       border-radius: 10px;
-      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .track {
+      position: absolute;
+      width: 100%;
+      height: 100%;
       display: flex;
-      align-items: center;
+      justify-content: space-around;
+    }
+
+    .lane {
+      width: 60px;
+      height: 100%;
+      position: relative;
+    }
+
+    .lane::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 200%;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.5),
+        rgba(255, 255, 255, 0.5) 15px,
+        transparent 15px,
+        transparent 30px
+      );
+      left: 50%;
+      transform: translateX(-50%);
+      animation: trackMove 2s linear infinite;
+    }
+
+    @keyframes trackMove {
+      0% { transform: translateX(-50%) translateY(0); }
+      100% { transform: translateX(-50%) translateY(-30px); }
+    }
+
+    .player {
+      position: absolute;
+      width: 40px;
+      height: 60px;
+      background: linear-gradient(to bottom, #3498db, #2980b9);
+      border-radius: 8px 8px 0 0;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      transition: left 0.2s ease;
+    }
+
+    .player::before {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 10px;
+      background: #2c3e50;
+      top: -10px;
+      left: 5px;
+      border-radius: 5px 5px 0 0;
+    }
+
+    .player::after {
+      content: '';
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: white;
+      top: 10px;
+      left: 5px;
+      border-radius: 50%;
+      box-shadow: 20px 0 0 white;
+    }
+
+    .obstacle {
+      position: absolute;
+      width: 50px;
+      height: 40px;
+      background: linear-gradient(to bottom, #e74c3c, #c0392b);
+      border-radius: 5px;
+      z-index: 1;
+    }
+
+    .coin-item {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
+      border-radius: 50%;
+      z-index: 1;
+      animation: coinSpin 2s infinite linear;
+    }
+
+    @keyframes coinSpin {
+      0% { transform: rotateY(0deg); }
+      100% { transform: rotateY(360deg); }
+    }
+
+    .game-controls {
+      display: flex;
       justify-content: center;
-      font-size: 28px;
-      transition: all 0.3s ease;
-      user-select: none;
+      gap: 15px;
+      margin-top: 15px;
     }
 
-    .card:hover:not(.flipped):not(.matched) {
-      transform: scale(1.05);
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+    .control-btn {
+      padding: 10px 20px;
+      background: linear-gradient(to bottom, #3498db, #2980b9);
+      border: none;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     }
 
-    .card.flipped,
-    .card.matched {
-      background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%);
-      border-color: white;
+    .control-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     }
 
-    .card.matched {
-      animation: matchPulse 0.5s ease;
-    }
-
-    @keyframes matchPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.15); }
-    }
-
-    .card-back {
-      display: none;
-    }
-
-    .card:not(.flipped) .card-front {
-      display: none;
-    }
-
-    .card.flipped .card-back {
-      display: none;
-    }
-
-    .card.flipped .card-front,
-    .card.matched .card-front {
-      display: block;
+    .control-btn:active {
+      transform: translateY(0);
     }
 
     .game-stats {
@@ -209,6 +392,8 @@
       margin-top: 15px;
       color: white;
       font-size: 14px;
+      position: relative;
+      z-index: 1;
     }
 
     .stat {
@@ -221,15 +406,15 @@
     .stat-value {
       font-size: 20px;
       font-weight: bold;
-      color: #ffd700;
+      color: #2ecc71;
     }
 
     /* التنويه */
     .notice {
       margin-top: 20px;
       padding: 15px;
-      background: rgba(255, 215, 0, 0.2);
-      border: 1px solid rgba(255, 215, 0, 0.4);
+      background: linear-gradient(to right, rgba(52, 152, 219, 0.2), rgba(46, 204, 113, 0.2));
+      border: 1px solid rgba(52, 152, 219, 0.4);
       border-radius: 10px;
       color: white;
       font-size: 13px;
@@ -237,6 +422,8 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      position: relative;
+      z-index: 1;
     }
 
     /* رسائل الحالة */
@@ -249,15 +436,35 @@
       color: rgba(255, 255, 255, 0.9);
       font-size: 14px;
       padding: 8px 15px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(30, 40, 50, 0.7);
       border-radius: 20px;
       display: inline-block;
       animation: fadeIn 0.5s ease;
+      border: 1px solid rgba(52, 152, 219, 0.3);
     }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* زر التخطي */
+    .skip-btn {
+      margin-top: 20px;
+      padding: 12px 30px;
+      background: linear-gradient(to right, #e74c3c, #c0392b);
+      border: none;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+    }
+
+    .skip-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(231, 76, 60, 0.6);
     }
 
     /* شاشات صغيرة */
@@ -285,24 +492,28 @@
         font-size: 28px;
       }
 
-      .game-grid {
-        max-width: 280px;
-        gap: 8px;
+      .game-area {
+        height: 150px;
       }
 
-      .card {
-        font-size: 22px;
+      .lane {
+        width: 50px;
       }
     }
   </style>
 </head>
 <body>
   <!-- الخلفية المتحركة -->
-  <div class="bg-animation" id="bubbles"></div>
+  <div class="bg-animation" id="bg-animation">
+    <div class="train-track"></div>
+    <div class="train">
+      <div class="train-window"></div>
+    </div>
+  </div>
 
   <!-- المحتوى الرئيسي -->
   <div class="container">
-    <div class="logo">🏥</div>
+    <div class="logo">🚇</div>
     <h1>خريطة semester-3</h1>
     <p class="subtitle">جاري تحميل الملفات وإعداد التطبيق...</p>
 
@@ -311,7 +522,7 @@
       <svg class="progress-ring" width="200" height="200">
         <circle
           class="progress-ring-circle"
-          stroke="rgba(255, 255, 255, 0.2)"
+          stroke="rgba(255, 255, 255, 0.1)"
           stroke-width="12"
           fill="transparent"
           r="90"
@@ -333,8 +544,8 @@
         />
         <defs>
           <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#48c6ef;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#6f86d6;stop-opacity:1" />
+            <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#2ecc71;stop-opacity:1" />
           </linearGradient>
         </defs>
       </svg>
@@ -346,55 +557,72 @@
       <div class="status-message" id="status-message">بدء التحميل...</div>
     </div>
 
-    <!-- اللعبة -->
+    <!-- لعبة Subway Surfers -->
     <div class="game-container">
       <div class="game-title">
         <span>🎮</span>
-        <span>لعبة الذاكرة - اقلب البطاقات!</span>
+        <span>Subway Surfers - تجنب العوائق واجمع العملات!</span>
       </div>
-      <div class="game-grid" id="game-grid"></div>
+      
+      <div class="game-area" id="game-area">
+        <div class="track" id="track">
+          <div class="lane"></div>
+          <div class="lane"></div>
+          <div class="lane"></div>
+        </div>
+        <div class="player" id="player"></div>
+      </div>
+      
+      <div class="game-controls">
+        <button class="control-btn" id="left-btn">◀ يسار</button>
+        <button class="control-btn" id="right-btn">يمين ▶</button>
+        <button class="control-btn" id="jump-btn">⬆ قفز</button>
+      </div>
+      
       <div class="game-stats">
         <div class="stat">
-          <div class="stat-value" id="moves">0</div>
-          <div>حركات</div>
+          <div class="stat-value" id="score">0</div>
+          <div>النتيجة</div>
         </div>
         <div class="stat">
-          <div class="stat-value" id="matches">0</div>
-          <div>مطابقات</div>
+          <div class="stat-value" id="coins">0</div>
+          <div>عملات</div>
         </div>
         <div class="stat">
-          <div class="stat-value" id="timer">00:00</div>
-          <div>الوقت</div>
+          <div class="stat-value" id="high-score">0</div>
+          <div>أفضل نتيجة</div>
         </div>
       </div>
     </div>
 
     <!-- التنويه -->
     <div class="notice">
-      <span>💡</span>
-      <span>هذه الشاشة تظهر في المرة الأولى فقط. جميع الملفات سيتم تخزينها في ذاكرة التخزين المؤقت (Cache) لتحميل أسرع في الزيارات القادمة!</span>
+      <span>⚡</span>
+      <span>جميع الملفات سيتم تخزينها في ذاكرة التخزين المؤقت لتحميل أسرع في الزيارات القادمة!</span>
     </div>
+
+    <!-- زر التخطي -->
+    <button class="skip-btn" id="skip-btn">تخطي الانتظار</button>
   </div>
 
   <script>
-    // ===== إنشاء الفقاعات المتحركة =====
-    const bubblesContainer = document.getElementById('bubbles');
-    for (let i = 0; i < 15; i++) {
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      const size = Math.random() * 60 + 20;
-      bubble.style.width = size + 'px';
-      bubble.style.height = size + 'px';
-      bubble.style.left = Math.random() * 100 + '%';
-      bubble.style.animationDelay = Math.random() * 5 + 's';
-      bubble.style.animationDuration = (Math.random() * 10 + 10) + 's';
-      bubblesContainer.appendChild(bubble);
+    // ===== إنشاء العملات المتحركة في الخلفية =====
+    const bgAnimation = document.getElementById('bg-animation');
+    for (let i = 0; i < 8; i++) {
+      const coin = document.createElement('div');
+      coin.className = 'coin';
+      coin.style.left = Math.random() * 100 + '%';
+      coin.style.animationDelay = Math.random() * 5 + 's';
+      coin.style.width = Math.random() * 20 + 15 + 'px';
+      coin.style.height = coin.style.width;
+      bgAnimation.appendChild(coin);
     }
 
     // ===== نظام التحميل =====
     const progressCircle = document.getElementById('progress-circle');
     const progressText = document.getElementById('progress-text');
     const statusMessage = document.getElementById('status-message');
+    const skipBtn = document.getElementById('skip-btn');
     const circumference = 2 * Math.PI * 90;
 
     const statusMessages = [
@@ -410,6 +638,7 @@
 
     let currentProgress = 0;
     let targetProgress = 0;
+    let isSkipped = false;
 
     function updateProgress(percent) {
       targetProgress = Math.min(100, Math.max(0, percent));
@@ -417,7 +646,7 @@
 
     function animateProgress() {
       if (currentProgress < targetProgress) {
-        currentProgress += 0.5;
+        currentProgress += 0.8;
         if (currentProgress > targetProgress) currentProgress = targetProgress;
       }
 
@@ -438,94 +667,251 @@
         }, 50);
       }
 
-      if (currentProgress < 100) {
+      if (currentProgress < 100 && !isSkipped) {
         requestAnimationFrame(animateProgress);
       } else {
         setTimeout(() => {
           window.location.href = 'index.html';
-        }, 1000);
+        }, 800);
       }
     }
 
-    animateProgress();
-
-    // ===== لعبة الذاكرة =====
-    const emojis = ['🩺', '💊', '🏥', '🔬', '💉', '🧬', '🦠', '⚕️'];
-    const cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
-    
-    let flippedCards = [];
-    let moves = 0;
-    let matches = 0;
-    let startTime = Date.now();
-    let timerInterval;
-
-    const gameGrid = document.getElementById('game-grid');
-    const movesEl = document.getElementById('moves');
-    const matchesEl = document.getElementById('matches');
-    const timerEl = document.getElementById('timer');
-
-    // إنشاء البطاقات
-    cards.forEach((emoji, index) => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.dataset.index = index;
-      card.dataset.emoji = emoji;
-      card.innerHTML = `
-        <div class="card-back">❓</div>
-        <div class="card-front">${emoji}</div>
-      `;
-      card.addEventListener('click', flipCard);
-      gameGrid.appendChild(card);
+    // زر التخطي
+    skipBtn.addEventListener('click', () => {
+      isSkipped = true;
+      targetProgress = 100;
+      statusMessage.textContent = 'تخطي التحميل...';
+      statusMessage.style.animation = 'fadeIn 0.5s ease';
     });
 
-    // بدء المؤقت
-    timerInterval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-      const seconds = (elapsed % 60).toString().padStart(2, '0');
-      timerEl.textContent = `${minutes}:${seconds}`;
-    }, 1000);
+    animateProgress();
 
-    function flipCard() {
-      if (flippedCards.length >= 2) return;
-      if (this.classList.contains('flipped') || this.classList.contains('matched')) return;
+    // ===== لعبة Subway Surfers =====
+    const gameArea = document.getElementById('game-area');
+    const player = document.getElementById('player');
+    const leftBtn = document.getElementById('left-btn');
+    const rightBtn = document.getElementById('right-btn');
+    const jumpBtn = document.getElementById('jump-btn');
+    const scoreEl = document.getElementById('score');
+    const coinsEl = document.getElementById('coins');
+    const highScoreEl = document.getElementById('high-score');
 
-      this.classList.add('flipped');
-      flippedCards.push(this);
+    let playerPosition = 1; // 0: يسار, 1: وسط, 2: يمين
+    let isJumping = false;
+    let score = 0;
+    let coins = 0;
+    let highScore = localStorage.getItem('subwayHighScore') || 0;
+    let gameInterval;
+    let obstacles = [];
+    let coinItems = [];
 
-      if (flippedCards.length === 2) {
-        moves++;
-        movesEl.textContent = moves;
+    highScoreEl.textContent = highScore;
 
-        const [card1, card2] = flippedCards;
-        if (card1.dataset.emoji === card2.dataset.emoji) {
-          // مطابقة!
-          setTimeout(() => {
-            card1.classList.add('matched');
-            card2.classList.add('matched');
-            card1.classList.remove('flipped');
-            card2.classList.remove('flipped');
-            flippedCards = [];
-            matches++;
-            matchesEl.textContent = matches;
+    // تحديث موضع اللاعب
+    function updatePlayerPosition() {
+      const laneWidth = gameArea.offsetWidth / 3;
+      const leftPosition = playerPosition * laneWidth + laneWidth / 2 - 20;
+      player.style.left = leftPosition + 'px';
+    }
 
-            // إذا انتهت اللعبة
-            if (matches === emojis.length) {
-              clearInterval(timerInterval);
-              setTimeout(() => {
-                alert('🎉 مبروك! أكملت اللعبة!\nالوقت: ' + timerEl.textContent + '\nعدد الحركات: ' + moves);
-              }, 500);
-            }
-          }, 600);
-        } else {
-          // غير متطابقة
-          setTimeout(() => {
-            card1.classList.remove('flipped');
-            card2.classList.remove('flipped');
-            flippedCards = [];
-          }, 1000);
+    // إنشاء عائق
+    function createObstacle() {
+      const obstacle = document.createElement('div');
+      obstacle.className = 'obstacle';
+      const lane = Math.floor(Math.random() * 3);
+      const laneWidth = gameArea.offsetWidth / 3;
+      obstacle.style.left = lane * laneWidth + laneWidth / 2 - 25 + 'px';
+      obstacle.style.top = '-40px';
+      gameArea.appendChild(obstacle);
+      
+      obstacles.push({
+        element: obstacle,
+        lane: lane,
+        top: -40
+      });
+    }
+
+    // إنشاء عملة
+    function createCoin() {
+      const coin = document.createElement('div');
+      coin.className = 'coin-item';
+      const lane = Math.floor(Math.random() * 3);
+      const laneWidth = gameArea.offsetWidth / 3;
+      coin.style.left = lane * laneWidth + laneWidth / 2 - 10 + 'px';
+      coin.style.top = '-20px';
+      gameArea.appendChild(coin);
+      
+      coinItems.push({
+        element: coin,
+        lane: lane,
+        top: -20
+      });
+    }
+
+    // تحريك العوائق والعملات
+    function moveItems() {
+      // تحريك العوائق
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obstacle = obstacles[i];
+        obstacle.top += 4;
+        obstacle.element.style.top = obstacle.top + 'px';
+        
+        // اكتشاف التصادم
+        if (obstacle.lane === playerPosition && obstacle.top > 100 && obstacle.top < 140 && !isJumping) {
+          gameOver();
+          return;
+        }
+        
+        // إزالة العائق إذا تجاوز الشاشة
+        if (obstacle.top > gameArea.offsetHeight) {
+          obstacle.element.remove();
+          obstacles.splice(i, 1);
+          score += 5;
+          scoreEl.textContent = score;
         }
       }
+      
+      // تحريك العملات
+      for (let i = coinItems.length - 1; i >= 0; i--) {
+        const coin = coinItems[i];
+        coin.top += 3;
+        coin.element.style.top = coin.top + 'px';
+        
+        // جمع العملة
+        if (coin.lane === playerPosition && coin.top > 100 && coin.top < 140 && !isJumping) {
+          coin.element.remove();
+          coinItems.splice(i, 1);
+          coins += 1;
+          coinsEl.textContent = coins;
+          score += 10;
+          scoreEl.textContent = score;
+          playCoinSound();
+        }
+        
+        // إزالة العملة إذا تجاوزت الشاشة
+        if (coin.top > gameArea.offsetHeight) {
+          coin.element.remove();
+          coinItems.splice(i, 1);
+        }
+      }
+    }
+
+    // القفز
+    function jump() {
+      if (isJumping) return;
+      
+      isJumping = true;
+      player.style.transform = 'translateX(-50%) translateY(-30px)';
+      
+      setTimeout(() => {
+        player.style.transform = 'translateX(-50%) translateY(0)';
+        setTimeout(() => {
+          isJumping = false;
+        }, 200);
+      }, 400);
+    }
+
+    // نهاية اللعبة
+    function gameOver() {
+      clearInterval(gameInterval);
+      
+      // تحديث أفضل نتيجة
+      if (score > highScore) {
+        highScore = score;
+        highScoreEl.textContent = highScore;
+        localStorage.setItem('subwayHighScore', highScore);
+      }
+      
+      // عرض رسالة
+      alert(`انتهت اللعبة!\nنتيجتك: ${score}\nالعملات: ${coins}\nأفضل نتيجة: ${highScore}`);
+      
+      // إعادة تشغيل اللعبة
+      setTimeout(() => {
+        restartGame();
+      }, 1000);
+    }
+
+    // إعادة تشغيل اللعبة
+    function restartGame() {
+      // إزالة العوائق والعملات
+      obstacles.forEach(obstacle => obstacle.element.remove());
+      coinItems.forEach(coin => coin.element.remove());
+      obstacles = [];
+      coinItems = [];
+      
+      // إعادة تعيين القيم
+      score = 0;
+      coins = 0;
+      playerPosition = 1;
+      isJumping = false;
+      scoreEl.textContent = score;
+      coinsEl.textContent = coins;
+      updatePlayerPosition();
+      player.style.transform = 'translateX(-50%) translateY(0)';
+      
+      // بدء اللعبة من جديد
+      startGame();
+    }
+
+    // بدء اللعبة
+    function startGame() {
+      gameInterval = setInterval(() => {
+        moveItems();
+        
+        // إنشاء عوائق وعملات بشكل عشوائي
+        if (Math.random() < 0.03) {
+          createObstacle();
+        }
+        if (Math.random() < 0.04) {
+          createCoin();
+        }
+      }, 50);
+    }
+
+    // تحريك اللاعب
+    leftBtn.addEventListener('click', () => {
+      if (playerPosition > 0) {
+        playerPosition--;
+        updatePlayerPosition();
+      }
+    });
+
+    rightBtn.addEventListener('click', () => {
+      if (playerPosition < 2) {
+        playerPosition++;
+        updatePlayerPosition();
+      }
+    });
+
+    jumpBtn.addEventListener('click', jump);
+
+    // التحكم باللوحة المفاتيح
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') {
+        if (playerPosition > 0) {
+          playerPosition--;
+          updatePlayerPosition();
+        }
+      } else if (e.key === 'ArrowRight' || e.key === 'd') {
+        if (playerPosition < 2) {
+          playerPosition++;
+          updatePlayerPosition();
+        }
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') {
+        jump();
+      }
+    });
+
+    // بدء اللعبة بعد تهيئة الصفحة
+    setTimeout(() => {
+      updatePlayerPosition();
+      startGame();
+    }, 1000);
+
+    // محاكاة صوت العملة (بدون صوت فعلي)
+    function playCoinSound() {
+      // يمكن إضافة صوت هنا
+      console.log('Coin collected!');
     }
 
     // ===== محاكاة التحميل =====
@@ -543,7 +929,7 @@
     ];
 
     let loadedCount = 0;
-    const totalFiles = filesToLoad.length + 5; // +5 للخطوات الإضافية
+    const totalFiles = filesToLoad.length + 5;
 
     // تحميل الملفات الفعلية
     filesToLoad.forEach((file, index) => {
