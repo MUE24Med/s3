@@ -6,9 +6,9 @@
 <title>جاري التحميل...</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{margin:0;padding:0;box-sizing:border-box}
 body{
-  font-family:Tahoma,Arial;
+  font-family:Tahomap,Arial;
   background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
   min-height:100vh;
   display:flex;
@@ -18,69 +18,66 @@ body{
 }
 .container{
   width:90%;
-  max-width:440px;
+  max-width:450px;
   background:rgba(0,0,0,.75);
   border-radius:20px;
-  padding:25px;
+  padding:20px;
   text-align:center;
 }
-.logo{font-size:48px;margin-bottom:8px}
-h1{font-size:22px;margin-bottom:6px}
-.subtitle{font-size:13px;opacity:.85;margin-bottom:15px}
+.logo{font-size:45px}
+h1{font-size:22px;margin:5px 0}
+.subtitle{font-size:13px;opacity:.8;margin-bottom:10px}
 
-.progress{
-  width:100%;
-  height:10px;
-  background:#333;
-  border-radius:5px;
-  overflow:hidden;
-}
+/* progress */
+.progress{height:10px;background:#333;border-radius:5px;overflow:hidden}
 .progress span{
-  display:block;
-  height:100%;
-  width:0%;
+  display:block;height:100%;width:0%;
   background:linear-gradient(90deg,#3498db,#2ecc71);
-  transition:.4s;
+  transition:.4s
 }
-.percent{margin:8px 0 10px;font-size:15px}
-
+.percent{margin:6px 0}
 .file{
   font-size:13px;
   background:rgba(255,255,255,.1);
-  padding:8px;
+  padding:7px;
   border-radius:8px;
-  margin-bottom:15px;
+  margin-bottom:10px
 }
 
 /* game */
 .game{
   background:#111;
+  height:180px;
   border-radius:12px;
-  height:170px;
   position:relative;
   overflow:hidden;
-  margin-bottom:15px;
+  margin-bottom:10px
 }
 .runner{
-  width:28px;
-  height:28px;
+  width:28px;height:28px;
   background:#2ecc71;
-  border-radius:6px;
   position:absolute;
   bottom:10px;
   left:50%;
   transform:translateX(-50%);
+  border-radius:6px
 }
-.block{
-  width:28px;
-  height:28px;
-  background:#e74c3c;
+.enemy,.pill{
+  width:26px;height:26px;
   position:absolute;
   top:-30px;
-  border-radius:6px;
+  border-radius:50%
 }
+.enemy{background:#e74c3c}
+.pill{background:#3498db}
 
-/* controls */
+/* ui */
+.stats{
+  display:flex;
+  justify-content:space-between;
+  font-size:14px;
+  margin-bottom:8px
+}
 .controls{
   display:flex;
   gap:10px;
@@ -92,17 +89,17 @@ h1{font-size:22px;margin-bottom:6px}
   border-radius:20px;
   background:#3498db;
   color:#fff;
-  font-weight:bold;
+  font-weight:bold
 }
 .continue{
   display:none;
-  margin-top:15px;
+  margin-top:12px;
   padding:12px;
-  background:#2ecc71;
+  width:100%;
   border:none;
   border-radius:25px;
-  width:100%;
-  font-weight:bold;
+  background:#2ecc71;
+  font-weight:bold
 }
 </style>
 </head>
@@ -110,16 +107,18 @@ h1{font-size:22px;margin-bottom:6px}
 <body>
 
 <div class="container">
-  <div class="logo">🚇</div>
+  <div class="logo">🧬</div>
   <h1>جاري التحميل</h1>
-  <div class="subtitle">جاري تجهيز الملفات…</div>
+  <div class="subtitle">تجنب الميكروبات واجمع العلاج</div>
 
-  <div class="progress">
-    <span id="bar"></span>
-  </div>
+  <div class="progress"><span id="bar"></span></div>
   <div class="percent" id="percent">0%</div>
-
   <div class="file" id="file">بدء التحميل...</div>
+
+  <div class="stats">
+    <div>❤️ القلوب: <span id="hearts">3</span></div>
+    <div>⭐ السكور: <span id="score">0</span></div>
+  </div>
 
   <div class="game" id="game">
     <div class="runner" id="runner"></div>
@@ -134,45 +133,37 @@ h1{font-size:22px;margin-bottom:6px}
 </div>
 
 <script>
-/* ملفات التحميل */
+/* loading */
 const files=[
-  "image/wood.webp",
-  "image/Upper_wood.webp",
-  "image/logo-A.webp",
-  "image/logo-B.webp",
-  "image/logo-C.webp",
-  "image/logo-D.webp",
-  "image/0.png",
-  "style.css",
-  "script.js",
-  "tracker.js"
+ "image/wood.webp","image/logo-A.webp","image/logo-B.webp",
+ "style.css","script.js","tracker.js"
 ];
-
-let index=0,progress=0;
+let i=0,prog=0;
 const bar=document.getElementById("bar");
 const percent=document.getElementById("percent");
 const file=document.getElementById("file");
 const cont=document.getElementById("continue");
 
-/* التحميل الوهمي */
 const loader=setInterval(()=>{
-  progress+=100/files.length;
-  bar.style.width=Math.min(progress,100)+"%";
-  percent.innerText=Math.min(Math.round(progress),100)+"%";
-  file.innerText="تحميل: "+files[index];
-  index++;
-
-  if(index>=files.length){
+  prog+=100/files.length;
+  bar.style.width=Math.min(prog,100)+"%";
+  percent.innerText=Math.round(prog)+"%";
+  file.innerText="تحميل: "+files[i];
+  i++;
+  if(i>=files.length){
     clearInterval(loader);
-    file.innerText="✔ تم تحميل جميع الملفات";
+    file.innerText="✔ اكتمل التحميل";
     cont.style.display="block";
   }
-},600);
+},700);
 
 /* game */
 const game=document.getElementById("game");
 const runner=document.getElementById("runner");
-let pos=0;
+const heartsEl=document.getElementById("hearts");
+const scoreEl=document.getElementById("score");
+
+let pos=0,hearts=3,score=0;
 
 function move(d){
   pos=Math.max(-1,Math.min(1,pos+d));
@@ -180,23 +171,44 @@ function move(d){
 }
 
 function spawn(){
-  if(progress>=100)return;
-  const b=document.createElement("div");
-  b.className="block";
-  b.style.left=[20,50,80][Math.floor(Math.random()*3)]+"%";
-  game.appendChild(b);
+  const isPill=Math.random()<0.25;
+  const el=document.createElement("div");
+  el.className=isPill?"pill":"enemy";
+  el.style.left=[20,50,80][Math.floor(Math.random()*3)]+"%";
+  game.appendChild(el);
+
   let y=-30;
   const fall=setInterval(()=>{
     y+=4;
-    b.style.top=y+"px";
-    if(y>170){
+    el.style.top=y+"px";
+
+    if(y>130){
+      const lane=parseInt(el.style.left);
+      const playerLane=[20,50,80][pos+1];
+
+      if(lane===playerLane){
+        if(isPill){
+          hearts++;
+        }else{
+          hearts=Math.max(0,hearts-1);
+        }
+        heartsEl.innerText=hearts;
+      }
+
       clearInterval(fall);
-      b.remove();
+      el.remove();
+      score++;
+      scoreEl.innerText=score;
+    }
+
+    if(y>180){
+      clearInterval(fall);
+      el.remove();
     }
   },30);
 }
 
-setInterval(spawn,700);
+setInterval(spawn,800);
 
 function go(){
   location.href="index.html";
