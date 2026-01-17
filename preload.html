@@ -1,283 +1,205 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Medical Map - Semester 3</title>
-  <style>
-    /* -----------------------------------------------------------
-       1. التنسيق العام والخلفية (نفس طول واحترافية الكود الأصلي)
-    -------------------------------------------------------------- */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جاري التحميل...</title>
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
 
-    /* الخلفية المتحركة - قطار سريع (محاكاة الكود الأصلي) */
-    .bg-animation {
-      position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; overflow: hidden;
-    }
+body{
+  font-family:Tahoma,Arial;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:#fff;
+}
 
-    .train-track {
-      position: absolute; bottom: 20%; width: 100%; height: 15px;
-      background: linear-gradient(to right, #444, #777, #444);
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-    }
+.container{
+  width:90%;
+  max-width:420px;
+  background:rgba(0,0,0,.7);
+  border-radius:20px;
+  padding:25px;
+  text-align:center;
+}
 
-    .train {
-      position: absolute; bottom: 21%; width: 180px; height: 70px;
-      background: linear-gradient(to right, #3498db, #2980b9); /* لون طبي أزرق */
-      border-radius: 10px 10px 0 0;
-      animation: trainMove 12s linear infinite;
-      transform: translateX(100vw);
-    }
+.logo{
+  font-size:50px;
+  margin-bottom:10px;
+}
 
-    @keyframes trainMove {
-      0% { transform: translateX(100vw); }
-      100% { transform: translateX(-180px); }
-    }
+h1{
+  font-size:22px;
+  margin-bottom:8px;
+}
 
-    /* العملات المتطايرة (تحولت لكبسولات طبية) */
-    .medical-particle {
-      position: absolute; width: 20px; height: 20px;
-      font-size: 20px; animation: floatUp 15s infinite linear; opacity: 0.5;
-    }
+.subtitle{
+  font-size:14px;
+  opacity:.85;
+  margin-bottom:20px;
+}
 
-    @keyframes floatUp {
-      0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
-    }
+/* progress */
+.progress{
+  width:100%;
+  height:10px;
+  background:#333;
+  border-radius:5px;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.progress span{
+  display:block;
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#3498db,#2ecc71);
+  transition:.3s;
+}
 
-    /* -----------------------------------------------------------
-       2. الحاوية الرئيسية (Glassmorphism)
-    -------------------------------------------------------------- */
-    .container {
-      position: relative; z-index: 1; text-align: center;
-      padding: 30px 25px; background: rgba(20, 30, 40, 0.95);
-      backdrop-filter: blur(15px); border-radius: 25px;
-      border: 2px solid rgba(52, 152, 219, 0.3);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;
-    }
+.percent{
+  font-size:16px;
+  margin-bottom:15px;
+}
 
-    /* الشعار المتحرك */
-    .logo {
-      width: 100px; height: 100px; margin: 0 auto 20px;
-      background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-      border-radius: 25px; display: flex; align-items: center; justify-content: center;
-      font-size: 50px; animation: float 3s ease-in-out infinite; position: relative;
-    }
+/* game */
+.game{
+  background:#111;
+  border-radius:12px;
+  height:180px;
+  position:relative;
+  overflow:hidden;
+  margin-bottom:15px;
+}
 
-    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+.runner{
+  width:30px;
+  height:30px;
+  background:#2ecc71;
+  border-radius:6px;
+  position:absolute;
+  bottom:10px;
+  left:50%;
+  transform:translateX(-50%);
+}
 
-    h1 {
-      background: linear-gradient(to right, #3498db, #2ecc71);
-      -webkit-background-clip: text; color: transparent;
-      font-size: 26px; font-weight: 700; margin-bottom: 10px;
-    }
+.block{
+  width:30px;
+  height:30px;
+  background:#e74c3c;
+  position:absolute;
+  top:-30px;
+  border-radius:6px;
+}
 
-    /* -----------------------------------------------------------
-       3. أنظمة التحميل (الدائرة والشريط)
-    -------------------------------------------------------------- */
-    .progress-ring-box { position: relative; width: 160px; height: 160px; margin: 15px auto; }
-    .progress-ring-circle { transition: stroke-dashoffset 0.5s ease; transform: rotate(-90deg); transform-origin: 50% 50%; }
-    .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 28px; font-weight: bold; }
+/* controls */
+.controls{
+  display:flex;
+  gap:10px;
+  margin-bottom:15px;
+}
+.controls button{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+  background:#3498db;
+  color:#fff;
+  font-weight:bold;
+}
 
-    .horizontal-bar-box { margin: 15px 0; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
-    #h-bar { height: 100%; width: 0%; background: linear-gradient(to right, #3498db, #2ecc71); transition: 0.3s; }
-
-    /* -----------------------------------------------------------
-       4. منطقة اللعبة (Subway Surfers Medical Version)
-    -------------------------------------------------------------- */
-    .game-box {
-      margin-top: 20px; background: rgba(0,0,0,0.4); border-radius: 15px;
-      padding: 10px; border: 1px solid rgba(52, 152, 219, 0.3); position: relative;
-    }
-
-    .stage {
-      width: 100%; height: 220px; background: #1a2530; border-radius: 10px;
-      position: relative; overflow: hidden; border: 1px solid #444;
-    }
-
-    .track-lane {
-      position: absolute; width: 33.33%; height: 100%; border-right: 1px dashed rgba(255,255,255,0.05);
-    }
-
-    #player {
-      position: absolute; bottom: 10px; width: 40px; height: 40px;
-      font-size: 30px; display: flex; align-items: center; justify-content: center;
-      transition: left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
-    }
-
-    .entity { position: absolute; font-size: 24px; transform: translateX(-50%); z-index: 5; }
-
-    /* أزرار اللعبة */
-    .game-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .g-btn { padding: 12px; border: none; border-radius: 10px; background: #34495e; color: #fff; font-weight: bold; cursor: pointer; }
-    .g-btn:active { background: #2c3e50; }
-    .jump-btn { grid-column: span 2; background: #2ecc71; }
-
-    /* -----------------------------------------------------------
-       5. أزرار التحكم والرسائل
-    -------------------------------------------------------------- */
-    .status-msg { height: 30px; color: #cbd5e1; font-size: 14px; margin: 10px 0; }
-    .main-actions { display: flex; gap: 10px; margin-top: 20px; }
-    .action-btn { flex: 1; padding: 15px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    #skip-btn { background: rgba(255,255,255,0.1); color: #fff; }
-    #continue-btn { background: #27ae60; color: #fff; display: none; animation: pulse 1.5s infinite; }
-
-    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-    .jump-anim { animation: jumpEffect 0.6s ease; }
-    @keyframes jumpEffect { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-80px); } }
-
-  </style>
+.continue{
+  display:none;
+  padding:12px;
+  background:#2ecc71;
+  border:none;
+  border-radius:25px;
+  width:100%;
+  font-weight:bold;
+}
+</style>
 </head>
+
 <body>
 
-  <div class="bg-animation" id="bg-box">
-    <div class="train-track"></div>
-    <div class="train"></div>
+<div class="container">
+  <div class="logo">🚇</div>
+  <h1>جاري التحميل</h1>
+  <div class="subtitle">اصبر شوية واستمتع باللعبة</div>
+
+  <div class="progress">
+    <span id="bar"></span>
+  </div>
+  <div class="percent" id="percent">0%</div>
+
+  <div class="game" id="game">
+    <div class="runner" id="runner"></div>
   </div>
 
-  <div class="container">
-    <div class="logo">🩺</div>
-    <h1>Medical Map: Semester-3</h1>
-    <p style="color: #94a3b8; font-size: 14px;">Preparing for Clinical Excellence...</p>
-
-    <div class="progress-ring-box">
-      <svg width="160" height="160">
-        <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10"/>
-        <circle id="ring-bar" cx="80" cy="80" r="70" fill="none" stroke="#3498db" stroke-width="10" 
-                stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round" class="progress-ring-circle"/>
-      </svg>
-      <div class="progress-text" id="pct-text">0%</div>
-    </div>
-
-    <div class="horizontal-bar-box">
-      <div id="h-bar"></div>
-    </div>
-
-    <div class="status-msg" id="status-msg">Initializing Systems...</div>
-
-    <div class="game-box">
-      <div style="font-size: 12px; margin-bottom: 5px; color: #2ecc71;">🎮 Mini-Game: Avoid 🦠 & Collect 💊</div>
-      <div class="stage" id="stage">
-        <div class="track-lane" style="left:0"></div>
-        <div class="track-lane" style="left:33.33%"></div>
-        <div class="track-lane" style="left:66.66%"></div>
-        <div id="player">👨‍⚕️</div>
-      </div>
-      <div class="game-btns">
-        <button class="g-btn jump-btn" onclick="jump()">JUMP (Space)</button>
-        <button class="g-btn" onclick="move(currentLane-1)">◀ Left</button>
-        <button class="g-btn" onclick="move(currentLane+1)">Right ▶</button>
-      </div>
-      <div style="margin-top: 10px; font-size: 13px;">Score: <span id="score">0</span></div>
-    </div>
-
-    <div class="main-actions">
-      <button id="skip-btn" class="action-btn" onclick="complete()">Skip Wait</button>
-      <button id="continue-btn" class="action-btn" onclick="alert('Loading Semester-3 Map...')">Enter Map ➡️</button>
-    </div>
+  <div class="controls">
+    <button onclick="move(-1)">◀</button>
+    <button onclick="move(1)">▶</button>
   </div>
 
-  <script>
-    /* 1. إنشاء خلفية طبية متطايرة (نفس منطق الكود الأصلي) */
-    const bg = document.getElementById('bg-box');
-    const icons = ['💊', '🩺', '🔬', '🧬'];
-    for(let i=0; i<10; i++) {
-      let p = document.createElement('div');
-      p.className = 'medical-particle';
-      p.innerText = icons[Math.floor(Math.random()*icons.length)];
-      p.style.left = Math.random() * 100 + '%';
-      p.style.animationDelay = Math.random() * 5 + 's';
-      bg.appendChild(p);
+  <button class="continue" id="continue" onclick="go()">متابعة ➡️</button>
+</div>
+
+<script>
+/* loading */
+let p=0;
+const bar=document.getElementById("bar");
+const percent=document.getElementById("percent");
+const cont=document.getElementById("continue");
+
+const loader=setInterval(()=>{
+  p+=1;
+  bar.style.width=p+"%";
+  percent.innerText=p+"%";
+  if(p>=100){
+    clearInterval(loader);
+    cont.style.display="block";
+  }
+},80);
+
+/* game */
+const game=document.getElementById("game");
+const runner=document.getElementById("runner");
+let pos=0;
+
+function move(dir){
+  pos+=dir;
+  pos=Math.max(-1,Math.min(1,pos));
+  runner.style.left=50+pos*30+"%";
+}
+
+function spawn(){
+  if(p>=100)return;
+  const b=document.createElement("div");
+  b.className="block";
+  b.style.left=[20,50,80][Math.floor(Math.random()*3)]+"%";
+  game.appendChild(b);
+
+  let y=-30;
+  const fall=setInterval(()=>{
+    y+=4;
+    b.style.top=y+"px";
+    if(y>180){
+      clearInterval(fall);
+      b.remove();
     }
+  },30);
+}
 
-    /* 2. منطق التحميل (Animation & Logic) */
-    let progress = 0;
-    const medicalMsgs = [
-      "Syncing Anatomy Atlas...", "Loading Pharmacology Database...", 
-      "Organizing Semester-3 Modules...", "Finalizing Clinical Cases..."
-    ];
+setInterval(spawn,700);
 
-    function updateLoading() {
-      if (progress < 100) {
-        progress += 0.3;
-        document.getElementById('ring-bar').style.strokeDashoffset = 440 - (progress/100)*440;
-        document.getElementById('h-bar').style.width = progress + '%';
-        document.getElementById('pct-text').innerText = Math.floor(progress) + '%';
-        document.getElementById('status-msg').innerText = medicalMsgs[Math.floor((progress/101)*medicalMsgs.length)];
-        requestAnimationFrame(updateLoading);
-      } else {
-        document.getElementById('skip-btn').style.display = 'none';
-        document.getElementById('continue-btn').style.display = 'block';
-        document.getElementById('status-msg').innerText = "All Ready! 🏥";
-      }
-    }
-    updateLoading();
-    function complete() { progress = 100; }
+/* continue */
+function go(){
+  window.location.href="index.html";
+}
+</script>
 
-    /* 3. منطق اللعبة (Medical Subway Surfers) */
-    let currentLane = 1;
-    let score = 0;
-    let jumping = false;
-    const laneX = [16.66, 50, 83.33];
-
-    function move(n) {
-      if(n >= 0 && n <= 2) {
-        currentLane = n;
-        document.getElementById('player').style.left = `calc(${laneX[n]}% - 20px)`;
-      }
-    }
-    move(1);
-
-    function jump() {
-      if(jumping) return;
-      jumping = true;
-      document.getElementById('player').classList.add('jump-anim');
-      setTimeout(() => { document.getElementById('player').classList.remove('jump-anim'); jumping = false; }, 600);
-    }
-
-    function spawn() {
-      if(progress >= 100) return;
-      const item = document.createElement('div');
-      const lane = Math.floor(Math.random()*3);
-      const isVirus = Math.random() > 0.3;
-      item.className = 'entity';
-      item.innerText = isVirus ? '🦠' : '💊';
-      item.style.left = laneX[lane] + '%';
-      item.style.top = '-40px';
-      document.getElementById('stage').appendChild(item);
-
-      let y = -40;
-      let anim = setInterval(() => {
-        y += 3;
-        item.style.top = y + 'px';
-        if(y > 150 && y < 190 && lane === currentLane) {
-          if(isVirus && !jumping) { score -= 10; item.innerText='💥'; clearInterval(anim); setTimeout(()=>item.remove(), 200); }
-          else if(!isVirus) { score += 20; item.remove(); clearInterval(anim); }
-        }
-        if(y > 230) { if(isVirus) score += 5; item.remove(); clearInterval(anim); }
-        document.getElementById('score').innerText = score;
-      }, 20);
-    }
-    setInterval(spawn, 2000);
-
-    // التحكم بالأسهم
-    document.addEventListener('keydown', (e) => {
-      if(e.key === 'ArrowLeft') move(currentLane-1);
-      if(e.key === 'ArrowRight') move(currentLane+1);
-      if(e.key === ' ') jump();
-    });
-  </script>
 </body>
 </html>
