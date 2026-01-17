@@ -241,3 +241,51 @@
 
 </body>
 </html>
+<script>
+/* ========================================
+   نظام التحديث التلقائي من GitHub
+   ======================================== */
+
+async function checkForUpdates() {
+  try {
+    // فحص آخر commit من GitHub
+    const response = await fetch('https://api.github.com/repos/MUE24Med/semester-3/commits/main');
+    const data = await response.json();
+    const latestCommitDate = new Date(data.commit.author.date).getTime();
+    
+    // الحصول على آخر تاريخ تحديث محلي
+    const lastUpdate = localStorage.getItem('last_update');
+    
+    if (!lastUpdate || latestCommitDate > parseInt(lastUpdate)) {
+      console.log('🆕 تحديث جديد متاح!');
+      
+      // حذف الكاش القديم
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+      
+      // تحديث التاريخ
+      localStorage.setItem('last_update', latestCommitDate.toString());
+      
+      // إعادة تحميل الصفحة
+      const shouldUpdate = confirm('🎉 يوجد تحديث جديد!\n\nهل تريد تحديث الموقع الآن؟');
+      if (shouldUpdate) {
+        window.location.reload(true);
+      }
+    } else {
+      console.log('✅ الموقع محدث');
+    }
+  } catch (error) {
+    console.log('⚠️ فشل فحص التحديثات:', error);
+  }
+}
+
+// فحص التحديثات عند فتح الموقع
+window.addEventListener('load', () => {
+  setTimeout(checkForUpdates, 2000);
+});
+
+// فحص دوري كل 5 دقائق
+setInterval(checkForUpdates, 5 * 60 * 1000);
+</script>
