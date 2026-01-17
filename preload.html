@@ -1,292 +1,231 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
+<title>Preload Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>جاري التحميل...</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
 body{
-  font-family:Arial;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  color:#fff;
-}
-.container{
-  width:90%;
-  max-width:450px;
-  background:rgba(0,0,0,.75);
-  border-radius:20px;
-  padding:16px;
-  text-align:center;
-}
-.notice{
-  font-size:12px;
-  background:rgba(46,204,113,.15);
-  color:#2ecc71;
-  padding:6px;
-  border-radius:10px;
-  margin-bottom:8px
-}
-.logo{font-size:40px}
-h1{font-size:22px;margin:5px 0}
-.subtitle{font-size:13px;opacity:.8;margin-bottom:8px}
-
-/* progress */
-.progress{height:10px;background:#333;border-radius:5px;overflow:hidden}
-.progress span{
-  display:block;height:100%;width:0%;
-  background:linear-gradient(90deg,#3498db,#2ecc71);
-}
-.percent{margin:5px 0}
-.file{
-  font-size:13px;
-  background:rgba(255,255,255,.1);
-  padding:6px;
-  border-radius:8px;
-  margin-bottom:6px
-}
-
-/* continue */
-.continue{
-  display:none;
-  margin:8px 0;
-  padding:10px;
-  width:100%;
-  border:none;
-  border-radius:25px;
-  background:#2ecc71;
-  font-weight:bold
-}
-
-/* game */
-.game{
+  margin:0;
   background:#111;
-  height:210px;
-  border-radius:12px;
-  position:relative;
+  color:#fff;
+  font-family:Arial;
   overflow:hidden;
-  margin-bottom:8px
-}
-.runner{
-  position:absolute;
-  bottom:10px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:28px;
-}
-.item{
-  position:absolute;
-  top:-30px;
-  font-size:26px;
 }
 
-/* game over */
-.overlay{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.85);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  z-index:10;
-}
-.overlay h2{margin-bottom:10px}
-.restart{
-  font-size:30px;
-  background:none;
-  border:none;
-  color:#2ecc71;
-  cursor:pointer
-}
-
-/* ui */
-.stats{
+/* UI */
+#ui{
   display:flex;
   justify-content:space-between;
-  font-size:14px;
-  margin-bottom:6px
-}
-.controls{
-  display:flex;
-  gap:10px;
-}
-.controls button{
-  flex:1;
   padding:10px;
-  border:none;
-  border-radius:20px;
-  background:#3498db;
-  color:#fff;
-  font-weight:bold
+  background:#000;
+  font-size:14px;
 }
+
+/* Game Area */
+#game{
+  position:relative;
+  width:100vw;
+  height:calc(100vh - 130px);
+  background:#222;
+  overflow:hidden;
+}
+
+/* Player */
+#player{
+  position:absolute;
+  bottom:10px;
+  font-size:42px;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+/* Falling Items */
+.item{
+  position:absolute;
+  font-size:32px;
+}
+
+/* Controls (معكوسة) */
+#controls{
+  display:flex;
+  justify-content:space-around;
+  background:#000;
+  padding:10px;
+}
+
+button{
+  font-size:22px;
+  padding:10px 25px;
+}
+
+/* Game Over */
+#gameOver{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.9);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+}
+
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div id="ui">
+  <div>❤️ القلوب: <span id="hearts">0</span></div>
+  <div>🏆 السكور: <span id="score">0</span></div>
+</div>
 
-  <div class="notice">
-    ℹ️ هذه الصفحة تظهر في أول زيارة فقط — يتم التحميل لاحقًا من الكاش
-  </div>
+<div id="game">
+  <div id="player">👨‍⚕️</div>
+</div>
 
-  <div class="logo">👨‍⚕️</div>
-  <h1>جاري التحميل</h1>
-  <div class="subtitle">تجنب العدوى واجمع العلاج</div>
+<div id="controls">
+  <!-- معكوسين -->
+  <button id="rightBtn">⬅️</button>
+  <button id="leftBtn">➡️</button>
+</div>
 
-  <div class="progress"><span id="bar"></span></div>
-  <div class="percent" id="percent">0%</div>
-  <div class="file" id="file">بدء التحميل...</div>
-
-  <button class="continue" id="continue" onclick="go()">متابعة ➡️</button>
-
-  <div class="stats">
-    <div>❤️ <span id="hearts">0</span></div>
-    <div>⭐ <span id="score">0</span></div>
-  </div>
-
-  <div class="game" id="game">
-    <div class="runner" id="runner">👨‍⚕️</div>
-
-    <div class="overlay" id="overlay">
-      <h2>Game Over</h2>
-      <button class="restart" onclick="restart()">▬</button>
-    </div>
-  </div>
-
-  <div class="controls">
-    <button onclick="move(-1)">◀</button>
-    <button onclick="move(1)">▶</button>
-  </div>
-
+<div id="gameOver" class="hidden">
+  <h1>Game Over</h1>
+  <button id="restart">🔄 إعادة اللعب</button>
 </div>
 
 <script>
-/* loading */
-const files=["doctor.png","virus.svg","bacteria.svg","antibiotic.svg"];
-let i=0,prog=0;
-const bar=document.getElementById("bar");
-const percent=document.getElementById("percent");
-const file=document.getElementById("file");
-const cont=document.getElementById("continue");
+/* ================== GAME LOGIC ================== */
 
-const loader=setInterval(()=>{
-  prog+=100/files.length;
-  bar.style.width=Math.min(prog,100)+"%";
-  percent.innerText=Math.round(prog)+"%";
-  file.innerText="تحميل: "+files[i];
-  i++;
-  if(i>=files.length){
-    clearInterval(loader);
-    file.innerText="✔ اكتمل التحميل";
-    cont.style.display="block";
-  }
-},700);
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const heartsEl = document.getElementById("hearts");
+const scoreEl = document.getElementById("score");
+const gameOverBox = document.getElementById("gameOver");
 
-/* game logic */
-const game=document.getElementById("game");
-const runner=document.getElementById("runner");
-const heartsEl=document.getElementById("hearts");
-const scoreEl=document.getElementById("score");
-const overlay=document.getElementById("overlay");
+let playerX = window.innerWidth / 2;
+let hearts = 0;          // يبدأ بـ 0
+let score = 0;
+let speed = 2;
+let running = true;
+let spawnedMid = false;
 
-let pos=0, hearts=0, score=0;
-let fallSpeed=4;
-let playing=true;
-
-function move(d){
-  if(!playing) return;
-  pos=Math.max(-1,Math.min(1,pos+d));
-  runner.style.left=50+pos*30+"%";
+/* Player Movement (معكوس) */
+function updatePlayer(){
+  player.style.left = playerX + "px";
 }
 
-/* keyboard — معكوس حسب إعداد المتصفح */
-document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowRight"||e.key==="d") move(-1);
-  if(e.key==="ArrowLeft"||e.key==="a") move(1);
+function moveLeft(){
+  playerX += 25; // معكوس
+  updatePlayer();
+}
+
+function moveRight(){
+  playerX -= 25; // معكوس
+  updatePlayer();
+}
+
+/* Buttons */
+document.getElementById("leftBtn").onclick = moveRight;
+document.getElementById("rightBtn").onclick = moveLeft;
+
+/* Keyboard (معكوس) */
+document.addEventListener("keydown", e=>{
+  if(e.key === "ArrowLeft") moveRight();
+  if(e.key === "ArrowRight") moveLeft();
 });
 
-function spawnWave(){
-  if(!playing) return;
-
-  const count=3+Math.floor(Math.random()*2); // 3 أو 4
-  for(let n=0;n<count;n++){
-    spawnItem();
-  }
-}
-
+/* Spawn Items */
 function spawnItem(){
-  const r=Math.random();
-  let emoji,type;
-  if(r<0.3){emoji="💊";type="pill"}
-  else if(r<0.6){emoji="🦠";type="bacteria"}
-  else{emoji="👾";type="virus"}
+  const item = document.createElement("div");
+  item.className = "item";
 
-  const el=document.createElement("div");
-  el.className="item";
-  el.innerText=emoji;
-  el.dataset.type=type;
-  el.style.left=[20,50,80][Math.floor(Math.random()*3)]+"%";
-  game.appendChild(el);
+  const r = Math.random();
+  if(r < 0.4) item.textContent = "🦠";
+  else if(r < 0.7) item.textContent = "☣️";
+  else item.textContent = "💊";
 
-  let y=-30;
-  const fall=setInterval(()=>{
-    y+=fallSpeed;
-    el.style.top=y+"px";
+  item.style.left = Math.random()*(window.innerWidth-40)+"px";
+  item.style.top = "0px";
+  game.appendChild(item);
 
-    if(y>150){
-      const lane=parseInt(el.style.left);
-      const playerLane=[20,50,80][pos+1];
+  let y = 0;
 
-      if(lane===playerLane){
-        if(type==="pill") hearts++;
-        if(type==="bacteria") hearts--;
-        if(type==="virus") hearts-=2;
-        heartsEl.innerText=hearts;
+  function fall(){
+    if(!running) return;
+    y += speed;
+    item.style.top = y + "px";
 
-        if(hearts<=0){
-          gameOver();
-        }
-      }
-
-      clearInterval(fall);
-      el.remove();
-      score++;
-      scoreEl.innerText=score;
+    /* عند نص الشاشة ينزل اتنين كمان */
+    if(!spawnedMid && y > game.clientHeight/2){
+      spawnedMid = true;
+      spawnItem();
+      spawnItem();
     }
-  },30);
+
+    const p = player.getBoundingClientRect();
+    const i = item.getBoundingClientRect();
+
+    if(i.bottom > p.top && i.left < p.right && i.right > p.left){
+      handleHit(item.textContent);
+      item.remove();
+      return;
+    }
+
+    if(y < game.clientHeight){
+      requestAnimationFrame(fall);
+    }else{
+      item.remove();
+      score++;
+      scoreEl.textContent = score;
+    }
+  }
+
+  fall();
 }
 
-function gameOver(){
-  playing=false;
-  overlay.style.display="flex";
+/* Hit Logic */
+function handleHit(type){
+  if(type === "💊") hearts++;
+  if(type === "🦠") hearts--;
+  if(type === "☣️") hearts -= 2;
+
+  heartsEl.textContent = hearts;
+
+  if(hearts < 0) endGame();
 }
 
-function restart(){
-  hearts=0;
-  score=0;
-  pos=0;
-  fallSpeed=4;
-  heartsEl.innerText=hearts;
-  scoreEl.innerText=score;
-  runner.style.left="50%";
-  overlay.style.display="none";
-  playing=true;
+/* Game Loop */
+function loop(){
+  if(!running) return;
+  spawnedMid = false;
+  spawnItem();
+  spawnItem();
+  speed += 0.15;
+  setTimeout(loop, 1400);
 }
 
-setInterval(()=>{
-  spawnWave();
-  if(playing) fallSpeed+=0.08;
-},900);
+/* End / Restart */
+function endGame(){
+  running = false;
+  gameOverBox.classList.remove("hidden");
+}
 
-function go(){
-  location.href="index.html";
+document.getElementById("restart").onclick = ()=>{
+  location.reload();
+};
+
+updatePlayer();
+loop();
+
+/* ====== Preload Notice (يظهر أول مرة فقط) ====== */
+if(!localStorage.getItem("preload_seen")){
+  console.log("⚡ Preload page cached");
+  localStorage.setItem("preload_seen","yes");
 }
 </script>
 
