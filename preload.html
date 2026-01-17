@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Mini Loading Game</title>
+<title>Loading...</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -12,43 +12,74 @@ body{
   color:#fff;
   font-family:Arial, sans-serif;
   overflow:hidden;
+  text-align:center;
 }
 
-/* ===== اللعبة ===== */
+/* ===== شاشة التحميل الأصلية ===== */
+#loading-screen{
+  padding-top:30px;
+}
+
+#logo{
+  width:160px;
+  margin-bottom:10px;
+}
+
+#loading-text{
+  color:#ffcc00;
+  font-size:20px;
+  margin:10px 0;
+}
+
+#lights{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin:15px 0;
+}
+
+.light{
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#222;
+  border:1px solid #444;
+}
+
+.light.on{ background:#ffcc00; box-shadow:0 0 10px #ffcc00; }
+
+/* ===== اللعبة (تحت التحميل) ===== */
+#game-wrapper{
+  margin-top:20px;
+}
+
 #game{
   position:relative;
-  width:360px;
-  height:520px;
-  margin:20px auto;
+  width:320px;
+  height:360px;
+  margin:0 auto;
   background:#111;
-  border:3px solid #555;
+  border:2px solid #555;
   overflow:hidden;
 }
 
 /* اللاعب */
 #player{
   position:absolute;
-  bottom:15px;
-  font-size:34px;
+  bottom:10px;
+  font-size:30px;
   transform:translateX(-50%);
 }
 
 /* العناصر */
 .item{
   position:absolute;
-  font-size:28px;
-}
-
-/* القلوب */
-#hearts{
-  text-align:center;
-  margin-bottom:6px;
-  font-size:20px;
+  font-size:26px;
 }
 
 /* التحكم */
 #controls{
-  width:360px;
+  width:320px;
   margin:10px auto;
   display:flex;
   justify-content:space-between;
@@ -56,25 +87,7 @@ body{
 
 button{
   font-size:22px;
-  padding:10px 22px;
-  cursor:pointer;
-}
-
-/* Game Over */
-#gameover{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.85);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  font-size:24px;
-}
-
-#restart{
-  margin-top:15px;
-  font-size:26px;
+  padding:6px 20px;
   cursor:pointer;
 }
 </style>
@@ -82,59 +95,56 @@ button{
 
 <body>
 
-<div id="hearts"></div>
+<!-- شاشة التحميل -->
+<div id="loading-screen">
+  <img id="logo" src="image/0.png" alt="logo">
+  <div id="loading-text">جاري التحميل...</div>
 
-<div id="game">
-  <div id="player">👨‍⚕️</div>
-
-  <div id="gameover">
-    <div>💀 Game Over</div>
-    <div id="restart">🔄</div>
+  <div id="lights">
+    <div class="light"></div>
+    <div class="light"></div>
+    <div class="light"></div>
+    <div class="light"></div>
   </div>
 </div>
 
-<div id="controls">
-  <!-- شمال الشاشة لكن يمين فعليًا -->
-  <button onclick="moveRight()">➡️</button>
+<!-- اللعبة -->
+<div id="game-wrapper">
+  <div id="game">
+    <div id="player">👨‍⚕️</div>
+  </div>
 
-  <!-- يمين الشاشة لكن شمال فعليًا -->
-  <button onclick="moveLeft()">⬅️</button>
+  <div id="controls">
+    <!-- زر ظاهر يسار لكن فعليًا يمين -->
+    <button onclick="moveRight()">➡️</button>
+
+    <!-- زر ظاهر يمين لكن فعليًا شمال -->
+    <button onclick="moveLeft()">⬅️</button>
+  </div>
 </div>
 
 <script>
-/* ===== الإعدادات ===== */
-const game   = document.getElementById("game");
+/* ===== أنوار التحميل ===== */
+const lights = document.querySelectorAll(".light");
+let lightIndex = 0;
+setInterval(()=>{
+  lights.forEach(l=>l.classList.remove("on"));
+  lights[lightIndex].classList.add("on");
+  lightIndex = (lightIndex+1)%lights.length;
+},400);
+
+/* ===== إعدادات اللعبة ===== */
+const game = document.getElementById("game");
 const player = document.getElementById("player");
-const heartsEl = document.getElementById("hearts");
-const overEl = document.getElementById("gameover");
-const restartBtn = document.getElementById("restart");
-
-const lanes = [90, 180, 270]; // 3 حارات
-let laneIndex;
-let hearts;
-let running;
-
-/* ===== تهيئة ===== */
-function resetGame(){
-  document.querySelectorAll(".item").forEach(e=>e.remove());
-  laneIndex = 1;
-  hearts = 0;
-  running = true;
-  overEl.style.display = "none";
-  updatePlayer();
-  updateHearts();
-  startWaves();
-}
+const lanes = [80,160,240];
+let laneIndex = 1;
 
 function updatePlayer(){
-  player.style.left = lanes[laneIndex] + "px";
+  player.style.left = lanes[laneIndex]+"px";
 }
+updatePlayer();
 
-function updateHearts(){
-  heartsEl.textContent = "❤️".repeat(hearts);
-}
-
-/* ===== الحركة (معكوسة) ===== */
+/* ===== حركة معكوسة ===== */
 function moveLeft(){
   if(laneIndex < 2){
     laneIndex++;
@@ -150,51 +160,30 @@ function moveRight(){
 }
 
 /* ===== كيبورد معكوس ===== */
-document.addEventListener("keydown", e=>{
+document.addEventListener("keydown",e=>{
   if(e.key==="ArrowLeft") moveRight();
   if(e.key==="ArrowRight") moveLeft();
 });
 
-/* ===== العناصر ===== */
+/* ===== سقوط عنصر واحد فقط ===== */
 function spawnItem(){
-  if(!running) return;
-
   const el = document.createElement("div");
   el.className="item";
 
   const r = Math.random();
-  if(r < 0.4) el.textContent="☣️";     // فيروس قوي
-  else if(r < 0.7) el.textContent="🦠"; // فيروس
-  else el.textContent="💊";             // علاج
+  if(r < 0.4) el.textContent="🦠";
+  else if(r < 0.7) el.textContent="☣️";
+  else el.textContent="💊";
 
   const lane = Math.floor(Math.random()*3);
-  el.dataset.lane = lane;
   el.style.left = lanes[lane]+"px";
   el.style.top="0px";
   game.appendChild(el);
 
   let y=0;
-  let midSpawn=false;
-
   function fall(){
-    if(!running){ el.remove(); return; }
-
-    y+=3;
+    y+=2;
     el.style.top=y+"px";
-
-    // اصطدام
-    if(y > game.clientHeight-80 && laneIndex == lane){
-      handleHit(el.textContent);
-      el.remove();
-      return;
-    }
-
-    // عند نص المسافة ينزل اتنين فقط
-    if(y > game.clientHeight/2 && !midSpawn){
-      midSpawn=true;
-      spawnItem();
-      spawnItem();
-    }
 
     if(y < game.clientHeight){
       requestAnimationFrame(fall);
@@ -205,46 +194,8 @@ function spawnItem(){
   fall();
 }
 
-/* ===== التصادم ===== */
-function handleHit(type){
-  if(type==="☣️") hearts -= 2;
-  if(type==="🦠") hearts -= 1;
-  if(type==="💊") hearts += 1;
-
-  if(hearts < 0) hearts = 0;
-  updateHearts();
-
-  if(hearts === 0){
-    gameOver();
-  }
-}
-
-/* ===== Game Over ===== */
-function gameOver(){
-  running=false;
-  overEl.style.display="flex";
-}
-
-/* ===== الموجات ===== */
-function startWaves(){
-  spawnItem();
-  spawnItem();
-
-  const interval = setInterval(()=>{
-    if(!running){
-      clearInterval(interval);
-      return;
-    }
-    spawnItem();
-    spawnItem();
-  },2000);
-}
-
-/* ===== إعادة ===== */
-restartBtn.onclick = resetGame;
-
-/* ===== تشغيل أول مرة ===== */
-resetGame();
+/* ===== عنصر كل شوية ===== */
+setInterval(spawnItem,1200);
 </script>
 
 </body>
