@@ -4,12 +4,12 @@ const CACHE_NAME = 'interactive-map-' + VERSION;
 
 const ASSETS_TO_CACHE = [
   './',
+  './image/0.webp',
+  './preload.html',
   './index.html',
   './style.css',
   './script.js',
-  './tracker.js',
-  './image/wood.webp',
-  './image/0.png',
+  './tracker.js'
 ];
 
 // ✅ تثبيت Service Worker
