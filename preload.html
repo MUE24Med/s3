@@ -7,7 +7,6 @@
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-
 body{
   font-family:Tahoma,Arial;
   background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
@@ -17,51 +16,39 @@ body{
   align-items:center;
   color:#fff;
 }
-
 .container{
   width:90%;
-  max-width:420px;
-  background:rgba(0,0,0,.7);
+  max-width:440px;
+  background:rgba(0,0,0,.75);
   border-radius:20px;
   padding:25px;
   text-align:center;
 }
+.logo{font-size:48px;margin-bottom:8px}
+h1{font-size:22px;margin-bottom:6px}
+.subtitle{font-size:13px;opacity:.85;margin-bottom:15px}
 
-.logo{
-  font-size:50px;
-  margin-bottom:10px;
-}
-
-h1{
-  font-size:22px;
-  margin-bottom:8px;
-}
-
-.subtitle{
-  font-size:14px;
-  opacity:.85;
-  margin-bottom:20px;
-}
-
-/* progress */
 .progress{
   width:100%;
   height:10px;
   background:#333;
   border-radius:5px;
   overflow:hidden;
-  margin-bottom:10px;
 }
 .progress span{
   display:block;
   height:100%;
   width:0%;
   background:linear-gradient(90deg,#3498db,#2ecc71);
-  transition:.3s;
+  transition:.4s;
 }
+.percent{margin:8px 0 10px;font-size:15px}
 
-.percent{
-  font-size:16px;
+.file{
+  font-size:13px;
+  background:rgba(255,255,255,.1);
+  padding:8px;
+  border-radius:8px;
   margin-bottom:15px;
 }
 
@@ -69,15 +56,14 @@ h1{
 .game{
   background:#111;
   border-radius:12px;
-  height:180px;
+  height:170px;
   position:relative;
   overflow:hidden;
   margin-bottom:15px;
 }
-
 .runner{
-  width:30px;
-  height:30px;
+  width:28px;
+  height:28px;
   background:#2ecc71;
   border-radius:6px;
   position:absolute;
@@ -85,10 +71,9 @@ h1{
   left:50%;
   transform:translateX(-50%);
 }
-
 .block{
-  width:30px;
-  height:30px;
+  width:28px;
+  height:28px;
   background:#e74c3c;
   position:absolute;
   top:-30px;
@@ -99,7 +84,6 @@ h1{
 .controls{
   display:flex;
   gap:10px;
-  margin-bottom:15px;
 }
 .controls button{
   flex:1;
@@ -110,9 +94,9 @@ h1{
   color:#fff;
   font-weight:bold;
 }
-
 .continue{
   display:none;
+  margin-top:15px;
   padding:12px;
   background:#2ecc71;
   border:none;
@@ -128,12 +112,14 @@ h1{
 <div class="container">
   <div class="logo">🚇</div>
   <h1>جاري التحميل</h1>
-  <div class="subtitle">اصبر شوية واستمتع باللعبة</div>
+  <div class="subtitle">جاري تجهيز الملفات…</div>
 
   <div class="progress">
     <span id="bar"></span>
   </div>
   <div class="percent" id="percent">0%</div>
+
+  <div class="file" id="file">بدء التحميل...</div>
 
   <div class="game" id="game">
     <div class="runner" id="runner"></div>
@@ -148,45 +134,62 @@ h1{
 </div>
 
 <script>
-/* loading */
-let p=0;
+/* ملفات التحميل */
+const files=[
+  "image/wood.webp",
+  "image/Upper_wood.webp",
+  "image/logo-A.webp",
+  "image/logo-B.webp",
+  "image/logo-C.webp",
+  "image/logo-D.webp",
+  "image/0.png",
+  "style.css",
+  "script.js",
+  "tracker.js"
+];
+
+let index=0,progress=0;
 const bar=document.getElementById("bar");
 const percent=document.getElementById("percent");
+const file=document.getElementById("file");
 const cont=document.getElementById("continue");
 
+/* التحميل الوهمي */
 const loader=setInterval(()=>{
-  p+=1;
-  bar.style.width=p+"%";
-  percent.innerText=p+"%";
-  if(p>=100){
+  progress+=100/files.length;
+  bar.style.width=Math.min(progress,100)+"%";
+  percent.innerText=Math.min(Math.round(progress),100)+"%";
+  file.innerText="تحميل: "+files[index];
+  index++;
+
+  if(index>=files.length){
     clearInterval(loader);
+    file.innerText="✔ تم تحميل جميع الملفات";
     cont.style.display="block";
   }
-},80);
+},600);
 
 /* game */
 const game=document.getElementById("game");
 const runner=document.getElementById("runner");
 let pos=0;
 
-function move(dir){
-  pos+=dir;
-  pos=Math.max(-1,Math.min(1,pos));
+function move(d){
+  pos=Math.max(-1,Math.min(1,pos+d));
   runner.style.left=50+pos*30+"%";
 }
 
 function spawn(){
-  if(p>=100)return;
+  if(progress>=100)return;
   const b=document.createElement("div");
   b.className="block";
   b.style.left=[20,50,80][Math.floor(Math.random()*3)]+"%";
   game.appendChild(b);
-
   let y=-30;
   const fall=setInterval(()=>{
     y+=4;
     b.style.top=y+"px";
-    if(y>180){
+    if(y>170){
       clearInterval(fall);
       b.remove();
     }
@@ -195,9 +198,8 @@ function spawn(){
 
 setInterval(spawn,700);
 
-/* continue */
 function go(){
-  window.location.href="index.html";
+  location.href="index.html";
 }
 </script>
 
