@@ -156,13 +156,13 @@ h1{font-size:22px;margin:5px 0}
 
     <div class="overlay" id="overlay">
       <h2>Game Over</h2>
-      <button class="restart" onclick="restart()">▬</button>
+      <button class="restart" onclick="restart()">🔄</button>
     </div>
   </div>
 
   <div class="controls">
-    <button onclick="move(-1)">◀</button>
-    <button onclick="move(1)">▶</button>
+    <button onclick="move(1)">➡️</button>
+    <button onclick="move(-1)">⬅️</button>
   </div>
 
 </div>
@@ -206,10 +206,10 @@ function move(d){
   runner.style.left=50+pos*30+"%";
 }
 
-/* keyboard — معكوس حسب إعداد المتصفح */
+/* keyboard  */
 document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowRight"||e.key==="d") move(-1);
-  if(e.key==="ArrowLeft"||e.key==="a") move(1);
+  if(e.key==="ArrowRight"||e.key==="d") move(1);
+  if(e.key==="ArrowLeft"||e.key==="a") move(-1);
 });
 
 function spawnWave(){
