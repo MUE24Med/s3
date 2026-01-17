@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>جاري التحميل...</title>
+  <title>Medical Map - Semester 3</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    /* -----------------------------------------------------------
+       1. التنسيق العام والخلفية (نفس طول واحترافية الكود الأصلي)
+    -------------------------------------------------------------- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -22,58 +21,23 @@
       position: relative;
     }
 
-    /* خلفية متحركة - قطار سريع */
+    /* الخلفية المتحركة - قطار سريع (محاكاة الكود الأصلي) */
     .bg-animation {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: 0;
-      overflow: hidden;
+      position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; overflow: hidden;
     }
 
     .train-track {
-      position: absolute;
-      bottom: 20%;
-      width: 100%;
-      height: 15px;
+      position: absolute; bottom: 20%; width: 100%; height: 15px;
       background: linear-gradient(to right, #444, #777, #444);
       box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     }
 
     .train {
-      position: absolute;
-      bottom: 21%;
-      width: 180px;
-      height: 70px;
-      background: linear-gradient(to right, #e74c3c, #c0392b);
+      position: absolute; bottom: 21%; width: 180px; height: 70px;
+      background: linear-gradient(to right, #3498db, #2980b9); /* لون طبي أزرق */
       border-radius: 10px 10px 0 0;
       animation: trainMove 12s linear infinite;
       transform: translateX(100vw);
-    }
-
-    .train::before {
-      content: '';
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      background: #f1c40f;
-      border-radius: 50%;
-      top: -20px;
-      left: 15px;
-      box-shadow: 60px 0 0 #f1c40f, 120px 0 0 #f1c40f;
-    }
-
-    .train-window {
-      position: absolute;
-      width: 25px;
-      height: 25px;
-      background: #3498db;
-      border-radius: 50%;
-      top: 15px;
-      left: 20px;
-      box-shadow: 40px 0 0 #3498db, 80px 0 0 #3498db, 120px 0 0 #3498db;
     }
 
     @keyframes trainMove {
@@ -81,1037 +45,239 @@
       100% { transform: translateX(-180px); }
     }
 
-    .coin {
-      position: absolute;
-      width: 25px;
-      height: 25px;
-      background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
-      border-radius: 50%;
-      animation: floatUp 15s infinite linear;
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+    /* العملات المتطايرة (تحولت لكبسولات طبية) */
+    .medical-particle {
+      position: absolute; width: 20px; height: 20px;
+      font-size: 20px; animation: floatUp 15s infinite linear; opacity: 0.5;
     }
 
     @keyframes floatUp {
-      0% { 
-        transform: translateY(100vh) rotate(0deg);
-        opacity: 1;
-      }
-      100% { 
-        transform: translateY(-100px) rotate(360deg);
-        opacity: 0;
-      }
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
     }
 
-    /* الحاوية الرئيسية */
+    /* -----------------------------------------------------------
+       2. الحاوية الرئيسية (Glassmorphism)
+    -------------------------------------------------------------- */
     .container {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 30px 25px;
-      background: rgba(20, 30, 40, 0.95);
-      backdrop-filter: blur(15px);
-      border-radius: 25px;
+      position: relative; z-index: 1; text-align: center;
+      padding: 30px 25px; background: rgba(20, 30, 40, 0.95);
+      backdrop-filter: blur(15px); border-radius: 25px;
       border: 2px solid rgba(52, 152, 219, 0.3);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
-                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      max-width: 500px;
-      width: 90%;
-      margin: 20px auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;
     }
 
-    /* الشعار */
+    /* الشعار المتحرك */
     .logo {
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 20px;
-      background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
-      border-radius: 25px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 50px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 
-                  inset 0 4px 10px rgba(255, 255, 255, 0.2);
-      animation: float 3s ease-in-out infinite;
-      position: relative;
-      overflow: hidden;
+      width: 100px; height: 100px; margin: 0 auto 20px;
+      background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+      border-radius: 25px; display: flex; align-items: center; justify-content: center;
+      font-size: 50px; animation: float 3s ease-in-out infinite; position: relative;
     }
 
-    .logo::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(
-        to bottom right,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.1) 50%,
-        rgba(255, 255, 255, 0) 100%
-      );
-      transform: rotate(30deg);
-      animation: shine 3s infinite;
-    }
-
-    @keyframes shine {
-      0% { transform: translateX(-100%) translateY(-100%) rotate(30deg); }
-      100% { transform: translateX(100%) translateY(100%) rotate(30deg); }
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
 
     h1 {
-      color: white;
-      font-size: 26px;
-      margin-bottom: 15px;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
       background: linear-gradient(to right, #3498db, #2ecc71);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-weight: 700;
-      line-height: 1.3;
+      -webkit-background-clip: text; color: transparent;
+      font-size: 26px; font-weight: 700; margin-bottom: 10px;
     }
 
-    .subtitle {
-      color: rgba(255, 255, 255, 0.85);
-      font-size: 15px;
-      margin-bottom: 20px;
-      line-height: 1.6;
+    /* -----------------------------------------------------------
+       3. أنظمة التحميل (الدائرة والشريط)
+    -------------------------------------------------------------- */
+    .progress-ring-box { position: relative; width: 160px; height: 160px; margin: 15px auto; }
+    .progress-ring-circle { transition: stroke-dashoffset 0.5s ease; transform: rotate(-90deg); transform-origin: 50% 50%; }
+    .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 28px; font-weight: bold; }
+
+    .horizontal-bar-box { margin: 15px 0; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+    #h-bar { height: 100%; width: 0%; background: linear-gradient(to right, #3498db, #2ecc71); transition: 0.3s; }
+
+    /* -----------------------------------------------------------
+       4. منطقة اللعبة (Subway Surfers Medical Version)
+    -------------------------------------------------------------- */
+    .game-box {
+      margin-top: 20px; background: rgba(0,0,0,0.4); border-radius: 15px;
+      padding: 10px; border: 1px solid rgba(52, 152, 219, 0.3); position: relative;
     }
 
-    /* دائرة التحميل */
-    .progress-container {
-      position: relative;
-      width: 180px;
-      height: 180px;
-      margin: 20px auto;
+    .stage {
+      width: 100%; height: 220px; background: #1a2530; border-radius: 10px;
+      position: relative; overflow: hidden; border: 1px solid #444;
     }
 
-    .progress-ring {
-      transform: rotate(-90deg);
+    .track-lane {
+      position: absolute; width: 33.33%; height: 100%; border-right: 1px dashed rgba(255,255,255,0.05);
     }
 
-    .progress-ring-circle {
-      transition: stroke-dashoffset 0.5s ease;
-      transform-origin: 50% 50%;
+    #player {
+      position: absolute; bottom: 10px; width: 40px; height: 40px;
+      font-size: 30px; display: flex; align-items: center; justify-content: center;
+      transition: left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
     }
 
-    .progress-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 32px;
-      font-weight: bold;
-      color: white;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    }
+    .entity { position: absolute; font-size: 24px; transform: translateX(-50%); z-index: 5; }
 
-    /* لعبة Subway Surfers */
-    .game-container {
-      margin-top: 20px;
-      padding: 15px;
-      background: rgba(30, 40, 50, 0.8);
-      border-radius: 15px;
-      border: 1px solid rgba(52, 152, 219, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
+    /* أزرار اللعبة */
+    .game-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .g-btn { padding: 12px; border: none; border-radius: 10px; background: #34495e; color: #fff; font-weight: bold; cursor: pointer; }
+    .g-btn:active { background: #2c3e50; }
+    .jump-btn { grid-column: span 2; background: #2ecc71; }
 
-    .game-container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        repeating-linear-gradient(
-          90deg,
-          transparent,
-          transparent 20px,
-          rgba(52, 152, 219, 0.05) 20px,
-          rgba(52, 152, 219, 0.05) 40px
-        );
-      z-index: 0;
-    }
+    /* -----------------------------------------------------------
+       5. أزرار التحكم والرسائل
+    -------------------------------------------------------------- */
+    .status-msg { height: 30px; color: #cbd5e1; font-size: 14px; margin: 10px 0; }
+    .main-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .action-btn { flex: 1; padding: 15px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    #skip-btn { background: rgba(255,255,255,0.1); color: #fff; }
+    #continue-btn { background: #27ae60; color: #fff; display: none; animation: pulse 1.5s infinite; }
 
-    .game-title {
-      color: white;
-      font-size: 16px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      position: relative;
-      z-index: 1;
-    }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    .jump-anim { animation: jumpEffect 0.6s ease; }
+    @keyframes jumpEffect { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-80px); } }
 
-    .game-area {
-      width: 100%;
-      height: 220px;
-      background: linear-gradient(to bottom, #1a2530, #2c3e50);
-      border-radius: 10px;
-      position: relative;
-      overflow: hidden;
-      margin-bottom: 12px;
-      border: 2px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .track {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: space-around;
-    }
-
-    .lane {
-      width: 60px;
-      height: 100%;
-      position: relative;
-    }
-
-    .lane::after {
-      content: '';
-      position: absolute;
-      width: 4px;
-      height: 200%;
-      background: repeating-linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0.5),
-        rgba(255, 255, 255, 0.5) 15px,
-        transparent 15px,
-        transparent 30px
-      );
-      left: 50%;
-      transform: translateX(-50%);
-      animation: trackMove 2s linear infinite;
-    }
-
-    @keyframes trackMove {
-      0% { transform: translateX(-50%) translateY(0); }
-      100% { transform: translateX(-50%) translateY(-30px); }
-    }
-
-    /* الشخصية التي تجري */
-    .runner {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2;
-      transition: left 0.15s ease;
-      width: 35px;
-      height: 70px;
-    }
-
-    .runner-body {
-      position: absolute;
-      width: 35px;
-      height: 50px;
-      background: linear-gradient(to bottom, #3498db, #2980b9);
-      border-radius: 6px 6px 0 0;
-      bottom: 0;
-      transition: all 0.25s ease;
-    }
-
-    .runner-head {
-      position: absolute;
-      width: 25px;
-      height: 25px;
-      background: #f39c12;
-      border-radius: 50%;
-      top: -20px;
-      left: 5px;
-    }
-
-    .runner-arm {
-      position: absolute;
-      width: 12px;
-      height: 35px;
-      background: #3498db;
-      top: 8px;
-      border-radius: 6px;
-      transition: transform 0.25s ease;
-    }
-
-    .runner-arm.left {
-      left: -8px;
-      transform-origin: right top;
-    }
-
-    .runner-arm.right {
-      right: -8px;
-      transform-origin: left top;
-    }
-
-    .runner-leg {
-      position: absolute;
-      width: 12px;
-      height: 30px;
-      background: #2980b9;
-      bottom: 0;
-      border-radius: 4px;
-      transition: transform 0.25s ease;
-    }
-
-    .runner-leg.left {
-      left: 5px;
-    }
-
-    .runner-leg.right {
-      right: 5px;
-    }
-
-    /* تأثير القفز */
-    .runner.jumping .runner-body {
-      height: 45px;
-      transform: translateY(-35px);
-    }
-
-    .runner.jumping .runner-arm {
-      transform: rotate(-25deg);
-    }
-
-    .runner.jumping .runner-arm.right {
-      transform: rotate(25deg);
-    }
-
-    .runner.jumping .runner-leg {
-      transform: rotate(-15deg);
-    }
-
-    .runner.jumping .runner-leg.right {
-      transform: rotate(15deg);
-    }
-
-    .obstacle {
-      position: absolute;
-      width: 45px;
-      height: 35px;
-      background: linear-gradient(to bottom, #e74c3c, #c0392b);
-      border-radius: 4px;
-      z-index: 1;
-    }
-
-    .coin-item {
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
-      border-radius: 50%;
-      z-index: 1;
-      animation: coinSpin 2s infinite linear;
-    }
-
-    @keyframes coinSpin {
-      0% { transform: rotateY(0deg); }
-      100% { transform: rotateY(360deg); }
-    }
-
-    .game-controls {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    .control-btn {
-      padding: 10px 15px;
-      background: linear-gradient(to bottom, #3498db, #2980b9);
-      border: none;
-      border-radius: 25px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      flex: 1;
-      min-width: 90px;
-      font-size: 14px;
-    }
-
-    .control-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    }
-
-    .control-btn:active {
-      transform: translateY(0);
-    }
-
-    .control-btn.jump-btn {
-      background: linear-gradient(to bottom, #2ecc71, #27ae60);
-      order: 1;
-      width: 100%;
-      margin-top: 8px;
-      padding: 12px;
-    }
-
-    .game-stats {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 12px;
-      color: white;
-      font-size: 13px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .stat-value {
-      font-size: 18px;
-      font-weight: bold;
-      color: #2ecc71;
-    }
-
-    /* أزرار التحكم في التحميل */
-    .load-controls {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
-
-    .load-btn {
-      padding: 12px 20px;
-      background: linear-gradient(to right, #9b59b6, #8e44ad);
-      border: none;
-      border-radius: 25px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
-      flex: 1;
-      max-width: 180px;
-      font-size: 14px;
-    }
-
-    .load-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(155, 89, 182, 0.6);
-    }
-
-    .load-btn.skip-btn {
-      background: linear-gradient(to right, #e74c3c, #c0392b);
-    }
-
-    .load-btn.continue-btn {
-      background: linear-gradient(to right, #2ecc71, #27ae60);
-      display: none; /* سيظهر عندما يكتمل التحميل */
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4); }
-      50% { transform: scale(1.05); box-shadow: 0 8px 30px rgba(46, 204, 113, 0.8); }
-      100% { transform: scale(1); box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4); }
-    }
-
-    /* التنويه */
-    .notice {
-      margin-top: 15px;
-      padding: 12px;
-      background: linear-gradient(to right, rgba(52, 152, 219, 0.2), rgba(46, 204, 113, 0.2));
-      border: 1px solid rgba(52, 152, 219, 0.4);
-      border-radius: 10px;
-      color: white;
-      font-size: 12px;
-      line-height: 1.5;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* رسائل الحالة */
-    .status-messages {
-      margin-top: 15px;
-      min-height: 25px;
-    }
-
-    .status-message {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 13px;
-      padding: 6px 12px;
-      background: rgba(30, 40, 50, 0.7);
-      border-radius: 20px;
-      display: inline-block;
-      animation: fadeIn 0.5s ease;
-      border: 1px solid rgba(52, 152, 219, 0.3);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* شاشات صغيرة */
-    @media (max-width: 480px) {
-      .container {
-        padding: 20px 15px;
-        margin: 10px auto;
-      }
-
-      h1 {
-        font-size: 22px;
-      }
-
-      .logo {
-        width: 80px;
-        height: 80px;
-        font-size: 40px;
-      }
-
-      .progress-container {
-        width: 150px;
-        height: 150px;
-      }
-
-      .progress-text {
-        font-size: 28px;
-      }
-
-      .game-area {
-        height: 180px;
-      }
-
-      .lane {
-        width: 50px;
-      }
-
-      .control-btn {
-        padding: 8px 12px;
-        min-width: 80px;
-        font-size: 13px;
-      }
-
-      .load-btn {
-        padding: 10px 15px;
-        font-size: 13px;
-        max-width: 150px;
-      }
-    }
   </style>
 </head>
 <body>
-  <!-- الخلفية المتحركة -->
-  <div class="bg-animation" id="bg-animation">
+
+  <div class="bg-animation" id="bg-box">
     <div class="train-track"></div>
-    <div class="train">
-      <div class="train-window"></div>
-    </div>
+    <div class="train"></div>
   </div>
 
-  <!-- المحتوى الرئيسي -->
   <div class="container">
-    <div class="logo">🚇</div>
-    <h1>خريطة semester-3</h1>
-    <p class="subtitle">جاري تحميل الملفات وإعداد التطبيق...</p>
+    <div class="logo">🩺</div>
+    <h1>Medical Map: Semester-3</h1>
+    <p style="color: #94a3b8; font-size: 14px;">Preparing for Clinical Excellence...</p>
 
-    <!-- دائرة التقدم -->
-    <div class="progress-container">
-      <svg class="progress-ring" width="180" height="180">
-        <circle
-          class="progress-ring-circle"
-          stroke="rgba(255, 255, 255, 0.1)"
-          stroke-width="10"
-          fill="transparent"
-          r="80"
-          cx="90"
-          cy="90"
-        />
-        <circle
-          id="progress-circle"
-          class="progress-ring-circle"
-          stroke="url(#gradient)"
-          stroke-width="10"
-          fill="transparent"
-          r="80"
-          cx="90"
-          cy="90"
-          stroke-dasharray="502.65"
-          stroke-dashoffset="502.65"
-          stroke-linecap="round"
-        />
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#2ecc71;stop-opacity:1" />
-          </linearGradient>
-        </defs>
+    <div class="progress-ring-box">
+      <svg width="160" height="160">
+        <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10"/>
+        <circle id="ring-bar" cx="80" cy="80" r="70" fill="none" stroke="#3498db" stroke-width="10" 
+                stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round" class="progress-ring-circle"/>
       </svg>
-      <div class="progress-text" id="progress-text">0%</div>
+      <div class="progress-text" id="pct-text">0%</div>
     </div>
 
-    <!-- رسائل الحالة -->
-    <div class="status-messages">
-      <div class="status-message" id="status-message">بدء التحميل...</div>
+    <div class="horizontal-bar-box">
+      <div id="h-bar"></div>
     </div>
 
-    <!-- أزرار التحكم في التحميل -->
-    <div class="load-controls">
-      <button class="load-btn skip-btn" id="skip-btn">تخطي الانتظار</button>
-      <button class="load-btn continue-btn" id="continue-btn">متابعة ➡️</button>
+    <div class="status-msg" id="status-msg">Initializing Systems...</div>
+
+    <div class="game-box">
+      <div style="font-size: 12px; margin-bottom: 5px; color: #2ecc71;">🎮 Mini-Game: Avoid 🦠 & Collect 💊</div>
+      <div class="stage" id="stage">
+        <div class="track-lane" style="left:0"></div>
+        <div class="track-lane" style="left:33.33%"></div>
+        <div class="track-lane" style="left:66.66%"></div>
+        <div id="player">👨‍⚕️</div>
+      </div>
+      <div class="game-btns">
+        <button class="g-btn jump-btn" onclick="jump()">JUMP (Space)</button>
+        <button class="g-btn" onclick="move(currentLane-1)">◀ Left</button>
+        <button class="g-btn" onclick="move(currentLane+1)">Right ▶</button>
+      </div>
+      <div style="margin-top: 10px; font-size: 13px;">Score: <span id="score">0</span></div>
     </div>
 
-    <!-- لعبة Subway Surfers -->
-    <div class="game-container">
-      <div class="game-title">
-        <span>🎮</span>
-        <span>Subway Surfers - تجنب العوائق واجمع العملات!</span>
-      </div>
-      
-      <div class="game-area" id="game-area">
-        <div class="track" id="track">
-          <div class="lane"></div>
-          <div class="lane"></div>
-          <div class="lane"></div>
-        </div>
-        <div class="runner" id="runner">
-          <div class="runner-head"></div>
-          <div class="runner-arm left"></div>
-          <div class="runner-arm right"></div>
-          <div class="runner-body"></div>
-          <div class="runner-leg left"></div>
-          <div class="runner-leg right"></div>
-        </div>
-      </div>
-      
-      <div class="game-controls">
-        <button class="control-btn" id="left-btn">◀ يسار</button>
-        <button class="control-btn" id="right-btn">يمين ▶</button>
-        <button class="control-btn jump-btn" id="jump-btn">⬆ قفز</button>
-      </div>
-      
-      <div class="game-stats">
-        <div class="stat">
-          <div class="stat-value" id="score">0</div>
-          <div>النتيجة</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value" id="coins">0</div>
-          <div>عملات</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value" id="high-score">0</div>
-          <div>أفضل نتيجة</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- التنويه -->
-    <div class="notice">
-      <span>⚡</span>
-      <span>جميع الملفات سيتم تخزينها في ذاكرة التخزين المؤقت لتحميل أسرع في الزيارات القادمة!</span>
+    <div class="main-actions">
+      <button id="skip-btn" class="action-btn" onclick="complete()">Skip Wait</button>
+      <button id="continue-btn" class="action-btn" onclick="alert('Loading Semester-3 Map...')">Enter Map ➡️</button>
     </div>
   </div>
 
   <script>
-    // ===== إنشاء العملات المتحركة في الخلفية =====
-    const bgAnimation = document.getElementById('bg-animation');
-    for (let i = 0; i < 8; i++) {
-      const coin = document.createElement('div');
-      coin.className = 'coin';
-      coin.style.left = Math.random() * 100 + '%';
-      coin.style.animationDelay = Math.random() * 5 + 's';
-      coin.style.width = Math.random() * 20 + 15 + 'px';
-      coin.style.height = coin.style.width;
-      bgAnimation.appendChild(coin);
+    /* 1. إنشاء خلفية طبية متطايرة (نفس منطق الكود الأصلي) */
+    const bg = document.getElementById('bg-box');
+    const icons = ['💊', '🩺', '🔬', '🧬'];
+    for(let i=0; i<10; i++) {
+      let p = document.createElement('div');
+      p.className = 'medical-particle';
+      p.innerText = icons[Math.floor(Math.random()*icons.length)];
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDelay = Math.random() * 5 + 's';
+      bg.appendChild(p);
     }
 
-    // ===== نظام التحميل =====
-    const progressCircle = document.getElementById('progress-circle');
-    const progressText = document.getElementById('progress-text');
-    const statusMessage = document.getElementById('status-message');
-    const skipBtn = document.getElementById('skip-btn');
-    const continueBtn = document.getElementById('continue-btn');
-    const circumference = 2 * Math.PI * 80; // نصف القطر 80
-
-    const statusMessages = [
-      'تحميل الأصول الأساسية...',
-      'تحميل ملفات المجموعات...',
-      'تحميل الخطوط والأيقونات...',
-      'تحميل البيانات من GitHub...',
-      'إعداد واجهة المستخدم...',
-      'تحسين الأداء...',
-      'تطبيق الإعدادات...',
-      'اكتمل التحميل! 🎉'
+    /* 2. منطق التحميل (Animation & Logic) */
+    let progress = 0;
+    const medicalMsgs = [
+      "Syncing Anatomy Atlas...", "Loading Pharmacology Database...", 
+      "Organizing Semester-3 Modules...", "Finalizing Clinical Cases..."
     ];
 
-    let currentProgress = 0;
-    let targetProgress = 0;
-    let isSkipped = false;
-    let isLoadingComplete = false;
-
-    function updateProgress(percent) {
-      targetProgress = Math.min(100, Math.max(0, percent));
-    }
-
-    function animateProgress() {
-      if (currentProgress < targetProgress) {
-        currentProgress += 0.8;
-        if (currentProgress > targetProgress) currentProgress = targetProgress;
-      }
-
-      const offset = circumference - (currentProgress / 100) * circumference;
-      progressCircle.style.strokeDashoffset = offset;
-      progressText.textContent = Math.round(currentProgress) + '%';
-
-      // تحديث رسالة الحالة
-      const messageIndex = Math.min(
-        Math.floor((currentProgress / 100) * statusMessages.length),
-        statusMessages.length - 1
-      );
-      if (statusMessage.textContent !== statusMessages[messageIndex]) {
-        statusMessage.style.animation = 'none';
-        setTimeout(() => {
-          statusMessage.textContent = statusMessages[messageIndex];
-          statusMessage.style.animation = 'fadeIn 0.5s ease';
-        }, 50);
-      }
-
-      // إظهار زر المتابعة عند اكتمال التحميل
-      if (currentProgress >= 100 && !isLoadingComplete) {
-        isLoadingComplete = true;
-        continueBtn.style.display = 'block';
-        skipBtn.style.display = 'none';
-      }
-
-      if (currentProgress < 100 && !isSkipped) {
-        requestAnimationFrame(animateProgress);
+    function updateLoading() {
+      if (progress < 100) {
+        progress += 0.3;
+        document.getElementById('ring-bar').style.strokeDashoffset = 440 - (progress/100)*440;
+        document.getElementById('h-bar').style.width = progress + '%';
+        document.getElementById('pct-text').innerText = Math.floor(progress) + '%';
+        document.getElementById('status-msg').innerText = medicalMsgs[Math.floor((progress/101)*medicalMsgs.length)];
+        requestAnimationFrame(updateLoading);
+      } else {
+        document.getElementById('skip-btn').style.display = 'none';
+        document.getElementById('continue-btn').style.display = 'block';
+        document.getElementById('status-msg').innerText = "All Ready! 🏥";
       }
     }
+    updateLoading();
+    function complete() { progress = 100; }
 
-    // زر التخطي
-    skipBtn.addEventListener('click', () => {
-      isSkipped = true;
-      targetProgress = 100;
-      statusMessage.textContent = 'تخطي التحميل...';
-      statusMessage.style.animation = 'fadeIn 0.5s ease';
-    });
-
-    // زر المتابعة
-    continueBtn.addEventListener('click', () => {
-      window.location.href = 'index.html';
-    });
-
-    animateProgress();
-
-    // ===== لعبة Subway Surfers =====
-    const gameArea = document.getElementById('game-area');
-    const runner = document.getElementById('runner');
-    const leftBtn = document.getElementById('left-btn');
-    const rightBtn = document.getElementById('right-btn');
-    const jumpBtn = document.getElementById('jump-btn');
-    const scoreEl = document.getElementById('score');
-    const coinsEl = document.getElementById('coins');
-    const highScoreEl = document.getElementById('high-score');
-
-    let playerPosition = 1; // 0: يسار, 1: وسط, 2: يمين
-    let isJumping = false;
+    /* 3. منطق اللعبة (Medical Subway Surfers) */
+    let currentLane = 1;
     let score = 0;
-    let coins = 0;
-    let highScore = localStorage.getItem('subwayHighScore') || 0;
-    let gameInterval;
-    let obstacles = [];
-    let coinItems = [];
-    let gameRunning = true;
+    let jumping = false;
+    const laneX = [16.66, 50, 83.33];
 
-    highScoreEl.textContent = highScore;
-
-    // تحديث موضع اللاعب
-    function updatePlayerPosition() {
-      const laneWidth = gameArea.offsetWidth / 3;
-      const leftPosition = playerPosition * laneWidth + laneWidth / 2;
-      runner.style.left = leftPosition + 'px';
-      
-      // التأكد من أن اللاعب داخل الحدود
-      if (playerPosition < 0) playerPosition = 0;
-      if (playerPosition > 2) playerPosition = 2;
-    }
-
-    // إنشاء عائق
-    function createObstacle() {
-      if (!gameRunning) return;
-      
-      const obstacle = document.createElement('div');
-      obstacle.className = 'obstacle';
-      const lane = Math.floor(Math.random() * 3);
-      const laneWidth = gameArea.offsetWidth / 3;
-      obstacle.style.left = lane * laneWidth + laneWidth / 2 - 22 + 'px';
-      obstacle.style.top = '-35px';
-      gameArea.appendChild(obstacle);
-      
-      obstacles.push({
-        element: obstacle,
-        lane: lane,
-        top: -35
-      });
-    }
-
-    // إنشاء عملة
-    function createCoin() {
-      if (!gameRunning) return;
-      
-      const coin = document.createElement('div');
-      coin.className = 'coin-item';
-      const lane = Math.floor(Math.random() * 3);
-      const laneWidth = gameArea.offsetWidth / 3;
-      coin.style.left = lane * laneWidth + laneWidth / 2 - 9 + 'px';
-      coin.style.top = '-18px';
-      gameArea.appendChild(coin);
-      
-      coinItems.push({
-        element: coin,
-        lane: lane,
-        top: -18
-      });
-    }
-
-    // تحريك العوائق والعملات
-    function moveItems() {
-      if (!gameRunning) return;
-      
-      // تحريك العوائق
-      for (let i = obstacles.length - 1; i >= 0; i--) {
-        const obstacle = obstacles[i];
-        obstacle.top += 3.5;
-        obstacle.element.style.top = obstacle.top + 'px';
-        
-        // اكتشاف التصادم
-        if (obstacle.lane === playerPosition && 
-            obstacle.top > 150 && 
-            obstacle.top < 200 && 
-            !isJumping) {
-          gameOver();
-          return;
-        }
-        
-        // إزالة العائق إذا تجاوز الشاشة
-        if (obstacle.top > gameArea.offsetHeight) {
-          obstacle.element.remove();
-          obstacles.splice(i, 1);
-          score += 5;
-          scoreEl.textContent = score;
-        }
-      }
-      
-      // تحريك العملات
-      for (let i = coinItems.length - 1; i >= 0; i--) {
-        const coin = coinItems[i];
-        coin.top += 3;
-        coin.element.style.top = coin.top + 'px';
-        
-        // جمع العملة
-        if (coin.lane === playerPosition && 
-            coin.top > 150 && 
-            coin.top < 200 && 
-            !isJumping) {
-          coin.element.remove();
-          coinItems.splice(i, 1);
-          coins += 1;
-          coinsEl.textContent = coins;
-          score += 10;
-          scoreEl.textContent = score;
-        }
-        
-        // إزالة العملة إذا تجاوزت الشاشة
-        if (coin.top > gameArea.offsetHeight) {
-          coin.element.remove();
-          coinItems.splice(i, 1);
-        }
+    function move(n) {
+      if(n >= 0 && n <= 2) {
+        currentLane = n;
+        document.getElementById('player').style.left = `calc(${laneX[n]}% - 20px)`;
       }
     }
+    move(1);
 
-    // القفز
     function jump() {
-      if (isJumping || !gameRunning) return;
-      
-      isJumping = true;
-      runner.classList.add('jumping');
-      
-      setTimeout(() => {
-        runner.classList.remove('jumping');
-        setTimeout(() => {
-          isJumping = false;
-        }, 100);
-      }, 500);
+      if(jumping) return;
+      jumping = true;
+      document.getElementById('player').classList.add('jump-anim');
+      setTimeout(() => { document.getElementById('player').classList.remove('jump-anim'); jumping = false; }, 600);
     }
 
-    // نهاية اللعبة
-    function gameOver() {
-      gameRunning = false;
-      clearInterval(gameInterval);
-      
-      // تحديث أفضل نتيجة
-      if (score > highScore) {
-        highScore = score;
-        highScoreEl.textContent = highScore;
-        localStorage.setItem('subwayHighScore', highScore);
-      }
-      
-      // عرض رسالة بعد وقت قصير
-      setTimeout(() => {
-        alert(`انتهت اللعبة!\nنتيجتك: ${score}\nالعملات: ${coins}\nأفضل نتيجة: ${highScore}`);
-        restartGame();
-      }, 300);
-    }
+    function spawn() {
+      if(progress >= 100) return;
+      const item = document.createElement('div');
+      const lane = Math.floor(Math.random()*3);
+      const isVirus = Math.random() > 0.3;
+      item.className = 'entity';
+      item.innerText = isVirus ? '🦠' : '💊';
+      item.style.left = laneX[lane] + '%';
+      item.style.top = '-40px';
+      document.getElementById('stage').appendChild(item);
 
-    // إعادة تشغيل اللعبة
-    function restartGame() {
-      // إزالة العوائق والعملات
-      obstacles.forEach(obstacle => obstacle.element.remove());
-      coinItems.forEach(coin => coin.element.remove());
-      obstacles = [];
-      coinItems = [];
-      
-      // إعادة تعيين القيم
-      score = 0;
-      coins = 0;
-      playerPosition = 1;
-      isJumping = false;
-      gameRunning = true;
-      scoreEl.textContent = score;
-      coinsEl.textContent = coins;
-      runner.classList.remove('jumping');
-      updatePlayerPosition();
-      
-      // بدء اللعبة من جديد
-      startGame();
-    }
-
-    // بدء اللعبة
-    function startGame() {
-      gameInterval = setInterval(() => {
-        moveItems();
-        
-        // إنشاء عوائق وعملات بشكل عشوائي
-        if (Math.random() < 0.025) {
-          createObstacle();
+      let y = -40;
+      let anim = setInterval(() => {
+        y += 3;
+        item.style.top = y + 'px';
+        if(y > 150 && y < 190 && lane === currentLane) {
+          if(isVirus && !jumping) { score -= 10; item.innerText='💥'; clearInterval(anim); setTimeout(()=>item.remove(), 200); }
+          else if(!isVirus) { score += 20; item.remove(); clearInterval(anim); }
         }
-        if (Math.random() < 0.035) {
-          createCoin();
-        }
-      }, 50);
+        if(y > 230) { if(isVirus) score += 5; item.remove(); clearInterval(anim); }
+        document.getElementById('score').innerText = score;
+      }, 20);
     }
+    setInterval(spawn, 2000);
 
-    // تحريك اللاعب
-    leftBtn.addEventListener('click', () => {
-      if (playerPosition > 0) {
-        playerPosition--;
-        updatePlayerPosition();
-      }
-    });
-
-    rightBtn.addEventListener('click', () => {
-      if (playerPosition < 2) {
-        playerPosition++;
-        updatePlayerPosition();
-      }
-    });
-
-    jumpBtn.addEventListener('click', jump);
-
-    // التحكم باللوحة المفاتيح
+    // التحكم بالأسهم
     document.addEventListener('keydown', (e) => {
-      if (!gameRunning) return;
-      
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        if (playerPosition > 0) {
-          playerPosition--;
-          updatePlayerPosition();
-        }
-      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        if (playerPosition < 2) {
-          playerPosition++;
-          updatePlayerPosition();
-        }
-      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
-        jump();
-      }
+      if(e.key === 'ArrowLeft') move(currentLane-1);
+      if(e.key === 'ArrowRight') move(currentLane+1);
+      if(e.key === ' ') jump();
     });
-
-    // بدء اللعبة عند تحميل الصفحة
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        updatePlayerPosition();
-        startGame();
-      }, 500);
-    });
-
-    // ===== محاكاة التحميل =====
-    const filesToLoad = [
-      'image/wood.webp',
-      'image/Upper_wood.webp',
-      'image/logo-A.webp',
-      'image/logo-B.webp',
-      'image/logo-C.webp',
-      'image/logo-D.webp',
-      'image/0.png',
-      'style.css',
-      'script.js',
-      'tracker.js'
-    ];
-
-    let loadedCount = 0;
-    const totalFiles = filesToLoad.length + 5;
-
-    // تحميل الملفات الفعلية
-    filesToLoad.forEach((file, index) => {
-      setTimeout(() => {
-        const img = new Image();
-        img.onload = img.onerror = () => {
-          loadedCount++;
-          updateProgress((loadedCount / totalFiles) * 100);
-        };
-        img.src = file;
-      }, index * 200);
-    });
-
-    // خطوات إضافية
-    setTimeout(() => {
-      loadedCount++;
-      updateProgress((loadedCount / totalFiles) * 100);
-    }, filesToLoad.length * 200 + 500);
-
-    setTimeout(() => {
-      loadedCount++;
-      updateProgress((loadedCount / totalFiles) * 100);
-    }, filesToLoad.length * 200 + 1000);
-
-    setTimeout(() => {
-      loadedCount++;
-      updateProgress((loadedCount / totalFiles) * 100);
-    }, filesToLoad.length * 200 + 1500);
-
-    setTimeout(() => {
-      loadedCount++;
-      updateProgress((loadedCount / totalFiles) * 100);
-    }, filesToLoad.length * 200 + 2000);
-
-    setTimeout(() => {
-      if (!isSkipped) {
-        updateProgress(100);
-      }
-    }, filesToLoad.length * 200 + 2500);
   </script>
 </body>
 </html>
