@@ -372,10 +372,6 @@ h1 {
 </div>
 
 <script>
-/* ========================================
-   [1] نظام التحميل الحقيقي
-   ======================================== */
-
 const filesToLoad = [
   'image/wood.webp',
   'image/Upper_wood.webp',
@@ -403,7 +399,7 @@ function updateProgress() {
 }
 
 function loadFile(url, index) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       const isImage = url.match(/\.(webp|png|jpg|jpeg|gif)$/i);
 
@@ -452,15 +448,12 @@ async function startLoading() {
 
 startLoading();
 
-// ✅ تعديل زر المتابعة - عدم إعادة التحميل
 continueBtn.addEventListener('click', () => {
+  console.log('✅ حفظ حالة preload_done');
   localStorage.setItem('preload_done', 'true');
-  window.location.href = 'index.html';
+  localStorage.setItem('last_visit_timestamp', Date.now());
+  window.location.replace('index.html');
 });
-
-/* ========================================
-   [2] نظام اللعبة المحدث
-   ======================================== */
 
 const gameContainer = document.getElementById('gameContainer');
 const runner = document.getElementById('runner');
@@ -477,11 +470,11 @@ let runnerPosition = 0;
 let hearts = 0;
 let score = 0;
 let gameActive = true;
-let fallSpeed = 1.5; // ✅ بداية أبطأ
+let fallSpeed = 1.5;
 let activeItems = [];
 let waveCounter = 0;
 let usedLanesInWave = [];
-let spawnInterval = 1800; // ✅ بداية أبطأ في التوليد
+let spawnInterval = 1800;
 
 const lanes = [20, 50, 80];
 
@@ -520,7 +513,6 @@ function spawnItem() {
   const rand = Math.random();
   let emoji, type;
 
-  // ✅ الأدوية أكثر ندرة: 15% فقط
   if (rand < 0.15) {
     emoji = '💊';
     type = 'pill';
@@ -532,9 +524,8 @@ function spawnItem() {
     type = 'virus';
   }
 
-  // ✅ اختيار عمود غير مستخدم في هذه الموجة
   let availableLanes = [0, 1, 2].filter(lane => !usedLanesInWave.includes(lane));
-  
+
   if (availableLanes.length === 0) {
     availableLanes = [0, 1, 2];
     usedLanesInWave = [];
@@ -678,9 +669,9 @@ function restartGame() {
   hearts = 0;
   score = 0;
   runnerPosition = 0;
-  fallSpeed = 1.5; // ✅ إعادة للسرعة البطيئة
+  fallSpeed = 1.5;
   waveCounter = 0;
-  spawnInterval = 1800; // ✅ إعادة لفترة بطيئة
+  spawnInterval = 1800;
   gameActive = true;
 
   heartsDisplay.textContent = hearts;
@@ -689,7 +680,7 @@ function restartGame() {
   gameOverlay.style.display = 'none';
 
   updateGame();
-  startSpawning(); // ✅ إعادة تشغيل التوليد
+  startSpawning();
 }
 
 restartBtn.addEventListener('click', restartGame);
@@ -697,7 +688,6 @@ restartBtn.addEventListener('click', restartGame);
 displayLeaderboard();
 updateGame();
 
-// ✅ نظام التسارع التدريجي المحسّن
 let spawnerIntervalId;
 
 function startSpawning() {
@@ -710,24 +700,21 @@ function startSpawning() {
       spawnWave();
       waveCounter++;
 
-      // ✅ زيادة السرعة تدريجياً كل 3 موجات (أبطأ من قبل)
       if (waveCounter % 3 === 0) {
-        fallSpeed += 0.15; // ✅ زيادة أقل
-        
-        // ✅ تقليل فترة التوليد تدريجياً (أسرع في الظهور)
+        fallSpeed += 0.15;
+
         if (spawnInterval > 800) {
           spawnInterval -= 100;
           clearInterval(spawnerIntervalId);
           startSpawning();
         }
-        
+
         console.log(`⚡ المستوى ${Math.floor(waveCounter / 3)}: السرعة = ${fallSpeed.toFixed(2)}, الفترة = ${spawnInterval}ms`);
       }
     }
   }, spawnInterval);
 }
 
-// بدء اللعبة
 startSpawning();
 </script>
 
