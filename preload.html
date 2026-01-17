@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>جاري التحميل...</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* خلفية متحركة */
+    .bg-animation {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      opacity: 0.3;
+    }
+
+    .bubble {
+      position: absolute;
+      bottom: -100px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      animation: rise 15s infinite ease-in;
+    }
+
+    @keyframes rise {
+      to {
+        bottom: 110%;
+        transform: translateX(100px);
+      }
+    }
+
+    /* الحاوية الرئيسية */
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 30px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+    }
+
+    /* الشعار */
+    .logo {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    h1 {
+      color: white;
+      font-size: 32px;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    /* دائرة التحميل */
+    .progress-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 30px auto;
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.5s ease;
+      transform-origin: 50% 50%;
+    }
+
+    .progress-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    /* اللعبة - Memory Game */
+    .game-container {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .game-title {
+      color: white;
+      font-size: 18px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .card {
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .card:hover:not(.flipped):not(.matched) {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+    }
+
+    .card.flipped,
+    .card.matched {
+      background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%);
+      border-color: white;
+    }
+
+    .card.matched {
+      animation: matchPulse 0.5s ease;
+    }
+
+    @keyframes matchPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    .card-back {
+      display: none;
+    }
+
+    .card:not(.flipped) .card-front {
+      display: none;
+    }
+
+    .card.flipped .card-back {
+      display: none;
+    }
+
+    .card.flipped .card-front,
+    .card.matched .card-front {
+      display: block;
+    }
+
+    .game-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 15px;
+      color: white;
+      font-size: 14px;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffd700;
+    }
+
+    /* التنويه */
+    .notice {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 215, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      border-radius: 10px;
+      color: white;
+      font-size: 13px;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* رسائل الحالة */
+    .status-messages {
+      margin-top: 20px;
+      min-height: 30px;
+    }
+
+    .status-message {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      padding: 8px 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      display: inline-block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* شاشات صغيرة */
+    @media (max-width: 480px) {
+      .container {
+        padding: 25px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .logo {
+        width: 80px;
+        height: 80px;
+        font-size: 40px;
+      }
+
+      .progress-container {
+        width: 150px;
+        height: 150px;
+      }
+
+      .progress-text {
+        font-size: 28px;
+      }
+
+      .game-grid {
+        max-width: 280px;
+        gap: 8px;
+      }
+
+      .card {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- الخلفية المتحركة -->
+  <div class="bg-animation" id="bubbles"></div>
+
+  <!-- المحتوى الرئيسي -->
+  <div class="container">
+    <div class="logo">🏥</div>
+    <h1>خريطة semester-3</h1>
+    <p class="subtitle">جاري تحميل الملفات وإعداد التطبيق...</p>
+
+    <!-- دائرة التقدم -->
+    <div class="progress-container">
+      <svg class="progress-ring" width="200" height="200">
+        <circle
+          class="progress-ring-circle"
+          stroke="rgba(255, 255, 255, 0.2)"
+          stroke-width="12"
+          fill="transparent"
+          r="90"
+          cx="100"
+          cy="100"
+        />
+        <circle
+          id="progress-circle"
+          class="progress-ring-circle"
+          stroke="url(#gradient)"
+          stroke-width="12"
+          fill="transparent"
+          r="90"
+          cx="100"
+          cy="100"
+          stroke-dasharray="565.48"
+          stroke-dashoffset="565.48"
+          stroke-linecap="round"
+        />
+        <defs>
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#48c6ef;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#6f86d6;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="progress-text" id="progress-text">0%</div>
+    </div>
+
+    <!-- رسائل الحالة -->
+    <div class="status-messages">
+      <div class="status-message" id="status-message">بدء التحميل...</div>
+    </div>
+
+    <!-- اللعبة -->
+    <div class="game-container">
+      <div class="game-title">
+        <span>🎮</span>
+        <span>لعبة الذاكرة - اقلب البطاقات!</span>
+      </div>
+      <div class="game-grid" id="game-grid"></div>
+      <div class="game-stats">
+        <div class="stat">
+          <div class="stat-value" id="moves">0</div>
+          <div>حركات</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="matches">0</div>
+          <div>مطابقات</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="timer">00:00</div>
+          <div>الوقت</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- التنويه -->
+    <div class="notice">
+      <span>💡</span>
+      <span>هذه الشاشة تظهر في المرة الأولى فقط. جميع الملفات سيتم تخزينها في ذاكرة التخزين المؤقت (Cache) لتحميل أسرع في الزيارات القادمة!</span>
+    </div>
+  </div>
+
+  <script>
+    // ===== إنشاء الفقاعات المتحركة =====
+    const bubblesContainer = document.getElementById('bubbles');
+    for (let i = 0; i < 15; i++) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      const size = Math.random() * 60 + 20;
+      bubble.style.width = size + 'px';
+      bubble.style.height = size + 'px';
+      bubble.style.left = Math.random() * 100 + '%';
+      bubble.style.animationDelay = Math.random() * 5 + 's';
+      bubble.style.animationDuration = (Math.random() * 10 + 10) + 's';
+      bubblesContainer.appendChild(bubble);
+    }
+
+    // ===== نظام التحميل =====
+    const progressCircle = document.getElementById('progress-circle');
+    const progressText = document.getElementById('progress-text');
+    const statusMessage = document.getElementById('status-message');
+    const circumference = 2 * Math.PI * 90;
+
+    const statusMessages = [
+      'تحميل الأصول الأساسية...',
+      'تحميل ملفات المجموعات...',
+      'تحميل الخطوط والأيقونات...',
+      'تحميل البيانات من GitHub...',
+      'إعداد واجهة المستخدم...',
+      'تحسين الأداء...',
+      'تطبيق الإعدادات...',
+      'اكتمل التحميل! 🎉'
+    ];
+
+    let currentProgress = 0;
+    let targetProgress = 0;
+
+    function updateProgress(percent) {
+      targetProgress = Math.min(100, Math.max(0, percent));
+    }
+
+    function animateProgress() {
+      if (currentProgress < targetProgress) {
+        currentProgress += 0.5;
+        if (currentProgress > targetProgress) currentProgress = targetProgress;
+      }
+
+      const offset = circumference - (currentProgress / 100) * circumference;
+      progressCircle.style.strokeDashoffset = offset;
+      progressText.textContent = Math.round(currentProgress) + '%';
+
+      // تحديث رسالة الحالة
+      const messageIndex = Math.min(
+        Math.floor((currentProgress / 100) * statusMessages.length),
+        statusMessages.length - 1
+      );
+      if (statusMessage.textContent !== statusMessages[messageIndex]) {
+        statusMessage.style.animation = 'none';
+        setTimeout(() => {
+          statusMessage.textContent = statusMessages[messageIndex];
+          statusMessage.style.animation = 'fadeIn 0.5s ease';
+        }, 50);
+      }
+
+      if (currentProgress < 100) {
+        requestAnimationFrame(animateProgress);
+      } else {
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+      }
+    }
+
+    animateProgress();
+
+    // ===== لعبة الذاكرة =====
+    const emojis = ['🩺', '💊', '🏥', '🔬', '💉', '🧬', '🦠', '⚕️'];
+    const cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+    
+    let flippedCards = [];
+    let moves = 0;
+    let matches = 0;
+    let startTime = Date.now();
+    let timerInterval;
+
+    const gameGrid = document.getElementById('game-grid');
+    const movesEl = document.getElementById('moves');
+    const matchesEl = document.getElementById('matches');
+    const timerEl = document.getElementById('timer');
+
+    // إنشاء البطاقات
+    cards.forEach((emoji, index) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.index = index;
+      card.dataset.emoji = emoji;
+      card.innerHTML = `
+        <div class="card-back">❓</div>
+        <div class="card-front">${emoji}</div>
+      `;
+      card.addEventListener('click', flipCard);
+      gameGrid.appendChild(card);
+    });
+
+    // بدء المؤقت
+    timerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+      const seconds = (elapsed % 60).toString().padStart(2, '0');
+      timerEl.textContent = `${minutes}:${seconds}`;
+    }, 1000);
+
+    function flipCard() {
+      if (flippedCards.length >= 2) return;
+      if (this.classList.contains('flipped') || this.classList.contains('matched')) return;
+
+      this.classList.add('flipped');
+      flippedCards.push(this);
+
+      if (flippedCards.length === 2) {
+        moves++;
+        movesEl.textContent = moves;
+
+        const [card1, card2] = flippedCards;
+        if (card1.dataset.emoji === card2.dataset.emoji) {
+          // مطابقة!
+          setTimeout(() => {
+            card1.classList.add('matched');
+            card2.classList.add('matched');
+            card1.classList.remove('flipped');
+            card2.classList.remove('flipped');
+            flippedCards = [];
+            matches++;
+            matchesEl.textContent = matches;
+
+            // إذا انتهت اللعبة
+            if (matches === emojis.length) {
+              clearInterval(timerInterval);
+              setTimeout(() => {
+                alert('🎉 مبروك! أكملت اللعبة!\nالوقت: ' + timerEl.textContent + '\nعدد الحركات: ' + moves);
+              }, 500);
+            }
+          }, 600);
+        } else {
+          // غير متطابقة
+          setTimeout(() => {
+            card1.classList.remove('flipped');
+            card2.classList.remove('flipped');
+            flippedCards = [];
+          }, 1000);
+        }
+      }
+    }
+
+    // ===== محاكاة التحميل =====
+    const filesToLoad = [
+      'image/wood.webp',
+      'image/Upper_wood.webp',
+      'image/logo-A.webp',
+      'image/logo-B.webp',
+      'image/logo-C.webp',
+      'image/logo-D.webp',
+      'image/0.png',
+      'style.css',
+      'script.js',
+      'tracker.js'
+    ];
+
+    let loadedCount = 0;
+    const totalFiles = filesToLoad.length + 5; // +5 للخطوات الإضافية
+
+    // تحميل الملفات الفعلية
+    filesToLoad.forEach((file, index) => {
+      setTimeout(() => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+          loadedCount++;
+          updateProgress((loadedCount / totalFiles) * 100);
+        };
+        img.src = file;
+      }, index * 200);
+    });
+
+    // خطوات إضافية
+    setTimeout(() => {
+      loadedCount++;
+      updateProgress((loadedCount / totalFiles) * 100);
+    }, filesToLoad.length * 200 + 500);
+
+    setTimeout(() => {
+      loadedCount++;
+      updateProgress((loadedCount / totalFiles) * 100);
+    }, filesToLoad.length * 200 + 1000);
+
+    setTimeout(() => {
+      loadedCount++;
+      updateProgress((loadedCount / totalFiles) * 100);
+    }, filesToLoad.length * 200 + 1500);
+
+    setTimeout(() => {
+      loadedCount++;
+      updateProgress((loadedCount / totalFiles) * 100);
+    }, filesToLoad.length * 200 + 2000);
+
+    setTimeout(() => {
+      updateProgress(100);
+    }, filesToLoad.length * 200 + 2500);
+  </script>
+</body>
+</html>
