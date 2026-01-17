@@ -20,6 +20,22 @@
       justify-content: center;
       overflow: hidden;
       position: relative;
+      padding: 20px;
+    }
+
+    /* شريط التمرير */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(to bottom, #3498db, #2ecc71);
+      border-radius: 10px;
     }
 
     /* خلفية متحركة - قطار سريع */
@@ -107,8 +123,8 @@
       position: relative;
       z-index: 1;
       text-align: center;
-      padding: 40px;
-      background: rgba(20, 30, 40, 0.85);
+      padding: 30px;
+      background: rgba(20, 30, 40, 0.95);
       backdrop-filter: blur(15px);
       border-radius: 25px;
       border: 2px solid rgba(52, 152, 219, 0.3);
@@ -116,13 +132,15 @@
                   inset 0 1px 0 rgba(255, 255, 255, 0.1);
       max-width: 500px;
       width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     /* الشعار */
     .logo {
       width: 120px;
       height: 120px;
-      margin: 0 auto 25px;
+      margin: 0 auto 20px;
       background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
       border-radius: 30px;
       display: flex;
@@ -165,7 +183,7 @@
 
     h1 {
       color: white;
-      font-size: 32px;
+      font-size: 28px;
       margin-bottom: 15px;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
       background: linear-gradient(to right, #3498db, #2ecc71);
@@ -178,7 +196,7 @@
     .subtitle {
       color: rgba(255, 255, 255, 0.85);
       font-size: 16px;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       line-height: 1.6;
     }
 
@@ -187,7 +205,7 @@
       position: relative;
       width: 200px;
       height: 200px;
-      margin: 30px auto;
+      margin: 25px auto;
     }
 
     .progress-ring {
@@ -212,13 +230,15 @@
 
     /* لعبة Subway Surfers */
     .game-container {
-      margin-top: 30px;
+      margin-top: 25px;
       padding: 20px;
-      background: rgba(30, 40, 50, 0.7);
+      background: rgba(30, 40, 50, 0.8);
       border-radius: 15px;
       border: 1px solid rgba(52, 152, 219, 0.3);
       position: relative;
       overflow: hidden;
+      max-height: 400px;
+      overflow-y: auto;
     }
 
     .game-container::before {
@@ -253,7 +273,7 @@
 
     .game-area {
       width: 100%;
-      height: 180px;
+      height: 280px; /* مددت طول اللعبة */
       background: linear-gradient(to bottom, #1a2530, #2c3e50);
       border-radius: 10px;
       position: relative;
@@ -298,40 +318,96 @@
       100% { transform: translateX(-50%) translateY(-30px); }
     }
 
-    .player {
+    /* الشخصية التي تجري */
+    .runner {
       position: absolute;
-      width: 40px;
-      height: 60px;
-      background: linear-gradient(to bottom, #3498db, #2980b9);
-      border-radius: 8px 8px 0 0;
       bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 2;
       transition: left 0.2s ease;
+      width: 40px;
+      height: 80px;
     }
 
-    .player::before {
-      content: '';
+    .runner-body {
+      position: absolute;
+      width: 40px;
+      height: 60px;
+      background: linear-gradient(to bottom, #3498db, #2980b9);
+      border-radius: 8px 8px 0 0;
+      bottom: 0;
+      transition: all 0.3s ease;
+    }
+
+    .runner-head {
       position: absolute;
       width: 30px;
-      height: 10px;
-      background: #2c3e50;
-      top: -10px;
+      height: 30px;
+      background: #f39c12;
+      border-radius: 50%;
+      top: -25px;
       left: 5px;
-      border-radius: 5px 5px 0 0;
     }
 
-    .player::after {
-      content: '';
+    .runner-arm {
       position: absolute;
       width: 15px;
-      height: 15px;
-      background: white;
+      height: 40px;
+      background: #3498db;
       top: 10px;
+      border-radius: 7px;
+      transition: transform 0.3s ease;
+    }
+
+    .runner-arm.left {
+      left: -10px;
+      transform-origin: right top;
+    }
+
+    .runner-arm.right {
+      right: -10px;
+      transform-origin: left top;
+    }
+
+    .runner-leg {
+      position: absolute;
+      width: 15px;
+      height: 35px;
+      background: #2980b9;
+      bottom: 0;
+      border-radius: 5px;
+      transition: transform 0.3s ease;
+    }
+
+    .runner-leg.left {
       left: 5px;
-      border-radius: 50%;
-      box-shadow: 20px 0 0 white;
+    }
+
+    .runner-leg.right {
+      right: 5px;
+    }
+
+    /* تأثير القفز */
+    .runner.jumping .runner-body {
+      height: 50px;
+      transform: translateY(-40px);
+    }
+
+    .runner.jumping .runner-arm {
+      transform: rotate(-20deg);
+    }
+
+    .runner.jumping .runner-arm.right {
+      transform: rotate(20deg);
+    }
+
+    .runner.jumping .runner-leg {
+      transform: rotate(-10deg);
+    }
+
+    .runner.jumping .runner-leg.right {
+      transform: rotate(10deg);
     }
 
     .obstacle {
@@ -361,12 +437,13 @@
     .game-controls {
       display: flex;
       justify-content: center;
-      gap: 15px;
+      gap: 10px;
       margin-top: 15px;
+      flex-wrap: wrap;
     }
 
     .control-btn {
-      padding: 10px 20px;
+      padding: 12px 20px;
       background: linear-gradient(to bottom, #3498db, #2980b9);
       border: none;
       border-radius: 30px;
@@ -375,6 +452,8 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      flex: 1;
+      min-width: 100px;
     }
 
     .control-btn:hover {
@@ -384,6 +463,13 @@
 
     .control-btn:active {
       transform: translateY(0);
+    }
+
+    .control-btn.jump-btn {
+      background: linear-gradient(to bottom, #2ecc71, #27ae60);
+      order: 1;
+      width: 100%;
+      margin-top: 10px;
     }
 
     .game-stats {
@@ -407,6 +493,41 @@
       font-size: 20px;
       font-weight: bold;
       color: #2ecc71;
+    }
+
+    /* أزرار التحكم في التحميل */
+    .load-controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .load-btn {
+      padding: 12px 25px;
+      background: linear-gradient(to right, #9b59b6, #8e44ad);
+      border: none;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
+      flex: 1;
+      max-width: 200px;
+    }
+
+    .load-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(155, 89, 182, 0.6);
+    }
+
+    .load-btn.skip-btn {
+      background: linear-gradient(to right, #e74c3c, #c0392b);
+    }
+
+    .load-btn.play-btn {
+      background: linear-gradient(to right, #2ecc71, #27ae60);
     }
 
     /* التنويه */
@@ -448,29 +569,11 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* زر التخطي */
-    .skip-btn {
-      margin-top: 20px;
-      padding: 12px 30px;
-      background: linear-gradient(to right, #e74c3c, #c0392b);
-      border: none;
-      border-radius: 30px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
-    }
-
-    .skip-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(231, 76, 60, 0.6);
-    }
-
     /* شاشات صغيرة */
     @media (max-width: 480px) {
       .container {
-        padding: 25px;
+        padding: 20px;
+        max-height: 95vh;
       }
 
       h1 {
@@ -493,11 +596,21 @@
       }
 
       .game-area {
-        height: 150px;
+        height: 250px;
       }
 
       .lane {
         width: 50px;
+      }
+
+      .control-btn {
+        padding: 10px 15px;
+        min-width: 80px;
+      }
+
+      .load-btn {
+        padding: 10px 20px;
+        font-size: 14px;
       }
     }
   </style>
@@ -557,8 +670,14 @@
       <div class="status-message" id="status-message">بدء التحميل...</div>
     </div>
 
+    <!-- أزرار التحكم في التحميل -->
+    <div class="load-controls">
+      <button class="load-btn skip-btn" id="skip-btn">تخطي الانتظار</button>
+      <button class="load-btn play-btn" id="play-game-btn">تجربة اللعبة</button>
+    </div>
+
     <!-- لعبة Subway Surfers -->
-    <div class="game-container">
+    <div class="game-container" id="game-container" style="display: none;">
       <div class="game-title">
         <span>🎮</span>
         <span>Subway Surfers - تجنب العوائق واجمع العملات!</span>
@@ -570,13 +689,20 @@
           <div class="lane"></div>
           <div class="lane"></div>
         </div>
-        <div class="player" id="player"></div>
+        <div class="runner" id="runner">
+          <div class="runner-head"></div>
+          <div class="runner-arm left"></div>
+          <div class="runner-arm right"></div>
+          <div class="runner-body"></div>
+          <div class="runner-leg left"></div>
+          <div class="runner-leg right"></div>
+        </div>
       </div>
       
       <div class="game-controls">
         <button class="control-btn" id="left-btn">◀ يسار</button>
         <button class="control-btn" id="right-btn">يمين ▶</button>
-        <button class="control-btn" id="jump-btn">⬆ قفز</button>
+        <button class="control-btn jump-btn" id="jump-btn">⬆ قفز</button>
       </div>
       
       <div class="game-stats">
@@ -593,6 +719,10 @@
           <div>أفضل نتيجة</div>
         </div>
       </div>
+
+      <button class="load-btn" id="back-to-load-btn" style="margin-top: 15px; width: 100%;">
+        العودة إلى شاشة التحميل
+      </button>
     </div>
 
     <!-- التنويه -->
@@ -600,9 +730,6 @@
       <span>⚡</span>
       <span>جميع الملفات سيتم تخزينها في ذاكرة التخزين المؤقت لتحميل أسرع في الزيارات القادمة!</span>
     </div>
-
-    <!-- زر التخطي -->
-    <button class="skip-btn" id="skip-btn">تخطي الانتظار</button>
   </div>
 
   <script>
@@ -623,6 +750,8 @@
     const progressText = document.getElementById('progress-text');
     const statusMessage = document.getElementById('status-message');
     const skipBtn = document.getElementById('skip-btn');
+    const playGameBtn = document.getElementById('play-game-btn');
+    const gameContainer = document.getElementById('game-container');
     const circumference = 2 * Math.PI * 90;
 
     const statusMessages = [
@@ -639,6 +768,7 @@
     let currentProgress = 0;
     let targetProgress = 0;
     let isSkipped = false;
+    let isGameActive = false;
 
     function updateProgress(percent) {
       targetProgress = Math.min(100, Math.max(0, percent));
@@ -667,12 +797,11 @@
         }, 50);
       }
 
-      if (currentProgress < 100 && !isSkipped) {
-        requestAnimationFrame(animateProgress);
-      } else {
+      // إذا اكتمل التحميل
+      if (currentProgress >= 100 && !isGameActive) {
         setTimeout(() => {
           window.location.href = 'index.html';
-        }, 800);
+        }, 1500);
       }
     }
 
@@ -684,14 +813,29 @@
       statusMessage.style.animation = 'fadeIn 0.5s ease';
     });
 
+    // زر تجربة اللعبة
+    playGameBtn.addEventListener('click', () => {
+      gameContainer.style.display = 'block';
+      isGameActive = true;
+      playGameBtn.style.display = 'none';
+      skipBtn.style.display = 'none';
+      statusMessage.textContent = 'اللعبة نشطة - استمتع!';
+      
+      // بدء اللعبة إذا لم تكن بدأت
+      if (!gameInterval) {
+        startGame();
+      }
+    });
+
     animateProgress();
 
     // ===== لعبة Subway Surfers =====
     const gameArea = document.getElementById('game-area');
-    const player = document.getElementById('player');
+    const runner = document.getElementById('runner');
     const leftBtn = document.getElementById('left-btn');
     const rightBtn = document.getElementById('right-btn');
     const jumpBtn = document.getElementById('jump-btn');
+    const backToLoadBtn = document.getElementById('back-to-load-btn');
     const scoreEl = document.getElementById('score');
     const coinsEl = document.getElementById('coins');
     const highScoreEl = document.getElementById('high-score');
@@ -710,8 +854,8 @@
     // تحديث موضع اللاعب
     function updatePlayerPosition() {
       const laneWidth = gameArea.offsetWidth / 3;
-      const leftPosition = playerPosition * laneWidth + laneWidth / 2 - 20;
-      player.style.left = leftPosition + 'px';
+      const leftPosition = playerPosition * laneWidth + laneWidth / 2;
+      runner.style.left = leftPosition + 'px';
     }
 
     // إنشاء عائق
@@ -757,7 +901,7 @@
         obstacle.element.style.top = obstacle.top + 'px';
         
         // اكتشاف التصادم
-        if (obstacle.lane === playerPosition && obstacle.top > 100 && obstacle.top < 140 && !isJumping) {
+        if (obstacle.lane === playerPosition && obstacle.top > 180 && obstacle.top < 220 && !isJumping) {
           gameOver();
           return;
         }
@@ -778,7 +922,7 @@
         coin.element.style.top = coin.top + 'px';
         
         // جمع العملة
-        if (coin.lane === playerPosition && coin.top > 100 && coin.top < 140 && !isJumping) {
+        if (coin.lane === playerPosition && coin.top > 180 && coin.top < 220 && !isJumping) {
           coin.element.remove();
           coinItems.splice(i, 1);
           coins += 1;
@@ -801,14 +945,14 @@
       if (isJumping) return;
       
       isJumping = true;
-      player.style.transform = 'translateX(-50%) translateY(-30px)';
+      runner.classList.add('jumping');
       
       setTimeout(() => {
-        player.style.transform = 'translateX(-50%) translateY(0)';
+        runner.classList.remove('jumping');
         setTimeout(() => {
           isJumping = false;
         }, 200);
-      }, 400);
+      }, 500);
     }
 
     // نهاية اللعبة
@@ -823,12 +967,9 @@
       }
       
       // عرض رسالة
-      alert(`انتهت اللعبة!\nنتيجتك: ${score}\nالعملات: ${coins}\nأفضل نتيجة: ${highScore}`);
-      
-      // إعادة تشغيل اللعبة
       setTimeout(() => {
-        restartGame();
-      }, 1000);
+        alert(`انتهت اللعبة!\nنتيجتك: ${score}\nالعملات: ${coins}\nأفضل نتيجة: ${highScore}`);
+      }, 300);
     }
 
     // إعادة تشغيل اللعبة
@@ -846,8 +987,8 @@
       isJumping = false;
       scoreEl.textContent = score;
       coinsEl.textContent = coins;
+      runner.classList.remove('jumping');
       updatePlayerPosition();
-      player.style.transform = 'translateX(-50%) translateY(0)';
       
       // بدء اللعبة من جديد
       startGame();
@@ -868,6 +1009,18 @@
       }, 50);
     }
 
+    // زر العودة إلى شاشة التحميل
+    backToLoadBtn.addEventListener('click', () => {
+      gameContainer.style.display = 'none';
+      isGameActive = false;
+      playGameBtn.style.display = 'block';
+      skipBtn.style.display = 'block';
+      statusMessage.textContent = 'جاري تحميل الملفات وإعداد التطبيق...';
+      
+      // إعادة تعيين اللعبة
+      restartGame();
+    });
+
     // تحريك اللاعب
     leftBtn.addEventListener('click', () => {
       if (playerPosition > 0) {
@@ -887,28 +1040,29 @@
 
     // التحكم باللوحة المفاتيح
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft' || e.key === 'a') {
+      if (!isGameActive) return;
+      
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
         if (playerPosition > 0) {
           playerPosition--;
           updatePlayerPosition();
         }
-      } else if (e.key === 'ArrowRight' || e.key === 'd') {
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         if (playerPosition < 2) {
           playerPosition++;
           updatePlayerPosition();
         }
-      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') {
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
         jump();
       }
     });
 
-    // بدء اللعبة بعد تهيئة الصفحة
+    // بدء اللعبة عند عرضها
     setTimeout(() => {
       updatePlayerPosition();
-      startGame();
-    }, 1000);
+    }, 100);
 
-    // محاكاة صوت العملة (بدون صوت فعلي)
+    // محاكاة صوت العملة
     function playCoinSound() {
       // يمكن إضافة صوت هنا
       console.log('Coin collected!');
@@ -965,7 +1119,9 @@
     }, filesToLoad.length * 200 + 2000);
 
     setTimeout(() => {
-      updateProgress(100);
+      if (!isGameActive && !isSkipped) {
+        updateProgress(100);
+      }
     }, filesToLoad.length * 200 + 2500);
   </script>
 </body>
