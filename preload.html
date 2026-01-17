@@ -21,33 +21,40 @@ body{
   max-width:450px;
   background:rgba(0,0,0,.75);
   border-radius:20px;
-  padding:18px;
+  padding:16px;
   text-align:center;
 }
-.logo{font-size:42px}
-h1{font-size:22px;margin:6px 0}
-.subtitle{font-size:13px;opacity:.8;margin-bottom:10px}
+.notice{
+  font-size:12px;
+  background:rgba(46,204,113,.15);
+  color:#2ecc71;
+  padding:6px;
+  border-radius:10px;
+  margin-bottom:8px
+}
+.logo{font-size:40px}
+h1{font-size:22px;margin:5px 0}
+.subtitle{font-size:13px;opacity:.8;margin-bottom:8px}
 
 /* progress */
 .progress{height:10px;background:#333;border-radius:5px;overflow:hidden}
 .progress span{
   display:block;height:100%;width:0%;
   background:linear-gradient(90deg,#3498db,#2ecc71);
-  transition:.4s
 }
-.percent{margin:6px 0}
+.percent{margin:5px 0}
 .file{
   font-size:13px;
   background:rgba(255,255,255,.1);
   padding:6px;
   border-radius:8px;
-  margin-bottom:8px
+  margin-bottom:6px
 }
 
 /* continue */
 .continue{
   display:none;
-  margin:10px 0;
+  margin:8px 0;
   padding:10px;
   width:100%;
   border:none;
@@ -59,14 +66,13 @@ h1{font-size:22px;margin:6px 0}
 /* game */
 .game{
   background:#111;
-  height:190px;
+  height:200px;
   border-radius:12px;
   position:relative;
   overflow:hidden;
-  margin-bottom:10px
+  margin-bottom:8px
 }
 .runner{
-  width:30px;height:30px;
   position:absolute;
   bottom:10px;
   left:50%;
@@ -77,6 +83,26 @@ h1{font-size:22px;margin:6px 0}
   position:absolute;
   top:-30px;
   font-size:26px;
+}
+
+/* game over */
+.overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:10;
+}
+.overlay h2{margin-bottom:10px}
+.restart{
+  font-size:28px;
+  background:none;
+  border:none;
+  color:#2ecc71;
+  cursor:pointer
 }
 
 /* ui */
@@ -105,39 +131,45 @@ h1{font-size:22px;margin:6px 0}
 <body>
 
 <div class="container">
+
+  <div class="notice">
+    ℹ️ هذه الصفحة تظهر في أول زيارة فقط — يتم التحميل لاحقًا من الكاش
+  </div>
+
   <div class="logo">👨‍⚕️</div>
   <h1>جاري التحميل</h1>
-  <div class="subtitle">احمِ المريض من العدوى</div>
+  <div class="subtitle">تجنب العدوى واجمع العلاج</div>
 
   <div class="progress"><span id="bar"></span></div>
   <div class="percent" id="percent">0%</div>
   <div class="file" id="file">بدء التحميل...</div>
 
-  <!-- زر المتابعة فوق اللعبة -->
   <button class="continue" id="continue" onclick="go()">متابعة ➡️</button>
 
   <div class="stats">
-    <div>❤️ <span id="hearts">5</span></div>
+    <div>❤️ <span id="hearts">0</span></div>
     <div>⭐ <span id="score">0</span></div>
   </div>
 
   <div class="game" id="game">
     <div class="runner" id="runner">👨‍⚕️</div>
+
+    <div class="overlay" id="overlay">
+      <h2>Game Over</h2>
+      <button class="restart" onclick="restart()">🔄</button>
+    </div>
   </div>
 
-  <!-- عكس الأزرار -->
   <div class="controls">
-    <button onclick="move(1)">◀</button>
-    <button onclick="move(-1)">▶</button>
+    <button onclick="move(-1)">◀</button>
+    <button onclick="move(1)">▶</button>
   </div>
+
 </div>
 
 <script>
 /* loading */
-const files=[
- "doctor.png","virus.svg","bacteria.svg",
- "antibiotic.svg","style.css","script.js"
-];
+const files=["doctor.png","virus.svg","bacteria.svg","antibiotic.svg"];
 let i=0,prog=0;
 const bar=document.getElementById("bar");
 const percent=document.getElementById("percent");
@@ -157,38 +189,36 @@ const loader=setInterval(()=>{
   }
 },700);
 
-/* game */
+/* game logic */
 const game=document.getElementById("game");
 const runner=document.getElementById("runner");
 const heartsEl=document.getElementById("hearts");
 const scoreEl=document.getElementById("score");
+const overlay=document.getElementById("overlay");
 
-let pos=0,hearts=5,score=0;
-
-function resetGame(){
-  hearts=5; score=0; pos=0;
-  heartsEl.innerText=hearts;
-  scoreEl.innerText=score;
-  runner.style.left="50%";
-}
+let pos=0, hearts=0, score=0;
+let fallSpeed=4;
+let playing=true;
 
 function move(d){
+  if(!playing) return;
   pos=Math.max(-1,Math.min(1,pos+d));
   runner.style.left=50+pos*30+"%";
 }
 
 /* keyboard */
 document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft"||e.key==="a") move(1);
-  if(e.key==="ArrowRight"||e.key==="d") move(-1);
+  if(e.key==="ArrowLeft"||e.key==="a") move(-1);
+  if(e.key==="ArrowRight"||e.key==="d") move(1);
 });
 
 function spawn(){
+  if(!playing) return;
+
   const r=Math.random();
   let emoji,type;
-
-  if(r<0.25){emoji="💊";type="pill"}
-  else if(r<0.55){emoji="🦠";type="bacteria"}
+  if(r<0.3){emoji="💊";type="pill"}
+  else if(r<0.6){emoji="🦠";type="bacteria"}
   else{emoji="👾";type="virus"}
 
   const el=document.createElement("div");
@@ -200,10 +230,10 @@ function spawn(){
 
   let y=-30;
   const fall=setInterval(()=>{
-    y+=4;
+    y+=fallSpeed;
     el.style.top=y+"px";
 
-    if(y>135){
+    if(y>140){
       const lane=parseInt(el.style.left);
       const playerLane=[20,50,80][pos+1];
 
@@ -211,10 +241,10 @@ function spawn(){
         if(type==="pill") hearts++;
         if(type==="bacteria") hearts--;
         if(type==="virus") hearts-=2;
-
         heartsEl.innerText=hearts;
+
         if(hearts<=0){
-          resetGame();
+          gameOver();
         }
       }
 
@@ -226,7 +256,27 @@ function spawn(){
   },30);
 }
 
-setInterval(spawn,800);
+function gameOver(){
+  playing=false;
+  overlay.style.display="flex";
+}
+
+function restart(){
+  hearts=0;
+  score=0;
+  pos=0;
+  fallSpeed=4;
+  heartsEl.innerText=hearts;
+  scoreEl.innerText=score;
+  runner.style.left="50%";
+  overlay.style.display="none";
+  playing=true;
+}
+
+setInterval(()=>{
+  spawn();
+  if(playing) fallSpeed+=0.05;
+},900);
 
 function go(){
   location.href="index.html";
