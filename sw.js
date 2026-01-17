@@ -1,131 +1,79 @@
-// ✅ نظام versioning ذكي - غيّر الرقم عند كل تحديث مهم
-const VERSION = '2025.01.13.004';
-const CACHE_NAME = 'interactive-map-' + VERSION;
+const CACHE_VERSION = 'v' + Date.now();
+const CACHE_NAME = 'semester-3-cache-' + CACHE_VERSION;
 
-const ASSETS_TO_CACHE = [
+const urlsToCache = [
   './',
-  './image/0.webp',
-  './preload.html',
   './index.html',
   './style.css',
   './script.js',
-  './tracker.js'
+  './tracker.js',
+  './image/wood.webp',
+  './image/Upper_wood.webp',
+  './image/0.png'
 ];
 
-// ✅ تثبيت Service Worker
+// ✅ التثبيت - تخزين الملفات في الكاش
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker: تثبيت الإصدار', CACHE_NAME);
-  
-  // ✅ تخطي مرحلة الانتظار وتفعيل مباشرة
-  self.skipWaiting();
+  console.log('🔧 Service Worker: Installing...');
   
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('📦 Service Worker: حفظ الملفات في الكاش');
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('📦 Caching files...');
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        console.log('✅ Service Worker: Installed');
+        return self.skipWaiting(); // تفعيل فوري
+      })
   );
 });
 
-// ✅ تنظيف الكاش القديم فوراً
+// ✅ التفعيل - حذف الكاش القديم
 self.addEventListener('activate', (event) => {
-  console.log('🔄 Service Worker: تفعيل الإصدار', CACHE_NAME);
+  console.log('🚀 Service Worker: Activating...');
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ حذف كاش قديم:', cacheName);
+            console.log('🗑️ Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      // ✅ السيطرة الفورية على جميع الصفحات
-      return self.clients.claim();
+      console.log('✅ Service Worker: Activated');
+      return self.clients.claim(); // التحكم الفوري في الصفحات
     })
   );
 });
 
-// ✅ السماح للصفحة بإجبار Service Worker على التحديث
+// ✅ الاستجابة - Network First مع Fallback للكاش
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // إذا نجح التحميل، حفظ في الكاش
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        // إذا فشل التحميل، استخدم الكاش
+        return caches.match(event.request);
+      })
+  );
+});
+
+// ✅ رسالة لإعادة التحميل عند التحديث
 self.addEventListener('message', (event) => {
   if (event.data && event.data.action === 'skipWaiting') {
     self.skipWaiting();
   }
-});
-
-// ✅ استراتيجية ذكية للتعامل مع الطلبات
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  const url = new URL(event.request.url);
-
-  // ✅ تجاهل طلبات GitHub API - دائماً من الشبكة
-  if (url.hostname === 'api.github.com' || url.hostname === 'raw.githubusercontent.com') {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // ✅ HTML/CSS/JS: Network First مع timeout (دائماً محدّث)
-  if (url.pathname.match(/\.(html|css|js)$/i) || url.pathname === '/' || url.pathname === './') {
-    event.respondWith(
-      Promise.race([
-        fetch(event.request).then((response) => {
-          console.log('🌐 Network Success:', url.pathname);
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, resClone);
-          });
-          return response;
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('timeout')), 3000)
-        )
-      ]).catch(() => {
-        console.log('💾 Cache Fallback:', url.pathname);
-        return caches.match(event.request);
-      })
-    );
-    return;
-  }
-
-  // ✅ الصور: Cache First (سريع)
-  if (url.pathname.match(/\.(webp|png|jpg|jpeg|svg|gif)$/i)) {
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          console.log('✅ Cache Hit:', url.pathname);
-          return cachedResponse;
-        }
-        console.log('📥 تحميل صورة جديدة:', url.pathname);
-        return fetch(event.request).then((response) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, response.clone());
-            return response;
-          });
-        });
-      })
-    );
-    return;
-  }
-
-  // ✅ باقي الملفات: Network First
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        console.log('🌐 Network Success:', url.pathname);
-        const resClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, resClone);
-        });
-        return response;
-      })
-      .catch(() => {
-        console.log('💾 Cache Fallback:', url.pathname);
-        return caches.match(event.request);
-      })
-  );
 });
