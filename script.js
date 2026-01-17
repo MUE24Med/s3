@@ -1971,3 +1971,51 @@ if ('serviceWorker' in navigator) {
 }
 
 console.log('✅ script.js تم تحميله بالكامل');
+
+
+
+// ✅ إضافة للكود الموجود في script.js
+
+// استقبال رسائل من Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data.type === 'UPDATE_CHECK_COMPLETE') {
+      if (event.data.hasUpdates) {
+        console.log('🆕 تم تحديث الملفات:', event.data.updatedFiles);
+        
+        const fileNames = event.data.updatedFiles
+          .map(url => url.split('/').pop())
+          .join(', ');
+        
+        const shouldReload = confirm(
+          `🎉 تم تحديث الملفات التالية:\n\n${fileNames}\n\n` +
+          `هل تريد إعادة التحميل للحصول على آخر نسخة؟`
+        );
+        
+        if (shouldReload) {
+          window.location.reload();
+        }
+      } else {
+        console.log('✅ لا توجد تحديثات');
+      }
+    }
+  });
+}
+
+// ✅ دالة لفحص التحديثات يدوياً
+async function manualUpdateCheck() {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      action: 'checkUpdates'
+    });
+  }
+}
+
+// ✅ تنظيف الكاش القديم (اختياري - يمكن استدعاؤه مرة شهرياً)
+async function cleanOldCache() {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      action: 'cleanCache'
+    });
+  }
+}
