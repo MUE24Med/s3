@@ -363,8 +363,8 @@ h1 {
   </div>
 
   <div class="controls">
-    <button class="control-btn" id="leftBtn">⬅️</button>
-    <button class="control-btn" id="rightBtn">➡️</button>
+    <button class="control-btn" id="leftBtn">➡️</button>
+    <button class="control-btn" id="rightBtn">⬅️</button>
   </div>
 
   <!-- Top 5 Leaderboard - في الأسفل -->
@@ -499,8 +499,8 @@ function moveRunner(direction) {
   runner.style.left = lanes[runnerPosition + 1] + '%';
 }
 
-leftBtn.addEventListener('click', () => moveRunner(-1));
-rightBtn.addEventListener('click', () => moveRunner(1));
+leftBtn.addEventListener('click', () => moveRunner(1));
+rightBtn.addEventListener('click', () => moveRunner(-1));
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft' || e.key === 'a') moveRunner(-1);
