@@ -1,243 +1,123 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.17.001">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>semester-3 / خريطة الكلية التفاعلية</title>
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="color-scheme" content="only light">
-  <meta name="supported-color-schemes" content="light">
-  <meta name="theme-color" content="#000000">
-  <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
-  <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
-
-  <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
-  <link rel="preconnect" href="https://api.github.com" crossorigin>
-  <link rel="dns-prefetch" href="https://mozilla.github.io">
-  <link rel="preload" href="image/wood.webp" as="image" type="image/webp">
-  <link rel="preload" href="image/0.png" as="image" type="image/png">
-  <link rel="icon" type="image/png" href="image/0.png">
-  <link rel="apple-touch-icon" href="image/0.png">
-  <link rel="preload" href="image/logo-A.webp" as="image" type="image/webp">
-  <link rel="preload" href="image/logo-B.webp" as="image" type="image/webp">
-  <link rel="preload" href="image/logo-C.webp" as="image" type="image/webp">
-  <link rel="preload" href="image/logo-D.webp" as="image" type="image/webp">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="خريطة المنهج الطبي التفاعلية - نظام تعليمي للطلاب">
+    <title>خريطة المنهج الطبي | Medical Curriculum Map</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/webp" href="image/logo-A.webp">
 </head>
 <body>
-
-<!-- شاشة اختيار الجروب -->
-<div id="group-selection-screen">
-  <div id="group-selection-content">
-    <img id="main-logo" src="image/0.png" alt="شعار الكلية" loading="eager" />
-    <h1>اختر مجموعتك</h1>
-    <div id="group-buttons">
-      <button class="group-btn" data-group="A" aria-label="اختر المجموعة A">
-        <span class="group-letter">A</span>
-        <span class="group-label">Group A</span>
-      </button>
-      <button class="group-btn" data-group="B" aria-label="اختر المجموعة B">
-        <span class="group-letter">B</span>
-        <span class="group-label">Group B</span>
-      </button>
-      <button class="group-btn" data-group="C" aria-label="اختر المجموعة C">
-        <span class="group-letter">C</span>
-        <span class="group-label">Group C</span>
-      </button>
-      <button class="group-btn" data-group="D" aria-label="اختر المجموعة D">
-        <span class="group-letter">D</span>
-        <span class="group-label">Group D</span>
-      </button>
+    <div id="app">
+        <!-- 🎯 شاشة التحميل الأولية -->
+        <div id="initial-loading-overlay" class="loading-overlay">
+            <div class="progress-container">
+                <svg width="200" height="200" viewBox="0 0 150 150">
+                    <circle class="progress-circle-bg" cx="75" cy="75" r="65"/>
+                    <circle id="progress-circle" class="progress-circle" cx="75" cy="75" r="65"/>
+                </svg>
+                <div id="progress-text" class="progress-text">0%</div>
+            </div>
+            <div id="loading-status">جاري تحميل البيانات...</div>
+        </div>
+        
+        <!-- 🟡 شاشة التحميل الثانوي -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loader-content">
+                <img id="splash-image" src="" alt="Group Logo" style="width: 200px; height: auto;">
+                <h2 id="project-loading-title" class="project-title"></h2>
+                <div class="light-bulbs">
+                    <div id="bulb-1" class="light-bulb"></div>
+                    <div id="bulb-2" class="light-bulb"></div>
+                    <div id="bulb-3" class="light-bulb"></div>
+                    <div id="bulb-4" class="light-bulb"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 👥 شاشة اختيار المجموعة -->
+        <div id="group-selection-screen" class="hidden">
+            <h1 class="selection-title">🌟 اختر مجموعتك</h1>
+            <div class="groups-container">
+                <button class="group-btn" data-group="A">المجموعة A</button>
+                <button class="group-btn" data-group="B">المجموعة B</button>
+                <button class="group-btn" data-group="C">المجموعة C</button>
+                <button class="group-btn" data-group="D">المجموعة D</button>
+            </div>
+            <div style="margin-top: 40px; color: rgba(255,255,255,0.7); text-align: center;">
+                <p>اختر مجموعتك للوصول إلى المواد والملفات الخاصة بك</p>
+                <p style="font-size: 0.9rem; margin-top: 10px;">سيتم تذكر اختيارك في الزيارة القادمة</p>
+            </div>
+        </div>
+        
+        <!-- 🔍 شريط البحث -->
+        <div id="search-bar">
+            <button id="search-icon" title="بحث">🔍</button>
+            <input id="search-input" type="text" placeholder="ابحث عن ملف أو محاضرة...">
+        </div>
+        
+        <!-- 🎮 لوحة التحكم -->
+        <div id="js-toggle-container" class="bottom">
+            <div class="controls-group">
+                <span class="toggle-label">التفاعل</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="js-toggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            
+            <div class="controls-group">
+                <button id="back-button-group" class="icon-btn" title="رجوع">
+                    <span id="back-btn-text">➡️ إلى الخريطة ➡️</span>
+                </button>
+                <button id="change-group-btn" class="icon-btn" title="تغيير المجموعة">
+                    <span id="group-btn-text">تغيير الجروب</span>
+                </button>
+            </div>
+            
+            <div class="controls-group">
+                <button id="clear-cache-svg-btn" class="icon-btn" title="مسح الكاش">🔄</button>
+            </div>
+            
+            <button id="move-toggle" class="icon-btn" title="تحريك اللوحة">↑↓</button>
+        </div>
+        
+        <!-- 🗺️ الحاوية الرئيسية للخريطة -->
+        <div id="scroll-container">
+            <svg id="main-svg" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!-- سيتم إضافة clipPaths هنا ديناميكياً -->
+                </defs>
+                
+                <!-- 🪵 صورة الخشب الأساسية -->
+                <image href="image/wood.webp" width="1024" height="2454"/>
+                
+                <!-- 🎯 المجموعة الديناميكية للروابط -->
+                <g id="dynamic-links-group">
+                    <!-- سيتم إضافة عناصر الواجهة هنا ديناميكياً -->
+                </g>
+                
+                <!-- 📂 محتوى المجموعة المحددة -->
+                <g id="group-specific-content">
+                    <!-- سيتم تحميل SVG المجموعة هنا -->
+                </g>
+            </svg>
+        </div>
+        
+        <!-- 📄 عارض PDF -->
+        <div id="pdf-overlay" class="hidden">
+            <div class="pdf-controls">
+                <div class="pdf-btn-group">
+                    <button id="downloadBtn" class="pdf-btn">📥 تحميل</button>
+                    <button id="shareBtn" class="pdf-btn">🔗 مشاركة</button>
+                </div>
+                <button id="closePdfBtn" class="pdf-btn">❌ إغلاق</button>
+            </div>
+            <iframe id="pdfFrame"></iframe>
+        </div>
     </div>
-    <p style="color: #888; font-size: 12px; margin-top: 20px;">
-      💡 يمكنك تغيير المجموعة لاحقاً من زر "🔄 Change Group"
-    </p>
-  </div>
-</div>
-
-<!-- أدوات التحكم -->
-<div id="js-toggle-container" class="top">
-  <div id="search-container">
-    <input 
-      type="text" 
-      id="search-input" 
-      placeholder="ابحث باسم الملف..."
-      autocomplete="off"
-      aria-label="حقل البحث"
-    >
-    <span id="search-icon" class="clickable-area" role="button" aria-label="بحث">🔙</span>
-  </div>
-  
-  <div class="controls-row">
-    <span 
-      id="move-toggle" 
-      role="button" 
-      aria-label="تحريك شريط الأدوات"
-      tabindex="0"
-    >↕️</span>
     
-    <span 
-      id="eye-toggle" 
-      role="button" 
-      aria-label="إخفاء/إظهار شريط البحث"
-      tabindex="0"
-      title="إخفاء/إظهار البحث"
-    >👁️</span>
-    
-    <div class="hover-toggle-container">
-      <span style="font-size: 12px; opacity: 0.8;">Hover</span>
-      <label class="switch">
-        <input type="checkbox" id="js-toggle" checked aria-label="تفعيل التفاعل">
-        <span class="slider round"></span>
-      </label>
-    </div>
-  </div>
-</div>
-
-<!-- شاشة التحميل -->
-<div id="loading-overlay">
-  <div id="loading-content">
-    <img 
-      id="splash-image" 
-      src="image/0.png" 
-      alt="شعار التحميل"
-      loading="eager"
-    />
-    <h1 id="project-loading-title">جاري التحميل...</h1>
-    <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
-      <div class="light-bulb" id="bulb-1"></div>
-      <div class="light-bulb" id="bulb-2"></div>
-      <div class="light-bulb" id="bulb-3"></div>
-      <div class="light-bulb" id="bulb-4"></div>
-    </div>
-    <div id="legend">
-      <div class="legend-item red">أسئلة</div>
-      <div class="legend-item yellow">محاضرات</div>
-      <div class="legend-item white">مواد أخرى</div>
-      <div class="legend-item purple">إجابات</div>
-      <div class="legend-item green">سكاشن العملي</div>
-      <div class="legend-item blue">فيديو شرح</div>
-    </div>
-  </div>
-</div>
-
-<!-- عارض PDF -->
-<div id="pdf-overlay" class="hidden">
-  <div id="toolbar">
-    <button id="closePdfBtn" class="toolbar-btn" aria-label="إغلاق">❌ إغلاق</button>
-    <button id="downloadBtn" class="toolbar-btn" aria-label="تحميل">⬇ تحميل</button>
-    <button id="shareBtn" class="toolbar-btn" aria-label="مشاركة">🔗 مشاركة</button>
-  </div>
-  <iframe 
-    id="pdfFrame" 
-    src="" 
-    loading="lazy"
-    title="عارض PDF"
-    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-  ></iframe>
-</div>
-
-<!-- SVG الرئيسي -->
-<div id="scroll-container">
-  <svg 
-    id="main-svg" 
-    xmlns="http://www.w3.org/2000/svg" 
-    xmlns:xlink="http://www.w3.org/1999/xlink" 
-    preserveAspectRatio="xMinYMin meet"
-    role="img"
-    aria-label="الخريطة التفاعلية"
-  >
-    <defs>
-      <clipPath id="fixed-buttons-clip">
-        <rect x="0" y="0" width="1024" height="250"/>
-      </clipPath>
-    </defs>
-
-    <g transform="translate(0,0)" id="files-list-container">
-      <image 
-        data-src="image/wood.webp" 
-        x="0" 
-        y="0" 
-        width="1024" 
-        height="2454"
-        aria-hidden="true"
-      />
-    </g>
-
-    <g id="dynamic-links-group"></g>
-    <g id="group-specific-content"></g>
-
-    <g id="fixed-controls-layer">
-      <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="654" y="100" width="250" height="50" rx="10" fill="#d32f2f" stroke="#fff" stroke-width="2"/>
-        <text 
-          id="reset-btn-text" 
-          x="779" 
-          y="130" 
-          text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
-          font-size="18"
-        >🔄 Reset</text>
-      </g>
-
-      <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff" stroke-width="2"/>
-        <text 
-          id="group-btn-text" 
-          x="245" 
-          y="130" 
-          text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
-          font-size="18"
-        >Change Group 🔄</text>
-      </g>
-
-      <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
-        <rect 
-          id="back-btn" 
-          x="112" 
-          y="160" 
-          width="800" 
-          height="70" 
-          rx="15" 
-          fill="#3e2723" 
-          stroke="#fff" 
-          stroke-width="2" 
-        />
-        <text 
-          x="512" 
-          y="205" 
-          id="back-btn-text" 
-          text-anchor="middle" 
-          fill="white" 
-          font-size="22" 
-          font-weight="bold"
-        >➡️ إلى الخريطة ➡️</text>
-      </g>
-    </g>
-
-    <image 
-      data-src="image/Upper_wood.webp" 
-      x="0" 
-      y="0" 
-      width="1024" 
-      height="250"
-      style="pointer-events: none;"
-      aria-hidden="true"
-    />
-  </svg>
-</div>
-
-<script defer src="script.js"></script>
-<script defer src="tracker.js"></script>
-
+    <script src="script.js"></script>
 </body>
 </html>
