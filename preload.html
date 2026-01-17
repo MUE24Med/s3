@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <title>Preload Game</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{
@@ -18,16 +18,16 @@ body{
 #ui{
   display:flex;
   justify-content:space-between;
-  padding:10px;
+  padding:8px 12px;
   background:#000;
   font-size:14px;
 }
 
-/* Game Area */
+/* Game */
 #game{
   position:relative;
   width:100vw;
-  height:calc(100vh - 130px);
+  height:calc(100vh - 120px);
   background:#222;
   overflow:hidden;
 }
@@ -35,29 +35,29 @@ body{
 /* Player */
 #player{
   position:absolute;
-  bottom:10px;
+  bottom:8px;
   font-size:42px;
   left:50%;
   transform:translateX(-50%);
 }
 
-/* Falling Items */
+/* Items */
 .item{
   position:absolute;
-  font-size:32px;
+  font-size:30px;
 }
 
 /* Controls (معكوسة) */
 #controls{
   display:flex;
   justify-content:space-around;
-  background:#000;
   padding:10px;
+  background:#000;
 }
 
 button{
   font-size:22px;
-  padding:10px 25px;
+  padding:8px 22px;
 }
 
 /* Game Over */
@@ -69,7 +69,7 @@ button{
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  z-index:10;
+  z-index:5;
 }
 
 .hidden{display:none}
@@ -79,8 +79,8 @@ button{
 <body>
 
 <div id="ui">
-  <div>❤️ القلوب: <span id="hearts">0</span></div>
-  <div>🏆 السكور: <span id="score">0</span></div>
+  <div>❤️ <span id="hearts">0</span></div>
+  <div>🏆 <span id="score">0</span></div>
 </div>
 
 <div id="game">
@@ -89,17 +89,17 @@ button{
 
 <div id="controls">
   <!-- معكوسين -->
-  <button id="rightBtn">⬅️</button>
-  <button id="leftBtn">➡️</button>
+  <button id="btnRight">⬅️</button>
+  <button id="btnLeft">➡️</button>
 </div>
 
 <div id="gameOver" class="hidden">
-  <h1>Game Over</h1>
+  <h2>Game Over</h2>
   <button id="restart">🔄 إعادة اللعب</button>
 </div>
 
 <script>
-/* ================== GAME LOGIC ================== */
+/* ================= GAME ================= */
 
 const game = document.getElementById("game");
 const player = document.getElementById("player");
@@ -107,126 +107,106 @@ const heartsEl = document.getElementById("hearts");
 const scoreEl = document.getElementById("score");
 const gameOverBox = document.getElementById("gameOver");
 
-let playerX = window.innerWidth / 2;
-let hearts = 0;          // يبدأ بـ 0
+let gameWidth = game.clientWidth;
+let playerX = gameWidth / 2;
+let hearts = 0;
 let score = 0;
 let speed = 2;
 let running = true;
-let spawnedMid = false;
 
-/* Player Movement (معكوس) */
+/* Player */
 function updatePlayer(){
+  if(playerX < 0) playerX = 0;
+  if(playerX > gameWidth - 40) playerX = gameWidth - 40;
   player.style.left = playerX + "px";
 }
 
-function moveLeft(){
-  playerX += 25; // معكوس
-  updatePlayer();
-}
+/* Controls (معكوسة) */
+function moveLeft(){ playerX += 30; updatePlayer(); }
+function moveRight(){ playerX -= 30; updatePlayer(); }
 
-function moveRight(){
-  playerX -= 25; // معكوس
-  updatePlayer();
-}
+document.getElementById("btnLeft").onclick = moveRight;
+document.getElementById("btnRight").onclick = moveLeft;
 
-/* Buttons */
-document.getElementById("leftBtn").onclick = moveRight;
-document.getElementById("rightBtn").onclick = moveLeft;
-
-/* Keyboard (معكوس) */
 document.addEventListener("keydown", e=>{
+  if(!running) return;
   if(e.key === "ArrowLeft") moveRight();
   if(e.key === "ArrowRight") moveLeft();
 });
 
-/* Spawn Items */
-function spawnItem(){
-  const item = document.createElement("div");
-  item.className = "item";
+/* Spawn */
+function createItem(){
+  if(!running) return;
+
+  const el = document.createElement("div");
+  el.className = "item";
 
   const r = Math.random();
-  if(r < 0.4) item.textContent = "🦠";
-  else if(r < 0.7) item.textContent = "☣️";
-  else item.textContent = "💊";
+  el.textContent = r < 0.4 ? "🦠" : r < 0.7 ? "☣️" : "💊";
 
-  item.style.left = Math.random()*(window.innerWidth-40)+"px";
-  item.style.top = "0px";
-  game.appendChild(item);
+  el.style.left = Math.random() * (gameWidth - 30) + "px";
+  el.style.top = "0px";
+  game.appendChild(el);
 
   let y = 0;
 
-  function fall(){
-    if(!running) return;
-    y += speed;
-    item.style.top = y + "px";
+  const fall = () => {
+    if(!running){ el.remove(); return; }
 
-    /* عند نص الشاشة ينزل اتنين كمان */
-    if(!spawnedMid && y > game.clientHeight/2){
-      spawnedMid = true;
-      spawnItem();
-      spawnItem();
-    }
+    y += speed;
+    el.style.top = y + "px";
 
     const p = player.getBoundingClientRect();
-    const i = item.getBoundingClientRect();
+    const i = el.getBoundingClientRect();
 
     if(i.bottom > p.top && i.left < p.right && i.right > p.left){
-      handleHit(item.textContent);
-      item.remove();
+      hit(el.textContent);
+      el.remove();
       return;
     }
 
     if(y < game.clientHeight){
       requestAnimationFrame(fall);
     }else{
-      item.remove();
+      el.remove();
       score++;
       scoreEl.textContent = score;
     }
-  }
+  };
 
   fall();
 }
 
-/* Hit Logic */
-function handleHit(type){
+/* Hit */
+function hit(type){
   if(type === "💊") hearts++;
   if(type === "🦠") hearts--;
   if(type === "☣️") hearts -= 2;
 
   heartsEl.textContent = hearts;
-
   if(hearts < 0) endGame();
 }
 
-/* Game Loop */
+/* Loop */
 function loop(){
   if(!running) return;
-  spawnedMid = false;
-  spawnItem();
-  spawnItem();
-  speed += 0.15;
-  setTimeout(loop, 1400);
+  createItem();
+  createItem(); // اتنين
+  speed += 0.1;
+  setTimeout(loop, 1300);
 }
 
-/* End / Restart */
+/* End */
 function endGame(){
   running = false;
   gameOverBox.classList.remove("hidden");
 }
 
-document.getElementById("restart").onclick = ()=>{
-  location.reload();
-};
+document.getElementById("restart").onclick = ()=>location.reload();
 
+/* Init */
 updatePlayer();
 loop();
-
-/* ====== Preload Notice (يظهر أول مرة فقط) ====== */
-if(!localStorage.getItem("preload_seen")){
-  console.log("⚡ Preload page cached");
-  localStorage.setItem("preload_seen","yes");
-}
 </script>
 
 </body>
