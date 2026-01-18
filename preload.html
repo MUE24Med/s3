@@ -364,7 +364,7 @@ h1 {
     <ul class="leaderboard-list" id="leaderboardList">
       <li class="leaderboard-item">
         <span class="leaderboard-rank">-</span>
-        <span class="leaderboard-name">لا توجد نتائج بعد</span>
+        <span class="leaderboard-name">جاري التحميل...</span>
         <span class="leaderboard-score">-</span>
       </li>
     </ul>
@@ -400,88 +400,49 @@ function updateProgress() {
 
 async function loadFile(url, index) {
   return new Promise(async (resolve) => {
-    setTimeout(async () => {
-      try {
-        const cache = await caches.open('semester-3-smart-cache-v2025.01.17');
-        
-        let cachedResponse = await cache.match(url);
-        
-        if (cachedResponse) {
-          console.log(`✅ من الكاش: ${url}`);
-          loadedFiles++;
-          updateProgress();
-          fileStatus.textContent = `✔ تم تحميل من الكاش: ${url.split('/').pop()}`;
-          resolve();
-          return;
-        }
+    try {
+      const cache = await caches.open('semester-3-smart-cache-v2025.01.17');
+      let cachedResponse = await cache.match(url);
 
-        console.log(`🌐 تحميل من الشبكة: ${url}`);
-        
-        const isImage = url.match(/\.(webp|png|jpg|jpeg|gif)$/i);
-
-        if (isImage) {
-          const img = new Image();
-          
-          img.onload = async () => {
-            try {
-              const response = await fetch(url);
-              if (response.ok) {
-                await cache.put(url, response.clone());
-                console.log(`💾 تم حفظ في الكاش: ${url}`);
-              }
-            } catch (err) {
-              console.warn('⚠️ فشل الحفظ في الكاش:', err);
-            }
-            
-            loadedFiles++;
-            updateProgress();
-            fileStatus.textContent = `✔ تم تحميل: ${url.split('/').pop()}`;
-            resolve();
-          };
-          
-          img.onerror = () => {
-            loadedFiles++;
-            updateProgress();
-            fileStatus.textContent = `⚠ فشل تحميل: ${url.split('/').pop()}`;
-            resolve();
-          };
-          
-          img.src = url;
-        } else {
-          try {
-            const response = await fetch(url);
-            
-            if (response.ok) {
-              await cache.put(url, response.clone());
-              console.log(`💾 تم حفظ في الكاش: ${url}`);
-            }
-            
-            loadedFiles++;
-            updateProgress();
-            fileStatus.textContent = `✔ تم تحميل: ${url.split('/').pop()}`;
-            resolve();
-          } catch (err) {
-            loadedFiles++;
-            updateProgress();
-            fileStatus.textContent = `⚠ فشل تحميل: ${url.split('/').pop()}`;
-            resolve();
-          }
-        }
-      } catch (cacheError) {
-        console.error('❌ خطأ في الكاش:', cacheError);
+      if (cachedResponse) {
+        console.log(`✅ من الكاش: ${url}`);
         loadedFiles++;
         updateProgress();
-        fileStatus.textContent = `⚠ خطأ: ${url.split('/').pop()}`;
-        resolve();
+        fileStatus.textContent = `✔ محفوظ: ${url.split('/').pop()}`;
+        
+        setTimeout(resolve, 50);
+        return;
       }
-    }, 200 + (index * 300));
+
+      console.log(`🌐 تحميل: ${url}`);
+      const response = await fetch(url);
+
+      if (response.ok) {
+        await cache.put(url, response.clone());
+        console.log(`💾 حفظ: ${url}`);
+      }
+
+      loadedFiles++;
+      updateProgress();
+      fileStatus.textContent = `✔ تم: ${url.split('/').pop()}`;
+      
+      setTimeout(resolve, 100);
+
+    } catch (error) {
+      console.error('❌ خطأ:', url, error);
+      loadedFiles++;
+      updateProgress();
+      resolve();
+    }
   });
 }
 
 async function startLoading() {
-  for (let i = 0; i < filesToLoad.length; i++) {
-    await loadFile(filesToLoad[i], i);
-  }
+  const loadPromises = filesToLoad.map((file, index) => 
+    loadFile(file, index)
+  );
+
+  await Promise.all(loadPromises);
 
   fileStatus.textContent = '🎉 اكتمل التحميل!';
   continueBtn.style.display = 'block';
@@ -495,6 +456,10 @@ continueBtn.addEventListener('click', () => {
   localStorage.setItem('last_visit_timestamp', Date.now());
   window.location.replace('index.html');
 });
+
+// ====================
+// نظام اللعبة
+// ====================
 
 const gameContainer = document.getElementById('gameContainer');
 const runner = document.getElementById('runner');
@@ -644,6 +609,22 @@ function saveLocalLeaderboard(leaderboard) {
 }
 
 async function updateLeaderboard(playerName, playerScore) {
+  try {
+    const formData = new FormData();
+    formData.append('name', playerName);
+    formData.append('score', playerScore);
+    formData.append('date', new Date().toISOString());
+    
+    await fetch('https://formspree.io/f/xzdpqrnj', {
+      method: 'POST',
+      body: formData
+    });
+    
+    console.log('✅ تم إرسال النتيجة إلى السيرفر');
+  } catch (error) {
+    console.error('❌ فشل إرسال النتيجة:', error);
+  }
+
   let leaderboard = getLocalLeaderboard();
 
   leaderboard.push({
