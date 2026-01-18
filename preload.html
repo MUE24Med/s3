@@ -371,6 +371,7 @@ h1 {
   </div>
 </div>
 
+<script src="tracker.js"></script>
 <script>
 const filesToLoad = [
   'image/wood.webp',
@@ -401,7 +402,7 @@ function updateProgress() {
 async function loadFile(url, index) {
   return new Promise(async (resolve) => {
     try {
-      const cache = await caches.open('semester-3-smart-cache-v2025.01.17');
+      const cache = await caches.open('semester-3-cache-v1');
       let cachedResponse = await cache.match(url);
 
       if (cachedResponse) {
@@ -409,7 +410,7 @@ async function loadFile(url, index) {
         loadedFiles++;
         updateProgress();
         fileStatus.textContent = `✔ محفوظ: ${url.split('/').pop()}`;
-        
+
         setTimeout(resolve, 50);
         return;
       }
@@ -425,7 +426,7 @@ async function loadFile(url, index) {
       loadedFiles++;
       updateProgress();
       fileStatus.textContent = `✔ تم: ${url.split('/').pop()}`;
-      
+
       setTimeout(resolve, 100);
 
     } catch (error) {
@@ -609,20 +610,9 @@ function saveLocalLeaderboard(leaderboard) {
 }
 
 async function updateLeaderboard(playerName, playerScore) {
-  try {
-    const formData = new FormData();
-    formData.append('name', playerName);
-    formData.append('score', playerScore);
-    formData.append('date', new Date().toISOString());
-    
-    await fetch('https://formspree.io/f/xzdpqrnj', {
-      method: 'POST',
-      body: formData
-    });
-    
-    console.log('✅ تم إرسال النتيجة إلى السيرفر');
-  } catch (error) {
-    console.error('❌ فشل إرسال النتيجة:', error);
+  // إرسال للسيرفر
+  if (typeof trackGameScore === 'function') {
+    trackGameScore(playerScore);
   }
 
   let leaderboard = getLocalLeaderboard();
@@ -673,9 +663,17 @@ function endGame() {
   finalScore.textContent = `النقاط النهائية: ${score}`;
   gameOverlay.style.display = 'flex';
 
-  let playerName = localStorage.getItem('user_real_name');
-  if (!playerName || playerName === 'زائر' || playerName === 'زائر مجهول') {
-    playerName = localStorage.getItem('visitor_id') || 'لاعب مجهول';
+  // الحصول على اسم اللاعب من UserTracker
+  let playerName = 'زائر';
+  if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
+    playerName = UserTracker.getDisplayName();
+  } else {
+    const realName = localStorage.getItem('user_real_name');
+    if (realName && realName.trim()) {
+      playerName = realName.trim();
+    } else {
+      playerName = localStorage.getItem('visitor_id') || 'زائر';
+    }
   }
 
   updateLeaderboard(playerName, score);
