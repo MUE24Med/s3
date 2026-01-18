@@ -215,19 +215,19 @@ function normalizeArabic(text) {
 
 function autoTranslate(filename) {
     if (!filename) return '';
-    let arabic = filename.toLowerCase();  
+    let arabic = filename.toLowerCase();
 
-    for (let [en, ar] of Object.entries(translationMap)) {  
-        const regex = new RegExp(en, 'gi');  
-        arabic = arabic.replace(regex, ar);  
-    }  
+    for (let [en, ar] of Object.entries(translationMap)) {
+        const regex = new RegExp(en, 'gi');
+        arabic = arabic.replace(regex, ar);
+    }
 
-    arabic = arabic  
-        .replace(/\.pdf$/i, '')  
-        .replace(/\.webp$/i, '')  
-        .replace(/-/g, ' ')  
-        .replace(/_/g, ' ')  
-        .trim();  
+    arabic = arabic
+        .replace(/\.pdf$/i, '')
+        .replace(/\.webp$/i, '')
+        .replace(/-/g, ' ')
+        .replace(/_/g, ' ')
+        .trim();
 
     return arabic;
 }
@@ -283,10 +283,10 @@ function loadSelectedGroup() {
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
 
-    const splashImage = document.getElementById('splash-image');  
-    if (splashImage) {  
-        splashImage.src = `image/logo-${groupLetter}.webp`;  
-    }  
+    const splashImage = document.getElementById('splash-image');
+    if (splashImage) {
+        splashImage.src = `image/logo-${groupLetter}.webp`;
+    }
 
     loadingProgress = {
         totalSteps: 0,
@@ -294,9 +294,9 @@ function showLoadingScreen(groupLetter) {
         currentPercentage: 0
     };
 
-    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));  
-    loadingOverlay.classList.add('active');  
-    console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);  
+    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
+    loadingOverlay.classList.add('active');
+    console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);
     updateWelcomeMessages();
 }
 
@@ -331,14 +331,19 @@ function updateLoadProgress() {
 
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
+    if (!groupContainer) {
+        console.error('❌ group-specific-content غير موجود');
+        return;
+    }
+
     groupContainer.innerHTML = '';
 
     try {
         console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);
-        
+
         const cache = await caches.open('semester-3-smart-cache-v2025.01.17');
         const cachedResponse = await cache.match(`groups/group-${groupLetter}.svg`);
-        
+
         let response;
         if (cachedResponse) {
             console.log(`✅ تم الحصول على SVG من الكاش`);
@@ -346,7 +351,7 @@ async function loadGroupSVG(groupLetter) {
         } else {
             console.log(`🌐 تحميل SVG من الشبكة`);
             response = await fetch(`groups/group-${groupLetter}.svg`);
-            
+
             if (response.ok) {
                 cache.put(`groups/group-${groupLetter}.svg`, response.clone());
             }
@@ -403,54 +408,72 @@ async function loadGroupSVG(groupLetter) {
 
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
-    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');  
-    if (oldBanner) oldBanner.remove();  
-    if (currentFolder !== "") return;  
+    if (!dynamicGroup) return;
 
-    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");  
-    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);   
-    banner.setAttribute("x", "197.20201666994924");  
-    banner.setAttribute("y", "2074.3139768463334");   
-    banner.setAttribute("width", "629.8946370139159");  
-    banner.setAttribute("height", "275.78922917259797");   
-    banner.setAttribute("class", "wood-banner-animation");  
-    banner.style.mixBlendMode = "multiply";  
-    banner.style.opacity = "0.9";  
-    banner.style.pointerEvents = "auto";   
+    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');
+    if (oldBanner) oldBanner.remove();
+    if (currentFolder !== "") return;
 
-    banner.onclick = (e) => {  
-        e.stopPropagation();  
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');  
+    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);
+    banner.setAttribute("x", "197.20201666994924");
+    banner.setAttribute("y", "2074.3139768463334");
+    banner.setAttribute("width", "629.8946370139159");
+    banner.setAttribute("height", "275.78922917259797");
+    banner.setAttribute("class", "wood-banner-animation");
+    banner.style.mixBlendMode = "multiply";
+    banner.style.opacity = "0.9";
+    banner.style.pointerEvents = "auto";
+
+    banner.onclick = (e) => {
+        e.stopPropagation();
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
         window.goToWood();
         pushNavigationState(NAV_STATE.GROUP_SELECTION);
-    };  
+    };
 
     dynamicGroup.appendChild(banner);
 }
 
+/* ========================================
+   [007] تهيئة المجموعة
+   ======================================== */
+
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
-    saveSelectedGroup(groupLetter);  
+    
+    saveSelectedGroup(groupLetter);
 
-    if (toggleContainer) toggleContainer.style.display = 'flex';  
-    if (scrollContainer) scrollContainer.style.display = 'block';  
-    if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');  
+    if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');
+    if (toggleContainer) toggleContainer.style.display = 'flex';
+    if (scrollContainer) scrollContainer.style.display = 'block';
 
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
-    showLoadingScreen(groupLetter);  
+    
+    showLoadingScreen(groupLetter);
 
-    await Promise.all([fetchGlobalTree(), loadGroupSVG(groupLetter)]);
-    window.updateDynamicSizes();  
-    window.loadImages();
+    try {
+        await Promise.all([
+            fetchGlobalTree(),
+            loadGroupSVG(groupLetter)
+        ]);
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        window.updateDynamicSizes();
+        window.loadImages();
+        
+        console.log('✅ اكتملت تهيئة المجموعة');
+        
+    } catch (error) {
+        console.error('❌ خطأ في تهيئة المجموعة:', error);
+        hideLoadingScreen();
+        alert('حدث خطأ في التحميل. حاول مرة أخرى.');
+    }
 }
 
-/* هنا باقي الكود يكمل في رد تاني لأن الحد الأقصى 7000 سطر */
-
-console.log('✅ script.js - الجزء الأول تم تحميله');
-/* استكمال script.js من الجزء الأول */
-
 /* ========================================
-   [007] عارض PDF ودوال مساعدة
+   [008] عارض PDF
    ======================================== */
 
 document.getElementById("closePdfBtn").onclick = () => {
@@ -521,16 +544,6 @@ async function smartOpen(item) {
 
         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
 
-        let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
-        history.push(item.path);
-        localStorage.setItem('openedFilesHistory', JSON.stringify(history));
-
-        window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
-
-        if (typeof trackSvgOpen === 'function') {
-            trackSvgOpen(item.path);
-        }
-
         pushNavigationState(NAV_STATE.PDF_VIEW, {
             path: item.path,
             scrollPosition: scrollPosition
@@ -542,9 +555,11 @@ async function smartOpen(item) {
         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
                         encodeURIComponent(url) + "#zoom=page-width";
 
-    } catch (error) {
-        console.warn(`⚠️ CORS Error, trying direct open:`, error);
+        if (typeof trackSvgOpen === 'function') {
+            trackSvgOpen(item.path);
+        }
 
+    } catch (error) {
         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
 
         pushNavigationState(NAV_STATE.PDF_VIEW, {
@@ -875,14 +890,6 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-console.log('✅ script.js - الجزء الثاني تم تحميله');
-
-/* استكمال script.js - الجزء الأخير */
-
-/* ملاحظة: هذا الجزء يُضاف بعد الجزء الثاني */
-
-/* تابع updateWoodInterface - بقية الدالة الكبيرة */
-
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -933,77 +940,6 @@ async function updateWoodInterface() {
             `🔙 ... > ${folderName} ${displayLabel}` :
             `🔙 ${breadcrumb} ${displayLabel}`;
     }
-
-    const folderPrefix = currentFolder ? currentFolder + '/' : '';
-    const itemsMap = new Map();
-
-    globalFileTree.forEach(item => {
-        if (item.path.startsWith(folderPrefix)) {
-            const relativePath = item.path.substring(folderPrefix.length);
-            const pathParts = relativePath.split('/');
-            const name = pathParts[0];
-
-            if (!itemsMap.has(name)) {
-                const isDir = pathParts.length > 1 || item.type === 'tree';
-                const isPdf = item.path.toLowerCase().endsWith('.pdf');
-
-                const lowerName = name.toLowerCase();
-                let isSubjectItem = false;
-                let mainSubject = null;
-
-                for (const subject of SUBJECT_FOLDERS) {
-                    if (lowerName.startsWith(subject) ||
-                        lowerName.includes(`-${subject}`) ||
-                        lowerName.startsWith(subject + '-')) {
-                        isSubjectItem = true;
-                        mainSubject = subject;
-                        break;
-                    }
-                }
-
-                if (isDir && name !== 'image' && name !== 'groups') {
-                    itemsMap.set(name, {
-                        name: name,
-                        type: 'dir',
-                        path: folderPrefix + name,
-                        isSubject: isSubjectItem,
-                        subject: mainSubject
-                    });
-                } else if (isPdf && pathParts.length === 1) {
-                    itemsMap.set(name, {
-                        name: name,
-                        type: 'file',
-                        path: item.path,
-                        isSubject: isSubjectItem,
-                        subject: mainSubject
-                    });
-                }
-            }
-        }
-    });
-
-    let filteredData = Array.from(itemsMap.values());
-
-    filteredData.sort((a, b) => {
-        if (a.isSubject && !b.isSubject) return -1;
-        if (!a.isSubject && b.isSubject) return 1;
-
-        if (a.isSubject && b.isSubject) {
-            const aSubjectIndex = SUBJECT_FOLDERS.indexOf(a.subject);
-            const bSubjectIndex = SUBJECT_FOLDERS.indexOf(b.subject);
-            if (aSubjectIndex !== bSubjectIndex) {
-                return aSubjectIndex - bSubjectIndex;
-            }
-        }
-
-        if (a.type !== b.type) {
-            return a.type === 'dir' ? -1 : 1;
-        }
-
-        return a.name.localeCompare(b.name);
-    });
-
-    /* هنا كود إنشاء العناصر في واجهة Wood - مختصر للحفاظ على الطول */
 
     if (currentFolder === "" && currentGroup) {
         updateWoodLogo(currentGroup);
@@ -1428,7 +1364,7 @@ if (searchInput) {
 }
 
 if (!localStorage.getItem('visitor_id')) {
-    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+    const newId = 'ID-' + Math.floor(1000 + Math.random() + 9000);
     localStorage.setItem('visitor_id', newId);
 }
 
@@ -1445,4 +1381,4 @@ if (hasSavedGroup) {
     pushNavigationState(NAV_STATE.GROUP_SELECTION);
 }
 
-console.log('✅ script.js تم تحميله بالكامل - النهاية');
+console.log('✅ script.js تم تحميله بالكامل');
