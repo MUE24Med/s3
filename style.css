@@ -558,6 +558,7 @@ body {
   transition: all 0.3s ease;
 }
 
+/* ✅ نفس الدائرة القديمة بالضبط - بدون تغيير */
 #js-toggle-container.collapsed {
   min-width: 50px !important;
   max-width: 50px !important;
@@ -707,21 +708,35 @@ body {
   transform: scale(0.9);
 }
 
+/* ✅ زر العين داخل الدائرة القديمة - بدون تغيير حجم الدائرة */
 #js-toggle-container.collapsed #eye-toggle {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   opacity: 1 !important;
-  font-size: 24px !important;
+  font-size: 26px !important;
   padding: 0 !important;
   margin: 0 !important;
   background: transparent !important;
   border-radius: 0 !important;
-  min-width: auto !important;
-  min-height: auto !important;
-  width: auto !important;
-  height: auto !important;
-  position: static !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+}
+
+#js-toggle-container.collapsed #eye-toggle:hover {
+  transform: scale(1.1) !important;
+  filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.9));
+}
+
+#js-toggle-container.collapsed #eye-toggle:active {
+  transform: scale(0.9) !important;
 }
 
 .hover-toggle-container {
@@ -980,12 +995,13 @@ input:focus:not(:focus-visible) {
 }
 
 /* ========================================
-   [015] أزرار التحكم الثابتة - فوق Upper_wood
+   [015] ✅ الأزرار الأربعة فوق Upper_wood - نصوص أوضح
    ======================================== */
 
 #fixed-controls-layer {
-    z-index: 10001 !important;
+    z-index: 30000 !important;
     pointer-events: auto !important;
+    position: relative !important;
 }
 
 #reset-btn,
@@ -994,7 +1010,7 @@ input:focus:not(:focus-visible) {
 #preload-btn {
     cursor: pointer !important;
     position: relative;
-    z-index: 10002 !important;
+    z-index: 30001 !important;
     pointer-events: auto !important;
 }
 
@@ -1002,74 +1018,100 @@ input:focus:not(:focus-visible) {
 #change-group-btn rect,
 #back-btn,
 #preload-btn rect {
-    transition: filter 0.3s ease;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    stroke-width: 2;
+    transition: filter 0.3s ease, fill 0.3s ease;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.7));
+    stroke-width: 3 !important;
     pointer-events: auto !important;
+    opacity: 1 !important;
 }
 
 #reset-btn:hover rect,
 #change-group-btn:hover rect,
 #back-button-group:hover rect,
 #preload-btn:hover rect {
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)) 
-            drop-shadow(0 0 20px rgba(255, 204, 0, 0.6));
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.9)) 
+            drop-shadow(0 0 30px rgba(255, 204, 0, 0.8));
+    stroke-width: 4 !important;
 }
 
 #reset-btn:active rect,
 #change-group-btn:active rect,
 #back-button-group:active rect,
 #preload-btn:active rect {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+    transform: translateY(2px);
 }
 
+/* ✅ نصوص الأزرار - أوضح وأكثر قابلية للقراءة */
 #reset-btn text,
 #change-group-btn text,
 #back-btn-text,
 #preload-btn text {
-    pointer-events: none;
-    user-select: none;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    pointer-events: none !important;
+    user-select: none !important;
+    font-family: 'Segoe UI', 'Arial', 'Tahoma', sans-serif !important;
+    font-weight: 900 !important;
+    opacity: 1 !important;
+    fill: #ffffff !important;
+    paint-order: stroke fill !important;
+    stroke: rgba(0, 0, 0, 0.9) !important;
+    stroke-width: 2px !important;
+    stroke-linejoin: round !important;
+    stroke-linecap: round !important;
+    text-shadow: 0px 2px 4px rgba(0,0,0,0.8),
+                 0px 4px 8px rgba(0,0,0,0.6),
+                 0px 0px 10px rgba(0,0,0,0.4) !important;
+    letter-spacing: 0.5px !important;
 }
 
 #reset-btn rect {
-    fill: #d32f2f;
+    fill: #d32f2f !important;
+    stroke: #ff6659 !important;
 }
 
 #reset-btn:hover rect {
-    fill: #f44336;
+    fill: #f44336 !important;
 }
 
 #change-group-btn rect {
-    fill: #2e7d32;
+    fill: #2e7d32 !important;
+    stroke: #4caf50 !important;
 }
 
 #change-group-btn:hover rect {
-    fill: #43a047;
+    fill: #43a047 !important;
 }
 
 #preload-btn rect {
-    fill: #1976d2;
+    fill: #1976d2 !important;
+    stroke: #42a5f5 !important;
 }
 
 #preload-btn:hover rect {
-    fill: #2196f3;
+    fill: #2196f3 !important;
 }
 
 #back-btn {
-    fill: #3e2723;
+    fill: #3e2723 !important;
+    stroke: #6d4c41 !important;
 }
 
 #back-button-group:hover #back-btn {
-    fill: #5d4037;
+    fill: #5d4037 !important;
+}
+
+/* جعل Upper_wood تحت الأزرار */
+image[data-src*="Upper_wood.webp"] {
+    z-index: 25000 !important;
+    pointer-events: none !important;
 }
 
 #reset-btn:focus,
 #change-group-btn:focus,
 #back-button-group:focus,
 #preload-btn:focus {
-    outline: 3px solid #ffca28;
-    outline-offset: 4px;
+    outline: 4px solid #ffca28;
+    outline-offset: 5px;
     border-radius: 12px;
 }
 
@@ -1086,14 +1128,15 @@ input:focus:not(:focus-visible) {
     #back-btn,
     #preload-btn rect {
         rx: 8;
-        stroke-width: 1.5;
+        stroke-width: 2.5 !important;
     }
 
     #reset-btn text,
     #change-group-btn text,
     #back-btn-text,
     #preload-btn text {
-        font-size: 15px;
+        font-size: 16px;
+        stroke-width: 1.8px !important;
     }
 }
 
@@ -1102,7 +1145,8 @@ input:focus:not(:focus-visible) {
     #change-group-btn text,
     #back-btn-text,
     #preload-btn text {
-        font-size: 13px;
+        font-size: 14px;
+        stroke-width: 1.5px !important;
     }
 
     #reset-btn rect,
@@ -1110,6 +1154,7 @@ input:focus:not(:focus-visible) {
     #back-btn,
     #preload-btn rect {
         rx: 6;
+        stroke-width: 2 !important;
     }
 }
 
