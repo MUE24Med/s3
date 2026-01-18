@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.18.002">
+<meta name="version" content="2025.01.18.005">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -99,7 +99,7 @@ if (needsPreload) {
     >👁️</span>
 
     <div class="hover-toggle-container">
-      <span style="font-size: 12px; opacity: 0.8;">Hover</span>
+      <span>Hover</span>
       <label class="switch">
         <input type="checkbox" id="js-toggle" checked aria-label="تفعيل التفاعل">
         <span class="slider round"></span>
@@ -178,9 +178,9 @@ if (needsPreload) {
     <g id="dynamic-links-group"></g>
     <g id="group-specific-content"></g>
 
-    <g id="fixed-controls-layer">
+    <!-- طبقة الأزرار الثابتة - فوق Upper_wood -->
+    <g id="fixed-controls-layer" style="z-index: 10001;">
       <!-- الصف الأول: 3 أزرار -->
-      <!-- زر تغيير المجموعة - يسار -->
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff" stroke-width="2"/>
         <text 
@@ -194,7 +194,6 @@ if (needsPreload) {
         >Change Group 🔄</text>
       </g>
 
-      <!-- زر العودة لشاشة التحميل - وسط -->
       <g id="preload-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="387" y="100" width="250" height="50" rx="10" fill="#1976d2" stroke="#fff" stroke-width="2"/>
         <text 
@@ -207,7 +206,6 @@ if (needsPreload) {
         >🔄 Preload</text>
       </g>
 
-      <!-- زر Reset - يمين -->
       <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="654" y="100" width="250" height="50" rx="10" fill="#d32f2f" stroke="#fff" stroke-width="2"/>
         <text 
@@ -246,13 +244,14 @@ if (needsPreload) {
       </g>
     </g>
 
+    <!-- Upper_wood تحت الأزرار -->
     <image 
       data-src="image/Upper_wood.webp" 
       x="0" 
       y="0" 
       width="1024" 
       height="250"
-      style="pointer-events: none;"
+      style="pointer-events: none; z-index: 10000;"
       aria-hidden="true"
     />
   </svg>
@@ -261,13 +260,65 @@ if (needsPreload) {
 <script defer src="script.js"></script>
 <script defer src="tracker.js"></script>
 
+<!-- Service Worker Registration -->
 <script>
-function replayPreload() {
-  localStorage.removeItem('preload_done');
-  localStorage.removeItem('last_visit_timestamp');
-  window.location.replace('preload.html');
-}
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('✅ Service Worker مسجل:', registration.scope);
 
+        // الاستماع للتحديثات
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          console.log('🔄 Service Worker جديد يتم تثبيته...');
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('✅ تحديث جديد متاح');
+              
+              // يمكنك إظهار رسالة للمستخدم هنا
+              if (confirm('🔄 يوجد تحديث جديد. هل تريد إعادة التحميل؟')) {
+                newWorker.postMessage({ action: 'skipWaiting' });
+                window.location.reload();
+              }
+            }
+          });
+        });
+
+        // التحقق من التحديثات كل 5 دقائق
+        setInterval(() => {
+          registration.update();
+        }, 5 * 60 * 1000);
+      })
+      .catch(err => {
+        console.error('❌ فشل تسجيل Service Worker:', err);
+      });
+  });
+
+  // الاستماع لرسائل Service Worker
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data.type === 'FILE_UPDATED') {
+      console.log('📢 تحديث ملف:', event.data.filename);
+      
+      // يمكنك إظهار إشعار للمستخدم
+      // أو إعادة تحميل الصفحة تلقائياً
+    }
+  });
+
+  // عند تفعيل Service Worker جديد
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      console.log('🔄 Service Worker محدث - إعادة تحميل الصفحة');
+      window.location.reload();
+    }
+  });
+}
+</script>
+
+<script>
 async function checkForUpdates() {
   try {
     const lastCheck = localStorage.getItem('last_update_check');
@@ -304,6 +355,7 @@ async function checkForUpdates() {
     if (lastSha !== latestSha) {
       console.log(`🆕 تحديث جديد: ${lastSha} → ${latestSha}`);
 
+      // حذف الكاش القديم بالكامل
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
 
