@@ -1,72 +1,88 @@
-const UserTracker = {
-    activities: [], // لتخزين الأنشطة حتى لحظة الخروج
-    deviceFingerprint: null, // البصمة الفريدة للجهاز
+// ========================================
+// نظام توليد ID فريد غير متكرر
+// ========================================
 
-    // ✅ 1. توليد بصمة فريدة للجهاز (Device Fingerprint)
+function generateUniqueID() {
+    const existingID = localStorage.getItem('visitor_id');
+    if (existingID) {
+        return existingID;
+    }
+
+    // جلب جميع الـ IDs المستخدمة من الكاش
+    const usedIDs = JSON.parse(localStorage.getItem('all_used_ids') || '[]');
+    
+    let newID;
+    let attempts = 0;
+    const maxAttempts = 10000; // لتجنب حلقة لا نهائية
+    
+    do {
+        // توليد رقم عشوائي من 4 أرقام (1000-9999)
+        const randomNumber = Math.floor(1000 + Math.random() * 9000);
+        newID = 'ID-' + randomNumber;
+        attempts++;
+        
+        if (attempts >= maxAttempts) {
+            // في حالة نادرة جداً، استخدم timestamp
+            newID = 'ID-' + Date.now().toString().slice(-4);
+            break;
+        }
+    } while (usedIDs.includes(newID));
+    
+    // حفظ الـ ID الجديد
+    usedIDs.push(newID);
+    localStorage.setItem('all_used_ids', JSON.stringify(usedIDs));
+    localStorage.setItem('visitor_id', newID);
+    
+    console.log(`✅ تم توليد ID فريد: ${newID}`);
+    return newID;
+}
+
+// ========================================
+// نظام التتبع الرئيسي
+// ========================================
+
+const UserTracker = {
+    activities: [],
+    deviceFingerprint: null,
+
     async generateFingerprint() {
-        // إذا كانت البصمة موجودة في localStorage، استخدمها
         const storedFingerprint = localStorage.getItem('device_fingerprint');
         if (storedFingerprint) {
             this.deviceFingerprint = storedFingerprint;
             return storedFingerprint;
         }
 
-        // إنشاء بصمة جديدة من معلومات الجهاز
         const components = {
-            // 1. معلومات الشاشة
             screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
             availScreen: `${screen.availWidth}x${screen.availHeight}`,
             pixelRatio: window.devicePixelRatio || 1,
-
-            // 2. معلومات المتصفح
             userAgent: navigator.userAgent,
             language: navigator.language,
             languages: navigator.languages ? navigator.languages.join(',') : '',
             platform: navigator.platform,
             hardwareConcurrency: navigator.hardwareConcurrency || 0,
             deviceMemory: navigator.deviceMemory || 0,
-
-            // 3. إعدادات النظام
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             timezoneOffset: new Date().getTimezoneOffset(),
-
-            // 4. Canvas Fingerprint (أقوى طريقة للتعرف)
             canvas: await this.getCanvasFingerprint(),
-
-            // 5. WebGL Fingerprint
             webgl: this.getWebGLFingerprint(),
-
-            // 6. الخطوط المثبتة
             fonts: await this.getFontsFingerprint(),
-
-            // 7. Audio Context Fingerprint
             audio: await this.getAudioFingerprint(),
-
-            // 8. معلومات الاتصال
             connection: this.getConnectionInfo(),
-
-            // 9. معلومات البطارية (إن وجدت)
             battery: await this.getBatteryInfo(),
-
-            // 10. Touch Support
             touchSupport: this.getTouchSupport(),
-
-            // 11. معلومات الـ Plugins
             plugins: this.getPluginsInfo()
         };
 
-        // تحويل البيانات إلى hash فريد
         const fingerprintString = JSON.stringify(components);
         const fingerprint = await this.hashString(fingerprintString);
 
-        // حفظ البصمة في localStorage
         localStorage.setItem('device_fingerprint', fingerprint);
         this.deviceFingerprint = fingerprint;
 
         return fingerprint;
     },
 
-    // ✅ 2. Canvas Fingerprint (دقة عالية جداً)
     async getCanvasFingerprint() {
         try {
             const canvas = document.createElement('canvas');
@@ -74,7 +90,6 @@ const UserTracker = {
             canvas.width = 200;
             canvas.height = 50;
 
-            // رسم نص ملون
             ctx.textBaseline = 'top';
             ctx.font = '14px Arial';
             ctx.fillStyle = '#f60';
@@ -82,7 +97,6 @@ const UserTracker = {
             ctx.fillStyle = '#069';
             ctx.fillText('Device Fingerprint 🔒', 2, 15);
 
-            // إضافة تدرجات لونية
             const gradient = ctx.createLinearGradient(0, 0, 200, 0);
             gradient.addColorStop(0, 'magenta');
             gradient.addColorStop(0.5, 'blue');
@@ -90,14 +104,12 @@ const UserTracker = {
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, 200, 50);
 
-            // استخراج البيانات
             return canvas.toDataURL();
         } catch (e) {
             return 'canvas_error';
         }
     },
 
-    // ✅ 3. WebGL Fingerprint
     getWebGLFingerprint() {
         try {
             const canvas = document.createElement('canvas');
@@ -117,7 +129,6 @@ const UserTracker = {
         }
     },
 
-    // ✅ 4. Fonts Fingerprint
     async getFontsFingerprint() {
         const baseFonts = ['monospace', 'sans-serif', 'serif'];
         const testFonts = [
@@ -149,7 +160,6 @@ const UserTracker = {
         return detected.join(',');
     },
 
-    // ✅ 5. Audio Context Fingerprint
     async getAudioFingerprint() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -161,7 +171,7 @@ const UserTracker = {
             const gainNode = context.createGain();
             const scriptProcessor = context.createScriptProcessor(4096, 1, 1);
 
-            gainNode.gain.value = 0; // صامت
+            gainNode.gain.value = 0;
             oscillator.connect(analyser);
             analyser.connect(scriptProcessor);
             scriptProcessor.connect(gainNode);
@@ -183,7 +193,6 @@ const UserTracker = {
         }
     },
 
-    // ✅ 6. معلومات البطارية
     async getBatteryInfo() {
         try {
             if ('getBattery' in navigator) {
@@ -199,7 +208,6 @@ const UserTracker = {
         }
     },
 
-    // ✅ 7. Touch Support
     getTouchSupport() {
         return {
             maxTouchPoints: navigator.maxTouchPoints || 0,
@@ -208,7 +216,6 @@ const UserTracker = {
         };
     },
 
-    // ✅ 8. Plugins Info
     getPluginsInfo() {
         const plugins = [];
         for (let i = 0; i < navigator.plugins.length; i++) {
@@ -217,26 +224,26 @@ const UserTracker = {
         return plugins.join(',');
     },
 
-    // ✅ 9. تحويل النص إلى Hash
     async hashString(str) {
         const encoder = new TextEncoder();
         const data = encoder.encode(str);
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        return hashHex.substring(0, 16); // أول 16 حرف فقط
+        return hashHex.substring(0, 16);
     },
 
-    // ✅ 10. الحصول على اسم المستخدم
     getDisplayName() {
         const realName = localStorage.getItem('user_real_name');
         if (realName === 'زائر مجهول' || realName === 'زائر') {
             localStorage.removeItem('user_real_name');
         }
+        
+        // التأكد من وجود ID فريد
         if (!localStorage.getItem('visitor_id')) {
-            const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
-            localStorage.setItem('visitor_id', newId);
+            generateUniqueID();
         }
+        
         const cleanRealName = localStorage.getItem('user_real_name');
         return (cleanRealName && cleanRealName.trim()) ? cleanRealName.trim() : localStorage.getItem('visitor_id');
     },
@@ -267,7 +274,6 @@ const UserTracker = {
         return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
     },
 
-    // ✅ 11. تسجيل النشاط
     logActivity(type, details = {}) {
         this.activities.push({
             time: new Date().toLocaleTimeString('ar-EG'),
@@ -276,28 +282,23 @@ const UserTracker = {
         });
     },
 
-    // ✅ 12. إرسال البيانات مع البصمة الفريدة
     async send(action, isFinal = false) {
-        // التأكد من توليد البصمة
         if (!this.deviceFingerprint) {
             await this.generateFingerprint();
         }
 
         const data = new FormData();
 
-        // ✅ البيانات الرئيسية (مع Device Fingerprint)
-        data.append("01-Device_ID", this.deviceFingerprint); // 🔒 البصمة الفريدة
+        data.append("01-Device_ID", this.deviceFingerprint);
         data.append("02-User_Name", this.getDisplayName());
         data.append("03-Visitor_ID", localStorage.getItem('visitor_id') || 'Unknown');
         data.append("04-Group", localStorage.getItem('selectedGroup') || 'لم يختر بعد');
         data.append("05-Action", action);
 
-        // ✅ ملخص الأنشطة (إن وجد)
         if (isFinal && this.activities.length > 0) {
             data.append("06-Activities", JSON.stringify(this.activities, null, 2));
         }
 
-        // ✅ معلومات الجهاز
         data.append("07-Browser", this.getBrowserName());
         data.append("08-OS", this.getOS());
         data.append("09-Screen", `${screen.width}x${screen.height}`);
@@ -310,32 +311,38 @@ const UserTracker = {
         data.append("16-Touch", navigator.maxTouchPoints > 0 ? "Yes" : "No");
         data.append("17-Timestamp", new Date().toLocaleString('ar-EG'));
 
-        // ✅ إرسال البيانات
         navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", data);
 
         console.log(`📤 تم إرسال البيانات - Device ID: ${this.deviceFingerprint.substring(0, 8)}...`);
     }
 };
 
-// ✅ 1. عند فتح الموقع: توليد البصمة وإرسال الرسالة الأولى
+// ========================================
+// تهيئة النظام
+// ========================================
+
+// توليد ID فريد عند أول تحميل
+generateUniqueID();
+
 window.addEventListener('load', async () => {
     await UserTracker.generateFingerprint();
     console.log(`🔒 Device Fingerprint: ${UserTracker.deviceFingerprint.substring(0, 8)}...`);
+    console.log(`🆔 Visitor ID: ${localStorage.getItem('visitor_id')}`);
     UserTracker.send("دخول الموقع");
 });
 
-// ✅ 2. تسجيل الأنشطة
 window.addEventListener('groupChanged', (e) => {
     UserTracker.logActivity("تغيير جروب", { newGroup: e.detail });
 });
 
-// وظائف يمكن استدعاؤها يدوياً
+// دوال التتبع
 function trackSearch(query) { UserTracker.logActivity("بحث", { query: query }); }
 function trackSvgOpen(name) { UserTracker.logActivity("فتح ملف SVG", { file: name }); }
 function trackApiOpen(endpoint) { UserTracker.logActivity("فتح API", { api: endpoint }); }
 function trackNameChange(newName) { UserTracker.logActivity("تغيير اسم", { name: newName }); }
+function trackGameScore(score) { UserTracker.logActivity("نتيجة اللعبة", { score: score }); }
 
-// ✅ 3. إرسال دوري كل 60 ثانية
+// إرسال دوري كل 60 ثانية
 setInterval(() => {
     if (UserTracker.activities.length > 0) {
         console.log('📤 إرسال تحديث دوري للأنشطة...');
@@ -344,7 +351,7 @@ setInterval(() => {
     }
 }, 60000);
 
-// ✅ 4. عند الغلق: إرسال التقرير النهائي
+// عند الخروج
 window.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         UserTracker.send("تقرير النشاط قبل الخروج", true);
@@ -352,13 +359,12 @@ window.addEventListener('visibilitychange', () => {
     }
 });
 
-// ✅ 5. إرسال إضافي عند إغلاق النافذة
 window.addEventListener('beforeunload', () => {
     if (UserTracker.activities.length > 0) {
         UserTracker.send("إغلاق النافذة", true);
     }
 });
 
-// ✅ 6. عرض البصمة في Console (للاختبار)
 console.log('%c🔒 Device Fingerprint System Active', 'color: #00ff00; font-size: 16px; font-weight: bold;');
+console.log('%c🆔 Unique Visitor ID System Active', 'color: #ffcc00; font-size: 14px; font-weight: bold;');
 console.log('%cيمكنك رؤية البصمة الفريدة لجهازك في localStorage', 'color: #ffcc00;');
