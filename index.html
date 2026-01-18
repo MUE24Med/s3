@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.18.005">
+<meta name="version" content="2025.01.19.001">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -164,6 +164,7 @@ if (needsPreload) {
       </clipPath>
     </defs>
 
+    <!-- الطبقة الخلفية -->
     <g transform="translate(0,0)" id="files-list-container">
       <image 
         data-src="image/wood.webp" 
@@ -178,44 +179,54 @@ if (needsPreload) {
     <g id="dynamic-links-group"></g>
     <g id="group-specific-content"></g>
 
-    <!-- طبقة الأزرار الثابتة - فوق Upper_wood -->
-    <g id="fixed-controls-layer" style="z-index: 10001;">
+    <!-- ✅ طبقة الأزرار الثابتة - فوق Upper_wood بـ z-index عالي جداً -->
+    <g id="fixed-controls-layer" style="z-index: 30000 !important;">
+      
       <!-- الصف الأول: 3 أزرار -->
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#fff" stroke-width="2"/>
+        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#4caf50" stroke-width="3"/>
         <text 
           id="group-btn-text" 
           x="245" 
           y="130" 
           text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
+          fill="#ffffff"
+          font-weight="900"
           font-size="18"
+          stroke="rgba(0,0,0,0.9)"
+          stroke-width="2"
+          paint-order="stroke fill"
         >Change Group 🔄</text>
       </g>
 
       <g id="preload-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="387" y="100" width="250" height="50" rx="10" fill="#1976d2" stroke="#fff" stroke-width="2"/>
+        <rect x="387" y="100" width="250" height="50" rx="10" fill="#1976d2" stroke="#42a5f5" stroke-width="3"/>
         <text 
           x="512" 
           y="130" 
           text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
+          fill="#ffffff"
+          font-weight="900"
           font-size="18"
+          stroke="rgba(0,0,0,0.9)"
+          stroke-width="2"
+          paint-order="stroke fill"
         >🔄 Preload</text>
       </g>
 
       <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="654" y="100" width="250" height="50" rx="10" fill="#d32f2f" stroke="#fff" stroke-width="2"/>
+        <rect x="654" y="100" width="250" height="50" rx="10" fill="#d32f2f" stroke="#ff6659" stroke-width="3"/>
         <text 
           id="reset-btn-text" 
           x="779" 
           y="130" 
           text-anchor="middle" 
-          fill="white" 
-          font-weight="bold"
+          fill="#ffffff"
+          font-weight="900"
           font-size="18"
+          stroke="rgba(0,0,0,0.9)"
+          stroke-width="2"
+          paint-order="stroke fill"
         >🔄 Reset</text>
       </g>
 
@@ -229,29 +240,32 @@ if (needsPreload) {
           height="70" 
           rx="15" 
           fill="#3e2723" 
-          stroke="#fff" 
-          stroke-width="2" 
+          stroke="#6d4c41" 
+          stroke-width="3" 
         />
         <text 
           x="512" 
           y="205" 
           id="back-btn-text" 
           text-anchor="middle" 
-          fill="white"
+          fill="#ffffff"
           font-size="22" 
-          font-weight="bold"
+          font-weight="900"
+          stroke="rgba(0,0,0,0.9)"
+          stroke-width="2"
+          paint-order="stroke fill"
         >➡️ إلى الخريطة ➡️</text>
       </g>
     </g>
 
-    <!-- Upper_wood تحت الأزرار -->
+    <!-- ✅ Upper_wood تحت الأزرار بـ z-index أقل -->
     <image 
       data-src="image/Upper_wood.webp" 
       x="0" 
       y="0" 
       width="1024" 
       height="250"
-      style="pointer-events: none; z-index: 10000;"
+      style="pointer-events: none; z-index: 25000 !important;"
       aria-hidden="true"
     />
   </svg>
@@ -268,7 +282,6 @@ if ('serviceWorker' in navigator) {
       .then(registration => {
         console.log('✅ Service Worker مسجل:', registration.scope);
 
-        // الاستماع للتحديثات
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           console.log('🔄 Service Worker جديد يتم تثبيته...');
@@ -276,8 +289,7 @@ if ('serviceWorker' in navigator) {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               console.log('✅ تحديث جديد متاح');
-              
-              // يمكنك إظهار رسالة للمستخدم هنا
+
               if (confirm('🔄 يوجد تحديث جديد. هل تريد إعادة التحميل؟')) {
                 newWorker.postMessage({ action: 'skipWaiting' });
                 window.location.reload();
@@ -286,7 +298,6 @@ if ('serviceWorker' in navigator) {
           });
         });
 
-        // التحقق من التحديثات كل 5 دقائق
         setInterval(() => {
           registration.update();
         }, 5 * 60 * 1000);
@@ -296,17 +307,12 @@ if ('serviceWorker' in navigator) {
       });
   });
 
-  // الاستماع لرسائل Service Worker
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data.type === 'FILE_UPDATED') {
       console.log('📢 تحديث ملف:', event.data.filename);
-      
-      // يمكنك إظهار إشعار للمستخدم
-      // أو إعادة تحميل الصفحة تلقائياً
     }
   });
 
-  // عند تفعيل Service Worker جديد
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!refreshing) {
@@ -355,7 +361,6 @@ async function checkForUpdates() {
     if (lastSha !== latestSha) {
       console.log(`🆕 تحديث جديد: ${lastSha} → ${latestSha}`);
 
-      // حذف الكاش القديم بالكامل
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
 
