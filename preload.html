@@ -398,42 +398,83 @@ function updateProgress() {
   progressBar.textContent = percentage + '%';
 }
 
-function loadFile(url, index) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const isImage = url.match(/\.(webp|png|jpg|jpeg|gif)$/i);
+async function loadFile(url, index) {
+  return new Promise(async (resolve) => {
+    setTimeout(async () => {
+      try {
+        const cache = await caches.open('semester-3-smart-cache-v2025.01.17');
+        
+        let cachedResponse = await cache.match(url);
+        
+        if (cachedResponse) {
+          console.log(`✅ من الكاش: ${url}`);
+          loadedFiles++;
+          updateProgress();
+          fileStatus.textContent = `✔ تم تحميل من الكاش: ${url.split('/').pop()}`;
+          resolve();
+          return;
+        }
 
-      if (isImage) {
-        const img = new Image();
-        img.onload = () => {
-          loadedFiles++;
-          updateProgress();
-          fileStatus.textContent = `✔ تم تحميل: ${url.split('/').pop()}`;
-          resolve();
-        };
-        img.onerror = () => {
-          loadedFiles++;
-          updateProgress();
-          fileStatus.textContent = `⚠ فشل تحميل: ${url.split('/').pop()}`;
-          resolve();
-        };
-        img.src = url + '?v=' + Date.now();
-      } else {
-        fetch(url + '?v=' + Date.now())
-          .then(() => {
+        console.log(`🌐 تحميل من الشبكة: ${url}`);
+        
+        const isImage = url.match(/\.(webp|png|jpg|jpeg|gif)$/i);
+
+        if (isImage) {
+          const img = new Image();
+          
+          img.onload = async () => {
+            try {
+              const response = await fetch(url);
+              if (response.ok) {
+                await cache.put(url, response.clone());
+                console.log(`💾 تم حفظ في الكاش: ${url}`);
+              }
+            } catch (err) {
+              console.warn('⚠️ فشل الحفظ في الكاش:', err);
+            }
+            
             loadedFiles++;
             updateProgress();
             fileStatus.textContent = `✔ تم تحميل: ${url.split('/').pop()}`;
             resolve();
-          })
-          .catch(() => {
+          };
+          
+          img.onerror = () => {
             loadedFiles++;
             updateProgress();
             fileStatus.textContent = `⚠ فشل تحميل: ${url.split('/').pop()}`;
             resolve();
-          });
+          };
+          
+          img.src = url;
+        } else {
+          try {
+            const response = await fetch(url);
+            
+            if (response.ok) {
+              await cache.put(url, response.clone());
+              console.log(`💾 تم حفظ في الكاش: ${url}`);
+            }
+            
+            loadedFiles++;
+            updateProgress();
+            fileStatus.textContent = `✔ تم تحميل: ${url.split('/').pop()}`;
+            resolve();
+          } catch (err) {
+            loadedFiles++;
+            updateProgress();
+            fileStatus.textContent = `⚠ فشل تحميل: ${url.split('/').pop()}`;
+            resolve();
+          }
+        }
+      } catch (cacheError) {
+        console.error('❌ خطأ في الكاش:', cacheError);
+        loadedFiles++;
+        updateProgress();
+        fileStatus.textContent = `⚠ خطأ: ${url.split('/').pop()}`;
+        resolve();
       }
-    }, 300 + (index * 400));
+    }, 200 + (index * 300));
   });
 }
 
@@ -480,10 +521,8 @@ const lanes = [20, 50, 80];
 
 function moveRunner(direction) {
   if (!gameActive) return;
-
   runnerPosition += direction;
   runnerPosition = Math.max(-1, Math.min(1, runnerPosition));
-
   runner.style.left = lanes[runnerPosition + 1] + '%';
 }
 
@@ -497,7 +536,6 @@ document.addEventListener('keydown', (e) => {
 
 function spawnWave() {
   if (!gameActive) return;
-
   waveCounter++;
   usedLanesInWave = [];
   const itemsInWave = 2;
@@ -708,8 +746,6 @@ function startSpawning() {
           clearInterval(spawnerIntervalId);
           startSpawning();
         }
-
-        console.log(`⚡ المستوى ${Math.floor(waveCounter / 3)}: السرعة = ${fallSpeed.toFixed(2)}, الفترة = ${spawnInterval}ms`);
       }
     }
   }, spawnInterval);
