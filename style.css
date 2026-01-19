@@ -558,48 +558,48 @@ body {
   transition: all 0.3s ease;
 }
 
+#js-toggle-container.collapsed {
+  min-width: 50px !important;
+  max-width: 50px !important;
+  width: 50px !important;
+  height: 50px !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: rgba(0, 0, 0, 0.95) !important;
+}
+
+#js-toggle-container.collapsed #search-container {
+  display: none !important;
+}
+
+#js-toggle-container.collapsed .controls-row {
+  display: none !important;
+}
+
+#js-toggle-container.collapsed #eye-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  font-size: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  min-width: auto !important;
+  min-height: auto !important;
+  width: auto !important;
+  height: auto !important;
+  position: static !important;
+  cursor: pointer !important;
+}
+
 #js-toggle-container.top { top: 20px; }
 #js-toggle-container.bottom { bottom: 20px; }
-
-/* زر العين المستقل - يظهر أسفل الحاوية */
-#eye-toggle-standalone {
-  transform: translateZ(0);
-  will-change: transform;
-  position: fixed;
-  right: 20px;
-  z-index: 10000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  background-color: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(8px);
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  font-size: 28px;
-  transition: all 0.3s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-#eye-toggle-standalone.top {
-  top: calc(20px + 160px); /* أسفل الحاوية في الأعلى */
-}
-
-#eye-toggle-standalone.bottom {
-  bottom: calc(20px + 160px); /* أسفل الحاوية في الأسفل */
-}
-
-#eye-toggle-standalone:hover {
-  background-color: rgba(0, 0, 0, 1);
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
-}
-
-#eye-toggle-standalone:active {
-  transform: scale(0.95);
-}
 
 #search-container {
   position: relative;
@@ -726,6 +726,11 @@ body {
   transform: scale(0.9);
 }
 
+#js-toggle-container.collapsed #eye-toggle:hover {
+  transform: scale(1.2);
+  background: transparent !important;
+}
+
 .hover-toggle-container {
   display: flex;
   align-items: center;
@@ -736,6 +741,11 @@ body {
 .hover-toggle-container span {
   font-size: 11px;
   opacity: 0.8;
+}
+
+#js-toggle-container.collapsed #move-toggle,
+#js-toggle-container.collapsed .hover-toggle-container {
+  display: none !important;
 }
 
 /* ========================================
@@ -977,7 +987,7 @@ input:focus:not(:focus-visible) {
 }
 
 /* ========================================
-   [015] أزرار التحكم الثابتة - فوق Upper_wood
+   [015] أزرار التحكم الثابتة - محسّنة
    ======================================== */
 
 #fixed-controls-layer {
@@ -1002,9 +1012,9 @@ input:focus:not(:focus-visible) {
 #preload-btn rect {
     transition: filter 0.3s ease, fill 0.3s ease;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+    stroke: none !important;
     stroke-width: 0 !important;
     pointer-events: auto !important;
-    stroke: none !important;
 }
 
 #reset-btn:hover rect,
@@ -1035,14 +1045,14 @@ input:focus:not(:focus-visible) {
     font-weight: 900 !important;
     font-size: 26px !important;
     fill: #ffffff !important;
-    paint-order: stroke fill;
+    paint-order: fill stroke;
     stroke: none !important;
     stroke-width: 0 !important;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9));
 }
 
 #back-btn-text {
-    font-size: 32px !important;
+    font-size: 30px !important;
 }
 
 #reset-btn rect {
@@ -1093,7 +1103,7 @@ input:focus:not(:focus-visible) {
     }
 
     #back-btn-text {
-        font-size: 28px !important;
+        font-size: 26px !important;
     }
 }
 
@@ -1106,7 +1116,7 @@ input:focus:not(:focus-visible) {
     }
 
     #back-btn-text {
-        font-size: 24px !important;
+        font-size: 23px !important;
     }
 
     #reset-btn rect,
@@ -1118,7 +1128,50 @@ input:focus:not(:focus-visible) {
 }
 
 /* ========================================
-   [016] تحسينات إضافية
+   [016] زر العين العائم - محسّن
+   ======================================== */
+
+#eye-toggle-standalone {
+  position: fixed;
+  right: 20px;
+  z-index: 9999;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+#eye-toggle-standalone.top {
+  top: auto;
+  bottom: auto;
+}
+
+#eye-toggle-standalone.bottom {
+  top: auto;
+  bottom: auto;
+}
+
+#eye-toggle-standalone:hover {
+  transform: scale(1.15);
+  background-color: rgba(0, 0, 0, 1);
+  box-shadow: 0 6px 20px rgba(255, 204, 0, 0.4);
+}
+
+#eye-toggle-standalone:active {
+  transform: scale(0.95);
+}
+
+/* ========================================
+   [017] تحسينات إضافية
    ======================================== */
 
 #upper-wood-layer {
