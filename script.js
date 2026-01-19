@@ -764,42 +764,117 @@ if (preloadBtn) {
 
 const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
-    resetBtn.addEventListener('click', function(e) {
+    resetBtn.addEventListener('click', async function(e) {
         e.stopPropagation();
-        const confirmReset = confirm('🔄 سيتم إعادة تحميل الصفحة بالكامل.\n\nهل أنت متأكد؟');
+        const confirmReset = confirm('🔄 سيتم:\n• حذف جميع البيانات المخزنة\n• مسح الكاش بالكامل\n• إعادة تحميل الصفحة\n\nهل أنت متأكد؟');
         if (confirmReset) {
-            console.log('🔄 إعادة التحميل...');
-            window.location.reload();
+            console.log('🔄 بدء عملية Reset الكاملة...');
+            
+            try {
+                // 1. حذف جميع الكاشات
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    console.log(`🗑️ حذف ${cacheNames.length} كاش...`);
+                    await Promise.all(
+                        cacheNames.map(cacheName => {
+                            console.log(`🗑️ حذف: ${cacheName}`);
+                            return caches.delete(cacheName);
+                        })
+                    );
+                }
+                
+                // 2. حذف Service Worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        console.log('🗑️ حذف Service Worker...');
+                        await registration.unregister();
+                    }
+                }
+                
+                // 3. مسح localStorage (اختياري - يمكن الاحتفاظ بالـ ID)
+                const keepKeys = ['visitor_id', 'device_fingerprint', 'all_used_ids'];
+                const allKeys = Object.keys(localStorage);
+                allKeys.forEach(key => {
+                    if (!keepKeys.includes(key)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                console.log('✅ تم Reset بنجاح - إعادة التحميل...');
+                
+                // 4. إعادة التحميل مع تجاهل الكاش
+                window.location.reload(true);
+                
+            } catch (error) {
+                console.error('❌ خطأ في Reset:', error);
+                alert('حدث خطأ. سيتم إعادة التحميل العادية.');
+                window.location.reload();
+            }
         }
     });
 }
 
 if (eyeToggle && searchContainer) {
+    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
     const searchVisible = localStorage.getItem('searchVisible') !== 'false';
+    
     if (!searchVisible) {
         searchContainer.classList.add('hidden');
-        toggleContainer.classList.add('collapsed');
-        eyeToggle.textContent = '👁️';
+        toggleContainer.style.display = 'none';
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'flex';
+        }
     }
+    
     eyeToggle.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        searchContainer.classList.toggle('hidden');
-        toggleContainer.classList.toggle('collapsed');
-        const isHidden = searchContainer.classList.contains('hidden');
-        localStorage.setItem('searchVisible', !isHidden);
-        eyeToggle.textContent = isHidden ? '👁️' : '👁️';
-        console.log(isHidden ? '👁️ تم إخفاء البحث' : '👁️ تم إظهار البحث');
+        searchContainer.classList.add('hidden');
+        toggleContainer.style.display = 'none';
+        localStorage.setItem('searchVisible', 'false');
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'flex';
+            // نقل الموضع (أعلى/أسفل) للزر الجديد
+            if (toggleContainer.classList.contains('top')) {
+                eyeToggleStandalone.classList.add('top');
+                eyeToggleStandalone.classList.remove('bottom');
+            } else {
+                eyeToggleStandalone.classList.add('bottom');
+                eyeToggleStandalone.classList.remove('top');
+            }
+        }
+        console.log('👁️ تم إخفاء البحث');
     });
+    
+    if (eyeToggleStandalone) {
+        eyeToggleStandalone.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            searchContainer.classList.remove('hidden');
+            toggleContainer.style.display = 'flex';
+            eyeToggleStandalone.style.display = 'none';
+            localStorage.setItem('searchVisible', 'true');
+            console.log('👁️ تم إظهار البحث');
+        });
+    }
 }
 
 if (moveToggle) {
     moveToggle.onclick = (e) => {
         e.preventDefault();
+        const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+        
         if (toggleContainer && toggleContainer.classList.contains('top')) {
             toggleContainer.classList.replace('top', 'bottom');
+            if (eyeToggleStandalone) {
+                eyeToggleStandalone.classList.replace('top', 'bottom');
+            }
         } else if (toggleContainer) {
             toggleContainer.classList.replace('bottom', 'top');
+            if (eyeToggleStandalone) {
+                eyeToggleStandalone.classList.replace('bottom', 'top');
+            }
         }
     };
 }
