@@ -1142,7 +1142,7 @@ async function listCacheContents() {
 }
 
 /* ========================================
-   [011] معالجات زر العين والبحث
+   [011] معالجات زر العين والبحث - النسخة الكاملة والمعدلة
    ======================================== */
 
 if (eyeToggle && searchContainer) {
@@ -1154,6 +1154,7 @@ if (eyeToggle && searchContainer) {
         toggleContainer.style.display = 'none';
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
+            updateEyeToggleStandalonePosition(); // استدعاء لضبط الموضع فوراً
         }
     }
 
@@ -1165,13 +1166,7 @@ if (eyeToggle && searchContainer) {
         localStorage.setItem('searchVisible', 'false');
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
-            if (toggleContainer.classList.contains('top')) {
-                eyeToggleStandalone.classList.add('top');
-                eyeToggleStandalone.classList.remove('bottom');
-            } else {
-                eyeToggleStandalone.classList.add('bottom');
-                eyeToggleStandalone.classList.remove('top');
-            }
+            updateEyeToggleStandalonePosition(); // استدعاء عند الإخفاء
         }
         console.log('👁️ تم إخفاء البحث');
     });
@@ -1196,15 +1191,11 @@ if (moveToggle) {
 
         if (toggleContainer && toggleContainer.classList.contains('top')) {
             toggleContainer.classList.replace('top', 'bottom');
-            if (eyeToggleStandalone) {
-                eyeToggleStandalone.classList.replace('top', 'bottom');
-            }
         } else if (toggleContainer) {
             toggleContainer.classList.replace('bottom', 'top');
-            if (eyeToggleStandalone) {
-                eyeToggleStandalone.classList.replace('bottom', 'top');
-            }
         }
+        // تحديث الموضع بعد انتهاء أي حركة أنيميشن بسيطة
+        setTimeout(updateEyeToggleStandalonePosition, 100);
     };
 }
 
@@ -1269,24 +1260,9 @@ if (searchInput) {
             }
 
             if (!isEmptySearch) {
-                const normalizedHref = normalizeArabic(href);
-                const normalizedFullText = normalizeArabic(fullText);
-                const normalizedFileName = normalizeArabic(fileName);
-                const normalizedAutoArabic = normalizeArabic(autoArabic);
-
-                const searchChars = query.split('');
-
-                const isMatch = [normalizedHref, normalizedFullText, normalizedFileName, normalizedAutoArabic].some(text => {
-                    if (text.includes(query)) return true;
-
-                    let lastIndex = -1;
-                    for (const char of searchChars) {
-                        const index = text.indexOf(char, lastIndex + 1);
-                        if (index === -1) return false;
-                        lastIndex = index;
-                    }
-                    return true;
-                });
+                // تعديل البحث بالحرف: دمج كل النصوص والبحث بداخلها
+                const combinedText = normalizeArabic(fullText + " " + fileName + " " + autoArabic);
+                const isMatch = combinedText.includes(query);
 
                 rect.style.display = isMatch ? '' : 'none';
                 if (label) label.style.display = rect.style.display;
@@ -1302,13 +1278,32 @@ if (searchInput) {
     }, 150));
 }
 
-if (mainSvg) {
-    mainSvg.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    }, false);
-}
+// دالة تحديث موضع زر العين المنفرد - النسخة المصححة للحالتين
+function updateEyeToggleStandalonePosition() {
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
 
-console.log('✅ script.js - معالجات الأحداث تم تحميلها');
+    if (!toggleContainer || !eyeToggleStandalone) return;
+
+    const isTop = toggleContainer.classList.contains('top');
+    const containerRect = toggleContainer.getBoundingClientRect();
+    const gap = 15;
+
+    if (isTop) {
+        // الحالة عندما تكون الحاوية في الأعلى
+        eyeToggleStandalone.style.top = `${containerRect.bottom + gap}px`;
+        eyeToggleStandalone.style.bottom = 'auto';
+        eyeToggleStandalone.classList.add('top');
+        eyeToggleStandalone.classList.remove('bottom');
+    } else {
+        // الحالة عندما تكون الحاوية في الأسفل
+        const distanceFromBottom = window.innerHeight - containerRect.top;
+        eyeToggleStandalone.style.bottom = `${distanceFromBottom + gap}px`;
+        eyeToggleStandalone.style.top = 'auto';
+        eyeToggleStandalone.classList.add('bottom');
+        eyeToggleStandalone.classList.remove('top');
+    }
+}
 
 /* ========================================
    [012] updateWoodInterface - واجهة الملفات الكاملة
