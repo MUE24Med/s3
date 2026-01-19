@@ -549,12 +549,15 @@ body {
   color: white;
   background-color: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
-  padding: 12px;
+  padding: 8px; /* تقليل البادنج ليناسب الحجم الصغير */
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  width: auto;
-  min-width: 220px !important;
-  max-width: 280px !important;
+  
+  /* توحيد الحجم هنا ليكون مثل الموبايل دائماً */
+  width: 180px !important; 
+  min-width: 180px !important;
+  max-width: 180px !important;
+  
   transition: all 0.3s ease;
 }
 
@@ -624,11 +627,10 @@ body {
   border: 1px solid #444;
   border-radius: 5px;
   width: 100%;
-  max-width: 250px;
-  height: 40px;
+  height: 36px; /* تقليل الارتفاع قليلاً */
   background: #222;
   color: white;
-  font-size: 14px;
+  font-size: 13px; /* حجم خط صغير موحد */
 }
 
 .clickable-area {
@@ -956,33 +958,6 @@ input:focus:not(:focus-visible) {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-@media (max-width: 768px) {
-  #js-toggle-container {
-    min-width: 180px !important;
-    max-width: 220px !important;
-    right: 8px;
-  }
-
-  #search-input {
-    font-size: 13px;
-    max-width: 200px;
-  }
-}
-
-@media (max-width: 480px) {
-  #js-toggle-container {
-    min-width: 160px !important;
-    max-width: 180px !important;
-    right: 10px;
-    padding: 8px;
-  }
-
-  #search-input {
-    font-size: 12px;
-    max-width: 170px;
   }
 }
 
