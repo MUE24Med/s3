@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.19.001">
+<meta name="version" content="2025.01.18.006">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -158,14 +158,10 @@ if (needsPreload) {
     role="img"
     aria-label="الخريطة التفاعلية"
   >
-    <defs>
-      <clipPath id="fixed-buttons-clip">
-        <rect x="0" y="0" width="1024" height="250"/>
-      </clipPath>
-    </defs>
+    <defs></defs>
 
-    <!-- الطبقة الخلفية -->
-    <g transform="translate(0,0)" id="files-list-container">
+    <!-- الطبقة الأولى: wood.webp في الخلفية -->
+    <g transform="translate(0,0)" id="files-list-container" style="isolation: isolate;">
       <image 
         data-src="image/wood.webp" 
         x="0" 
@@ -173,60 +169,61 @@ if (needsPreload) {
         width="1024" 
         height="2454"
         aria-hidden="true"
+        style="pointer-events: none;"
       />
     </g>
 
-    <g id="dynamic-links-group"></g>
-    <g id="group-specific-content"></g>
+    <!-- الطبقة الثانية: المحتوى الديناميكي -->
+    <g id="dynamic-links-group" style="isolation: isolate;"></g>
+    
+    <!-- الطبقة الثالثة: محتوى المجموعة -->
+    <g id="group-specific-content" style="isolation: isolate;"></g>
 
-    <!-- ✅ طبقة الأزرار الثابتة - فوق Upper_wood بـ z-index عالي جداً -->
-    <g id="fixed-controls-layer" style="z-index: 30000 !important;">
-      
+    <!-- الطبقة الرابعة: Upper_wood -->
+    <g id="upper-wood-layer" style="isolation: isolate; pointer-events: none; z-index: 99999;">
+      <image 
+        data-src="image/Upper_wood.webp" 
+        x="0" 
+        y="0" 
+        width="1024" 
+        height="250"
+        aria-hidden="true"
+        style="pointer-events: none;"
+      />
+    </g>
+
+    <!-- الطبقة الخامسة والأخيرة: الأزرار فوق كل شيء -->
+    <g id="fixed-controls-layer" style="isolation: isolate;">
       <!-- الصف الأول: 3 أزرار -->
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="120" y="100" width="250" height="50" rx="10" fill="#2e7d32" stroke="#4caf50" stroke-width="3"/>
+        <rect x="120" y="100" width="250" height="50" rx="10"/>
         <text 
           id="group-btn-text" 
           x="245" 
           y="130" 
-          text-anchor="middle" 
-          fill="#ffffff"
-          font-weight="900"
-          font-size="18"
-          stroke="rgba(0,0,0,0.9)"
-          stroke-width="2"
-          paint-order="stroke fill"
+          text-anchor="middle"
+          dominant-baseline="middle"
         >Change Group 🔄</text>
       </g>
 
       <g id="preload-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="387" y="100" width="250" height="50" rx="10" fill="#1976d2" stroke="#42a5f5" stroke-width="3"/>
+        <rect x="387" y="100" width="250" height="50" rx="10"/>
         <text 
           x="512" 
           y="130" 
-          text-anchor="middle" 
-          fill="#ffffff"
-          font-weight="900"
-          font-size="18"
-          stroke="rgba(0,0,0,0.9)"
-          stroke-width="2"
-          paint-order="stroke fill"
+          text-anchor="middle"
+          dominant-baseline="middle"
         >🔄 Preload</text>
       </g>
 
       <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0">
-        <rect x="654" y="100" width="250" height="50" rx="10" fill="#d32f2f" stroke="#ff6659" stroke-width="3"/>
+        <rect x="654" y="100" width="250" height="50" rx="10"/>
         <text 
           id="reset-btn-text" 
           x="779" 
           y="130" 
-          text-anchor="middle" 
-          fill="#ffffff"
-          font-weight="900"
-          font-size="18"
-          stroke="rgba(0,0,0,0.9)"
-          stroke-width="2"
-          paint-order="stroke fill"
+          text-anchor="middle"
+          dominant-baseline="middle"
         >🔄 Reset</text>
       </g>
 
@@ -238,36 +235,17 @@ if (needsPreload) {
           y="160" 
           width="800" 
           height="70" 
-          rx="15" 
-          fill="#3e2723" 
-          stroke="#6d4c41" 
-          stroke-width="3" 
+          rx="15"
         />
         <text 
           x="512" 
-          y="205" 
+          y="195" 
           id="back-btn-text" 
-          text-anchor="middle" 
-          fill="#ffffff"
-          font-size="22" 
-          font-weight="900"
-          stroke="rgba(0,0,0,0.9)"
-          stroke-width="2"
-          paint-order="stroke fill"
+          text-anchor="middle"
+          dominant-baseline="middle"
         >➡️ إلى الخريطة ➡️</text>
       </g>
     </g>
-
-    <!-- ✅ Upper_wood تحت الأزرار بـ z-index أقل -->
-    <image 
-      data-src="image/Upper_wood.webp" 
-      x="0" 
-      y="0" 
-      width="1024" 
-      height="250"
-      style="pointer-events: none; z-index: 25000 !important;"
-      aria-hidden="true"
-    />
   </svg>
 </div>
 
