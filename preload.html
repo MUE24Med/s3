@@ -157,7 +157,7 @@ h1 {
 
 .runner {
   position: absolute;
-  bottom: 20px; /* هذه تجعله دائماً فوق الحافة السفلية بـ 20 بكسل مهما طالت الشاشة */
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 35px;
@@ -409,8 +409,7 @@ async function loadFile(url, index) {
         loadedFiles++;
         updateProgress();
         fileStatus.textContent = `✔ محفوظ: ${url.split('/').pop()}`;
-
-        setTimeout(resolve, 50);
+        resolve();
         return;
       }
 
@@ -425,8 +424,7 @@ async function loadFile(url, index) {
       loadedFiles++;
       updateProgress();
       fileStatus.textContent = `✔ تم: ${url.split('/').pop()}`;
-
-      setTimeout(resolve, 100);
+      resolve();
 
     } catch (error) {
       console.error('❌ خطأ:', url, error);
@@ -563,11 +561,8 @@ function updateGame() {
     itemData.y += fallSpeed;
     itemData.element.style.top = itemData.y + 'px';
 
-    // الحصول على الارتفاع الحالي للحاوية (Game Container)
     const containerHeight = gameContainer.offsetHeight;
 
-    // 1. منطق التصادم: يتم عندما يصل الإيموجي لمستوى اللاعب (تقريباً عند 80% من طول الشاشة)
-    // طرحنا 60px لضمان حدوث التصادم عند ملامسة جسم اللاعب
     if (itemData.y > containerHeight - 100 && itemData.y < containerHeight - 40) {
       const playerLane = runnerPosition + 1;
 
@@ -590,7 +585,6 @@ function updateGame() {
       }
     }
 
-    // 2. منطق حساب النقاط والاختفاء: يتم عندما يتجاوز الإيموجي أسفل الشاشة تماماً
     if (itemData.y > containerHeight) {
       score++;
       scoreDisplay.textContent = score;
@@ -614,7 +608,6 @@ function saveLocalLeaderboard(leaderboard) {
 }
 
 async function updateLeaderboard(playerName, playerScore) {
-  // إرسال للسيرفر
   if (typeof trackGameScore === 'function') {
     trackGameScore(playerScore);
   }
@@ -667,7 +660,6 @@ function endGame() {
   finalScore.textContent = `النقاط النهائية: ${score}`;
   gameOverlay.style.display = 'flex';
 
-  // الحصول على اسم اللاعب من UserTracker
   let playerName = 'زائر';
   if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
     playerName = UserTracker.getDisplayName();
