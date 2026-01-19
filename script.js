@@ -963,286 +963,162 @@ if (resetBtn) {
     });
 }
 
-/* ========================================
-   [010] دوال مساعدة للتحديثات
-   ======================================== */
+/* ============================================================
+   [010] نظام تحميل المصابيح الذكي (Smart Preload Sync)
+   ============================================================ */
 
-async function checkForUpdatesOnly() {
+async function startLoadingSequence() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const bulbs = [
+        document.getElementById('bulb-1'),
+        document.getElementById('bulb-2'),
+        document.getElementById('bulb-3'),
+        document.getElementById('bulb-4')
+    ];
+    
+    // الملفات الأساسية التي نتحقق منها (يجب أن تطابق ملفات الـ Preload)
+    const criticalFiles = [
+        'image/wood.webp',
+        'image/Upper_wood.webp',
+        'style.css',
+        'script.js'
+    ];
+
+    if (!loadingOverlay) return;
+
     try {
-        console.log('🔍 فحص التحديثات...');
+        const cache = await caches.open('semester-3-cache-v1');
 
-        const commitResponse = await fetch(
-            `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
-            { 
-                cache: 'no-store',
-                headers: { 'Accept': 'application/vnd.github.v3+json' }
+        for (let i = 0; i < criticalFiles.length; i++) {
+            const url = criticalFiles[i];
+            const cachedResponse = await cache.match(url);
+
+            if (cachedResponse) {
+                // الحالة 1: موجود في الكاش - إضاءة سريعة
+                console.log(`✅ مصباح ${i+1}: موجود في الكاش`);
+                await new Promise(resolve => setTimeout(resolve, 150)); 
+            } else {
+                // الحالة 2: ملف ناقص - تحميل فعلي
+                console.log(`🌐 مصباح ${i+1}: جاري تحميل الملف الناقص...`);
+                const response = await fetch(url);
+                if (response.ok) await cache.put(url, response.clone());
             }
-        );
 
-        if (!commitResponse.ok) {
-            console.error('❌ فشل الاتصال بـ GitHub');
-            return null;
+            // إضاءة المصباح فور التأكد من وجود الملف
+            if (bulbs[i]) {
+                bulbs[i].classList.add('active');
+            }
         }
 
-        const commitData = await commitResponse.json();
-        const latestSha = commitData.sha.substring(0, 7);
-        const lastSha = localStorage.getItem('last_commit_sha');
-        const commitDate = new Date(commitData.commit.author.date);
-
-        console.log(`📅 آخر تحديث على GitHub: ${commitDate.toLocaleString('ar-EG')}`);
-        console.log(`🔖 SHA الحالي: ${lastSha || 'غير محفوظ'}`);
-        console.log(`🔖 SHA الجديد: ${latestSha}`);
-
-        if (!lastSha) {
-            console.log('⚠️ لا يوجد SHA محفوظ - تحتاج لعمل Reset');
-            return {
-                hasUpdate: true,
-                currentSha: lastSha,
-                latestSha: latestSha,
-                commitDate: commitDate,
-                message: commitData.commit.message
-            };
-        }
-
-        if (lastSha !== latestSha) {
-            console.log('🆕 يوجد تحديث جديد!');
-            console.log(`📝 رسالة الـ commit: ${commitData.commit.message}`);
-
-            const filesResponse = await fetch(
-                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${commitData.sha}`,
-                { 
-                    cache: 'no-store',
-                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+        // إخفاء الشاشة بعد اكتمال المصابيح
+        setTimeout(() => {
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                // بعد اختفاء التحميل نحدث موضع زر العين لو كان ظاهراً
+                if (typeof updateEyeToggleStandalonePosition === 'function') {
+                    updateEyeToggleStandalonePosition();
                 }
-            );
-
-            if (filesResponse.ok) {
-                const filesData = await filesResponse.json();
-                console.log(`📋 الملفات المعدلة (${filesData.files.length}):`);
-                filesData.files.forEach(file => {
-                    console.log(`  • ${file.filename} (${file.status})`);
-                });
-            }
-
-            return {
-                hasUpdate: true,
-                currentSha: lastSha,
-                latestSha: latestSha,
-                commitDate: commitDate,
-                message: commitData.commit.message,
-                filesCount: filesResponse.ok ? filesData.files.length : 0
-            };
-        } else {
-            console.log('✅ الموقع محدّث');
-            return {
-                hasUpdate: false,
-                currentSha: lastSha,
-                latestSha: latestSha,
-                commitDate: commitDate
-            };
-        }
+            }, 500);
+        }, 300);
 
     } catch (error) {
-        console.error('❌ خطأ في فحص التحديثات:', error);
-        return null;
+        console.error("⚠️ خطأ في نظام المصابيح:", error);
+        loadingOverlay.style.display = 'none';
     }
 }
 
-async function updateSingleFile(filename) {
-    try {
-        console.log(`🔄 تحديث ملف واحد: ${filename}`);
+// تشغيل الدالة فور تحميل الـ DOM
+document.addEventListener('DOMContentLoaded', startLoadingSequence);
 
-        const cacheNames = await caches.keys();
-        const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
 
-        if (!semesterCache) {
-            console.error('❌ الكاش غير موجود');
-            return false;
-        }
-
-        const cache = await caches.open(semesterCache);
-
-        await cache.delete(`./${filename}`);
-        await cache.delete(`/${filename}`);
-        await cache.delete(filename);
-
-        const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
-        const response = await fetch(newFileUrl, { 
-            cache: 'reload',
-            mode: 'cors'
-        });
-
-        if (response.ok) {
-            await cache.put(`./${filename}`, response.clone());
-            console.log(`✅ تم تحديث: ${filename}`);
-            return true;
-        } else {
-            console.error(`❌ فشل تحديث: ${filename}`);
-            return false;
-        }
-
-    } catch (error) {
-        console.error(`❌ خطأ في تحديث ${filename}:`, error);
-        return false;
-    }
-}
-
-async function listCacheContents() {
-    try {
-        const cacheNames = await caches.keys();
-
-        for (const cacheName of cacheNames) {
-            if (cacheName.startsWith('semester-3-cache-')) {
-                const cache = await caches.open(cacheName);
-                const keys = await cache.keys();
-
-                console.log(`\n📦 ${cacheName}:`);
-                console.log(`📄 عدد الملفات: ${keys.length}\n`);
-
-                const filesByType = {
-                    html: [],
-                    css: [],
-                    js: [],
-                    images: [],
-                    svg: [],
-                    other: []
-                };
-
-                keys.forEach(request => {
-                    const url = new URL(request.url);
-                    const path = url.pathname;
-
-                    if (path.endsWith('.html')) filesByType.html.push(path);
-                    else if (path.endsWith('.css')) filesByType.css.push(path);
-                    else if (path.endsWith('.js')) filesByType.js.push(path);
-                    else if (path.match(/\.(webp|png|jpg|jpeg|gif)$/)) filesByType.images.push(path);
-                    else if (path.endsWith('.svg')) filesByType.svg.push(path);
-                    else filesByType.other.push(path);
-                });
-
-                console.log('📝 HTML:', filesByType.html.length);
-                filesByType.html.forEach(f => console.log(`  • ${f}`));
-
-                console.log('\n🎨 CSS:', filesByType.css.length);
-                filesByType.css.forEach(f => console.log(`  • ${f}`));
-
-                console.log('\n⚙️ JavaScript:', filesByType.js.length);
-                filesByType.js.forEach(f => console.log(`  • ${f}`));
-
-                console.log('\n🖼️ صور:', filesByType.images.length);
-
-                console.log('\n📊 SVG:', filesByType.svg.length);
-
-                console.log('\n📦 أخرى:', filesByType.other.length);
-            }
-        }
-    } catch (error) {
-        console.error('❌ خطأ:', error);
-    }
-}
-
-/* ========================================
-   [011] معالجات زر العين والبحث - النسخة الكاملة والمعدلة
-   ======================================== */
+/* ============================================================
+   [011] معالجات زر العين والبحث - النسخة المحدثة بالكامل
+   ============================================================ */
 
 if (eyeToggle && searchContainer) {
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
     const searchVisible = localStorage.getItem('searchVisible') !== 'false';
 
+    // الحالة الأولية
     if (!searchVisible) {
         searchContainer.classList.add('hidden');
         toggleContainer.style.display = 'none';
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
-            updateEyeToggleStandalonePosition(); // استدعاء لضبط الموضع فوراً
+            setTimeout(updateEyeToggleStandalonePosition, 100);
         }
     }
 
+    // زر الإخفاء (داخل الحاوية)
     eyeToggle.addEventListener('click', function(e) {
         e.preventDefault();
-        e.stopPropagation();
         searchContainer.classList.add('hidden');
         toggleContainer.style.display = 'none';
         localStorage.setItem('searchVisible', 'false');
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
-            updateEyeToggleStandalonePosition(); // استدعاء عند الإخفاء
+            updateEyeToggleStandalonePosition();
         }
-        console.log('👁️ تم إخفاء البحث');
     });
 
+    // زر الإظهار (العين الطائرة)
     if (eyeToggleStandalone) {
         eyeToggleStandalone.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation();
             searchContainer.classList.remove('hidden');
             toggleContainer.style.display = 'flex';
             eyeToggleStandalone.style.display = 'none';
             localStorage.setItem('searchVisible', 'true');
-            console.log('👁️ تم إظهار البحث');
         });
     }
 }
 
+// دالة تحديث موضع زر العين المنفرد (الحل النهائي للحاوية فوق وتحت)
+function updateEyeToggleStandalonePosition() {
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+
+    if (!toggleContainer || !eyeToggleStandalone || eyeToggleStandalone.style.display === 'none') return;
+
+    const isTop = toggleContainer.classList.contains('top');
+    const containerRect = toggleContainer.getBoundingClientRect();
+    const gap = 15;
+
+    if (isTop) {
+        // إذا الحاوية فوق: العين تظهر تحتها
+        eyeToggleStandalone.style.top = `${containerRect.bottom + gap}px`;
+        eyeToggleStandalone.style.bottom = 'auto';
+        eyeToggleStandalone.classList.replace('bottom', 'top');
+    } else {
+        // إذا الحاوية تحت: العين تظهر فوقها (تم تصحيح الحساب هنا)
+        const distanceFromBottom = window.innerHeight - containerRect.top;
+        eyeToggleStandalone.style.bottom = `${distanceFromBottom + gap}px`;
+        eyeToggleStandalone.style.top = 'auto';
+        eyeToggleStandalone.classList.replace('top', 'bottom');
+    }
+}
+
+// زر التحريك (Move)
 if (moveToggle) {
     moveToggle.onclick = (e) => {
         e.preventDefault();
-        const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-
-        if (toggleContainer && toggleContainer.classList.contains('top')) {
+        if (toggleContainer.classList.contains('top')) {
             toggleContainer.classList.replace('top', 'bottom');
-        } else if (toggleContainer) {
+        } else {
             toggleContainer.classList.replace('bottom', 'top');
         }
-        // تحديث الموضع بعد انتهاء أي حركة أنيميشن بسيطة
-        setTimeout(updateEyeToggleStandalonePosition, 100);
+        // تحديث مكان العين بعد انتهاء حركة الحاوية
+        setTimeout(updateEyeToggleStandalonePosition, 200);
     };
 }
 
-if (searchIcon) {
-    searchIcon.onclick = (e) => {
-        e.preventDefault();
-        window.goToWood();
-    };
-}
-
-if (backButtonGroup) {
-    backButtonGroup.onclick = (e) => {
-        e.stopPropagation();
-        if (currentFolder !== "") {
-            console.log('📂 زر SVG: العودة للمجلد الأب');
-            let parts = currentFolder.split('/');
-            parts.pop();
-            currentFolder = parts.join('/');
-            updateWoodInterface();
-        } else {
-            console.log('🗺️ زر SVG: الذهاب لنهاية الخريطة');
-            window.goToMapEnd();
-        }
-    };
-}
-
-if (jsToggle) {
-    jsToggle.addEventListener('change', function() {
-        interactionEnabled = this.checked;
-    });
-}
-
+// منطق البحث بالحرف (Character-by-character search)
 if (searchInput) {
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            if (typeof trackSearch === 'function') trackSearch(searchInput.value);
-            window.goToWood();
-        }
-    };
-
     searchInput.addEventListener('input', debounce(function(e) {
         if (!mainSvg) return;
-
         const query = normalizeArabic(e.target.value);
-        const isEmptySearch = query.length === 0;
-
+        
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const href = rect.getAttribute('data-href') || '';
             const fullText = rect.getAttribute('data-full-text') || '';
@@ -1255,55 +1131,24 @@ if (searchInput) {
             if (href === '#') {
                 rect.style.display = 'none';
                 if (label) label.style.display = 'none';
-                if (bg) bg.style.display = 'none';
                 return;
             }
 
-            if (!isEmptySearch) {
-                // تعديل البحث بالحرف: دمج كل النصوص والبحث بداخلها
-                const combinedText = normalizeArabic(fullText + " " + fileName + " " + autoArabic);
-                const isMatch = combinedText.includes(query);
+            const combinedText = normalizeArabic(fullText + " " + fileName + " " + autoArabic);
+            const isMatch = query.length === 0 || combinedText.includes(query);
 
-                rect.style.display = isMatch ? '' : 'none';
-                if (label) label.style.display = rect.style.display;
-                if (bg) bg.style.display = rect.style.display;
-            } else {
-                rect.style.display = '';
-                if (label) label.style.display = '';
-                if (bg) bg.style.display = '';
-            }
+            rect.style.display = isMatch ? '' : 'none';
+            if (label) label.style.display = rect.style.display;
+            if (bg) bg.style.display = rect.style.display;
         });
 
         updateWoodInterface();
     }, 150));
 }
 
-// دالة تحديث موضع زر العين المنفرد - النسخة المصححة للحالتين
-function updateEyeToggleStandalonePosition() {
-    const toggleContainer = document.getElementById('js-toggle-container');
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+// تحديث الموضع عند تغيير حجم الشاشة
+window.addEventListener('resize', debounce(updateEyeToggleStandalonePosition, 100));
 
-    if (!toggleContainer || !eyeToggleStandalone) return;
-
-    const isTop = toggleContainer.classList.contains('top');
-    const containerRect = toggleContainer.getBoundingClientRect();
-    const gap = 15;
-
-    if (isTop) {
-        // الحالة عندما تكون الحاوية في الأعلى
-        eyeToggleStandalone.style.top = `${containerRect.bottom + gap}px`;
-        eyeToggleStandalone.style.bottom = 'auto';
-        eyeToggleStandalone.classList.add('top');
-        eyeToggleStandalone.classList.remove('bottom');
-    } else {
-        // الحالة عندما تكون الحاوية في الأسفل
-        const distanceFromBottom = window.innerHeight - containerRect.top;
-        eyeToggleStandalone.style.bottom = `${distanceFromBottom + gap}px`;
-        eyeToggleStandalone.style.top = 'auto';
-        eyeToggleStandalone.classList.add('bottom');
-        eyeToggleStandalone.classList.remove('top');
-    }
-}
 
 /* ========================================
    [012] updateWoodInterface - واجهة الملفات الكاملة
