@@ -1,8 +1,8 @@
 /* ========================================
-   Smart Service Worker - يحدث فقط الملفات المعدلة
+   Smart Service Worker - محسّن مع دعم Reset
    ======================================== */
 
-const CACHE_VERSION = 'v2025.01.18.005';
+const CACHE_VERSION = 'v2025.01.18.006'; // تم تحديث الإصدار
 const CACHE_NAME = 'semester-3-cache-' + CACHE_VERSION;
 
 // الملفات الأساسية التي يجب تحميلها
@@ -20,11 +20,11 @@ const criticalFiles = [
 
 // قائمة بصمات الملفات (File Hashes) لمعرفة أي الملفات تغيرت
 const fileVersions = {
-  'index.html': '2025.01.18.005',
-  'preload.html': '2025.01.18.005',
-  'style.css': '2025.01.18.005',
-  'script.js': '2025.01.18.005',
-  'tracker.js': '2025.01.18.005'
+  'index.html': '2025.01.18.006',
+  'preload.html': '2025.01.18.006',
+  'style.css': '2025.01.18.006',
+  'script.js': '2025.01.18.006',
+  'tracker.js': '2025.01.18.006'
 };
 
 /* ========================================
@@ -68,7 +68,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const cacheNames = await caches.keys();
-      
+
       // حذف الكاشات القديمة فقط
       await Promise.all(
         cacheNames.map((cacheName) => {
@@ -78,6 +78,9 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+
+      // تنظيف الكاش القديم
+      await cleanOldCaches();
 
       console.log('✅ Service Worker: Activated');
       return self.clients.claim();
@@ -133,7 +136,7 @@ self.addEventListener('fetch', (event) => {
 
       } catch (err) {
         console.error('❌ Fetch error:', err);
-        
+
         // محاولة العودة للكاش في حالة فشل الشبكة
         const cachedResponse = await caches.match(event.request);
         if (cachedResponse) {
@@ -184,7 +187,7 @@ async function checkAndUpdateFile(request, cache) {
       // الملف تغير - تحديثه
       await cache.put(request, networkResponse.clone());
       console.log(`🔄 تم تحديث الملف: ${filename}`);
-      
+
       // إشعار جميع الصفحات المفتوحة بالتحديث
       notifyClients(filename);
     } else {
@@ -202,7 +205,7 @@ async function checkAndUpdateFile(request, cache) {
 
 async function notifyClients(filename) {
   const clients = await self.clients.matchAll({ type: 'window' });
-  
+
   clients.forEach(client => {
     client.postMessage({
       type: 'FILE_UPDATED',
@@ -216,47 +219,116 @@ async function notifyClients(filename) {
 }
 
 /* ========================================
-   [006] معالجة الرسائل من الصفحات
+   [006] معالجة الرسائل من الصفحات - محسّن
    ======================================== */
 
 self.addEventListener('message', (event) => {
   console.log('📨 رسالة من الصفحة:', event.data);
 
+  // Skip Waiting
   if (event.data && event.data.action === 'skipWaiting') {
+    console.log('⏩ Skip Waiting triggered');
     self.skipWaiting();
   }
 
+  // حذف جميع الكاشات - محسّن
   if (event.data && event.data.action === 'clearCache') {
+    console.log('🗑️ تلقي أمر clearCache');
+    
     event.waitUntil(
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
+      (async () => {
+        try {
+          const cacheNames = await caches.keys();
+          console.log(`🗑️ عدد الكاشات للحذف: ${cacheNames.length}`);
+          
+          // حذف جميع الكاشات
+          const deletePromises = cacheNames.map(async (cacheName) => {
             if (cacheName.startsWith('semester-3-cache-')) {
-              console.log('🗑️ حذف الكاش:', cacheName);
+              console.log(`🗑️ حذف الكاش: ${cacheName}`);
               return caches.delete(cacheName);
             }
-          })
-        );
-      }).then(() => {
-        console.log('✅ تم حذف جميع الكاشات');
-        event.ports[0]?.postMessage({ success: true });
-      })
+          });
+
+          await Promise.all(deletePromises);
+          
+          console.log('✅ تم حذف جميع الكاشات بنجاح');
+          
+          // إرسال رد للصفحة
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ 
+              success: true,
+              message: 'تم حذف جميع الكاشات',
+              deletedCount: cacheNames.length
+            });
+          }
+
+        } catch (error) {
+          console.error('❌ خطأ في حذف الكاشات:', error);
+          
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ 
+              success: false,
+              error: error.message
+            });
+          }
+        }
+      })()
     );
   }
 
+  // الحصول على معلومات الكاش
   if (event.data && event.data.action === 'getCacheInfo') {
     event.waitUntil(
       (async () => {
-        const cache = await caches.open(CACHE_NAME);
-        const keys = await cache.keys();
-        
-        const info = {
-          version: CACHE_VERSION,
-          totalFiles: keys.length,
-          files: keys.map(req => new URL(req.url).pathname)
-        };
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          const keys = await cache.keys();
 
-        event.ports[0]?.postMessage(info);
+          const info = {
+            version: CACHE_VERSION,
+            cacheName: CACHE_NAME,
+            totalFiles: keys.length,
+            files: keys.map(req => new URL(req.url).pathname)
+          };
+
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage(info);
+          }
+        } catch (error) {
+          console.error('❌ خطأ في getCacheInfo:', error);
+          
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ error: error.message });
+          }
+        }
+      })()
+    );
+  }
+
+  // حذف كاش معين
+  if (event.data && event.data.action === 'deleteCacheItem' && event.data.url) {
+    event.waitUntil(
+      (async () => {
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          const deleted = await cache.delete(event.data.url);
+          
+          console.log(`🗑️ حذف ${event.data.url}: ${deleted ? 'نجح' : 'فشل'}`);
+          
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ 
+              success: deleted,
+              url: event.data.url
+            });
+          }
+        } catch (error) {
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ 
+              success: false,
+              error: error.message
+            });
+          }
+        }
       })()
     );
   }
@@ -287,12 +359,12 @@ self.addEventListener('periodicsync', (event) => {
 async function checkForUpdates() {
   try {
     const cache = await caches.open(CACHE_NAME);
-    
+
     for (const file of criticalFiles) {
       const request = new Request(file);
       await checkAndUpdateFile(request, cache);
     }
-    
+
     console.log('✅ اكتمل فحص التحديثات');
   } catch (error) {
     console.error('❌ خطأ في فحص التحديثات:', error);
@@ -307,11 +379,11 @@ async function checkForUpdates() {
 async function cacheFirstStrategy(request) {
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(request);
-  
+
   if (cachedResponse) {
     return cachedResponse;
   }
-  
+
   try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
@@ -327,7 +399,7 @@ async function cacheFirstStrategy(request) {
 // استراتيجية Network First للملفات الديناميكية
 async function networkFirstStrategy(request) {
   const cache = await caches.open(CACHE_NAME);
-  
+
   try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
@@ -349,34 +421,35 @@ async function networkFirstStrategy(request) {
    ======================================== */
 
 async function cleanOldCaches() {
-  const cacheNames = await caches.keys();
-  const now = Date.now();
-  const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 أيام
+  try {
+    const cacheNames = await caches.keys();
+    const now = Date.now();
+    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 أيام
 
-  for (const cacheName of cacheNames) {
-    if (!cacheName.startsWith('semester-3-cache-')) continue;
+    for (const cacheName of cacheNames) {
+      if (!cacheName.startsWith('semester-3-cache-')) continue;
 
-    const cache = await caches.open(cacheName);
-    const keys = await cache.keys();
+      const cache = await caches.open(cacheName);
+      const keys = await cache.keys();
 
-    for (const request of keys) {
-      const response = await cache.match(request);
-      const dateHeader = response?.headers.get('date');
-      
-      if (dateHeader) {
-        const cacheDate = new Date(dateHeader).getTime();
-        if (now - cacheDate > maxAge) {
-          await cache.delete(request);
-          console.log('🗑️ حذف ملف قديم:', new URL(request.url).pathname);
+      for (const request of keys) {
+        const response = await cache.match(request);
+        const dateHeader = response?.headers.get('date');
+
+        if (dateHeader) {
+          const cacheDate = new Date(dateHeader).getTime();
+          if (now - cacheDate > maxAge) {
+            await cache.delete(request);
+            console.log('🗑️ حذف ملف قديم:', new URL(request.url).pathname);
+          }
         }
       }
     }
+    
+    console.log('✅ تم تنظيف الكاش القديم');
+  } catch (error) {
+    console.warn('⚠️ خطأ في تنظيف الكاش:', error);
   }
 }
-
-// تشغيل التنظيف عند التفعيل
-self.addEventListener('activate', (event) => {
-  event.waitUntil(cleanOldCaches());
-});
 
 console.log('✅ Smart Service Worker loaded - Version:', CACHE_VERSION);
