@@ -1,455 +1,405 @@
 /* ========================================
-   Smart Service Worker - محسّن مع دعم Reset
+   زر Reset الذكي جداً - يحدث الملفات المعدلة فقط
+   يتصل بـ GitHub ويقارن التواريخ/الهاشات
    ======================================== */
 
-const CACHE_VERSION = 'v2025.01.18.006'; // تم تحديث الإصدار
-const CACHE_NAME = 'semester-3-cache-' + CACHE_VERSION;
+const resetBtn = document.getElementById('reset-btn');
+if (resetBtn) {
+    resetBtn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        
+        const confirmReset = confirm(
+            '🔄 سيتم:\n' +
+            '• فحص الملفات المعدلة على GitHub\n' +
+            '• تحديث الملفات المعدلة فقط\n' +
+            '• الاحتفاظ بكل شيء آخر\n' +
+            '• إعادة تحميل الصفحة\n\n' +
+            'هل تريد المتابعة؟'
+        );
+        
+        if (!confirmReset) return;
 
-// الملفات الأساسية التي يجب تحميلها
-const criticalFiles = [
-  './',
-  './index.html',
-  './preload.html',
-  './style.css',
-  './script.js',
-  './tracker.js',
-  './image/wood.webp',
-  './image/Upper_wood.webp',
-  './image/0.png'
-];
+        console.log('🔄 بدء فحص التحديثات...');
 
-// قائمة بصمات الملفات (File Hashes) لمعرفة أي الملفات تغيرت
-const fileVersions = {
-  'index.html': '2025.01.18.006',
-  'preload.html': '2025.01.18.006',
-  'style.css': '2025.01.18.006',
-  'script.js': '2025.01.18.006',
-  'tracker.js': '2025.01.18.006'
-};
+        // إظهار رسالة تحميل
+        const loadingMsg = document.createElement('div');
+        loadingMsg.id = 'update-loading';
+        loadingMsg.innerHTML = `
+            <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                        background: rgba(0,0,0,0.9); color: white; padding: 30px; 
+                        border-radius: 15px; z-index: 99999; text-align: center;
+                        box-shadow: 0 0 30px rgba(255,204,0,0.5);">
+                <h2 style="margin: 0 0 15px 0; color: #ffca28;">🔍 جاري الفحص...</h2>
+                <p style="margin: 5px 0;" id="update-status">يتم الاتصال بـ GitHub...</p>
+                <div style="margin-top: 15px; font-size: 12px; color: #aaa;" id="update-details"></div>
+            </div>
+        `;
+        document.body.appendChild(loadingMsg);
 
-/* ========================================
-   [001] التثبيت - Install Event
-   ======================================== */
+        const updateStatus = (msg) => {
+            const el = document.getElementById('update-status');
+            if (el) el.textContent = msg;
+        };
 
-self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker: Installing version', CACHE_VERSION);
+        const updateDetails = (msg) => {
+            const el = document.getElementById('update-details');
+            if (el) el.innerHTML += msg + '<br>';
+        };
 
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      console.log('📦 Caching critical files...');
-
-      // تحميل الملفات الأساسية فقط
-      const cachePromises = criticalFiles.map(async (url) => {
         try {
-          const response = await fetch(url, { cache: 'reload' });
-          if (response.ok) {
-            await cache.put(url, response.clone());
-            console.log('✅ Cached:', url);
-          }
-        } catch (err) {
-          console.warn('⚠️ Failed to cache:', url, err);
-        }
-      });
+            updateStatus('🌐 الاتصال بـ GitHub API...');
 
-      await Promise.all(cachePromises);
-      console.log('✅ Service Worker: Installation complete');
-      return self.skipWaiting();
-    })
-  );
-});
+            // 1️⃣ جلب آخر commit من GitHub
+            const commitResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
 
-/* ========================================
-   [002] التفعيل - Activate Event
-   ======================================== */
-
-self.addEventListener('activate', (event) => {
-  console.log('🚀 Service Worker: Activating version', CACHE_VERSION);
-
-  event.waitUntil(
-    (async () => {
-      const cacheNames = await caches.keys();
-
-      // حذف الكاشات القديمة فقط
-      await Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName.startsWith('semester-3-cache-') && cacheName !== CACHE_NAME) {
-            console.log('🗑️ Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-
-      // تنظيف الكاش القديم
-      await cleanOldCaches();
-
-      console.log('✅ Service Worker: Activated');
-      return self.clients.claim();
-    })()
-  );
-});
-
-/* ========================================
-   [003] جلب الملفات - Fetch Event (ذكي)
-   ======================================== */
-
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // تجاهل الطلبات الخارجية
-  if (url.origin !== self.location.origin) {
-    return event.respondWith(fetch(event.request));
-  }
-
-  event.respondWith(
-    (async () => {
-      try {
-        const cache = await caches.open(CACHE_NAME);
-        const cachedResponse = await cache.match(event.request);
-
-        // التحقق من الملفات الديناميكية (HTML, CSS, JS)
-        const isDynamicFile = url.pathname.endsWith('.html') || 
-                             url.pathname.endsWith('.css') || 
-                             url.pathname.endsWith('.js');
-
-        if (cachedResponse) {
-          console.log(`✅ من الكاش: ${url.pathname}`);
-
-          // إذا كان ملف ديناميكي، تحقق من التحديثات في الخلفية
-          if (isDynamicFile) {
-            checkAndUpdateFile(event.request, cache);
-          }
-
-          return cachedResponse;
-        }
-
-        // إذا لم يكن موجود في الكاش، جلبه من الشبكة
-        console.log(`🌐 من الشبكة: ${url.pathname}`);
-        const networkResponse = await fetch(event.request);
-
-        // حفظه في الكاش إذا كان الطلب ناجحاً
-        if (networkResponse && networkResponse.status === 200) {
-          cache.put(event.request, networkResponse.clone());
-          console.log(`💾 تم حفظ في الكاش: ${url.pathname}`);
-        }
-
-        return networkResponse;
-
-      } catch (err) {
-        console.error('❌ Fetch error:', err);
-
-        // محاولة العودة للكاش في حالة فشل الشبكة
-        const cachedResponse = await caches.match(event.request);
-        if (cachedResponse) {
-          console.log(`⚠️ استخدام نسخة الكاش القديمة: ${url.pathname}`);
-          return cachedResponse;
-        }
-
-        return new Response('Network error - الملف غير متاح حالياً', { 
-          status: 408,
-          statusText: 'Network Error'
-        });
-      }
-    })()
-  );
-});
-
-/* ========================================
-   [004] تحديث ذكي للملفات (في الخلفية)
-   ======================================== */
-
-async function checkAndUpdateFile(request, cache) {
-  try {
-    const url = new URL(request.url);
-    const filename = url.pathname.split('/').pop();
-
-    // جلب النسخة الجديدة من الشبكة
-    const networkResponse = await fetch(request, { cache: 'no-cache' });
-
-    if (!networkResponse || !networkResponse.ok) {
-      return;
-    }
-
-    // الحصول على النسخة المحفوظة
-    const cachedResponse = await cache.match(request);
-
-    if (!cachedResponse) {
-      // إذا لم يكن موجود، احفظه
-      await cache.put(request, networkResponse.clone());
-      console.log(`💾 تم حفظ ملف جديد: ${filename}`);
-      return;
-    }
-
-    // مقارنة المحتوى
-    const cachedText = await cachedResponse.text();
-    const networkText = await networkResponse.clone().text();
-
-    if (cachedText !== networkText) {
-      // الملف تغير - تحديثه
-      await cache.put(request, networkResponse.clone());
-      console.log(`🔄 تم تحديث الملف: ${filename}`);
-
-      // إشعار جميع الصفحات المفتوحة بالتحديث
-      notifyClients(filename);
-    } else {
-      console.log(`✅ الملف محدث: ${filename}`);
-    }
-
-  } catch (error) {
-    console.warn('⚠️ خطأ في التحديث الذكي:', error);
-  }
-}
-
-/* ========================================
-   [005] إشعار الصفحات بالتحديثات
-   ======================================== */
-
-async function notifyClients(filename) {
-  const clients = await self.clients.matchAll({ type: 'window' });
-
-  clients.forEach(client => {
-    client.postMessage({
-      type: 'FILE_UPDATED',
-      filename: filename,
-      version: CACHE_VERSION,
-      message: `تم تحديث الملف: ${filename}`
-    });
-  });
-
-  console.log(`📢 تم إشعار ${clients.length} صفحة بالتحديث`);
-}
-
-/* ========================================
-   [006] معالجة الرسائل من الصفحات - محسّن
-   ======================================== */
-
-self.addEventListener('message', (event) => {
-  console.log('📨 رسالة من الصفحة:', event.data);
-
-  // Skip Waiting
-  if (event.data && event.data.action === 'skipWaiting') {
-    console.log('⏩ Skip Waiting triggered');
-    self.skipWaiting();
-  }
-
-  // حذف جميع الكاشات - محسّن
-  if (event.data && event.data.action === 'clearCache') {
-    console.log('🗑️ تلقي أمر clearCache');
-    
-    event.waitUntil(
-      (async () => {
-        try {
-          const cacheNames = await caches.keys();
-          console.log(`🗑️ عدد الكاشات للحذف: ${cacheNames.length}`);
-          
-          // حذف جميع الكاشات
-          const deletePromises = cacheNames.map(async (cacheName) => {
-            if (cacheName.startsWith('semester-3-cache-')) {
-              console.log(`🗑️ حذف الكاش: ${cacheName}`);
-              return caches.delete(cacheName);
+            if (!commitResponse.ok) {
+                throw new Error('فشل الاتصال بـ GitHub');
             }
-          });
 
-          await Promise.all(deletePromises);
-          
-          console.log('✅ تم حذف جميع الكاشات بنجاح');
-          
-          // إرسال رد للصفحة
-          if (event.ports && event.ports[0]) {
-            event.ports[0].postMessage({ 
-              success: true,
-              message: 'تم حذف جميع الكاشات',
-              deletedCount: cacheNames.length
-            });
-          }
+            const commitData = await commitResponse.json();
+            const latestCommitSha = commitData.sha;
+            const commitDate = new Date(commitData.commit.author.date);
+            
+            console.log(`📅 آخر تحديث على GitHub: ${commitDate.toLocaleString('ar-EG')}`);
+            updateDetails(`📅 آخر تحديث: ${commitDate.toLocaleString('ar-EG')}`);
+
+            // 2️⃣ جلب قائمة الملفات المعدلة في آخر commit
+            updateStatus('📋 جلب قائمة الملفات المعدلة...');
+            
+            const filesResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${latestCommitSha}`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
+
+            if (!filesResponse.ok) {
+                throw new Error('فشل جلب تفاصيل الـ commit');
+            }
+
+            const filesData = await filesResponse.json();
+            const modifiedFiles = filesData.files || [];
+
+            console.log(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
+            updateDetails(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
+
+            if (modifiedFiles.length === 0) {
+                updateStatus('✅ لا توجد تحديثات جديدة!');
+                setTimeout(() => {
+                    document.body.removeChild(loadingMsg);
+                    alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
+                }, 1500);
+                return;
+            }
+
+            // 3️⃣ فتح الكاش
+            updateStatus('💾 فتح الكاش...');
+            
+            const cacheNames = await caches.keys();
+            const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
+            
+            if (!semesterCache) {
+                throw new Error('الكاش غير موجود');
+            }
+
+            const cache = await caches.open(semesterCache);
+
+            // 4️⃣ تحديث الملفات المعدلة فقط
+            updateStatus('🔄 تحديث الملفات المعدلة...');
+            
+            let updatedCount = 0;
+            const filesToUpdate = [];
+
+            for (const file of modifiedFiles) {
+                const filename = file.filename;
+                
+                // تجاهل الملفات غير المهمة
+                if (filename.startsWith('.') || 
+                    filename.includes('README') || 
+                    filename.includes('.md')) {
+                    continue;
+                }
+
+                filesToUpdate.push(filename);
+            }
+
+            console.log(`📦 ملفات للتحديث: ${filesToUpdate.length}`);
+            updateDetails(`📦 سيتم تحديث ${filesToUpdate.length} ملف`);
+
+            for (const filename of filesToUpdate) {
+                try {
+                    // حذف من الكاش
+                    const deleted = await cache.delete(`./${filename}`);
+                    if (!deleted) {
+                        await cache.delete(`/${filename}`);
+                        await cache.delete(filename);
+                    }
+
+                    // جلب النسخة الجديدة
+                    const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
+                    const response = await fetch(newFileUrl, { 
+                        cache: 'reload',
+                        mode: 'cors'
+                    });
+
+                    if (response.ok) {
+                        await cache.put(`./${filename}`, response.clone());
+                        updatedCount++;
+                        console.log(`✅ تم تحديث: ${filename}`);
+                        updateDetails(`✅ ${filename}`);
+                    } else {
+                        console.warn(`⚠️ فشل تحديث: ${filename}`);
+                        updateDetails(`⚠️ فشل: ${filename}`);
+                    }
+
+                } catch (fileError) {
+                    console.warn(`⚠️ خطأ في ${filename}:`, fileError);
+                }
+            }
+
+            // 5️⃣ حفظ SHA الجديد
+            localStorage.setItem('last_commit_sha', latestCommitSha.substring(0, 7));
+            localStorage.setItem('last_update_check', Date.now().toString());
+
+            console.log(`✅ تم تحديث ${updatedCount} من ${filesToUpdate.length} ملف`);
+
+            updateStatus('✅ اكتمل التحديث!');
+            updateDetails(`<br><strong>✅ تم تحديث ${updatedCount} ملف</strong>`);
+
+            setTimeout(() => {
+                document.body.removeChild(loadingMsg);
+                
+                alert(
+                    `✅ تم التحديث بنجاح!\n\n` +
+                    `📊 الإحصائيات:\n` +
+                    `• الملفات المعدلة: ${modifiedFiles.length}\n` +
+                    `• تم التحديث: ${updatedCount}\n\n` +
+                    `🔄 إعادة التحميل...`
+                );
+
+                // إعادة التحميل
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 500);
+
+            }, 2000);
 
         } catch (error) {
-          console.error('❌ خطأ في حذف الكاشات:', error);
-          
-          if (event.ports && event.ports[0]) {
-            event.ports[0].postMessage({ 
-              success: false,
-              error: error.message
-            });
-          }
+            console.error('❌ خطأ في التحديث:', error);
+            
+            const msg = document.getElementById('update-loading');
+            if (msg) document.body.removeChild(msg);
+            
+            alert(
+                '⚠️ حدث خطأ في التحديث:\n' +
+                error.message + '\n\n' +
+                'سيتم إعادة التحميل العادية.'
+            );
+            
+            window.location.reload();
         }
-      })()
-    );
-  }
-
-  // الحصول على معلومات الكاش
-  if (event.data && event.data.action === 'getCacheInfo') {
-    event.waitUntil(
-      (async () => {
-        try {
-          const cache = await caches.open(CACHE_NAME);
-          const keys = await cache.keys();
-
-          const info = {
-            version: CACHE_VERSION,
-            cacheName: CACHE_NAME,
-            totalFiles: keys.length,
-            files: keys.map(req => new URL(req.url).pathname)
-          };
-
-          if (event.ports && event.ports[0]) {
-            event.ports[0].postMessage(info);
-          }
-        } catch (error) {
-          console.error('❌ خطأ في getCacheInfo:', error);
-          
-          if (event.ports && event.ports[0]) {
-            event.ports[0].postMessage({ error: error.message });
-          }
-        }
-      })()
-    );
-  }
-
-  // حذف كاش معين
-  if (event.data && event.data.action === 'deleteCacheItem' && event.data.url) {
-    event.waitUntil(
-      (async () => {
-        try {
-          const cache = await caches.open(CACHE_NAME);
-          const deleted = await cache.delete(event.data.url);
-          
-          console.log(`🗑️ حذف ${event.data.url}: ${deleted ? 'نجح' : 'فشل'}`);
-          
-          if (event.ports && event.ports[0]) {
-            event.ports[0].postMessage({ 
-              success: deleted,
-              url: event.data.url
-            });
-          }
-        } catch (error) {
-          if (event.ports && event.ports[0]) {
-            event.ports[0].postMessage({ 
-              success: false,
-              error: error.message
-            });
-          }
-        }
-      })()
-    );
-  }
-});
-
-/* ========================================
-   [007] معالجة أخطاء Service Worker
-   ======================================== */
-
-self.addEventListener('error', (event) => {
-  console.error('❌ Service Worker Error:', event.error);
-});
-
-self.addEventListener('unhandledrejection', (event) => {
-  console.error('❌ Service Worker Unhandled Rejection:', event.reason);
-});
-
-/* ========================================
-   [008] Periodic Background Sync (اختياري)
-   ======================================== */
-
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'check-updates') {
-    event.waitUntil(checkForUpdates());
-  }
-});
-
-async function checkForUpdates() {
-  try {
-    const cache = await caches.open(CACHE_NAME);
-
-    for (const file of criticalFiles) {
-      const request = new Request(file);
-      await checkAndUpdateFile(request, cache);
-    }
-
-    console.log('✅ اكتمل فحص التحديثات');
-  } catch (error) {
-    console.error('❌ خطأ في فحص التحديثات:', error);
-  }
+    });
 }
 
 /* ========================================
-   [009] استراتيجيات Caching المتقدمة
+   دالة مساعدة: فحص التحديثات بدون تحديث
    ======================================== */
 
-// استراتيجية Cache First للصور
-async function cacheFirstStrategy(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const cachedResponse = await cache.match(request);
+async function checkForUpdatesOnly() {
+    try {
+        console.log('🔍 فحص التحديثات...');
 
-  if (cachedResponse) {
-    return cachedResponse;
-  }
+        const commitResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
+            { 
+                cache: 'no-store',
+                headers: { 'Accept': 'application/vnd.github.v3+json' }
+            }
+        );
 
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
+        if (!commitResponse.ok) {
+            console.error('❌ فشل الاتصال بـ GitHub');
+            return null;
+        }
+
+        const commitData = await commitResponse.json();
+        const latestSha = commitData.sha.substring(0, 7);
+        const lastSha = localStorage.getItem('last_commit_sha');
+        const commitDate = new Date(commitData.commit.author.date);
+
+        console.log(`📅 آخر تحديث على GitHub: ${commitDate.toLocaleString('ar-EG')}`);
+        console.log(`🔖 SHA الحالي: ${lastSha || 'غير محفوظ'}`);
+        console.log(`🔖 SHA الجديد: ${latestSha}`);
+
+        if (!lastSha) {
+            console.log('⚠️ لا يوجد SHA محفوظ - تحتاج لعمل Reset');
+            return {
+                hasUpdate: true,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate,
+                message: commitData.commit.message
+            };
+        }
+
+        if (lastSha !== latestSha) {
+            console.log('🆕 يوجد تحديث جديد!');
+            console.log(`📝 رسالة الـ commit: ${commitData.commit.message}`);
+            
+            // جلب الملفات المعدلة
+            const filesResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${commitData.sha}`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
+
+            if (filesResponse.ok) {
+                const filesData = await filesResponse.json();
+                console.log(`📋 الملفات المعدلة (${filesData.files.length}):`);
+                filesData.files.forEach(file => {
+                    console.log(`  • ${file.filename} (${file.status})`);
+                });
+            }
+
+            return {
+                hasUpdate: true,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate,
+                message: commitData.commit.message,
+                filesCount: filesResponse.ok ? filesData.files.length : 0
+            };
+        } else {
+            console.log('✅ الموقع محدّث');
+            return {
+                hasUpdate: false,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate
+            };
+        }
+
+    } catch (error) {
+        console.error('❌ خطأ في فحص التحديثات:', error);
+        return null;
     }
-    return networkResponse;
-  } catch (error) {
-    console.error('Network error:', error);
-    throw error;
-  }
-}
-
-// استراتيجية Network First للملفات الديناميكية
-async function networkFirstStrategy(request) {
-  const cache = await caches.open(CACHE_NAME);
-
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  } catch (error) {
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) {
-      console.log('⚠️ Network failed, using cache');
-      return cachedResponse;
-    }
-    throw error;
-  }
 }
 
 /* ========================================
-   [010] تنظيف الكاش التلقائي
+   دالة مساعدة: تحديث ملف واحد فقط
    ======================================== */
 
-async function cleanOldCaches() {
-  try {
-    const cacheNames = await caches.keys();
-    const now = Date.now();
-    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 أيام
+async function updateSingleFile(filename) {
+    try {
+        console.log(`🔄 تحديث ملف واحد: ${filename}`);
 
-    for (const cacheName of cacheNames) {
-      if (!cacheName.startsWith('semester-3-cache-')) continue;
-
-      const cache = await caches.open(cacheName);
-      const keys = await cache.keys();
-
-      for (const request of keys) {
-        const response = await cache.match(request);
-        const dateHeader = response?.headers.get('date');
-
-        if (dateHeader) {
-          const cacheDate = new Date(dateHeader).getTime();
-          if (now - cacheDate > maxAge) {
-            await cache.delete(request);
-            console.log('🗑️ حذف ملف قديم:', new URL(request.url).pathname);
-          }
+        const cacheNames = await caches.keys();
+        const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
+        
+        if (!semesterCache) {
+            console.error('❌ الكاش غير موجود');
+            return false;
         }
-      }
+
+        const cache = await caches.open(semesterCache);
+
+        // حذف من الكاش
+        await cache.delete(`./${filename}`);
+        await cache.delete(`/${filename}`);
+        await cache.delete(filename);
+
+        // جلب النسخة الجديدة
+        const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
+        const response = await fetch(newFileUrl, { 
+            cache: 'reload',
+            mode: 'cors'
+        });
+
+        if (response.ok) {
+            await cache.put(`./${filename}`, response.clone());
+            console.log(`✅ تم تحديث: ${filename}`);
+            return true;
+        } else {
+            console.error(`❌ فشل تحديث: ${filename}`);
+            return false;
+        }
+
+    } catch (error) {
+        console.error(`❌ خطأ في تحديث ${filename}:`, error);
+        return false;
     }
-    
-    console.log('✅ تم تنظيف الكاش القديم');
-  } catch (error) {
-    console.warn('⚠️ خطأ في تنظيف الكاش:', error);
-  }
 }
 
-console.log('✅ Smart Service Worker loaded - Version:', CACHE_VERSION);
+/* ========================================
+   دالة مساعدة: عرض محتوى الكاش
+   ======================================== */
+
+async function listCacheContents() {
+    try {
+        const cacheNames = await caches.keys();
+        
+        for (const cacheName of cacheNames) {
+            if (cacheName.startsWith('semester-3-cache-')) {
+                const cache = await caches.open(cacheName);
+                const keys = await cache.keys();
+                
+                console.log(`\n📦 ${cacheName}:`);
+                console.log(`📄 عدد الملفات: ${keys.length}\n`);
+                
+                const filesByType = {
+                    html: [],
+                    css: [],
+                    js: [],
+                    images: [],
+                    svg: [],
+                    other: []
+                };
+
+                keys.forEach(request => {
+                    const url = new URL(request.url);
+                    const path = url.pathname;
+                    
+                    if (path.endsWith('.html')) filesByType.html.push(path);
+                    else if (path.endsWith('.css')) filesByType.css.push(path);
+                    else if (path.endsWith('.js')) filesByType.js.push(path);
+                    else if (path.match(/\.(webp|png|jpg|jpeg|gif)$/)) filesByType.images.push(path);
+                    else if (path.endsWith('.svg')) filesByType.svg.push(path);
+                    else filesByType.other.push(path);
+                });
+
+                console.log('📝 HTML:', filesByType.html.length);
+                filesByType.html.forEach(f => console.log(`  • ${f}`));
+                
+                console.log('\n🎨 CSS:', filesByType.css.length);
+                filesByType.css.forEach(f => console.log(`  • ${f}`));
+                
+                console.log('\n⚙️ JavaScript:', filesByType.js.length);
+                filesByType.js.forEach(f => console.log(`  • ${f}`));
+                
+                console.log('\n🖼️ صور:', filesByType.images.length);
+                
+                console.log('\n📊 SVG:', filesByType.svg.length);
+                
+                console.log('\n📦 أخرى:', filesByType.other.length);
+            }
+        }
+    } catch (error) {
+        console.error('❌ خطأ:', error);
+    }
+}
+
+// للاستخدام في Console:
+// checkForUpdatesOnly()              // فحص التحديثات فقط
+// updateSingleFile('style.css')      // تحديث ملف واحد
+// listCacheContents()                // عرض محتويات الكاش
+
+console.log('✅ Super Smart Reset Button loaded - يحدث الملفات المعدلة فقط من GitHub');
