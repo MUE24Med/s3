@@ -270,7 +270,6 @@ function loadSelectedGroup() {
     }
     return false;
 }
-
 /* ========================================
    [005] إدارة شاشة التحميل
    ======================================== */
@@ -624,7 +623,6 @@ function renderNameInput() {
     };
     dynamicGroup.appendChild(inputGroup);
 }
-
 function loadImages() {
     if (!mainSvg) return;
     console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);
@@ -835,8 +833,82 @@ if (jsToggle) {
     });
 }
 
+if (searchInput) {
+    searchInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (typeof trackSearch === 'function') trackSearch(searchInput.value);
+            window.goToWood();
+        }
+    };
+
+    searchInput.addEventListener('input', debounce(function(e) {
+        if (!mainSvg) return;
+
+        const query = normalizeArabic(e.target.value);
+        const isEmptySearch = query.length === 0;
+
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+            const href = rect.getAttribute('data-href') || '';
+            const fullText = rect.getAttribute('data-full-text') || '';
+            const fileName = href !== '#' ? href.split('/').pop() : '';
+            const autoArabic = autoTranslate(fileName);
+
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+
+            if (href === '#') {
+                rect.style.display = 'none';
+                if (label) label.style.display = 'none';
+                if (bg) bg.style.display = 'none';
+                return;
+            }
+
+            if (!isEmptySearch) {
+                const normalizedHref = normalizeArabic(href);
+                const normalizedFullText = normalizeArabic(fullText);
+                const normalizedFileName = normalizeArabic(fileName);
+                const normalizedAutoArabic = normalizeArabic(autoArabic);
+
+                // بحث أكثر دقة - يجب أن يحتوي النص على جميع أحرف البحث بالترتيب
+                const searchChars = query.split('');
+                
+                const isMatch = [normalizedHref, normalizedFullText, normalizedFileName, normalizedAutoArabic].some(text => {
+                    if (text.includes(query)) return true; // تطابق مباشر
+                    
+                    // فحص تطابق جزئي متتابع
+                    let lastIndex = -1;
+                    for (const char of searchChars) {
+                        const index = text.indexOf(char, lastIndex + 1);
+                        if (index === -1) return false;
+                        lastIndex = index;
+                    }
+                    return true;
+                });
+
+                rect.style.display = isMatch ? '' : 'none';
+                if (label) label.style.display = rect.style.display;
+                if (bg) bg.style.display = rect.style.display;
+            } else {
+                rect.style.display = '';
+                if (label) label.style.display = '';
+                if (bg) bg.style.display = '';
+            }
+        });
+
+        updateWoodInterface();
+    }, 150));
+}
+
+if (mainSvg) {
+    mainSvg.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
+}
+
+console.log('✅ script.js - الجزء الثالث تم تحميله');
 /* ========================================
-   [009] ✅ updateWoodInterface - البحث المحسّن
+   [009] updateWoodInterface - واجهة الملفات
    ======================================== */
 
 async function updateWoodInterface() {
@@ -866,24 +938,16 @@ async function updateWoodInterface() {
         }
     } else {
         const folderName = currentFolder.split('/').pop();
-        
-        // ✅ بحث محسّن - عد الملفات المتطابقة
         const countInCurrent = globalFileTree.filter(f => {
             const isInside = f.path.startsWith(currentFolder + '/');
             const isPdf = f.path.toLowerCase().endsWith('.pdf');
-            
-            if (!isInside || !isPdf) return false;
-            if (query === "") return true;
-            
-            // ✅ بحث صارم - حتى لو حرف واحد
-            const fileName = f.path.split('/').pop();
+            if (query === "") return isInside && isPdf;
+            const fileName = f.path.split('/').pop().toLowerCase();
             const arabicName = autoTranslate(fileName);
-            
-            const normalizedFileName = normalizeArabic(fileName);
-            const normalizedArabicName = normalizeArabic(arabicName);
-            
-            return normalizedFileName.includes(query) || 
-                   normalizedArabicName.includes(query);
+            return isInside && isPdf && (
+                normalizeArabic(fileName).includes(query) ||
+                normalizeArabic(arabicName).includes(query)
+            );
         }).length;
 
         const pathParts = currentFolder.split('/');
@@ -1093,23 +1157,18 @@ async function updateWoodInterface() {
             let shouldDisplay = true;
 
             if (item.type === 'dir') {
-                // ✅ بحث محسّن في المجلدات
                 const filteredCount = globalFileTree.filter(f => {
                     const isInsideFolder = f.path.startsWith(item.path + '/');
                     const isPdf = f.path.toLowerCase().endsWith('.pdf');
-                    
-                    if (!isInsideFolder || !isPdf) return false;
-                    if (query === "") return true;
+                    if (query === "") return isInsideFolder && isPdf;
 
-                    // ✅ بحث صارم - حتى لو حرف واحد
-                    const fileName = f.path.split('/').pop();
+                    const fileName = f.path.split('/').pop().toLowerCase();
                     const fileArabic = autoTranslate(fileName);
 
-                    const normalizedFileName = normalizeArabic(fileName);
-                    const normalizedFileArabic = normalizeArabic(fileArabic);
-
-                    return normalizedFileName.includes(query) || 
-                           normalizedFileArabic.includes(query);
+                    return isInsideFolder && isPdf && (
+                        normalizeArabic(fileName).includes(query) ||
+                        normalizeArabic(fileArabic).includes(query)
+                    );
                 }).length;
 
                 const maxLength = width === 780 ? 45 : 25;
@@ -1124,18 +1183,11 @@ async function updateWoodInterface() {
                 const displayName = cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName;
                 t.textContent = "📄 " + displayName;
 
-                // ✅ بحث محسّن للملفات
-                if (query !== "") {
-                    const arabicName = autoTranslate(cleanName);
-                    const normalizedFileName = normalizeArabic(cleanName);
-                    const normalizedArabicName = normalizeArabic(arabicName);
-                    
-                    const isMatch = normalizedFileName.includes(query) || 
-                                   normalizedArabicName.includes(query);
-                    
-                    if (!isMatch) {
-                        shouldDisplay = false;
-                    }
+                const arabicName = autoTranslate(cleanName);
+                if (query !== "" &&
+                    !normalizeArabic(cleanName).includes(query) &&
+                    !normalizeArabic(arabicName).includes(query)) {
+                    shouldDisplay = false;
                 }
             }
 
@@ -1408,6 +1460,7 @@ async function updateWoodInterface() {
     dynamicGroup.appendChild(scrollContainerGroup);
 }
 
+console.log('✅ script.js - الجزء الرابع (updateWoodInterface) تم تحميله');
 /* ========================================
    [010] معالجة المستطيلات والتفاعل
    ======================================== */
@@ -1777,75 +1830,7 @@ function scan() {
 }
 window.scan = scan;
 
-/* ========================================
-   [011] ✅ معالجات البحث المحسّنة
-   ======================================== */
-
-if (searchInput) {
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            if (typeof trackSearch === 'function') trackSearch(searchInput.value);
-            window.goToWood();
-        }
-    };
-
-    searchInput.addEventListener('input', debounce(function(e) {
-        if (!mainSvg) return;
-
-        const query = normalizeArabic(e.target.value);
-        const isEmptySearch = query.length === 0;
-
-        console.log('🔍 البحث:', query, '| الطول:', query.length);
-
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const href = rect.getAttribute('data-href') || '';
-            const fullText = rect.getAttribute('data-full-text') || '';
-            const fileName = href !== '#' ? href.split('/').pop() : '';
-            const autoArabic = autoTranslate(fileName);
-
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-
-            if (href === '#') {
-                rect.style.display = 'none';
-                if (label) label.style.display = 'none';
-                if (bg) bg.style.display = 'none';
-                return;
-            }
-
-            if (!isEmptySearch) {
-                // ✅ بحث محسّن - يعمل مع حرف واحد
-                const normalizedFileName = normalizeArabic(fileName);
-                const normalizedFullText = normalizeArabic(fullText);
-                const normalizedAutoArabic = normalizeArabic(autoArabic);
-
-                const isMatch = normalizedFileName.includes(query) || 
-                               normalizedFullText.includes(query) || 
-                               normalizedAutoArabic.includes(query);
-
-                rect.style.display = isMatch ? '' : 'none';
-                if (label) label.style.display = rect.style.display;
-                if (bg) bg.style.display = rect.style.display;
-            } else {
-                rect.style.display = '';
-                if (label) label.style.display = '';
-                if (bg) bg.style.display = '';
-            }
-        });
-
-        updateWoodInterface();
-    }, 150));
-}
-
-if (mainSvg) {
-    mainSvg.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    }, false);
-}
-
-console.log('✅ script.js تم تحميله بالكامل');
-
-// تهيئة نظام الرجوع
+// تشغيل setupBackButton عند بدء الصفحة
 setupBackButton();
 
+console.log('✅ script.js تم تحميله بالكامل');
