@@ -558,48 +558,48 @@ body {
   transition: all 0.3s ease;
 }
 
-#js-toggle-container.collapsed {
-  min-width: 50px !important;
-  max-width: 50px !important;
-  width: 50px !important;
-  height: 50px !important;
-  padding: 0 !important;
-  gap: 0 !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background-color: rgba(0, 0, 0, 0.95) !important;
-}
-
-#js-toggle-container.collapsed #search-container {
-  display: none !important;
-}
-
-#js-toggle-container.collapsed .controls-row {
-  display: none !important;
-}
-
-#js-toggle-container.collapsed #eye-toggle {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  opacity: 1 !important;
-  font-size: 28px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  min-width: auto !important;
-  min-height: auto !important;
-  width: auto !important;
-  height: auto !important;
-  position: static !important;
-  cursor: pointer !important;
-}
-
 #js-toggle-container.top { top: 20px; }
 #js-toggle-container.bottom { bottom: 20px; }
+
+/* زر العين المستقل - يظهر أسفل الحاوية */
+#eye-toggle-standalone {
+  transform: translateZ(0);
+  will-change: transform;
+  position: fixed;
+  right: 20px;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  font-size: 28px;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#eye-toggle-standalone.top {
+  top: calc(20px + 160px); /* أسفل الحاوية في الأعلى */
+}
+
+#eye-toggle-standalone.bottom {
+  bottom: calc(20px + 160px); /* أسفل الحاوية في الأسفل */
+}
+
+#eye-toggle-standalone:hover {
+  background-color: rgba(0, 0, 0, 1);
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+}
+
+#eye-toggle-standalone:active {
+  transform: scale(0.95);
+}
 
 #search-container {
   position: relative;
@@ -726,11 +726,6 @@ body {
   transform: scale(0.9);
 }
 
-#js-toggle-container.collapsed #eye-toggle:hover {
-  transform: scale(1.2);
-  background: transparent !important;
-}
-
 .hover-toggle-container {
   display: flex;
   align-items: center;
@@ -741,11 +736,6 @@ body {
 .hover-toggle-container span {
   font-size: 11px;
   opacity: 0.8;
-}
-
-#js-toggle-container.collapsed #move-toggle,
-#js-toggle-container.collapsed .hover-toggle-container {
-  display: none !important;
 }
 
 /* ========================================
@@ -1012,9 +1002,9 @@ input:focus:not(:focus-visible) {
 #preload-btn rect {
     transition: filter 0.3s ease, fill 0.3s ease;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
-    stroke-width: 3 !important;
+    stroke-width: 0 !important;
     pointer-events: auto !important;
-    stroke: #ffffff !important;
+    stroke: none !important;
 }
 
 #reset-btn:hover rect,
@@ -1043,48 +1033,48 @@ input:focus:not(:focus-visible) {
     user-select: none;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-weight: 900 !important;
-    font-size: 20px !important;
-    fill: #000000 !important;
+    font-size: 26px !important;
+    fill: #ffffff !important;
     paint-order: stroke fill;
-    stroke: #ffffff !important;
-    stroke-width: 3px !important;
-    filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.8));
+    stroke: none !important;
+    stroke-width: 0 !important;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 #back-btn-text {
-    font-size: 24px !important;
+    font-size: 32px !important;
 }
 
 #reset-btn rect {
-    fill: #d32f2f !important;
+    fill: #000000 !important;
 }
 
 #reset-btn:hover rect {
-    fill: #f44336 !important;
+    fill: #1a1a1a !important;
 }
 
 #change-group-btn rect {
-    fill: #2e7d32 !important;
+    fill: #000000 !important;
 }
 
 #change-group-btn:hover rect {
-    fill: #43a047 !important;
+    fill: #1a1a1a !important;
 }
 
 #preload-btn rect {
-    fill: #1976d2 !important;
+    fill: #000000 !important;
 }
 
 #preload-btn:hover rect {
-    fill: #2196f3 !important;
+    fill: #1a1a1a !important;
 }
 
 #back-btn {
-    fill: #3e2723 !important;
+    fill: #000000 !important;
 }
 
 #back-button-group:hover #back-btn {
-    fill: #5d4037 !important;
+    fill: #1a1a1a !important;
 }
 
 @media (max-width: 768px) {
@@ -1093,18 +1083,17 @@ input:focus:not(:focus-visible) {
     #back-btn,
     #preload-btn rect {
         rx: 8;
-        stroke-width: 2.5 !important;
     }
 
     #reset-btn text,
     #change-group-btn text,
     #preload-btn text,
     #group-btn-text {
-        font-size: 17px !important;
+        font-size: 22px !important;
     }
 
     #back-btn-text {
-        font-size: 20px !important;
+        font-size: 28px !important;
     }
 }
 
@@ -1113,11 +1102,11 @@ input:focus:not(:focus-visible) {
     #change-group-btn text,
     #preload-btn text,
     #group-btn-text {
-        font-size: 15px !important;
+        font-size: 19px !important;
     }
 
     #back-btn-text {
-        font-size: 18px !important;
+        font-size: 24px !important;
     }
 
     #reset-btn rect,
@@ -1125,7 +1114,6 @@ input:focus:not(:focus-visible) {
     #back-btn,
     #preload-btn rect {
         rx: 6;
-        stroke-width: 2 !important;
     }
 }
 
