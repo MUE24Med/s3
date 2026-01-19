@@ -836,7 +836,7 @@ if (jsToggle) {
 }
 
 /* ========================================
-   [009] updateWoodInterface - واجهة الملفات
+   [009] ✅ updateWoodInterface - البحث المحسّن
    ======================================== */
 
 async function updateWoodInterface() {
@@ -866,16 +866,24 @@ async function updateWoodInterface() {
         }
     } else {
         const folderName = currentFolder.split('/').pop();
+        
+        // ✅ بحث محسّن - عد الملفات المتطابقة
         const countInCurrent = globalFileTree.filter(f => {
             const isInside = f.path.startsWith(currentFolder + '/');
             const isPdf = f.path.toLowerCase().endsWith('.pdf');
-            if (query === "") return isInside && isPdf;
-            const fileName = f.path.split('/').pop().toLowerCase();
+            
+            if (!isInside || !isPdf) return false;
+            if (query === "") return true;
+            
+            // ✅ بحث صارم - حتى لو حرف واحد
+            const fileName = f.path.split('/').pop();
             const arabicName = autoTranslate(fileName);
-            return isInside && isPdf && (
-                normalizeArabic(fileName).includes(query) ||
-                normalizeArabic(arabicName).includes(query)
-            );
+            
+            const normalizedFileName = normalizeArabic(fileName);
+            const normalizedArabicName = normalizeArabic(arabicName);
+            
+            return normalizedFileName.includes(query) || 
+                   normalizedArabicName.includes(query);
         }).length;
 
         const pathParts = currentFolder.split('/');
@@ -1085,18 +1093,23 @@ async function updateWoodInterface() {
             let shouldDisplay = true;
 
             if (item.type === 'dir') {
+                // ✅ بحث محسّن في المجلدات
                 const filteredCount = globalFileTree.filter(f => {
                     const isInsideFolder = f.path.startsWith(item.path + '/');
                     const isPdf = f.path.toLowerCase().endsWith('.pdf');
-                    if (query === "") return isInsideFolder && isPdf;
+                    
+                    if (!isInsideFolder || !isPdf) return false;
+                    if (query === "") return true;
 
-                    const fileName = f.path.split('/').pop().toLowerCase();
+                    // ✅ بحث صارم - حتى لو حرف واحد
+                    const fileName = f.path.split('/').pop();
                     const fileArabic = autoTranslate(fileName);
 
-                    return isInsideFolder && isPdf && (
-                        normalizeArabic(fileName).includes(query) ||
-                        normalizeArabic(fileArabic).includes(query)
-                    );
+                    const normalizedFileName = normalizeArabic(fileName);
+                    const normalizedFileArabic = normalizeArabic(fileArabic);
+
+                    return normalizedFileName.includes(query) || 
+                           normalizedFileArabic.includes(query);
                 }).length;
 
                 const maxLength = width === 780 ? 45 : 25;
@@ -1111,11 +1124,18 @@ async function updateWoodInterface() {
                 const displayName = cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName;
                 t.textContent = "📄 " + displayName;
 
-                const arabicName = autoTranslate(cleanName);
-                if (query !== "" &&
-                    !normalizeArabic(cleanName).includes(query) &&
-                    !normalizeArabic(arabicName).includes(query)) {
-                    shouldDisplay = false;
+                // ✅ بحث محسّن للملفات
+                if (query !== "") {
+                    const arabicName = autoTranslate(cleanName);
+                    const normalizedFileName = normalizeArabic(cleanName);
+                    const normalizedArabicName = normalizeArabic(arabicName);
+                    
+                    const isMatch = normalizedFileName.includes(query) || 
+                                   normalizedArabicName.includes(query);
+                    
+                    if (!isMatch) {
+                        shouldDisplay = false;
+                    }
                 }
             }
 
@@ -1758,7 +1778,7 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [011] معالجات إضافية للبحث
+   [011] ✅ معالجات البحث المحسّنة
    ======================================== */
 
 if (searchInput) {
@@ -1775,6 +1795,8 @@ if (searchInput) {
 
         const query = normalizeArabic(e.target.value);
         const isEmptySearch = query.length === 0;
+
+        console.log('🔍 البحث:', query, '| الطول:', query.length);
 
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const href = rect.getAttribute('data-href') || '';
@@ -1793,14 +1815,13 @@ if (searchInput) {
             }
 
             if (!isEmptySearch) {
-                const normalizedHref = normalizeArabic(href);
-                const normalizedFullText = normalizeArabic(fullText);
+                // ✅ بحث محسّن - يعمل مع حرف واحد
                 const normalizedFileName = normalizeArabic(fileName);
+                const normalizedFullText = normalizeArabic(fullText);
                 const normalizedAutoArabic = normalizeArabic(autoArabic);
 
-                const isMatch = normalizedHref.includes(query) || 
+                const isMatch = normalizedFileName.includes(query) || 
                                normalizedFullText.includes(query) || 
-                               normalizedFileName.includes(query) || 
                                normalizedAutoArabic.includes(query);
 
                 rect.style.display = isMatch ? '' : 'none';
@@ -1825,4 +1846,6 @@ if (mainSvg) {
 
 console.log('✅ script.js تم تحميله بالكامل');
 
-// سأكمل الملف في الرد التالي لأنه طويل جداً
+// تهيئة نظام الرجوع
+setupBackButton();
+
