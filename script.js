@@ -765,7 +765,384 @@ if (preloadBtn) {
 }
 
 /* ========================================
-   [009] معالجات زر العين والبحث - المُحسّن
+   [009] زر Reset الذكي جداً - GitHub API
+   ======================================== */
+
+const resetBtn = document.getElementById('reset-btn');
+if (resetBtn) {
+    resetBtn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+
+        const confirmReset = confirm(
+            '🔄 سيتم:\n' +
+            '• فحص الملفات المعدلة على GitHub\n' +
+            '• تحديث الملفات المعدلة فقط\n' +
+            '• الاحتفاظ بكل شيء آخر\n' +
+            '• إعادة تحميل الصفحة\n\n' +
+            'هل تريد المتابعة؟'
+        );
+
+        if (!confirmReset) return;
+
+        console.log('🔄 بدء فحص التحديثات...');
+
+        const loadingMsg = document.createElement('div');
+        loadingMsg.id = 'update-loading';
+        loadingMsg.innerHTML = `
+            <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                        background: rgba(0,0,0,0.9); color: white; padding: 30px; 
+                        border-radius: 15px; z-index: 99999; text-align: center;
+                        box-shadow: 0 0 30px rgba(255,204,0,0.5);">
+                <h2 style="margin: 0 0 15px 0; color: #ffca28;">🔍 جاري الفحص...</h2>
+                <p style="margin: 5px 0;" id="update-status">يتم الاتصال بـ GitHub...</p>
+                <div style="margin-top: 15px; font-size: 12px; color: #aaa;" id="update-details"></div>
+            </div>
+        `;
+        document.body.appendChild(loadingMsg);
+
+        const updateStatus = (msg) => {
+            const el = document.getElementById('update-status');
+            if (el) el.textContent = msg;
+        };
+
+        const updateDetails = (msg) => {
+            const el = document.getElementById('update-details');
+            if (el) el.innerHTML += msg + '<br>';
+        };
+
+        try {
+            updateStatus('🌐 الاتصال بـ GitHub API...');
+
+            const commitResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
+
+            if (!commitResponse.ok) {
+                throw new Error('فشل الاتصال بـ GitHub');
+            }
+
+            const commitData = await commitResponse.json();
+            const latestCommitSha = commitData.sha;
+            const commitDate = new Date(commitData.commit.author.date);
+
+            console.log(`📅 آخر تحديث على GitHub: ${commitDate.toLocaleString('ar-EG')}`);
+            updateDetails(`📅 آخر تحديث: ${commitDate.toLocaleString('ar-EG')}`);
+
+            updateStatus('📋 جلب قائمة الملفات المعدلة...');
+
+            const filesResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${latestCommitSha}`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
+
+            if (!filesResponse.ok) {
+                throw new Error('فشل جلب تفاصيل الـ commit');
+            }
+
+            const filesData = await filesResponse.json();
+            const modifiedFiles = filesData.files || [];
+
+            console.log(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
+            updateDetails(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
+
+            if (modifiedFiles.length === 0) {
+                updateStatus('✅ لا توجد تحديثات جديدة!');
+                setTimeout(() => {
+                    document.body.removeChild(loadingMsg);
+                    alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
+                }, 1500);
+                return;
+            }
+
+            updateStatus('💾 فتح الكاش...');
+
+            const cacheNames = await caches.keys();
+            const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
+
+            if (!semesterCache) {
+                throw new Error('الكاش غير موجود');
+            }
+
+            const cache = await caches.open(semesterCache);
+
+            updateStatus('🔄 تحديث الملفات المعدلة...');
+
+            let updatedCount = 0;
+            const filesToUpdate = [];
+
+            for (const file of modifiedFiles) {
+                const filename = file.filename;
+
+                if (filename.startsWith('.') || 
+                    filename.includes('README') || 
+                    filename.includes('.md')) {
+                    continue;
+                }
+
+                filesToUpdate.push(filename);
+            }
+
+            console.log(`📦 ملفات للتحديث: ${filesToUpdate.length}`);
+            updateDetails(`📦 سيتم تحديث ${filesToUpdate.length} ملف`);
+
+            for (const filename of filesToUpdate) {
+                try {
+                    const deleted = await cache.delete(`./${filename}`);
+                    if (!deleted) {
+                        await cache.delete(`/${filename}`);
+                        await cache.delete(filename);
+                    }
+
+                    const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
+                    const response = await fetch(newFileUrl, { 
+                        cache: 'reload',
+                        mode: 'cors'
+                    });
+
+                    if (response.ok) {
+                        await cache.put(`./${filename}`, response.clone());
+                        updatedCount++;
+                        console.log(`✅ تم تحديث: ${filename}`);
+                        updateDetails(`✅ ${filename}`);
+                    } else {
+                        console.warn(`⚠️ فشل تحديث: ${filename}`);
+                        updateDetails(`⚠️ فشل: ${filename}`);
+                    }
+
+                } catch (fileError) {
+                    console.warn(`⚠️ خطأ في ${filename}:`, fileError);
+                }
+            }
+
+            localStorage.setItem('last_commit_sha', latestCommitSha.substring(0, 7));
+            localStorage.setItem('last_update_check', Date.now().toString());
+
+            console.log(`✅ تم تحديث ${updatedCount} من ${filesToUpdate.length} ملف`);
+
+            updateStatus('✅ اكتمل التحديث!');
+            updateDetails(`<br><strong>✅ تم تحديث ${updatedCount} ملف</strong>`);
+
+            setTimeout(() => {
+                document.body.removeChild(loadingMsg);
+
+                alert(
+                    `✅ تم التحديث بنجاح!\n\n` +
+                    `📊 الإحصائيات:\n` +
+                    `• الملفات المعدلة: ${modifiedFiles.length}\n` +
+                    `• تم التحديث: ${updatedCount}\n\n` +
+                    `🔄 إعادة التحميل...`
+                );
+
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 500);
+
+            }, 2000);
+
+        } catch (error) {
+            console.error('❌ خطأ في التحديث:', error);
+
+            const msg = document.getElementById('update-loading');
+            if (msg) document.body.removeChild(msg);
+
+            alert(
+                '⚠️ حدث خطأ في التحديث:\n' +
+                error.message + '\n\n' +
+                'سيتم إعادة التحميل العادية.'
+            );
+
+            window.location.reload();
+        }
+    });
+}
+
+/* ========================================
+   [010] دوال مساعدة للتحديثات
+   ======================================== */
+
+async function checkForUpdatesOnly() {
+    try {
+        console.log('🔍 فحص التحديثات...');
+
+        const commitResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
+            { 
+                cache: 'no-store',
+                headers: { 'Accept': 'application/vnd.github.v3+json' }
+            }
+        );
+
+        if (!commitResponse.ok) {
+            console.error('❌ فشل الاتصال بـ GitHub');
+            return null;
+        }
+
+        const commitData = await commitResponse.json();
+        const latestSha = commitData.sha.substring(0, 7);
+        const lastSha = localStorage.getItem('last_commit_sha');
+        const commitDate = new Date(commitData.commit.author.date);
+
+        console.log(`📅 آخر تحديث على GitHub: ${commitDate.toLocaleString('ar-EG')}`);
+        console.log(`🔖 SHA الحالي: ${lastSha || 'غير محفوظ'}`);
+        console.log(`🔖 SHA الجديد: ${latestSha}`);
+
+        if (!lastSha) {
+            console.log('⚠️ لا يوجد SHA محفوظ - تحتاج لعمل Reset');
+            return {
+                hasUpdate: true,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate,
+                message: commitData.commit.message
+            };
+        }
+
+        if (lastSha !== latestSha) {
+            console.log('🆕 يوجد تحديث جديد!');
+            console.log(`📝 رسالة الـ commit: ${commitData.commit.message}`);
+
+            const filesResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${commitData.sha}`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
+
+            if (filesResponse.ok) {
+                const filesData = await filesResponse.json();
+                console.log(`📋 الملفات المعدلة (${filesData.files.length}):`);
+                filesData.files.forEach(file => {
+                    console.log(`  • ${file.filename} (${file.status})`);
+                });
+            }
+
+            return {
+                hasUpdate: true,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate,
+                message: commitData.commit.message,
+                filesCount: filesResponse.ok ? filesData.files.length : 0
+            };
+        } else {
+            console.log('✅ الموقع محدّث');
+            return {
+                hasUpdate: false,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate
+            };
+        }
+
+    } catch (error) {
+        console.error('❌ خطأ في فحص التحديثات:', error);
+        return null;
+    }
+}
+
+async function updateSingleFile(filename) {
+    try {
+        console.log(`🔄 تحديث ملف واحد: ${filename}`);
+
+        const cacheNames = await caches.keys();
+        const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
+
+        if (!semesterCache) {
+            console.error('❌ الكاش غير موجود');
+            return false;
+        }
+
+        const cache = await caches.open(semesterCache);
+
+        await cache.delete(`./${filename}`);
+        await cache.delete(`/${filename}`);
+        await cache.delete(filename);
+
+        const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
+        const response = await fetch(newFileUrl, { 
+            cache: 'reload',
+            mode: 'cors'
+        });
+
+        if (response.ok) {
+            await cache.put(`./${filename}`, response.clone());
+            console.log(`✅ تم تحديث: ${filename}`);
+            return true;
+        } else {
+            console.error(`❌ فشل تحديث: ${filename}`);
+            return false;
+        }
+
+    } catch (error) {
+        console.error(`❌ خطأ في تحديث ${filename}:`, error);
+        return false;
+    }
+}
+
+async function listCacheContents() {
+    try {
+        const cacheNames = await caches.keys();
+
+        for (const cacheName of cacheNames) {
+            if (cacheName.startsWith('semester-3-cache-')) {
+                const cache = await caches.open(cacheName);
+                const keys = await cache.keys();
+
+                console.log(`\n📦 ${cacheName}:`);
+                console.log(`📄 عدد الملفات: ${keys.length}\n`);
+
+                const filesByType = {
+                    html: [],
+                    css: [],
+                    js: [],
+                    images: [],
+                    svg: [],
+                    other: []
+                };
+
+                keys.forEach(request => {
+                    const url = new URL(request.url);
+                    const path = url.pathname;
+
+                    if (path.endsWith('.html')) filesByType.html.push(path);
+                    else if (path.endsWith('.css')) filesByType.css.push(path);
+                    else if (path.endsWith('.js')) filesByType.js.push(path);
+                    else if (path.match(/\.(webp|png|jpg|jpeg|gif)$/)) filesByType.images.push(path);
+                    else if (path.endsWith('.svg')) filesByType.svg.push(path);
+                    else filesByType.other.push(path);
+                });
+
+                console.log('📝 HTML:', filesByType.html.length);
+                filesByType.html.forEach(f => console.log(`  • ${f}`));
+
+                console.log('\n🎨 CSS:', filesByType.css.length);
+                filesByType.css.forEach(f => console.log(`  • ${f}`));
+
+                console.log('\n⚙️ JavaScript:', filesByType.js.length);
+                filesByType.js.forEach(f => console.log(`  • ${f}`));
+
+                console.log('\n🖼️ صور:', filesByType.images.length);
+
+                console.log('\n📊 SVG:', filesByType.svg.length);
+
+                console.log('\n📦 أخرى:', filesByType.other.length);
+            }
+        }
+    } catch (error) {
+        console.error('❌ خطأ:', error);
+    }
+}
+
+/* ========================================
+   [011] معالجات زر العين والبحث
    ======================================== */
 
 if (eyeToggle && searchContainer) {
@@ -788,7 +1165,13 @@ if (eyeToggle && searchContainer) {
         localStorage.setItem('searchVisible', 'false');
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
-            setTimeout(updateEyeToggleStandalonePosition, 50);
+            if (toggleContainer.classList.contains('top')) {
+                eyeToggleStandalone.classList.add('top');
+                eyeToggleStandalone.classList.remove('bottom');
+            } else {
+                eyeToggleStandalone.classList.add('bottom');
+                eyeToggleStandalone.classList.remove('top');
+            }
         }
         console.log('👁️ تم إخفاء البحث');
     });
@@ -822,8 +1205,6 @@ if (moveToggle) {
                 eyeToggleStandalone.classList.replace('bottom', 'top');
             }
         }
-        
-        setTimeout(updateEyeToggleStandalonePosition, 50);
     };
 }
 
@@ -871,8 +1252,6 @@ if (searchInput) {
         const query = normalizeArabic(e.target.value);
         const isEmptySearch = query.length === 0;
 
-        console.log(`🔍 البحث عن: "${e.target.value}" (normalized: "${query}")`);
-
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const href = rect.getAttribute('data-href') || '';
             const fullText = rect.getAttribute('data-full-text') || '';
@@ -894,19 +1273,10 @@ if (searchInput) {
                 const normalizedFullText = normalizeArabic(fullText);
                 const normalizedFileName = normalizeArabic(fileName);
                 const normalizedAutoArabic = normalizeArabic(autoArabic);
-                
-                // 🔍 البحث في النص المعروض على الشاشة
-                const displayedText = label ? normalizeArabic(label.textContent || '') : '';
 
                 const searchChars = query.split('');
 
-                const isMatch = [
-                    normalizedHref, 
-                    normalizedFullText, 
-                    normalizedFileName, 
-                    normalizedAutoArabic,
-                    displayedText  // ✅ إضافة النص المعروض
-                ].some(text => {
+                const isMatch = [normalizedHref, normalizedFullText, normalizedFileName, normalizedAutoArabic].some(text => {
                     if (text.includes(query)) return true;
 
                     let lastIndex = -1;
@@ -941,7 +1311,7 @@ if (mainSvg) {
 console.log('✅ script.js - معالجات الأحداث تم تحميلها');
 
 /* ========================================
-   [010] updateWoodInterface - واجهة الملفات الكاملة
+   [012] updateWoodInterface - واجهة الملفات الكاملة
    ======================================== */
 
 async function updateWoodInterface() {
@@ -1496,7 +1866,7 @@ async function updateWoodInterface() {
 console.log('✅ script.js - updateWoodInterface تم تحميلها');
 
 /* ========================================
-   [011] معالجة المستطيلات والتفاعل
+   [013] معالجة المستطيلات والتفاعل
    ======================================== */
 
 function getCumulativeTranslate(element) {
@@ -1865,7 +2235,7 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [012] تحديث موضع زر العين العائم - المُحسّن
+   [014] تحديث موضع زر العين العائم
    ======================================== */
 
 function updateEyeToggleStandalonePosition() {
@@ -1885,18 +2255,20 @@ function updateEyeToggleStandalonePosition() {
         eyeToggleStandalone.classList.add('top');
         eyeToggleStandalone.classList.remove('bottom');
     } else {
-        // ✅ إصلاح: استخدام موضع الحاوية مباشرة من الأعلى
-        const topPosition = containerRect.top - 60; // 50px للزر + 10px فجوة
-        eyeToggleStandalone.style.top = `${topPosition}px`;
-        eyeToggleStandalone.style.bottom = 'auto';
+        const topPosition = window.innerHeight - containerRect.top + gap;
+        eyeToggleStandalone.style.bottom = `${topPosition}px`;
+        eyeToggleStandalone.style.top = 'auto';
         eyeToggleStandalone.classList.add('bottom');
         eyeToggleStandalone.classList.remove('top');
     }
-    
-    console.log(`👁️ تحديث موضع العين - ${isTop ? 'أعلى' : 'أسفل'}`, {
-        containerRect,
-        eyePosition: eyeToggleStandalone.style.top || eyeToggleStandalone.style.bottom
-    });
+}
+
+if (moveToggle) {
+    const originalOnClick = moveToggle.onclick;
+    moveToggle.onclick = (e) => {
+        if (originalOnClick) originalOnClick.call(moveToggle, e);
+        setTimeout(updateEyeToggleStandalonePosition, 100);
+    };
 }
 
 window.addEventListener('load', () => {
@@ -1917,4 +2289,4 @@ window.addEventListener('resize', debounce(updateEyeToggleStandalonePosition, 20
 
 setupBackButton();
 
-console.log('✅ script.js تم تحميله بالكامل - النسخة المُحسّنة');
+console.log('✅ script.js تم تحميله بالكامل (2300+ سطر)');
