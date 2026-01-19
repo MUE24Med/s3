@@ -157,11 +157,10 @@ h1 {
 
 .runner {
   position: absolute;
-  bottom: 20px;
+  bottom: 20px; /* هذه تجعله دائماً فوق الحافة السفلية بـ 20 بكسل مهما طالت الشاشة */
   left: 50%;
   transform: translateX(-50%);
   font-size: 35px;
-  transition: left 0.2s ease;
   z-index: 5;
 }
 
@@ -564,7 +563,12 @@ function updateGame() {
     itemData.y += fallSpeed;
     itemData.element.style.top = itemData.y + 'px';
 
-    if (itemData.y > 200 && itemData.y < 250) {
+    // الحصول على الارتفاع الحالي للحاوية (Game Container)
+    const containerHeight = gameContainer.offsetHeight;
+
+    // 1. منطق التصادم: يتم عندما يصل الإيموجي لمستوى اللاعب (تقريباً عند 80% من طول الشاشة)
+    // طرحنا 60px لضمان حدوث التصادم عند ملامسة جسم اللاعب
+    if (itemData.y > containerHeight - 100 && itemData.y < containerHeight - 40) {
       const playerLane = runnerPosition + 1;
 
       if (itemData.lane === playerLane) {
@@ -577,7 +581,6 @@ function updateGame() {
         }
 
         heartsDisplay.textContent = hearts;
-
         itemData.element.remove();
         activeItems.splice(index, 1);
 
@@ -587,7 +590,8 @@ function updateGame() {
       }
     }
 
-    if (itemData.y > 300) {
+    // 2. منطق حساب النقاط والاختفاء: يتم عندما يتجاوز الإيموجي أسفل الشاشة تماماً
+    if (itemData.y > containerHeight) {
       score++;
       scoreDisplay.textContent = score;
       itemData.element.remove();
