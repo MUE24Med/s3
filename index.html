@@ -108,7 +108,6 @@ if (needsPreload) {
   </div>
 </div>
 
-<!-- زر العين المستقل -->
 <div id="eye-toggle-standalone" class="top" role="button" aria-label="إظهار شريط البحث" tabindex="0">
   👁️
 </div>
@@ -165,7 +164,6 @@ if (needsPreload) {
   >
     <defs></defs>
 
-    <!-- الطبقة الأولى: wood.webp في الخلفية -->
     <g transform="translate(0,0)" id="files-list-container" style="isolation: isolate;">
       <image 
         data-src="image/wood.webp" 
@@ -178,13 +176,10 @@ if (needsPreload) {
       />
     </g>
 
-    <!-- الطبقة الثانية: المحتوى الديناميكي -->
     <g id="dynamic-links-group" style="isolation: isolate;"></g>
 
-    <!-- الطبقة الثالثة: محتوى المجموعة -->
     <g id="group-specific-content" style="isolation: isolate;"></g>
 
-    <!-- الطبقة الرابعة: Upper_wood -->
     <g id="upper-wood-layer" style="isolation: isolate; pointer-events: none; z-index: 99999;">
       <image 
         data-src="image/Upper_wood.webp" 
@@ -197,9 +192,7 @@ if (needsPreload) {
       />
     </g>
 
-    <!-- الطبقة الخامسة والأخيرة: الأزرار فوق كل شيء -->
     <g id="fixed-controls-layer" style="isolation: isolate;">
-      <!-- الصف الأول: 3 أزرار -->
       <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
         <rect x="120" y="100" width="250" height="50" rx="10"/>
         <text 
@@ -232,7 +225,6 @@ if (needsPreload) {
         >🔄 Reset</text>
       </g>
 
-      <!-- الصف الثاني: زر الرجوع الكبير -->
       <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
         <rect 
           id="back-btn" 
@@ -257,7 +249,6 @@ if (needsPreload) {
 <script defer src="script.js"></script>
 <script defer src="tracker.js"></script>
 
-<!-- Service Worker Registration -->
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
