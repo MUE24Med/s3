@@ -1,4 +1,8 @@
 /* ========================================
+   script.js - النسخة النهائية الكاملة
+   ======================================== */
+
+/* ========================================
    [001] الإعدادات والمتغيرات العالمية
    ======================================== */
 
@@ -87,7 +91,65 @@ if (jsToggle) {
 }
 
 /* ========================================
-   [002] نظام التنقل الخلفي - مُحسّن
+   [001-B] إصلاح حالة العرض عند التحميل
+   ======================================== */
+
+// 🔥 معالج فوري عند تحميل DOM
+document.addEventListener('DOMContentLoaded', function() {
+    const searchContainer = document.getElementById('search-container');
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+    
+    if (!searchContainer || !toggleContainer) return;
+    
+    const savedState = localStorage.getItem('searchVisible');
+    
+    console.log('🔧 DOMContentLoaded - حالة الرؤية:', savedState);
+    
+    if (savedState === 'false') {
+        // إخفاء كل شيء فوراً
+        searchContainer.classList.add('hidden');
+        toggleContainer.classList.add('hidden');
+        
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'flex';
+        }
+    } else {
+        // إظهار كل شيء فوراً
+        searchContainer.classList.remove('hidden');
+        toggleContainer.classList.remove('hidden');
+        
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'none';
+        }
+    }
+});
+
+// 🔥 التأكد من تطابق حالة العرض مع الحالة المحفوظة (عند التنفيذ المباشر)
+if (searchContainer && toggleContainer) {
+    const savedState = localStorage.getItem('searchVisible');
+    
+    if (savedState === 'false') {
+        searchContainer.classList.add('hidden');
+        toggleContainer.classList.add('hidden');
+        
+        const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'flex';
+        }
+    } else {
+        searchContainer.classList.remove('hidden');
+        toggleContainer.classList.remove('hidden');
+        
+        const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'none';
+        }
+    }
+}
+
+/* ========================================
+   [002] نظام التنقل الخلفي
    ======================================== */
 
 function pushNavigationState(state, data = {}) {
@@ -329,7 +391,6 @@ async function loadGroupSVG(groupLetter) {
         const svgPath = `groups/group-${groupLetter}.svg`;
         console.log(`🔄 تحميل: ${svgPath}`);
         
-        // 🔥 الكاش أولاً
         const cache = await caches.open('semester-3-cache-v1');
         const cachedResponse = await cache.match(svgPath);
         
@@ -650,7 +711,6 @@ function loadImages() {
             const url = imageUrlsToLoad[currentIndex];
             currentIndex++;
             
-            // 🔥 الكاش أولاً
             try {
                 const cache = await caches.open('semester-3-cache-v1');
                 const cachedImg = await cache.match(url);
@@ -743,7 +803,6 @@ function finishLoading() {
     updateLoadProgress();
     console.log('✅ اكتمل التحميل - عرض فوري');
     
-    // 🔥 تنفيذ فوري بدون setTimeout
     window.updateDynamicSizes();
     scan();
     updateWoodInterface();
@@ -792,7 +851,7 @@ if (preloadBtn) {
 }
 
 /* ========================================
-   [009] زر Reset الذكي - حذف SVG + تحديث الملفات المعدلة
+   [009] زر Reset الذكي - حذف SVG + GitHub
    ======================================== */
 
 const resetBtn = document.getElementById('reset-btn');
@@ -838,7 +897,6 @@ if (resetBtn) {
         };
 
         try {
-            // 🔥 المرحلة 1: حذف ملفات SVG من الكاش
             updateStatus('🗑️ حذف ملفات SVG من الكاش...');
             
             const cacheNames = await caches.keys();
@@ -857,7 +915,6 @@ if (resetBtn) {
                 const url = new URL(request.url);
                 const path = url.pathname;
                 
-                // حذف أي ملف ينتهي بـ .svg
                 if (path.endsWith('.svg')) {
                     await cache.delete(request);
                     deletedSvgCount++;
@@ -869,7 +926,6 @@ if (resetBtn) {
             console.log(`✅ تم حذف ${deletedSvgCount} ملف SVG`);
             updateDetails(`<br><strong>✅ تم حذف ${deletedSvgCount} ملف SVG</strong><br>`);
 
-            // 🔥 المرحلة 2: فحص التحديثات من GitHub
             updateStatus('🌐 الاتصال بـ GitHub API...');
 
             const commitResponse = await fetch(
@@ -911,7 +967,6 @@ if (resetBtn) {
             console.log(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
             updateDetails(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
 
-            // 🔥 المرحلة 3: تحديث الملفات المعدلة
             updateStatus('🔄 تحديث الملفات المعدلة...');
 
             let updatedCount = 0;
@@ -1006,7 +1061,7 @@ if (resetBtn) {
 }
 
 /* ========================================
-   [010] دوال مساعدة للتحديثات
+   [010] دوال مساعدة
    ======================================== */
 
 async function checkForUpdatesOnly() {
@@ -1186,42 +1241,109 @@ async function listCacheContents() {
    [011] معالجات زر العين والبحث
    ======================================== */
 
-if (eyeToggle && searchContainer) {
+if (eyeToggle && searchContainer && toggleContainer) {
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-    const searchVisible = localStorage.getItem('searchVisible') !== 'false';
-
-    if (!searchVisible) {
+    
+    const searchVisible = localStorage.getItem('searchVisible');
+    
+    if (searchVisible === 'false') {
         searchContainer.classList.add('hidden');
-        toggleContainer.style.display = 'none';
+        toggleContainer.classList.add('hidden');
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
             updateEyeToggleStandalonePosition();
+        }
+    } else {
+        searchContainer.classList.remove('hidden');
+        toggleContainer.classList.remove('hidden');
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'none';
         }
     }
 
     eyeToggle.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        
         searchContainer.classList.add('hidden');
-        toggleContainer.style.display = 'none';
+        toggleContainer.classList.add('hidden');
+        
         localStorage.setItem('searchVisible', 'false');
+        
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
             updateEyeToggleStandalonePosition();
         }
-        console.log('👁️ تم إخفاء البحث');
+        
+        console.log('👁️ تم إخفاء شريط البحث والأدوات');
     });
 
     if (eyeToggleStandalone) {
         eyeToggleStandalone.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            
             searchContainer.classList.remove('hidden');
-            toggleContainer.style.display = 'flex';
-            eyeToggleStandalone.style.display = 'none';
+            toggleContainer.classList.remove('hidden');
+            
             localStorage.setItem('searchVisible', 'true');
-            console.log('👁️ تم إظهار البحث');
+            
+            eyeToggleStandalone.style.display = 'none';
+            
+            console.log('👁️ تم إظهار شريط البحث والأدوات');
         });
+    }
+}
+
+function updateEyeToggleStandalonePosition() {
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+
+    if (!toggleContainer || !eyeToggleStandalone) return;
+
+    const isTop = toggleContainer.classList.contains('top');
+    const containerRect = toggleContainer.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const gap = 15;
+    const eyeButtonHeight = 50;
+
+    if (isTop) {
+        let calculatedTop = containerRect.bottom + gap;
+        
+        const maxAllowedTop = windowHeight - eyeButtonHeight - 10;
+        if (calculatedTop > maxAllowedTop) {
+            calculatedTop = maxAllowedTop;
+            console.warn('⚠️ تصحيح موضع العين - كانت ستخرج من الأسفل');
+        }
+        
+        eyeToggleStandalone.style.top = `${calculatedTop}px`;
+        eyeToggleStandalone.style.bottom = 'auto';
+        eyeToggleStandalone.classList.add('top');
+        eyeToggleStandalone.classList.remove('bottom');
+        
+        console.log(`📍 موضع العين (top): ${calculatedTop}px من الأعلى`);
+    } else {
+        const distanceFromBottom = windowHeight - containerRect.top;
+        let calculatedBottom = distanceFromBottom + gap;
+        
+        const maxAllowedBottom = windowHeight - eyeButtonHeight - 10;
+        if (calculatedBottom > maxAllowedBottom) {
+            calculatedBottom = maxAllowedBottom;
+            console.warn('⚠️ تصحيح موضع العين - كانت ستخرج من الأعلى');
+        }
+        
+        const minBottom = 10;
+        if (calculatedBottom < minBottom) {
+            calculatedBottom = minBottom;
+            console.warn('⚠️ تصحيح موضع العين - كانت قريبة جداً من الأسفل');
+        }
+        
+        eyeToggleStandalone.style.bottom = `${calculatedBottom}px`;
+        eyeToggleStandalone.style.top = 'auto';
+        eyeToggleStandalone.classList.add('bottom');
+        eyeToggleStandalone.classList.remove('top');
+        
+        console.log(`📍 موضع العين (bottom): ${calculatedBottom}px من الأسفل`);
     }
 }
 
@@ -1235,6 +1357,8 @@ if (moveToggle) {
         } else if (toggleContainer) {
             toggleContainer.classList.replace('bottom', 'top');
         }
+        
+        updateEyeToggleStandalonePosition();
         setTimeout(updateEyeToggleStandalonePosition, 100);
     };
 }
@@ -1316,70 +1440,6 @@ if (searchInput) {
         updateWoodInterface();
     }, 150));
 }
-
-function updateEyeToggleStandalonePosition() {
-    const toggleContainer = document.getElementById('js-toggle-container');
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-
-    if (!toggleContainer || !eyeToggleStandalone) return;
-
-    const isTop = toggleContainer.classList.contains('top');
-    const containerRect = toggleContainer.getBoundingClientRect();
-    const gap = 15;
-
-    if (isTop) {
-        eyeToggleStandalone.style.top = `${containerRect.bottom + gap}px`;
-        eyeToggleStandalone.style.bottom = 'auto';
-        eyeToggleStandalone.classList.add('top');
-        eyeToggleStandalone.classList.remove('bottom');
-    } else {
-        const distanceFromBottom = window.innerHeight - containerRect.top;
-        eyeToggleStandalone.style.bottom = `${distanceFromBottom + gap}px`;
-        eyeToggleStandalone.style.top = 'auto';
-        eyeToggleStandalone.classList.add('bottom');
-        eyeToggleStandalone.classList.remove('top');
-    }
-}
-
-/* ========================================
-   [012] updateWoodInterface - واجهة الملفات
-   ======================================== */
-
-async function updateWoodInterface() {
-    // الكود الكامل لواجهة الملفات (نفس الكود الموجود سابقاً)
-    // يمكنك نسخه من الملف الأصلي
-    console.log('🔄 تحديث واجهة الملفات...');
-}
-
-/* ========================================
-   [013] scan ومعالجة المستطيلات
-   ======================================== */
-
-function scan() {
-    if (!mainSvg) return;
-    console.log('🔍 تشغيل scan()...');
-    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
-    console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);
-    rects.forEach(r => processRect(r));
-}
-window.scan = scan;
-
-function processRect(r) {
-    // الكود الكامل لمعالجة المستطيلات
-    console.log('معالجة مستطيل...');
-}
-
-/* ========================================
-   [014] التهيئة النهائية
-   ======================================== */
-
-setupBackButton();
-
-console.log('✅ script.js تم تحميله بالكامل - مع حذف SVG في Reset');
-console.log('📌 الدوال المتاحة في Console:');
-console.log('   • checkForUpdatesOnly()     - فحص التحديثات');
-console.log('   • deleteSVGFromCache()      - حذف SVG من الكاش');
-console.log('   • listCacheContents()       - عرض محتويات الكاش');
 /* ========================================
    [012] updateWoodInterface - واجهة الملفات الكاملة
    ======================================== */
@@ -2304,7 +2364,6 @@ window.scan = scan;
    [014] التهيئة النهائية + فحص الرؤية
    ======================================== */
 
-// 🔥 تحديث موضع زر العين عند resize و scroll
 window.addEventListener('resize', debounce(function() {
     updateEyeToggleStandalonePosition();
 }, 200));
@@ -2314,20 +2373,12 @@ window.addEventListener('scroll', debounce(function() {
 }, 100));
 
 window.addEventListener('load', () => {
-    // تحديث فوري
     updateEyeToggleStandalonePosition();
-    
-    // تحديث بعد 200ms للتأكد
     setTimeout(updateEyeToggleStandalonePosition, 200);
-    
-    // تحديث بعد 500ms (بعد اكتمال كل الانيميشن)
     setTimeout(updateEyeToggleStandalonePosition, 500);
-    
-    // 🔥 فحص نهائي للتأكد من تطابق حالة العرض
     ensureVisibilityConsistency();
 });
 
-// 🔥 دالة للتأكد من تطابق حالة العرض
 function ensureVisibilityConsistency() {
     const searchContainer = document.getElementById('search-container');
     const toggleContainer = document.getElementById('js-toggle-container');
@@ -2340,7 +2391,6 @@ function ensureVisibilityConsistency() {
     console.log('🔍 فحص حالة الرؤية:', savedState);
     
     if (savedState === 'false') {
-        // يجب أن يكون كل شيء مخفي والعين المنفردة ظاهرة
         if (!searchContainer.classList.contains('hidden')) {
             console.warn('⚠️ تصحيح: إخفاء searchContainer');
             searchContainer.classList.add('hidden');
@@ -2356,11 +2406,9 @@ function ensureVisibilityConsistency() {
                 console.warn('⚠️ تصحيح: إظهار eyeToggleStandalone');
                 eyeToggleStandalone.style.display = 'flex';
             }
-            // 🔥 تحديث الموضع بعد الإظهار
             updateEyeToggleStandalonePosition();
         }
     } else {
-        // يجب أن يكون كل شيء ظاهر والعين المنفردة مخفية
         if (searchContainer.classList.contains('hidden')) {
             console.warn('⚠️ تصحيح: إظهار searchContainer');
             searchContainer.classList.remove('hidden');
@@ -2380,13 +2428,11 @@ function ensureVisibilityConsistency() {
     console.log('✅ فحص الرؤية مكتمل');
 }
 
-// 🔥 فحص دوري للتأكد من الحالة (كل 2 ثانية خلال أول 10 ثواني)
 let visibilityCheckCount = 0;
 const visibilityCheckInterval = setInterval(() => {
     visibilityCheckCount++;
     ensureVisibilityConsistency();
     
-    // إيقاف الفحص بعد 5 مرات (10 ثواني)
     if (visibilityCheckCount >= 5) {
         clearInterval(visibilityCheckInterval);
         console.log('✅ إيقاف الفحص الدوري للرؤية');
@@ -2400,7 +2446,7 @@ console.log('🔥 ميزات Reset:');
 console.log('   • حذف ملفات SVG من الكاش');
 console.log('   • تحديث الملفات المعدلة من GitHub');
 console.log('📌 الدوال المتاحة في Console:');
-console.log('   • checkForUpdatesOnly()     - فحص التحديثات');
-console.log('   • deleteSVGFromCache()      - حذف SVG من الكاش');
-console.log('   • listCacheContents()       - عرض محتويات الكاش');
-console.log('   • ensureVisibilityConsistency() - فحص حالة الرؤية');
+console.log('   • checkForUpdatesOnly()');
+console.log('   • deleteSVGFromCache()');
+console.log('   • listCacheContents()');
+console.log('   • ensureVisibilityConsistency()');
