@@ -2,7 +2,7 @@
    إصلاح مشكلة ظهور شريط البحث منفرداً
    ======================================== */
 
-/* ✅ التأكد من إخفاء كامل للعناصر */
+/* التأكد من إخفاء كامل للعناصر */
 .hidden {
     display: none !important;
     opacity: 0 !important;
@@ -10,7 +10,16 @@
     pointer-events: none !important;
 }
 
-/* ✅ عندما تكون الحاوية مخفية - نخفي كل محتوياتها */
+/* التأكد من أن searchContainer و toggleContainer يعملان معاً */
+#js-toggle-container {
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+#search-container {
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* عندما تكون الحاوية مخفية - نخفي كل محتوياتها */
 #js-toggle-container.hidden,
 #js-toggle-container.hidden * {
     display: none !important;
@@ -21,37 +30,97 @@
     display: none !important;
 }
 
-/* ✅ زر العين المنفرد */
+/* التأكد من أن زر العين المنفرد يظهر فقط عند الحاجة */
 #eye-toggle-standalone {
-    display: none;
+    display: none; /* مخفي افتراضياً */
     position: fixed;
     z-index: 9999;
-    width: 50px;
-    height: 50px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid #ffca28;
-    border-radius: 50%;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(255, 202, 40, 0.3);
-    transition: all 0.3s ease;
-    left: 10px;
+    
+    /* 🔥 ضمان عدم الخروج من الشاشة */
+    max-width: 50px;
+    max-height: 50px;
 }
 
-#eye-toggle-standalone:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(255, 202, 40, 0.5);
+/* 🔥 عندما يكون في الأعلى */
+#eye-toggle-standalone.top {
+    top: auto !important; /* سيتم تحديده من JS */
+    bottom: auto;
+    left: 10px;
+    right: auto;
+    
+    /* ضمان عدم الخروج من الأسفل */
+    max-height: calc(100vh - var(--top-position, 100px));
+}
+
+/* 🔥 عندما يكون في الأسفل */
+#eye-toggle-standalone.bottom {
+    top: auto;
+    bottom: auto !important; /* سيتم تحديده من JS */
+    left: 10px;
+    right: auto;
+    
+    /* ضمان عدم الخروج من الأعلى */
+    min-bottom: 10px;
+}
+
+/* 🔥 منع الخروج خارج الشاشة تماماً */
+#eye-toggle-standalone.top {
+    /* إذا كانت top أكبر من ارتفاع الشاشة - 60px */
+    max-top: calc(100vh - 60px);
+}
+
+#eye-toggle-standalone.bottom {
+    /* إذا كانت bottom أكبر من ارتفاع الشاشة - 60px */
+    min-bottom: 10px;
 }
 
 #eye-toggle-standalone:not(.hidden) {
     display: flex !important;
 }
 
-/* ✅ حماية من الخروج خارج الشاشة */
+/* منع أي حالة وسيطة غريبة */
+#js-toggle-container:not(.hidden) {
+    display: flex !important;
+}
+
+#search-container:not(.hidden) {
+    display: flex !important;
+}
+
+/* ========================================
+   قواعد إضافية للتوافق
+   ======================================== */
+
+/* التأكد من عدم تداخل الأنماط */
+#js-toggle-container.top,
+#js-toggle-container.bottom {
+    /* لا تؤثر على display إلا إذا كانت hidden */
+}
+
+#js-toggle-container.top:not(.hidden),
+#js-toggle-container.bottom:not(.hidden) {
+    display: flex !important;
+}
+
+/* منع FOUC (Flash of Unstyled Content) */
+#js-toggle-container,
+#search-container {
+    opacity: 1;
+    visibility: visible;
+}
+
+#js-toggle-container.hidden,
+#search-container.hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* ========================================
+   🔥 حماية من الخروج خارج الشاشة
+   ======================================== */
+
 @media (max-height: 600px) {
+    /* في الشاشات القصيرة - تأكد من بقاء الزر مرئياً */
     #eye-toggle-standalone.bottom {
         bottom: 60px !important;
     }
@@ -62,11 +131,10 @@
 }
 
 @media (max-height: 400px) {
+    /* في الشاشات القصيرة جداً */
     #eye-toggle-standalone {
         width: 40px !important;
         height: 40px !important;
         font-size: 20px !important;
     }
 }
-
-/* باقي الـ CSS يبقى كما هو - لم يتم تعديل أي شيء آخر */
