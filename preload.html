@@ -436,11 +436,9 @@ async function loadFile(url, index) {
 }
 
 async function startLoading() {
-  const loadPromises = filesToLoad.map((file, index) => 
-    loadFile(file, index)
-  );
-
-  await Promise.all(loadPromises);
+  for (const file of filesToLoad) {
+    await loadFile(file);
+  }
 
   fileStatus.textContent = '🎉 اكتمل التحميل!';
   continueBtn.style.display = 'block';
