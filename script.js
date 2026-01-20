@@ -87,36 +87,7 @@ if (jsToggle) {
 }
 
 /* ========================================
-   [002] إصلاح مشكلة ظهور شريط البحث وحده
-   ======================================== */
-
-// التأكد من تزامن حالة العرض عند تحميل الصفحة
-window.addEventListener('DOMContentLoaded', () => {
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-    const searchVisible = localStorage.getItem('searchVisible');
-    
-    // إذا كانت الحالة غير محفوظة، اجعل البحث ظاهراً بشكل افتراضي
-    if (searchVisible === null) {
-        localStorage.setItem('searchVisible', 'true');
-    }
-    
-    // تطبيق الحالة المحفوظة
-    if (searchVisible === 'false') {
-        if (searchContainer) searchContainer.classList.add('hidden');
-        if (toggleContainer) toggleContainer.style.display = 'none';
-        if (eyeToggleStandalone) {
-            eyeToggleStandalone.style.display = 'flex';
-            updateEyeToggleStandalonePosition();
-        }
-    } else {
-        if (searchContainer) searchContainer.classList.remove('hidden');
-        if (toggleContainer) toggleContainer.style.display = 'flex';
-        if (eyeToggleStandalone) eyeToggleStandalone.style.display = 'none';
-    }
-});
-
-/* ========================================
-   [003] نظام التنقل الخلفي
+   [002] نظام التنقل الخلفي - مُحسّن
    ======================================== */
 
 function pushNavigationState(state, data = {}) {
@@ -224,7 +195,7 @@ function setupBackButton() {
 }
 
 /* ========================================
-   [004] دوال مساعدة للنصوص
+   [003] دوال مساعدة للنصوص
    ======================================== */
 
 function normalizeArabic(text) {
@@ -270,7 +241,7 @@ function debounce(func, delay) {
 }
 
 /* ========================================
-   [005] دوال جلب البيانات
+   [004] دوال جلب البيانات
    ======================================== */
 
 async function fetchGlobalTree() {
@@ -301,7 +272,7 @@ function loadSelectedGroup() {
 }
 
 /* ========================================
-   [006] إدارة شاشة التحميل
+   [005] إدارة شاشة التحميل
    ======================================== */
 
 function showLoadingScreen(groupLetter) {
@@ -343,7 +314,7 @@ function updateLoadProgress() {
 }
 
 /* ========================================
-   [007] تحميل SVG الخاص بالمجموعة
+   [006] تحميل SVG الخاص بالمجموعة - محسّن
    ======================================== */
 
 async function loadGroupSVG(groupLetter) {
@@ -352,36 +323,47 @@ async function loadGroupSVG(groupLetter) {
         console.error('❌ group-specific-content غير موجود');
         return;
     }
+    
     groupContainer.innerHTML = '';
+
     try {
-        console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);
+        const svgPath = `groups/group-${groupLetter}.svg`;
+        console.log(`🔄 تحميل: ${svgPath}`);
+        
+        // **الكاش أولاً** ⚡
         const cache = await caches.open('semester-3-cache-v1');
-        const cachedResponse = await cache.match(`groups/group-${groupLetter}.svg`);
-        let response;
-        if (cachedResponse) {
-            console.log(`✅ تم الحصول على SVG من الكاش`);
-            response = cachedResponse;
+        let response = await cache.match(svgPath);
+        
+        if (response) {
+            console.log(`✅ SVG من الكاش`);
         } else {
             console.log(`🌐 تحميل SVG من الشبكة`);
-            response = await fetch(`groups/group-${groupLetter}.svg`);
+            response = await fetch(svgPath);
+            
             if (response.ok) {
-                cache.put(`groups/group-${groupLetter}.svg`, response.clone());
+                cache.put(svgPath, response.clone());
             }
         }
+
         if (!response.ok) {
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
             loadingProgress.completedSteps++;
             updateLoadProgress();
             return;
         }
+
         const svgText = await response.text();
         const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
+        
         if (match && match[1]) {
             groupContainer.innerHTML = match[1];
             console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
+
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
             console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
+
             imageUrlsToLoad = ['image/wood.webp', 'image/Upper_wood.webp'];
+
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
                 if (src && !imageUrlsToLoad.includes(src)) {
@@ -391,15 +373,12 @@ async function loadGroupSVG(groupLetter) {
                     if (isGroupImage) imageUrlsToLoad.push(src);
                 }
             });
+
             loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
-            console.log(`📋 قائمة الصور للتحميل (${imageUrlsToLoad.length}):`, imageUrlsToLoad);
-        } else {
-            console.error('❌ فشل استخراج محتوى SVG');
-            loadingProgress.totalSteps = 1;
-            loadingProgress.completedSteps = 1;
-            updateLoadProgress();
+
+            console.log(`📋 قائمة الصور (${imageUrlsToLoad.length}):`, imageUrlsToLoad);
         }
     } catch (err) {
         console.error(`❌ خطأ في loadGroupSVG:`, err);
@@ -448,7 +427,7 @@ async function initializeGroup(groupLetter) {
 }
 
 /* ========================================
-   [008] عارض PDF ودوال مساعدة
+   [007] عارض PDF ودوال مساعدة
    ======================================== */
 
 document.getElementById("closePdfBtn").onclick = () => {
@@ -654,112 +633,146 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
+/* ========================================
+   [008] تحميل الصور - محسّن بالكامل ⚡
+   ======================================== */
+
 function loadImages() {
     if (!mainSvg) return;
     console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);
+    
     if (imageUrlsToLoad.length === 0) {
         console.warn('⚠️ لا توجد صور للتحميل!');
         finishLoading();
         return;
     }
-    const MAX_CONCURRENT = 5;
+
+    const MAX_CONCURRENT = 8;
     let currentIndex = 0;
+
     async function loadNextBatch() {
-        while (currentIndex < imageUrlsToLoad.length && currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {
+        const batch = [];
+        
+        while (currentIndex < imageUrlsToLoad.length && batch.length < MAX_CONCURRENT) {
             const url = imageUrlsToLoad[currentIndex];
             currentIndex++;
-            try {
-                const cache = await caches.open('semester-3-cache-v1');
-                const cachedImg = await cache.match(url);
-                
-                if (cachedImg) {
-                    console.log(`✅ الصورة موجودة في الكاش: ${url.split('/').pop()}`);
-                    const blob = await cachedImg.blob();
-                    const imgUrl = URL.createObjectURL(blob);
-                    const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
-                    allImages.forEach(si => {
-                        const dataSrc = si.getAttribute('data-src');
-                        if (dataSrc === url) {
-                            si.setAttribute('href', imgUrl);
-                        }
-                    });
-                    loadingProgress.completedSteps++;
-                    updateLoadProgress();
-                    if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
-                        finishLoading();
-                    } else {
-                        loadNextBatch();
-                    }
-                    continue;
-                }
-            } catch (cacheError) {
-                console.warn(`⚠️ خطأ في الوصول للكاش: ${cacheError}`);
+            batch.push(loadSingleImage(url));
+        }
+
+        if (batch.length > 0) {
+            await Promise.all(batch);
+            
+            if (currentIndex < imageUrlsToLoad.length) {
+                loadNextBatch();
+            } else if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
+                finishLoading();
             }
-            const img = new Image();
-            img.onload = async function() {
-                const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
-                allImages.forEach(si => {
-                    const dataSrc = si.getAttribute('data-src');
-                    if (dataSrc === url) {
-                        si.setAttribute('href', this.src);
-                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);
-                    }
-                });
-                try {
-                    const cache = await caches.open('semester-3-cache-v1');
-                    const imgResponse = await fetch(url);
-                    if (imgResponse.ok) {
-                        await cache.put(url, imgResponse);
-                        console.log(`💾 تم حفظ الصورة في الكاش: ${url.split('/').pop()}`);
-                    }
-                } catch (cacheError) {
-                    console.warn(`⚠️ فشل حفظ الصورة في الكاش: ${cacheError}`);
-                }
-                loadingProgress.completedSteps++;
-                updateLoadProgress();
-                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
-                    finishLoading();
-                } else {
-                    loadNextBatch();
-                }
-            };
-            img.onerror = function() {
-                console.error(`❌ خطأ في تحميل ${url}`);
-                loadingProgress.completedSteps++;
-                updateLoadProgress();
-                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
-                    finishLoading();
-                } else {
-                    loadNextBatch();
-                }
-            };
-            img.src = url;
         }
     }
+
+    async function loadSingleImage(url) {
+        try {
+            const cache = await caches.open('semester-3-cache-v1');
+            const cachedImg = await cache.match(url);
+
+            if (cachedImg) {
+                console.log(`✅ من الكاش: ${url.split('/').pop()}`);
+                const blob = await cachedImg.blob();
+                const imgUrl = URL.createObjectURL(blob);
+                
+                applyImageToSVG(url, imgUrl);
+                
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+                return;
+            }
+
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                
+                img.onload = async function() {
+                    applyImageToSVG(url, this.src);
+                    
+                    cache.match(url).then(async (exists) => {
+                        if (!exists) {
+                            const response = await fetch(url);
+                            if (response.ok) {
+                                await cache.put(url, response);
+                                console.log(`💾 حُفظت: ${url.split('/').pop()}`);
+                            }
+                        }
+                    });
+
+                    loadingProgress.completedSteps++;
+                    updateLoadProgress();
+                    resolve();
+                };
+
+                img.onerror = function() {
+                    console.error(`❌ فشل: ${url}`);
+                    loadingProgress.completedSteps++;
+                    updateLoadProgress();
+                    resolve();
+                };
+
+                img.src = url;
+            });
+
+        } catch (error) {
+            console.warn(`⚠️ خطأ في ${url}:`, error);
+            loadingProgress.completedSteps++;
+            updateLoadProgress();
+        }
+    }
+
+    function applyImageToSVG(url, imgSrc) {
+        const allImages = [
+            ...mainSvg.querySelectorAll('image'),
+            ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])
+        ];
+
+        allImages.forEach(si => {
+            const dataSrc = si.getAttribute('data-src');
+            if (dataSrc === url) {
+                si.setAttribute('href', imgSrc);
+            }
+        });
+    }
+
     loadNextBatch();
 }
 window.loadImages = loadImages;
+
+/* ========================================
+   [009] إنهاء التحميل - محسّن بدون تأخير
+   ======================================== */
 
 function finishLoading() {
     loadingProgress.completedSteps = loadingProgress.totalSteps;
     loadingProgress.currentPercentage = 100;
     updateLoadProgress();
-    console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
+    
+    console.log('✅ التحميل اكتمل 100%');
+
     window.updateDynamicSizes();
     scan();
     updateWoodInterface();
     window.goToWood();
+
     if (mainSvg) {
         mainSvg.style.opacity = '1';
         mainSvg.style.visibility = 'visible';
         mainSvg.classList.add('loaded');
     }
-    hideLoadingScreen();
-    console.log('🎉 اكتمل التحميل والعرض');
+
+    requestAnimationFrame(() => {
+        hideLoadingScreen();
+        console.log('🎉 جاهز للاستخدام');
+    });
 }
 
 /* ========================================
-   [009] البدء التلقائي ومعالجات الأحداث
+   [010] البدء التلقائي ومعالجات الأحداث
    ======================================== */
 
 document.querySelectorAll('.group-btn').forEach(btn => {
@@ -791,7 +804,7 @@ if (preloadBtn) {
 }
 
 /* ========================================
-   [010] زر Reset الذكي - حذف ملفات SVG
+   [011] زر Reset الذكي - GitHub API
    ======================================== */
 
 const resetBtn = document.getElementById('reset-btn');
@@ -801,41 +814,93 @@ if (resetBtn) {
 
         const confirmReset = confirm(
             '🔄 سيتم:\n' +
-            '• حذف جميع ملفات SVG من الكاش\n' +
+            '• فحص الملفات المعدلة على GitHub\n' +
+            '• تحديث الملفات المعدلة فقط\n' +
+            '• الاحتفاظ بكل شيء آخر\n' +
             '• إعادة تحميل الصفحة\n\n' +
             'هل تريد المتابعة؟'
         );
 
         if (!confirmReset) return;
 
-        console.log('🔄 بدء حذف ملفات SVG...');
+        console.log('🔄 بدء فحص التحديثات...');
 
         const loadingMsg = document.createElement('div');
-        loadingMsg.id = 'reset-loading';
+        loadingMsg.id = 'update-loading';
         loadingMsg.innerHTML = `
             <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
                         background: rgba(0,0,0,0.9); color: white; padding: 30px; 
                         border-radius: 15px; z-index: 99999; text-align: center;
                         box-shadow: 0 0 30px rgba(255,204,0,0.5);">
-                <h2 style="margin: 0 0 15px 0; color: #ffca28;">🗑️ جاري الحذف...</h2>
-                <p style="margin: 5px 0;" id="reset-status">جاري حذف ملفات SVG...</p>
-                <div style="margin-top: 15px; font-size: 12px; color: #aaa;" id="reset-details"></div>
+                <h2 style="margin: 0 0 15px 0; color: #ffca28;">🔍 جاري الفحص...</h2>
+                <p style="margin: 5px 0;" id="update-status">يتم الاتصال بـ GitHub...</p>
+                <div style="margin-top: 15px; font-size: 12px; color: #aaa;" id="update-details"></div>
             </div>
         `;
         document.body.appendChild(loadingMsg);
 
         const updateStatus = (msg) => {
-            const el = document.getElementById('reset-status');
+            const el = document.getElementById('update-status');
             if (el) el.textContent = msg;
         };
 
         const updateDetails = (msg) => {
-            const el = document.getElementById('reset-details');
+            const el = document.getElementById('update-details');
             if (el) el.innerHTML += msg + '<br>';
         };
 
         try {
-            updateStatus('🔍 البحث عن ملفات SVG في الكاش...');
+            updateStatus('🌐 الاتصال بـ GitHub API...');
+
+            const commitResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
+
+            if (!commitResponse.ok) {
+                throw new Error('فشل الاتصال بـ GitHub');
+            }
+
+            const commitData = await commitResponse.json();
+            const latestCommitSha = commitData.sha;
+            const commitDate = new Date(commitData.commit.author.date);
+
+            console.log(`📅 آخر تحديث على GitHub: ${commitDate.toLocaleString('ar-EG')}`);
+            updateDetails(`📅 آخر تحديث: ${commitDate.toLocaleString('ar-EG')}`);
+
+            updateStatus('📋 جلب قائمة الملفات المعدلة...');
+
+            const filesResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${latestCommitSha}`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
+
+            if (!filesResponse.ok) {
+                throw new Error('فشل جلب تفاصيل الـ commit');
+            }
+
+            const filesData = await filesResponse.json();
+            const modifiedFiles = filesData.files || [];
+
+            console.log(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
+            updateDetails(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
+
+            if (modifiedFiles.length === 0) {
+                updateStatus('✅ لا توجد تحديثات جديدة!');
+                setTimeout(() => {
+                    document.body.removeChild(loadingMsg);
+                    alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
+                }, 1500);
+                return;
+            }
+
+            updateStatus('💾 فتح الكاش...');
 
             const cacheNames = await caches.keys();
             const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
@@ -845,57 +910,72 @@ if (resetBtn) {
             }
 
             const cache = await caches.open(semesterCache);
-            const requests = await cache.keys();
 
-            updateDetails(`📦 إجمالي الملفات في الكاش: ${requests.length}`);
+            updateStatus('🔄 تحديث الملفات المعدلة...');
 
-            const svgRequests = requests.filter(request => {
-                const url = new URL(request.url);
-                return url.pathname.toLowerCase().endsWith('.svg');
-            });
+            let updatedCount = 0;
+            const filesToUpdate = [];
 
-            console.log(`📝 عدد ملفات SVG: ${svgRequests.length}`);
-            updateDetails(`🎯 ملفات SVG المكتشفة: ${svgRequests.length}`);
+            for (const file of modifiedFiles) {
+                const filename = file.filename;
 
-            if (svgRequests.length === 0) {
-                updateStatus('✅ لا توجد ملفات SVG في الكاش!');
-                setTimeout(() => {
-                    document.body.removeChild(loadingMsg);
-                    alert('✅ لا توجد ملفات SVG للحذف.');
-                }, 1500);
-                return;
+                if (filename.startsWith('.') || 
+                    filename.includes('README') || 
+                    filename.includes('.md')) {
+                    continue;
+                }
+
+                filesToUpdate.push(filename);
             }
 
-            updateStatus('🗑️ جاري حذف ملفات SVG...');
+            console.log(`📦 ملفات للتحديث: ${filesToUpdate.length}`);
+            updateDetails(`📦 سيتم تحديث ${filesToUpdate.length} ملف`);
 
-            let deletedCount = 0;
-            for (const request of svgRequests) {
+            for (const filename of filesToUpdate) {
                 try {
-                    const deleted = await cache.delete(request);
-                    if (deleted) {
-                        deletedCount++;
-                        const url = new URL(request.url);
-                        const filename = url.pathname.split('/').pop();
-                        console.log(`✅ تم حذف: ${filename}`);
-                        updateDetails(`🗑️ ${filename}`);
+                    const deleted = await cache.delete(`./${filename}`);
+                    if (!deleted) {
+                        await cache.delete(`/${filename}`);
+                        await cache.delete(filename);
                     }
-                } catch (deleteError) {
-                    console.warn(`⚠️ فشل حذف ملف:`, deleteError);
+
+                    const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
+                    const response = await fetch(newFileUrl, { 
+                        cache: 'reload',
+                        mode: 'cors'
+                    });
+
+                    if (response.ok) {
+                        await cache.put(`./${filename}`, response.clone());
+                        updatedCount++;
+                        console.log(`✅ تم تحديث: ${filename}`);
+                        updateDetails(`✅ ${filename}`);
+                    } else {
+                        console.warn(`⚠️ فشل تحديث: ${filename}`);
+                        updateDetails(`⚠️ فشل: ${filename}`);
+                    }
+
+                } catch (fileError) {
+                    console.warn(`⚠️ خطأ في ${filename}:`, fileError);
                 }
             }
 
-            console.log(`✅ تم حذف ${deletedCount} ملف SVG`);
+            localStorage.setItem('last_commit_sha', latestCommitSha.substring(0, 7));
+            localStorage.setItem('last_update_check', Date.now().toString());
 
-            updateStatus('✅ اكتمل الحذف!');
-            updateDetails(`<br><strong>✅ تم حذف ${deletedCount} ملف SVG</strong>`);
+            console.log(`✅ تم تحديث ${updatedCount} من ${filesToUpdate.length} ملف`);
+
+            updateStatus('✅ اكتمل التحديث!');
+            updateDetails(`<br><strong>✅ تم تحديث ${updatedCount} ملف</strong>`);
 
             setTimeout(() => {
                 document.body.removeChild(loadingMsg);
 
                 alert(
-                    `✅ تم الحذف بنجاح!\n\n` +
+                    `✅ تم التحديث بنجاح!\n\n` +
                     `📊 الإحصائيات:\n` +
-                    `• ملفات SVG المحذوفة: ${deletedCount}\n\n` +
+                    `• الملفات المعدلة: ${modifiedFiles.length}\n` +
+                    `• تم التحديث: ${updatedCount}\n\n` +
                     `🔄 إعادة التحميل...`
                 );
 
@@ -906,13 +986,13 @@ if (resetBtn) {
             }, 2000);
 
         } catch (error) {
-            console.error('❌ خطأ في الحذف:', error);
+            console.error('❌ خطأ في التحديث:', error);
 
-            const msg = document.getElementById('reset-loading');
+            const msg = document.getElementById('update-loading');
             if (msg) document.body.removeChild(msg);
 
             alert(
-                '⚠️ حدث خطأ في الحذف:\n' +
+                '⚠️ حدث خطأ في التحديث:\n' +
                 error.message + '\n\n' +
                 'سيتم إعادة التحميل العادية.'
             );
@@ -923,11 +1003,199 @@ if (resetBtn) {
 }
 
 /* ========================================
-   [011] معالجات زر العين والبحث
+   [012] دوال مساعدة للتحديثات
+   ======================================== */
+
+async function checkForUpdatesOnly() {
+    try {
+        console.log('🔍 فحص التحديثات...');
+
+        const commitResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
+            { 
+                cache: 'no-store',
+                headers: { 'Accept': 'application/vnd.github.v3+json' }
+            }
+        );
+
+        if (!commitResponse.ok) {
+            console.error('❌ فشل الاتصال بـ GitHub');
+            return null;
+        }
+
+        const commitData = await commitResponse.json();
+        const latestSha = commitData.sha.substring(0, 7);
+        const lastSha = localStorage.getItem('last_commit_sha');
+        const commitDate = new Date(commitData.commit.author.date);
+
+        console.log(`📅 آخر تحديث على GitHub: ${commitDate.toLocaleString('ar-EG')}`);
+        console.log(`🔖 SHA الحالي: ${lastSha || 'غير محفوظ'}`);
+        console.log(`🔖 SHA الجديد: ${latestSha}`);
+
+        if (!lastSha) {
+            console.log('⚠️ لا يوجد SHA محفوظ - تحتاج لعمل Reset');
+            return {
+                hasUpdate: true,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate,
+                message: commitData.commit.message
+            };
+        }
+
+        if (lastSha !== latestSha) {
+            console.log('🆕 يوجد تحديث جديد!');
+            console.log(`📝 رسالة الـ commit: ${commitData.commit.message}`);
+
+            const filesResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${commitData.sha}`,
+                { 
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                }
+            );
+
+            if (filesResponse.ok) {
+                const filesData = await filesResponse.json();
+                console.log(`📋 الملفات المعدلة (${filesData.files.length}):`);
+                filesData.files.forEach(file => {
+                    console.log(`  • ${file.filename} (${file.status})`);
+                });
+            }
+
+            return {
+                hasUpdate: true,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate,
+                message: commitData.commit.message,
+                filesCount: filesResponse.ok ? filesData.files.length : 0
+            };
+        } else {
+            console.log('✅ الموقع محدّث');
+            return {
+                hasUpdate: false,
+                currentSha: lastSha,
+                latestSha: latestSha,
+                commitDate: commitDate
+            };
+        }
+
+    } catch (error) {
+        console.error('❌ خطأ في فحص التحديثات:', error);
+        return null;
+    }
+}
+
+async function updateSingleFile(filename) {
+    try {
+        console.log(`🔄 تحديث ملف واحد: ${filename}`);
+
+        const cacheNames = await caches.keys();
+        const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
+
+        if (!semesterCache) {
+            console.error('❌ الكاش غير موجود');
+            return false;
+        }
+
+        const cache = await caches.open(semesterCache);
+
+        await cache.delete(`./${filename}`);
+        await cache.delete(`/${filename}`);
+        await cache.delete(filename);
+
+        const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
+        const response = await fetch(newFileUrl, { 
+            cache: 'reload',
+            mode: 'cors'
+        });
+
+        if (response.ok) {
+            await cache.put(`./${filename}`, response.clone());
+            console.log(`✅ تم تحديث: ${filename}`);
+            return true;
+        } else {
+            console.error(`❌ فشل تحديث: ${filename}`);
+            return false;
+        }
+
+    } catch (error) {
+        console.error(`❌ خطأ في تحديث ${filename}:`, error);
+        return false;
+    }
+}
+
+async function listCacheContents() {
+    try {
+        const cacheNames = await caches.keys();
+
+        for (const cacheName of cacheNames) {
+            if (cacheName.startsWith('semester-3-cache-')) {
+                const cache = await caches.open(cacheName);
+                const keys = await cache.keys();
+
+                console.log(`\n📦 ${cacheName}:`);
+                console.log(`📄 عدد الملفات: ${keys.length}\n`);
+
+                const filesByType = {
+                    html: [],
+                    css: [],
+                    js: [],
+                    images: [],
+                    svg: [],
+                    other: []
+                };
+
+                keys.forEach(request => {
+                    const url = new URL(request.url);
+                    const path = url.pathname;
+
+                    if (path.endsWith('.html')) filesByType.html.push(path);
+                    else if (path.endsWith('.css')) filesByType.css.push(path);
+                    else if (path.endsWith('.js')) filesByType.js.push(path);
+                    else if (path.match(/\.(webp|png|jpg|jpeg|gif)$/)) filesByType.images.push(path);
+                    else if (path.endsWith('.svg')) filesByType.svg.push(path);
+                    else filesByType.other.push(path);
+                });
+
+                console.log('📝 HTML:', filesByType.html.length);
+                filesByType.html.forEach(f => console.log(`  • ${f}`));
+
+                console.log('\n🎨 CSS:', filesByType.css.length);
+                filesByType.css.forEach(f => console.log(`  • ${f}`));
+
+                console.log('\n⚙️ JavaScript:', filesByType.js.length);
+                filesByType.js.forEach(f => console.log(`  • ${f}`));
+
+                console.log('\n🖼️ صور:', filesByType.images.length);
+
+                console.log('\n📊 SVG:', filesByType.svg.length);
+
+                console.log('\n📦 أخرى:', filesByType.other.length);
+            }
+        }
+    } catch (error) {
+        console.error('❌ خطأ:', error);
+    }
+}
+
+/* ========================================
+   [013] معالجات زر العين والبحث
    ======================================== */
 
 if (eyeToggle && searchContainer) {
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+    const searchVisible = localStorage.getItem('searchVisible') !== 'false';
+
+    if (!searchVisible) {
+        searchContainer.classList.add('hidden');
+        toggleContainer.style.display = 'none';
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'flex';
+            updateEyeToggleStandalonePosition();
+        }
+    }
 
     eyeToggle.addEventListener('click', function(e) {
         e.preventDefault();
@@ -1055,17 +1323,16 @@ function updateEyeToggleStandalonePosition() {
 
     const isTop = toggleContainer.classList.contains('top');
     const containerRect = toggleContainer.getBoundingClientRect();
-    const gap = 10;
+    const gap = 15;
 
     if (isTop) {
-        const bottomPosition = containerRect.bottom + gap;
-        eyeToggleStandalone.style.top = `${bottomPosition}px`;
+        eyeToggleStandalone.style.top = `${containerRect.bottom + gap}px`;
         eyeToggleStandalone.style.bottom = 'auto';
         eyeToggleStandalone.classList.add('top');
         eyeToggleStandalone.classList.remove('bottom');
     } else {
-        const topPosition = window.innerHeight - containerRect.top + gap;
-        eyeToggleStandalone.style.bottom = `${topPosition}px`;
+        const distanceFromBottom = window.innerHeight - containerRect.top;
+        eyeToggleStandalone.style.bottom = `${distanceFromBottom + gap}px`;
         eyeToggleStandalone.style.top = 'auto';
         eyeToggleStandalone.classList.add('bottom');
         eyeToggleStandalone.classList.remove('top');
@@ -1073,7 +1340,7 @@ function updateEyeToggleStandalonePosition() {
 }
 
 /* ========================================
-   [012] updateWoodInterface - واجهة الملفات الكاملة
+   [014] updateWoodInterface - واجهة الملفات
    ======================================== */
 
 async function updateWoodInterface() {
@@ -1628,7 +1895,7 @@ async function updateWoodInterface() {
 console.log('✅ script.js - updateWoodInterface تم تحميلها');
 
 /* ========================================
-   [013] معالجة المستطيلات والتفاعل
+   [015] معالجة المستطيلات والتفاعل
    ======================================== */
 
 function getCumulativeTranslate(element) {
@@ -1922,86 +2189,617 @@ function processRect(r) {
                         overlay.classList.remove("hidden");
                         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";
 
-                        if (typeof trackSvgOpen === 'function') trackSvgOpen(href);
-                    } catch (error) {
-                        const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-                        pushNavigationState(NAV_STATE.PDF_VIEW, { path: href, scrollPosition: scrollPosition });
+           /* ========================================
+   ملحق script.js - الأقسام التكميلية
+   هذا الملف يحتوي على الأقسام الإضافية المكملة
+   ======================================== */
 
-                        const overlay = document.getElementById("pdf-overlay");
-                        const pdfViewer = document.getElementById("pdfFrame");
-                        overlay.classList.remove("hidden");
-                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(href) + "#zoom=page-width";
-                    }
-                }
-            }
-            cleanupHover();
-        });
-    }
+// ملاحظة: هذه الأقسام تُضاف بعد القسم [016] في ملف script.js الأصلي
 
-    r.setAttribute('data-processed', 'true');
-}
+/* ========================================
+   [017] دوال التعامل مع الأخطاء والتسجيل
+   ======================================== */
 
-function scan() {
-    if (!mainSvg) return;
+// نظام تسجيل مركزي للأخطاء
+const ErrorLogger = {
+    errors: [],
+    maxErrors: 50,
 
-    console.log('🔍 تشغيل scan()...');
+    log(type, message, data = null) {
+        const error = {
+            type,
+            message,
+            data,
+            timestamp: new Date().toISOString(),
+            url: window.location.href,
+            userAgent: navigator.userAgent
+        };
 
-    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
-    console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);
-
-    rects.forEach(r => {
-        processRect(r);
-
-        const href = r.getAttribute('data-href') || '';
-        if (href === '#') {
-            r.style.display = 'none';
-            const label = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);
-            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);
-            if (label) label.style.display = 'none';
-            if (bg) bg.style.display = 'none';
+        this.errors.push(error);
+        
+        if (this.errors.length > this.maxErrors) {
+            this.errors.shift();
         }
-    });
 
-    if (!window.svgObserver) {
-        const observer = new MutationObserver((mutations) => {
-            let hasNewElements = false;
+        console.error(`[${type}]`, message, data);
 
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType === 1) {
-                        if (node.tagName === 'image' || node.querySelector('image')) {
-                            hasNewElements = true;
-                        }
-                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
-                            processRect(node);
-                        }
-                        if (node.querySelectorAll) {
-                            const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
-                            newRects.forEach(rect => processRect(rect));
-                        }
-                    }
-                });
-            });
+        // إرسال للتتبع إذا كان متاحاً
+        if (typeof trackError === 'function') {
+            trackError(type, message);
+        }
+    },
 
-            if (hasNewElements) {
-                console.log('🔄 تم اكتشاف عناصر جديدة - تحديث viewBox');
-                updateDynamicSizes();
-            }
-        });
+    getErrors() {
+        return this.errors;
+    },
 
-        observer.observe(mainSvg, { childList: true, subtree: true });
-        window.svgObserver = observer;
-        console.log('👁️ تم تفعيل مراقب العناصر الجديدة');
+    clearErrors() {
+        this.errors = [];
+    },
+
+    exportErrors() {
+        return JSON.stringify(this.errors, null, 2);
     }
-}
-window.scan = scan;
+};
 
-setupBackButton();
-
-window.addEventListener('load', () => {
-    setTimeout(updateEyeToggleStandalonePosition, 200);
+// معالج الأخطاء العام
+window.addEventListener('error', (event) => {
+    ErrorLogger.log('RUNTIME_ERROR', event.message, {
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno
+    });
 });
 
-window.addEventListener('resize', debounce(updateEyeToggleStandalonePosition, 200));
+window.addEventListener('unhandledrejection', (event) => {
+    ErrorLogger.log('UNHANDLED_PROMISE', event.reason, {
+        promise: event.promise
+    });
+});
 
-console.log('✅ script.js تم تحميله بالكامل (2400+ سطر)');
+/* ========================================
+   [018] نظام الإشعارات والتنبيهات
+   ======================================== */
+
+const NotificationSystem = {
+    show(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: ${this.getColor(type)};
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 999999;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        `;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, duration);
+    },
+
+    getColor(type) {
+        const colors = {
+            info: '#3498db',
+            success: '#2ecc71',
+            warning: '#f39c12',
+            error: '#e74c3c'
+        };
+        return colors[type] || colors.info;
+    }
+};
+
+// إضافة الأنيميشن للإشعارات
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+/* ========================================
+   [019] نظام التحليلات والإحصائيات
+   ======================================== */
+
+const Analytics = {
+    sessions: [],
+    currentSession: null,
+
+    startSession() {
+        this.currentSession = {
+            id: Date.now(),
+            startTime: Date.now(),
+            group: currentGroup,
+            interactions: [],
+            filesOpened: [],
+            searchQueries: [],
+            errors: []
+        };
+
+        this.sessions.push(this.currentSession);
+        this.saveToStorage();
+    },
+
+    endSession() {
+        if (this.currentSession) {
+            this.currentSession.endTime = Date.now();
+            this.currentSession.duration = this.currentSession.endTime - this.currentSession.startTime;
+            this.saveToStorage();
+        }
+    },
+
+    trackInteraction(type, data) {
+        if (this.currentSession) {
+            this.currentSession.interactions.push({
+                type,
+                data,
+                timestamp: Date.now()
+            });
+            this.saveToStorage();
+        }
+    },
+
+    trackFileOpen(path) {
+        if (this.currentSession) {
+            this.currentSession.filesOpened.push({
+                path,
+                timestamp: Date.now()
+            });
+            this.saveToStorage();
+        }
+    },
+
+    trackSearch(query) {
+        if (this.currentSession) {
+            this.currentSession.searchQueries.push({
+                query,
+                timestamp: Date.now()
+            });
+            this.saveToStorage();
+        }
+    },
+
+    saveToStorage() {
+        try {
+            localStorage.setItem('analytics_sessions', JSON.stringify(this.sessions));
+        } catch (e) {
+            console.warn('⚠️ فشل حفظ التحليلات:', e);
+        }
+    },
+
+    loadFromStorage() {
+        try {
+            const saved = localStorage.getItem('analytics_sessions');
+            if (saved) {
+                this.sessions = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.warn('⚠️ فشل تحميل التحليلات:', e);
+        }
+    },
+
+    getStats() {
+        return {
+            totalSessions: this.sessions.length,
+            totalFiles: this.sessions.reduce((sum, s) => sum + s.filesOpened.length, 0),
+            totalSearches: this.sessions.reduce((sum, s) => sum + s.searchQueries.length, 0),
+            mostOpenedFiles: this.getMostOpenedFiles(),
+            mostSearchedTerms: this.getMostSearchedTerms(),
+            averageSessionDuration: this.getAverageSessionDuration()
+        };
+    },
+
+    getMostOpenedFiles() {
+        const files = {};
+        this.sessions.forEach(session => {
+            session.filesOpened.forEach(file => {
+                files[file.path] = (files[file.path] || 0) + 1;
+            });
+        });
+
+        return Object.entries(files)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .map(([path, count]) => ({ path, count }));
+    },
+
+    getMostSearchedTerms() {
+        const terms = {};
+        this.sessions.forEach(session => {
+            session.searchQueries.forEach(search => {
+                const query = search.query.toLowerCase();
+                terms[query] = (terms[query] || 0) + 1;
+            });
+        });
+
+        return Object.entries(terms)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .map(([term, count]) => ({ term, count }));
+    },
+
+    getAverageSessionDuration() {
+        const validSessions = this.sessions.filter(s => s.duration);
+        if (validSessions.length === 0) return 0;
+        
+        const total = validSessions.reduce((sum, s) => sum + s.duration, 0);
+        return Math.round(total / validSessions.length / 1000); // بالثواني
+    },
+
+    exportData() {
+        return JSON.stringify({
+            sessions: this.sessions,
+            stats: this.getStats()
+        }, null, 2);
+    }
+};
+
+// تحميل البيانات عند البدء
+Analytics.loadFromStorage();
+
+// بدء جلسة جديدة
+window.addEventListener('load', () => {
+    Analytics.startSession();
+});
+
+// حفظ الجلسة عند المغادرة
+window.addEventListener('beforeunload', () => {
+    Analytics.endSession();
+});
+
+// تتبع فتح الملفات
+window.addEventListener('fileOpened', (e) => {
+    Analytics.trackFileOpen(e.detail);
+});
+
+/* ========================================
+   [020] نظام الاختصارات والكيبورد
+   ======================================== */
+
+const KeyboardShortcuts = {
+    shortcuts: {
+        'ctrl+k': () => {
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        },
+        'ctrl+h': () => {
+            window.goToWood();
+        },
+        'ctrl+m': () => {
+            window.goToMapEnd();
+        },
+        'escape': () => {
+            const overlay = document.getElementById('pdf-overlay');
+            if (overlay && !overlay.classList.contains('hidden')) {
+                document.getElementById('closePdfBtn').click();
+            }
+        },
+        'ctrl+shift+d': () => {
+            console.log('📊 الإحصائيات:', Analytics.getStats());
+        },
+        'ctrl+shift+e': () => {
+            console.log('❌ الأخطاء:', ErrorLogger.getErrors());
+        },
+        'ctrl+shift+c': () => {
+            listCacheContents();
+        }
+    },
+
+    init() {
+        document.addEventListener('keydown', (e) => {
+            const key = this.getKeyString(e);
+            
+            if (this.shortcuts[key]) {
+                e.preventDefault();
+                this.shortcuts[key]();
+            }
+        });
+
+        console.log('⌨️ الاختصارات المتاحة:');
+        console.log('  Ctrl+K: البحث');
+        console.log('  Ctrl+H: الصفحة الرئيسية');
+        console.log('  Ctrl+M: نهاية الخريطة');
+        console.log('  ESC: إغلاق PDF');
+        console.log('  Ctrl+Shift+D: عرض الإحصائيات');
+        console.log('  Ctrl+Shift+E: عرض الأخطاء');
+        console.log('  Ctrl+Shift+C: عرض محتوى الكاش');
+    },
+
+    getKeyString(e) {
+        const parts = [];
+        if (e.ctrlKey) parts.push('ctrl');
+        if (e.shiftKey) parts.push('shift');
+        if (e.altKey) parts.push('alt');
+        
+        const key = e.key.toLowerCase();
+        if (!['control', 'shift', 'alt'].includes(key)) {
+            parts.push(key);
+        }
+        
+        return parts.join('+');
+    }
+};
+
+// تفعيل الاختصارات
+KeyboardShortcuts.init();
+
+/* ========================================
+   [021] نظام الحفظ المؤقت المتقدم
+   ======================================== */
+
+const AdvancedCache = {
+    async preloadCriticalResources() {
+        console.log('🔄 بدء التحميل المسبق للموارد الحرجة...');
+        
+        const criticalResources = [
+            'style.css',
+            'script.js',
+            'tracker.js',
+            'image/wood.webp',
+            'image/Upper_wood.webp'
+        ];
+
+        const cache = await caches.open('semester-3-cache-v1');
+        
+        for (const resource of criticalResources) {
+            try {
+                const cached = await cache.match(resource);
+                if (!cached) {
+                    console.log(`📥 تحميل: ${resource}`);
+                    const response = await fetch(resource);
+                    if (response.ok) {
+                        await cache.put(resource, response);
+                    }
+                }
+            } catch (e) {
+                console.warn(`⚠️ فشل تحميل ${resource}:`, e);
+            }
+        }
+        
+        console.log('✅ اكتمل التحميل المسبق');
+    },
+
+    async cleanOldCache() {
+        const cacheNames = await caches.keys();
+        const currentCache = 'semester-3-cache-v1';
+        
+        for (const cacheName of cacheNames) {
+            if (cacheName !== currentCache && cacheName.startsWith('semester-3-cache-')) {
+                console.log(`🗑️ حذف كاش قديم: ${cacheName}`);
+                await caches.delete(cacheName);
+            }
+        }
+    },
+
+    async getCacheSize() {
+        if ('storage' in navigator && 'estimate' in navigator.storage) {
+            const estimate = await navigator.storage.estimate();
+            const usage = estimate.usage;
+            const quota = estimate.quota;
+            const percentUsed = (usage / quota * 100).toFixed(2);
+            
+            console.log(`💾 استخدام الكاش:`);
+            console.log(`  المستخدم: ${(usage / 1024 / 1024).toFixed(2)} MB`);
+            console.log(`  المتاح: ${(quota / 1024 / 1024).toFixed(2)} MB`);
+            console.log(`  النسبة: ${percentUsed}%`);
+            
+            return { usage, quota, percentUsed };
+        }
+        
+        return null;
+    }
+};
+
+/* ========================================
+   [022] نظام المزامنة في الخلفية
+   ======================================== */
+
+const BackgroundSync = {
+    async checkForUpdatesInBackground() {
+        if (!navigator.onLine) {
+            console.log('📴 لا يوجد اتصال - تخطي الفحص');
+            return;
+        }
+
+        try {
+            const updateInfo = await checkForUpdatesOnly();
+            
+            if (updateInfo && updateInfo.hasUpdate) {
+                NotificationSystem.show(
+                    `🆕 تحديث جديد متاح! (${updateInfo.latestSha})`,
+                    'info',
+                    5000
+                );
+            }
+        } catch (e) {
+            console.warn('⚠️ فشل فحص التحديثات:', e);
+        }
+    },
+
+    startPeriodicCheck(intervalMinutes = 30) {
+        // فحص فوري
+        this.checkForUpdatesInBackground();
+
+        // فحص دوري
+        setInterval(() => {
+            this.checkForUpdatesInBackground();
+        }, intervalMinutes * 60 * 1000);
+
+        console.log(`🔄 تم تفعيل الفحص الدوري (كل ${intervalMinutes} دقيقة)`);
+    }
+};
+
+/* ========================================
+   [023] دوال مساعدة إضافية
+   ======================================== */
+
+// دالة تصدير البيانات
+window.exportAllData = function() {
+    const data = {
+        analytics: Analytics.exportData(),
+        errors: ErrorLogger.exportErrors(),
+        localStorage: Object.keys(localStorage).reduce((obj, key) => {
+            obj[key] = localStorage.getItem(key);
+            return obj;
+        }, {}),
+        timestamp: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `semester3-data-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    console.log('✅ تم تصدير جميع البيانات');
+};
+
+// دالة إعادة تعيين شاملة
+window.fullReset = async function() {
+    if (!confirm('⚠️ هل أنت متأكد؟ سيتم حذف جميع البيانات والكاش!')) {
+        return;
+    }
+
+    console.log('🔄 بدء إعادة التعيين الشاملة...');
+
+    // حذف localStorage
+    localStorage.clear();
+    console.log('✅ تم مسح localStorage');
+
+    // حذف جميع الكاش
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map(name => caches.delete(name)));
+    console.log('✅ تم مسح الكاش');
+
+    // إعادة التحميل
+    console.log('🔄 إعادة تحميل الصفحة...');
+    setTimeout(() => {
+        window.location.href = window.location.origin + window.location.pathname;
+    }, 1000);
+};
+
+// دالة عرض معلومات النظام
+window.showSystemInfo = function() {
+    console.log('📊 معلومات النظام:');
+    console.log('─────────────────────────────────');
+    console.log('المتصفح:', navigator.userAgent);
+    console.log('اللغة:', navigator.language);
+    console.log('Online:', navigator.onLine);
+    console.log('الشاشة:', `${window.screen.width}x${window.screen.height}`);
+    console.log('Viewport:', `${window.innerWidth}x${window.innerHeight}`);
+    console.log('المجموعة الحالية:', currentGroup || 'غير محدد');
+    console.log('المجلد الحالي:', currentFolder || 'الرئيسية');
+    console.log('عدد الملفات:', globalFileTree.length);
+    console.log('─────────────────────────────────');
+    
+    AdvancedCache.getCacheSize();
+};
+
+/* ========================================
+   [024] تهيئة نهائية وبدء النظام
+   ======================================== */
+
+// بدء المزامنة في الخلفية
+if (loadSelectedGroup()) {
+    console.log('✅ تم تحميل المجموعة المحفوظة:', currentGroup);
+    initializeGroup(currentGroup);
+} else {
+    console.log('📋 في انتظار اختيار المجموعة');
+}
+
+// بدء الفحص الدوري للتحديثات
+setTimeout(() => {
+    BackgroundSync.startPeriodicCheck(30); // كل 30 دقيقة
+}, 5000);
+
+// تنظيف الكاش القديم
+setTimeout(() => {
+    AdvancedCache.cleanOldCache();
+}, 10000);
+
+// رسالة ترحيب في Console
+console.log(`
+╔═══════════════════════════════════════════════════════╗
+║                                                       ║
+║   🎓  Semester-3 Interactive Map                     ║
+║   📚  Medical Education Platform                     ║
+║                                                       ║
+║   ⚡  Performance: ULTRA OPTIMIZED                   ║
+║   💾  Cache: ENABLED                                 ║
+║   🚀  Status: READY                                  ║
+║                                                       ║
+║   📖  Type 'help()' for available commands          ║
+║                                                       ║
+╚═══════════════════════════════════════════════════════╝
+`);
+
+// دالة المساعدة
+window.help = function() {
+    console.log(`
+📚 الأوامر المتاحة:
+
+🔍 المعلومات:
+  showSystemInfo()           - عرض معلومات النظام
+  Analytics.getStats()       - عرض الإحصائيات
+  ErrorLogger.getErrors()    - عرض الأخطاء
+
+🔄 التحديث:
+  checkForUpdatesOnly()      - فحص التحديثات
+  updateSingleFile(name)     - تحديث ملف واحد
+  
+💾 الكاش:
+  listCacheContents()        - عرض محتوى الكاش
+  AdvancedCache.getCacheSize() - حجم الكاش
+  
+📤 التصدير:
+  exportAllData()            - تصدير جميع البيانات
+  Analytics.exportData()     - تصدير الإحصائيات
+  
+⚠️  إعادة التعيين:
+  fullReset()                - إعادة تعيين شاملة
+  
+⌨️  الاختصارات:
+  Ctrl+K    - البحث
+  Ctrl+H    - الصفحة الرئيسية  
+  Ctrl+M    - نهاية الخريطة
+  ESC       - إغلاق PDF
+`);
+};
+
+console.log('✅ جميع الأنظمة جاهزة - script.js محمّل بالكامل (2500+ سطر)');
+console.log('💡 اكتب help() لعرض الأوامر المتاحة');             
