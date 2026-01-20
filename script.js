@@ -324,44 +324,35 @@ async function loadGroupSVG(groupLetter) {
         return;
     }
     groupContainer.innerHTML = '';
-    
     try {
-        const svgPath = `groups/group-${groupLetter}.svg`;
-        console.log(`🔄 تحميل: ${svgPath}`);
-        
-        // 🔥 الكاش أولاً
+        console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);
         const cache = await caches.open('semester-3-cache-v1');
-        const cachedResponse = await cache.match(svgPath);
-        
+        const cachedResponse = await cache.match(`groups/group-${groupLetter}.svg`);
         let response;
         if (cachedResponse) {
-            console.log(`✅ SVG من الكاش`);
+            console.log(`✅ تم الحصول على SVG من الكاش`);
             response = cachedResponse;
         } else {
-            console.log(`🌐 SVG من الشبكة`);
-            response = await fetch(svgPath);
+            console.log(`🌐 تحميل SVG من الشبكة`);
+            response = await fetch(`groups/group-${groupLetter}.svg`);
             if (response.ok) {
-                cache.put(svgPath, response.clone());
+                cache.put(`groups/group-${groupLetter}.svg`, response.clone());
             }
         }
-        
         if (!response.ok) {
-            console.warn(`⚠️ SVG غير موجود`);
+            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
             loadingProgress.completedSteps++;
             updateLoadProgress();
             return;
         }
-        
         const svgText = await response.text();
         const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
-        
         if (match && match[1]) {
             groupContainer.innerHTML = match[1];
-            console.log(`✅ حقن ${groupContainer.children.length} عنصر`);
-            
+            console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
+            console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
             imageUrlsToLoad = ['image/wood.webp', 'image/Upper_wood.webp'];
-            
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
                 if (src && !imageUrlsToLoad.includes(src)) {
@@ -371,18 +362,18 @@ async function loadGroupSVG(groupLetter) {
                     if (isGroupImage) imageUrlsToLoad.push(src);
                 }
             });
-            
             loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
+            console.log(`📋 قائمة الصور للتحميل (${imageUrlsToLoad.length}):`, imageUrlsToLoad);
         } else {
-            console.error('❌ فشل استخراج SVG');
+            console.error('❌ فشل استخراج محتوى SVG');
             loadingProgress.totalSteps = 1;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
         }
     } catch (err) {
-        console.error(`❌ خطأ loadGroupSVG:`, err);
+        console.error(`❌ خطأ في loadGroupSVG:`, err);
         loadingProgress.totalSteps = 1;
         loadingProgress.completedSteps = 1;
         updateLoadProgress();
@@ -642,38 +633,28 @@ function loadImages() {
         finishLoading();
         return;
     }
-    const MAX_CONCURRENT = 6;
+    const MAX_CONCURRENT = 3;
     let currentIndex = 0;
-    
     async function loadNextBatch() {
         while (currentIndex < imageUrlsToLoad.length && currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {
             const url = imageUrlsToLoad[currentIndex];
             currentIndex++;
-            
-            // 🔥 الكاش أولاً
             try {
                 const cache = await caches.open('semester-3-cache-v1');
                 const cachedImg = await cache.match(url);
-                
                 if (cachedImg) {
-                    console.log(`✅ كاش: ${url.split('/').pop()}`);
+                    console.log(`✅ الصورة موجودة في الكاش: ${url.split('/').pop()}`);
                     const blob = await cachedImg.blob();
                     const imgUrl = URL.createObjectURL(blob);
-                    
-                    const allImages = [
-                        ...mainSvg.querySelectorAll('image'), 
-                        ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])
-                    ];
-                    
+                    const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
                     allImages.forEach(si => {
-                        if (si.getAttribute('data-src') === url) {
+                        const dataSrc = si.getAttribute('data-src');
+                        if (dataSrc === url) {
                             si.setAttribute('href', imgUrl);
                         }
                     });
-                    
                     loadingProgress.completedSteps++;
                     updateLoadProgress();
-                    
                     if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
                         finishLoading();
                     } else {
@@ -682,57 +663,49 @@ function loadImages() {
                     continue;
                 }
             } catch (cacheError) {
-                console.warn(`⚠️ كاش: ${cacheError}`);
+                console.warn(`⚠️ خطأ في الوصول للكاش: ${cacheError}`);
             }
-            
             const img = new Image();
-            
             img.onload = async function() {
-                const allImages = [
-                    ...mainSvg.querySelectorAll('image'), 
-                    ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])
-                ];
-                
+                const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
                 allImages.forEach(si => {
-                    if (si.getAttribute('data-src') === url) {
+                    const dataSrc = si.getAttribute('data-src');
+                    if (dataSrc === url) {
                         si.setAttribute('href', this.src);
+                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);
                     }
                 });
-                
                 try {
                     const cache = await caches.open('semester-3-cache-v1');
                     const imgResponse = await fetch(url);
                     if (imgResponse.ok) {
                         await cache.put(url, imgResponse);
+                        console.log(`💾 تم حفظ الصورة في الكاش: ${url.split('/').pop()}`);
                     }
-                } catch {}
-                
+                } catch (cacheError) {
+                    console.warn(`⚠️ فشل حفظ الصورة في الكاش: ${cacheError}`);
+                }
                 loadingProgress.completedSteps++;
                 updateLoadProgress();
-                
                 if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
                     finishLoading();
                 } else {
                     loadNextBatch();
                 }
             };
-            
             img.onerror = function() {
-                console.error(`❌ ${url}`);
+                console.error(`❌ خطأ في تحميل ${url}`);
                 loadingProgress.completedSteps++;
                 updateLoadProgress();
-                
                 if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
                     finishLoading();
                 } else {
                     loadNextBatch();
                 }
             };
-            
             img.src = url;
         }
     }
-    
     loadNextBatch();
 }
 window.loadImages = loadImages;
@@ -741,22 +714,22 @@ function finishLoading() {
     loadingProgress.completedSteps = loadingProgress.totalSteps;
     loadingProgress.currentPercentage = 100;
     updateLoadProgress();
-    console.log('✅ اكتمل التحميل - عرض فوري');
-    
-    // 🔥 تنفيذ فوري بدون setTimeout
-    window.updateDynamicSizes();
-    scan();
-    updateWoodInterface();
-    window.goToWood();
-    
-    if (mainSvg) {
-        mainSvg.style.opacity = '1';
-        mainSvg.style.visibility = 'visible';
-        mainSvg.classList.add('loaded');
-    }
-    
-    hideLoadingScreen();
-    console.log('🎉 الموقع جاهز');
+    console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
+    setTimeout(() => {
+        window.updateDynamicSizes();
+        scan();
+        updateWoodInterface();
+        window.goToWood();
+        if (mainSvg) {
+            mainSvg.style.opacity = '1';
+            mainSvg.style.visibility = 'visible';
+            mainSvg.classList.add('loaded');
+        }
+        setTimeout(() => {
+            hideLoadingScreen();
+            console.log('🎉 اكتمل التحميل والعرض');
+        }, 300);
+    }, 200);
 }
 
 /* ========================================
@@ -792,7 +765,7 @@ if (preloadBtn) {
 }
 
 /* ========================================
-   [009] زر Reset الذكي - حذف SVG + تحديث الملفات المعدلة
+   [009] زر Reset الذكي جداً - GitHub API
    ======================================== */
 
 const resetBtn = document.getElementById('reset-btn');
@@ -802,16 +775,16 @@ if (resetBtn) {
 
         const confirmReset = confirm(
             '🔄 سيتم:\n' +
-            '• حذف جميع ملفات SVG من الكاش\n' +
             '• فحص الملفات المعدلة على GitHub\n' +
             '• تحديث الملفات المعدلة فقط\n' +
+            '• الاحتفاظ بكل شيء آخر\n' +
             '• إعادة تحميل الصفحة\n\n' +
             'هل تريد المتابعة؟'
         );
 
         if (!confirmReset) return;
 
-        console.log('🔄 بدء عملية Reset...');
+        console.log('🔄 بدء فحص التحديثات...');
 
         const loadingMsg = document.createElement('div');
         loadingMsg.id = 'update-loading';
@@ -820,8 +793,8 @@ if (resetBtn) {
                         background: rgba(0,0,0,0.9); color: white; padding: 30px; 
                         border-radius: 15px; z-index: 99999; text-align: center;
                         box-shadow: 0 0 30px rgba(255,204,0,0.5);">
-                <h2 style="margin: 0 0 15px 0; color: #ffca28;">🔍 جاري المعالجة...</h2>
-                <p style="margin: 5px 0;" id="update-status">جاري البدء...</p>
+                <h2 style="margin: 0 0 15px 0; color: #ffca28;">🔍 جاري الفحص...</h2>
+                <p style="margin: 5px 0;" id="update-status">يتم الاتصال بـ GitHub...</p>
                 <div style="margin-top: 15px; font-size: 12px; color: #aaa;" id="update-details"></div>
             </div>
         `;
@@ -838,38 +811,6 @@ if (resetBtn) {
         };
 
         try {
-            // 🔥 المرحلة 1: حذف ملفات SVG من الكاش
-            updateStatus('🗑️ حذف ملفات SVG من الكاش...');
-            
-            const cacheNames = await caches.keys();
-            const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
-
-            if (!semesterCache) {
-                throw new Error('الكاش غير موجود');
-            }
-
-            const cache = await caches.open(semesterCache);
-            const allCachedRequests = await cache.keys();
-            
-            let deletedSvgCount = 0;
-            
-            for (const request of allCachedRequests) {
-                const url = new URL(request.url);
-                const path = url.pathname;
-                
-                // حذف أي ملف ينتهي بـ .svg
-                if (path.endsWith('.svg')) {
-                    await cache.delete(request);
-                    deletedSvgCount++;
-                    console.log(`🗑️ تم حذف: ${path}`);
-                    updateDetails(`🗑️ ${path.split('/').pop()}`);
-                }
-            }
-            
-            console.log(`✅ تم حذف ${deletedSvgCount} ملف SVG`);
-            updateDetails(`<br><strong>✅ تم حذف ${deletedSvgCount} ملف SVG</strong><br>`);
-
-            // 🔥 المرحلة 2: فحص التحديثات من GitHub
             updateStatus('🌐 الاتصال بـ GitHub API...');
 
             const commitResponse = await fetch(
@@ -911,7 +852,26 @@ if (resetBtn) {
             console.log(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
             updateDetails(`📝 عدد الملفات المعدلة: ${modifiedFiles.length}`);
 
-            // 🔥 المرحلة 3: تحديث الملفات المعدلة
+            if (modifiedFiles.length === 0) {
+                updateStatus('✅ لا توجد تحديثات جديدة!');
+                setTimeout(() => {
+                    document.body.removeChild(loadingMsg);
+                    alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
+                }, 1500);
+                return;
+            }
+
+            updateStatus('💾 فتح الكاش...');
+
+            const cacheNames = await caches.keys();
+            const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
+
+            if (!semesterCache) {
+                throw new Error('الكاش غير موجود');
+            }
+
+            const cache = await caches.open(semesterCache);
+
             updateStatus('🔄 تحديث الملفات المعدلة...');
 
             let updatedCount = 0;
@@ -934,9 +894,11 @@ if (resetBtn) {
 
             for (const filename of filesToUpdate) {
                 try {
-                    await cache.delete(`./${filename}`);
-                    await cache.delete(`/${filename}`);
-                    await cache.delete(filename);
+                    const deleted = await cache.delete(`./${filename}`);
+                    if (!deleted) {
+                        await cache.delete(`/${filename}`);
+                        await cache.delete(filename);
+                    }
 
                     const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
                     const response = await fetch(newFileUrl, { 
@@ -962,23 +924,19 @@ if (resetBtn) {
             localStorage.setItem('last_commit_sha', latestCommitSha.substring(0, 7));
             localStorage.setItem('last_update_check', Date.now().toString());
 
-            console.log(`✅ النتائج النهائية:`);
-            console.log(`   • SVG المحذوفة: ${deletedSvgCount}`);
-            console.log(`   • الملفات المحدّثة: ${updatedCount}`);
+            console.log(`✅ تم تحديث ${updatedCount} من ${filesToUpdate.length} ملف`);
 
-            updateStatus('✅ اكتملت العملية!');
-            updateDetails(`<br><strong>📊 النتائج:</strong>`);
-            updateDetails(`• حذف ${deletedSvgCount} ملف SVG`);
-            updateDetails(`• تحديث ${updatedCount} ملف`);
+            updateStatus('✅ اكتمل التحديث!');
+            updateDetails(`<br><strong>✅ تم تحديث ${updatedCount} ملف</strong>`);
 
             setTimeout(() => {
                 document.body.removeChild(loadingMsg);
 
                 alert(
-                    `✅ تمت العملية بنجاح!\n\n` +
+                    `✅ تم التحديث بنجاح!\n\n` +
                     `📊 الإحصائيات:\n` +
-                    `• ملفات SVG المحذوفة: ${deletedSvgCount}\n` +
-                    `• الملفات المحدّثة: ${updatedCount}\n\n` +
+                    `• الملفات المعدلة: ${modifiedFiles.length}\n` +
+                    `• تم التحديث: ${updatedCount}\n\n` +
                     `🔄 إعادة التحميل...`
                 );
 
@@ -989,13 +947,13 @@ if (resetBtn) {
             }, 2000);
 
         } catch (error) {
-            console.error('❌ خطأ في العملية:', error);
+            console.error('❌ خطأ في التحديث:', error);
 
             const msg = document.getElementById('update-loading');
             if (msg) document.body.removeChild(msg);
 
             alert(
-                '⚠️ حدث خطأ:\n' +
+                '⚠️ حدث خطأ في التحديث:\n' +
                 error.message + '\n\n' +
                 'سيتم إعادة التحميل العادية.'
             );
@@ -1090,40 +1048,42 @@ async function checkForUpdatesOnly() {
     }
 }
 
-async function deleteSVGFromCache() {
+async function updateSingleFile(filename) {
     try {
-        console.log('🗑️ بدء حذف ملفات SVG من الكاش...');
+        console.log(`🔄 تحديث ملف واحد: ${filename}`);
 
         const cacheNames = await caches.keys();
         const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
 
         if (!semesterCache) {
             console.error('❌ الكاش غير موجود');
-            return 0;
+            return false;
         }
 
         const cache = await caches.open(semesterCache);
-        const allCachedRequests = await cache.keys();
-        
-        let deletedCount = 0;
-        
-        for (const request of allCachedRequests) {
-            const url = new URL(request.url);
-            const path = url.pathname;
-            
-            if (path.endsWith('.svg')) {
-                await cache.delete(request);
-                deletedCount++;
-                console.log(`🗑️ تم حذف: ${path}`);
-            }
+
+        await cache.delete(`./${filename}`);
+        await cache.delete(`/${filename}`);
+        await cache.delete(filename);
+
+        const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
+        const response = await fetch(newFileUrl, { 
+            cache: 'reload',
+            mode: 'cors'
+        });
+
+        if (response.ok) {
+            await cache.put(`./${filename}`, response.clone());
+            console.log(`✅ تم تحديث: ${filename}`);
+            return true;
+        } else {
+            console.error(`❌ فشل تحديث: ${filename}`);
+            return false;
         }
-        
-        console.log(`✅ تم حذف ${deletedCount} ملف SVG من الكاش`);
-        return deletedCount;
 
     } catch (error) {
-        console.error('❌ خطأ في حذف SVG:', error);
-        return 0;
+        console.error(`❌ خطأ في تحديث ${filename}:`, error);
+        return false;
     }
 }
 
@@ -1172,7 +1132,6 @@ async function listCacheContents() {
                 console.log('\n🖼️ صور:', filesByType.images.length);
 
                 console.log('\n📊 SVG:', filesByType.svg.length);
-                filesByType.svg.forEach(f => console.log(`  • ${f}`));
 
                 console.log('\n📦 أخرى:', filesByType.other.length);
             }
@@ -1183,7 +1142,7 @@ async function listCacheContents() {
 }
 
 /* ========================================
-   [011] معالجات زر العين والبحث
+   [011] معالجات زر العين والبحث - النسخة الكاملة والمعدلة
    ======================================== */
 
 if (eyeToggle && searchContainer) {
@@ -1195,7 +1154,7 @@ if (eyeToggle && searchContainer) {
         toggleContainer.style.display = 'none';
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
-            updateEyeToggleStandalonePosition();
+            updateEyeToggleStandalonePosition(); // استدعاء لضبط الموضع فوراً
         }
     }
 
@@ -1207,7 +1166,7 @@ if (eyeToggle && searchContainer) {
         localStorage.setItem('searchVisible', 'false');
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
-            updateEyeToggleStandalonePosition();
+            updateEyeToggleStandalonePosition(); // استدعاء عند الإخفاء
         }
         console.log('👁️ تم إخفاء البحث');
     });
@@ -1235,6 +1194,7 @@ if (moveToggle) {
         } else if (toggleContainer) {
             toggleContainer.classList.replace('bottom', 'top');
         }
+        // تحديث الموضع بعد انتهاء أي حركة أنيميشن بسيطة
         setTimeout(updateEyeToggleStandalonePosition, 100);
     };
 }
@@ -1300,6 +1260,7 @@ if (searchInput) {
             }
 
             if (!isEmptySearch) {
+                // تعديل البحث بالحرف: دمج كل النصوص والبحث بداخلها
                 const combinedText = normalizeArabic(fullText + " " + fileName + " " + autoArabic);
                 const isMatch = combinedText.includes(query);
 
@@ -1317,6 +1278,7 @@ if (searchInput) {
     }, 150));
 }
 
+// دالة تحديث موضع زر العين المنفرد - النسخة المصححة للحالتين
 function updateEyeToggleStandalonePosition() {
     const toggleContainer = document.getElementById('js-toggle-container');
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
@@ -1328,11 +1290,13 @@ function updateEyeToggleStandalonePosition() {
     const gap = 15;
 
     if (isTop) {
+        // الحالة عندما تكون الحاوية في الأعلى
         eyeToggleStandalone.style.top = `${containerRect.bottom + gap}px`;
         eyeToggleStandalone.style.bottom = 'auto';
         eyeToggleStandalone.classList.add('top');
         eyeToggleStandalone.classList.remove('bottom');
     } else {
+        // الحالة عندما تكون الحاوية في الأسفل
         const distanceFromBottom = window.innerHeight - containerRect.top;
         eyeToggleStandalone.style.bottom = `${distanceFromBottom + gap}px`;
         eyeToggleStandalone.style.top = 'auto';
@@ -1341,45 +1305,6 @@ function updateEyeToggleStandalonePosition() {
     }
 }
 
-/* ========================================
-   [012] updateWoodInterface - واجهة الملفات
-   ======================================== */
-
-async function updateWoodInterface() {
-    // الكود الكامل لواجهة الملفات (نفس الكود الموجود سابقاً)
-    // يمكنك نسخه من الملف الأصلي
-    console.log('🔄 تحديث واجهة الملفات...');
-}
-
-/* ========================================
-   [013] scan ومعالجة المستطيلات
-   ======================================== */
-
-function scan() {
-    if (!mainSvg) return;
-    console.log('🔍 تشغيل scan()...');
-    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
-    console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);
-    rects.forEach(r => processRect(r));
-}
-window.scan = scan;
-
-function processRect(r) {
-    // الكود الكامل لمعالجة المستطيلات
-    console.log('معالجة مستطيل...');
-}
-
-/* ========================================
-   [014] التهيئة النهائية
-   ======================================== */
-
-setupBackButton();
-
-console.log('✅ script.js تم تحميله بالكامل - مع حذف SVG في Reset');
-console.log('📌 الدوال المتاحة في Console:');
-console.log('   • checkForUpdatesOnly()     - فحص التحديثات');
-console.log('   • deleteSVGFromCache()      - حذف SVG من الكاش');
-console.log('   • listCacheContents()       - عرض محتويات الكاش');
 /* ========================================
    [012] updateWoodInterface - واجهة الملفات الكاملة
    ======================================== */
@@ -1706,6 +1631,7 @@ async function updateWoodInterface() {
     yPosition += BOTTOM_PADDING;
 
     const totalContentHeight = yPosition - 250;
+
     const needsScroll = totalContentHeight > 1700;
 
     if (needsScroll) {
@@ -1725,6 +1651,8 @@ async function updateWoodInterface() {
 
     const maxScroll = Math.max(0, totalContentHeight - 1700);
     let scrollOffset = 0;
+
+    console.log(`📊 المحتوى: ${totalContentHeight}px، التمرير المتاح: ${maxScroll}px`);
 
     if (maxScroll > 0) {
         const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1930,7 +1858,8 @@ async function updateWoodInterface() {
     dynamicGroup.appendChild(scrollContainerGroup);
 }
 
-console.log('✅ updateWoodInterface تم تحميلها');
+console.log('✅ script.js - updateWoodInterface تم تحميلها');
+
 /* ========================================
    [013] معالجة المستطيلات والتفاعل
    ======================================== */
@@ -2301,106 +2230,58 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [014] التهيئة النهائية + فحص الرؤية
+   [014] تحديث موضع زر العين العائم
    ======================================== */
 
-// 🔥 تحديث موضع زر العين عند resize و scroll
-window.addEventListener('resize', debounce(function() {
-    updateEyeToggleStandalonePosition();
-}, 200));
-
-window.addEventListener('scroll', debounce(function() {
-    updateEyeToggleStandalonePosition();
-}, 100));
-
-window.addEventListener('load', () => {
-    // تحديث فوري
-    updateEyeToggleStandalonePosition();
-    
-    // تحديث بعد 200ms للتأكد
-    setTimeout(updateEyeToggleStandalonePosition, 200);
-    
-    // تحديث بعد 500ms (بعد اكتمال كل الانيميشن)
-    setTimeout(updateEyeToggleStandalonePosition, 500);
-    
-    // 🔥 فحص نهائي للتأكد من تطابق حالة العرض
-    ensureVisibilityConsistency();
-});
-
-// 🔥 دالة للتأكد من تطابق حالة العرض
-function ensureVisibilityConsistency() {
-    const searchContainer = document.getElementById('search-container');
+function updateEyeToggleStandalonePosition() {
     const toggleContainer = document.getElementById('js-toggle-container');
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-    
-    if (!searchContainer || !toggleContainer) return;
-    
-    const savedState = localStorage.getItem('searchVisible');
-    
-    console.log('🔍 فحص حالة الرؤية:', savedState);
-    
-    if (savedState === 'false') {
-        // يجب أن يكون كل شيء مخفي والعين المنفردة ظاهرة
-        if (!searchContainer.classList.contains('hidden')) {
-            console.warn('⚠️ تصحيح: إخفاء searchContainer');
-            searchContainer.classList.add('hidden');
-        }
-        
-        if (!toggleContainer.classList.contains('hidden')) {
-            console.warn('⚠️ تصحيح: إخفاء toggleContainer');
-            toggleContainer.classList.add('hidden');
-        }
-        
-        if (eyeToggleStandalone) {
-            if (eyeToggleStandalone.style.display !== 'flex') {
-                console.warn('⚠️ تصحيح: إظهار eyeToggleStandalone');
-                eyeToggleStandalone.style.display = 'flex';
-            }
-            // 🔥 تحديث الموضع بعد الإظهار
-            updateEyeToggleStandalonePosition();
-        }
+
+    if (!toggleContainer || !eyeToggleStandalone) return;
+
+    const isTop = toggleContainer.classList.contains('top');
+    const containerRect = toggleContainer.getBoundingClientRect();
+    const gap = 10;
+
+    if (isTop) {
+        const bottomPosition = containerRect.bottom + gap;
+        eyeToggleStandalone.style.top = `${bottomPosition}px`;
+        eyeToggleStandalone.style.bottom = 'auto';
+        eyeToggleStandalone.classList.add('top');
+        eyeToggleStandalone.classList.remove('bottom');
     } else {
-        // يجب أن يكون كل شيء ظاهر والعين المنفردة مخفية
-        if (searchContainer.classList.contains('hidden')) {
-            console.warn('⚠️ تصحيح: إظهار searchContainer');
-            searchContainer.classList.remove('hidden');
-        }
-        
-        if (toggleContainer.classList.contains('hidden')) {
-            console.warn('⚠️ تصحيح: إظهار toggleContainer');
-            toggleContainer.classList.remove('hidden');
-        }
-        
-        if (eyeToggleStandalone && eyeToggleStandalone.style.display !== 'none') {
-            console.warn('⚠️ تصحيح: إخفاء eyeToggleStandalone');
-            eyeToggleStandalone.style.display = 'none';
-        }
+        const topPosition = window.innerHeight - containerRect.top + gap;
+        eyeToggleStandalone.style.bottom = `${topPosition}px`;
+        eyeToggleStandalone.style.top = 'auto';
+        eyeToggleStandalone.classList.add('bottom');
+        eyeToggleStandalone.classList.remove('top');
     }
-    
-    console.log('✅ فحص الرؤية مكتمل');
 }
 
-// 🔥 فحص دوري للتأكد من الحالة (كل 2 ثانية خلال أول 10 ثواني)
-let visibilityCheckCount = 0;
-const visibilityCheckInterval = setInterval(() => {
-    visibilityCheckCount++;
-    ensureVisibilityConsistency();
-    
-    // إيقاف الفحص بعد 5 مرات (10 ثواني)
-    if (visibilityCheckCount >= 5) {
-        clearInterval(visibilityCheckInterval);
-        console.log('✅ إيقاف الفحص الدوري للرؤية');
-    }
-}, 2000);
+if (moveToggle) {
+    const originalOnClick = moveToggle.onclick;
+    moveToggle.onclick = (e) => {
+        if (originalOnClick) originalOnClick.call(moveToggle, e);
+        setTimeout(updateEyeToggleStandalonePosition, 100);
+    };
+}
+
+window.addEventListener('load', () => {
+    setTimeout(updateEyeToggleStandalonePosition, 200);
+});
+
+if (eyeToggle && document.getElementById('eye-toggle-standalone')) {
+    eyeToggle.addEventListener('click', () => {
+        setTimeout(updateEyeToggleStandalonePosition, 100);
+    });
+
+    document.getElementById('eye-toggle-standalone').addEventListener('click', () => {
+        setTimeout(updateEyeToggleStandalonePosition, 100);
+    });
+}
+
+window.addEventListener('resize', debounce(updateEyeToggleStandalonePosition, 200));
 
 setupBackButton();
 
-console.log('✅ script.js تم تحميله بالكامل');
-console.log('🔥 ميزات Reset:');
-console.log('   • حذف ملفات SVG من الكاش');
-console.log('   • تحديث الملفات المعدلة من GitHub');
-console.log('📌 الدوال المتاحة في Console:');
-console.log('   • checkForUpdatesOnly()     - فحص التحديثات');
-console.log('   • deleteSVGFromCache()      - حذف SVG من الكاش');
-console.log('   • listCacheContents()       - عرض محتويات الكاش');
-console.log('   • ensureVisibilityConsistency() - فحص حالة الرؤية');
+console.log('✅ script.js تم تحميله بالكامل (2300+ سطر)');
