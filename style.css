@@ -533,38 +533,39 @@ body {
 .legend-item.is { --item-color: var(--color-is); }
 
 /* ========================================
-   [008] شريط الأدوات والبحث - النسخة المبسطة (إما كامل أو مطوي)
+   [008] شريط الأدوات والبحث - محسّن
    ======================================== */
 
 #js-toggle-container {
-  position: fixed !important;
-  right: 20px !important;
-  top: 20px !important;
-  z-index: 10000 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 8px !important;
-  color: white !important;
-  background-color: rgba(0, 0, 0, 0.85) !important;
-  backdrop-filter: blur(8px) !important;
-  padding: 8px !important;
-  border-radius: 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  width: auto !important;
+  transform: translateZ(0); 
+  will-change: transform;
+  position: fixed;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 8px; /* تقليل البادنج ليناسب الحجم الصغير */
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  /* توحيد الحجم هنا ليكون مثل الموبايل دائماً */
+  width: 180px !important; 
   min-width: 180px !important;
-  max-width: 250px !important;
-  transition: all 0.3s ease !important;
-  pointer-events: auto !important;
-  contain: layout style paint !important;
+  max-width: 180px !important;
+
+  transition: all 0.3s ease;
 }
 
-/* الحالة المطوية - دائرة فقط */
 #js-toggle-container.collapsed {
-  width: 50px !important;
-  height: 50px !important;
   min-width: 50px !important;
   max-width: 50px !important;
+  width: 50px !important;
+  height: 50px !important;
   padding: 0 !important;
   gap: 0 !important;
   border-radius: 50% !important;
@@ -574,13 +575,8 @@ body {
   background-color: rgba(0, 0, 0, 0.95) !important;
 }
 
-/* إخفاء كل شيء عند الطي */
 #js-toggle-container.collapsed #search-container {
   display: none !important;
-  opacity: 0 !important;
-  max-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
 }
 
 #js-toggle-container.collapsed .controls-row {
@@ -591,39 +587,39 @@ body {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 100% !important;
-  height: 100% !important;
+  opacity: 1 !important;
   font-size: 28px !important;
   padding: 0 !important;
   margin: 0 !important;
-  border-radius: 50% !important;
-  cursor: pointer !important;
   background: transparent !important;
+  border-radius: 0 !important;
+  min-width: auto !important;
+  min-height: auto !important;
+  width: auto !important;
+  height: auto !important;
+  position: static !important;
+  cursor: pointer !important;
 }
 
-#js-toggle-container.bottom {
-  top: auto !important;
-  bottom: 20px !important;
-}
+#js-toggle-container.top { top: 20px; }
+#js-toggle-container.bottom { bottom: 20px; }
 
-/* شريط البحث */
 #search-container {
-  position: relative !important;
-  width: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  transition: all 0.3s ease !important;
-  max-height: 500px !important;
-  overflow: hidden !important;
-  opacity: 1 !important;
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  max-height: 500px;
+  overflow: hidden;
 }
 
 #search-container.hidden {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  max-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
 }
 
 #search-input {
@@ -631,10 +627,10 @@ body {
   border: 1px solid #444;
   border-radius: 5px;
   width: 100%;
-  height: 36px;
+  height: 36px; /* تقليل الارتفاع قليلاً */
   background: #222;
   color: white;
-  font-size: 13px;
+  font-size: 13px; /* حجم خط صغير موحد */
 }
 
 .clickable-area {
@@ -1107,15 +1103,46 @@ input:focus:not(:focus-visible) {
 }
 
 /* ========================================
-   [016] زر العين العائم - إزالته نهائياً
+   [016] زر العين العائم - محسّن
    ======================================== */
 
 #eye-toggle-standalone {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  position: absolute !important;
-  left: -9999px !important;
+  position: fixed;
+  right: 20px;
+  z-index: 9999;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+#eye-toggle-standalone.top {
+  top: auto;
+  bottom: auto;
+}
+
+#eye-toggle-standalone.bottom {
+  top: auto;
+  bottom: auto;
+}
+
+#eye-toggle-standalone:hover {
+  transform: scale(1.15);
+  background-color: rgba(0, 0, 0, 1);
+  box-shadow: 0 6px 20px rgba(255, 204, 0, 0.4);
+}
+
+#eye-toggle-standalone:active {
+  transform: scale(0.95);
 }
 
 /* ========================================
@@ -1223,217 +1250,4 @@ button, [role="button"], input {
 
 #scroll-container::-webkit-scrollbar-thumb:hover {
   background: #666;
-}
-
-/* ========================================
-   [018] حلول لأجهزة الجوال
-   ======================================== */
-
-@media (max-width: 768px) {
-    #js-toggle-container {
-        right: 15px !important;
-        top: 15px !important;
-        min-width: 170px !important;
-        max-width: 220px !important;
-    }
-    
-    #js-toggle-container.bottom {
-        top: auto !important;
-        bottom: 15px !important;
-    }
-    
-    #js-toggle-container.collapsed {
-        width: 45px !important;
-        height: 45px !important;
-        min-width: 45px !important;
-        max-width: 45px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    #js-toggle-container {
-        right: 10px !important;
-        top: 10px !important;
-        min-width: 160px !important;
-        max-width: 200px !important;
-        padding: 6px !important;
-    }
-    
-    #js-toggle-container.bottom {
-        top: auto !important;
-        bottom: 10px !important;
-    }
-    
-    #js-toggle-container.collapsed {
-        width: 45px !important;
-        height: 45px !important;
-        min-width: 45px !important;
-        max-width: 45px !important;
-    }
-    
-    #search-input {
-        font-size: 12px !important;
-        padding: 6px 8px 6px 35px !important;
-        height: 32px !important;
-    }
-    
-    .clickable-area {
-        width: 35px !important;
-        height: 32px !important;
-        font-size: 16px !important;
-    }
-}
-
-/* ========================================
-   [019] تحسينات متبقية
-   ======================================== */
-
-#main-svg {
-    pointer-events: auto !important;
-}
-
-#js-toggle-container {
-    pointer-events: auto !important;
-}
-
-#js-toggle-container, #search-container {
-    transition: 
-        opacity 0.3s ease,
-        transform 0.3s ease,
-        max-height 0.3s ease,
-        width 0.3s ease,
-        height 0.3s ease !important;
-}
-
-/* ========================================
-   [020] تحسينات للرسوم المتحركة والتفاعل
-   ======================================== */
-
-/* تأثير عند التمرير */
-.scrollable-content {
-    scroll-behavior: smooth;
-}
-
-/* تحسين مظهر زر العين في الحالة المطوية */
-#js-toggle-container.collapsed #eye-toggle {
-    transition: all 0.2s ease !important;
-}
-
-#js-toggle-container.collapsed #eye-toggle:active {
-    transform: scale(0.85) !important;
-    opacity: 0.8 !important;
-}
-
-/* تحسين مظهر شريط البحث */
-#search-input:focus {
-    outline: 2px solid #ffca28 !important;
-    outline-offset: -2px !important;
-    border-color: #ffca28 !important;
-    box-shadow: 0 0 0 3px rgba(255, 202, 40, 0.2) !important;
-}
-
-/* تحسينات للأجهزة التي تدعم hover */
-@media (hover: hover) {
-    #js-toggle-container:not(.collapsed) #eye-toggle:hover {
-        background-color: rgba(255, 255, 255, 0.15) !important;
-    }
-    
-    .wood-folder-group:hover,
-    .wood-file-group:hover {
-        filter: brightness(1.1) !important;
-    }
-}
-
-/* تحسينات للأجهزة التي لا تدعم hover */
-@media (hover: none) {
-    #js-toggle-container:not(.collapsed) #eye-toggle:active {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        transform: scale(0.95) !important;
-    }
-    
-    #js-toggle-container.collapsed #eye-toggle:active {
-        transform: scale(0.85) !important;
-    }
-}
-
-/* منع التحديد النصي غير المقصود */
-#js-toggle-container * {
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-}
-
-/* تحسين عرض الحاوية عند زيادة المحتوى */
-#js-toggle-container:not(.collapsed) {
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-/* إخفاء شريط التمرير في الحاوية */
-#js-toggle-container:not(.collapsed)::-webkit-scrollbar {
-    width: 4px !important;
-}
-
-#js-toggle-container:not(.collapsed)::-webkit-scrollbar-track {
-    background: transparent !important;
-}
-
-#js-toggle-container:not(.collapsed)::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2) !important;
-    border-radius: 2px !important;
-}
-
-#js-toggle-container:not(.collapsed)::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3) !important;
-}
-
-/* التأكد من أن الحاوية المطوية دائرة مثالية */
-#js-toggle-container.collapsed::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    height: 90%;
-    border-radius: 50%;
-    background: transparent;
-    pointer-events: none;
-}
-
-/* تأثير ظل عند التمرير */
-.scrollable-content {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-/* تحسينات الوصول */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
-}
-
-/* تحسينات للطباعة */
-@media print {
-    .wood-banner-animation,
-    .name-input-group,
-    #js-toggle-container,
-    #back-button-group,
-    #change-group-btn,
-    #preload-btn,
-    #reset-btn {
-        display: none !important;
-    }
-    
-    #main-svg {
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
 }
