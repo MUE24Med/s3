@@ -627,62 +627,109 @@ function renderNameInput() {
 
 function loadImages() {
     if (!mainSvg) return;
-    console.log(`🖼️ بدء تحميل الصور...`);
-
+    console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);
     if (imageUrlsToLoad.length === 0) {
-        setTimeout(finishLoading, 500); // تأخير بسيط لضمان استقرار الـ DOM
+        console.warn('⚠️ لا توجد صور للتحميل!');
+        finishLoading();
         return;
     }
-
-    let loadedCount = 0;
-    const totalToLoad = imageUrlsToLoad.length;
-    
-    // تأمين: إذا مر 7 ثوانٍ ولم ينتهِ التحميل، ادخل للموقع على أي حال
-    const safetyTimeout = setTimeout(() => {
-        console.warn("⚠️ تم تخطي التحميل بسبب التأخير (Safety Timeout)");
-        finishLoading();
-    }, 7000);
-
-    async function processImage(url) {
-        try {
-            const cache = await caches.open('semester-3-cache-v1');
-            const cachedResponse = await cache.match(url);
-            let finalUrl = url;
-
-            if (cachedResponse) {
-                const blob = await cachedResponse.blob();
-                finalUrl = URL.createObjectURL(blob);
-            }
-
-            const allImages = [...mainSvg.querySelectorAll('image')];
-            allImages.forEach(si => {
-                if (si.getAttribute('data-src') === url) {
-                    si.setAttribute('href', finalUrl);
+    const MAX_CONCURRENT = 3;
+    let currentIndex = 0;
+    async function loadNextBatch() {
+        while (currentIndex < imageUrlsToLoad.length && currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {
+            const url = imageUrlsToLoad[currentIndex];
+            currentIndex++;
+            try {
+                const cache = await caches.open('semester-3-cache-v1');
+                const cachedImg = await cache.match(url);
+                if (cachedImg) {
+                    console.log(`✅ الصورة موجودة في الكاش: ${url.split('/').pop()}`);
+                    const blob = await cachedImg.blob();
+                    const imgUrl = URL.createObjectURL(blob);
+                    const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
+                    allImages.forEach(si => {
+                        const dataSrc = si.getAttribute('data-src');
+                        if (dataSrc === url) {
+                            si.setAttribute('href', imgUrl);
+                        }
+                    });
+                    loadingProgress.completedSteps++;
+                    updateLoadProgress();
+                    if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
+                        finishLoading();
+                    } else {
+                        loadNextBatch();
+                    }
+                    continue;
                 }
-            });
-        } catch (e) {
-            console.error(`❌ فشل في معالجة الصورة: ${url}`, e);
-        } finally {
-            loadedCount++;
-            loadingProgress.completedSteps = loadedCount;
-            updateLoadProgress();
-            
-            if (loadedCount >= totalToLoad) {
-                clearTimeout(safetyTimeout);
-                finishLoading();
+            } catch (cacheError) {
+                console.warn(`⚠️ خطأ في الوصول للكاش: ${cacheError}`);
             }
+            const img = new Image();
+            img.onload = async function() {
+                const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
+                allImages.forEach(si => {
+                    const dataSrc = si.getAttribute('data-src');
+                    if (dataSrc === url) {
+                        si.setAttribute('href', this.src);
+                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);
+                    }
+                });
+                try {
+                    const cache = await caches.open('semester-3-cache-v1');
+                    const imgResponse = await fetch(url);
+                    if (imgResponse.ok) {
+                        await cache.put(url, imgResponse);
+                        console.log(`💾 تم حفظ الصورة في الكاش: ${url.split('/').pop()}`);
+                    }
+                } catch (cacheError) {
+                    console.warn(`⚠️ فشل حفظ الصورة في الكاش: ${cacheError}`);
+                }
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
+                    finishLoading();
+                } else {
+                    loadNextBatch();
+                }
+            };
+            img.onerror = function() {
+                console.error(`❌ خطأ في تحميل ${url}`);
+                loadingProgress.completedSteps++;
+                updateLoadProgress();
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
+                    finishLoading();
+                } else {
+                    loadNextBatch();
+                }
+            };
+            img.src = url;
         }
     }
-
-    imageUrlsToLoad.forEach(url => processImage(url));
+    loadNextBatch();
 }
+window.loadImages = loadImages;
 
 function finishLoading() {
-    console.log("🏁 إنهاء التحميل وإظهار الموقع");
-    hideLoadingScreen(); // إخفاء شاشة التحميل
-    if (mainSvg) mainSvg.classList.add('loaded'); // إظهار الـ SVG
-    window.scan(); // تشغيل فحص المستطيلات (القطعة 8)
-    updateWoodInterface(); // بناء واجهة الخشب (القطعة 5)
+    loadingProgress.completedSteps = loadingProgress.totalSteps;
+    loadingProgress.currentPercentage = 100;
+    updateLoadProgress();
+    console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
+    setTimeout(() => {
+        window.updateDynamicSizes();
+        scan();
+        updateWoodInterface();
+        window.goToWood();
+        if (mainSvg) {
+            mainSvg.style.opacity = '1';
+            mainSvg.style.visibility = 'visible';
+            mainSvg.classList.add('loaded');
+        }
+        setTimeout(() => {
+            hideLoadingScreen();
+            console.log('🎉 اكتمل التحميل والعرض');
+        }, 300);
+    }, 200);
 }
 
 /* ========================================
