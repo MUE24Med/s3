@@ -636,7 +636,7 @@ function loadImages() {
 
     let loadedCount = 0;
     const totalToLoad = imageUrlsToLoad.length;
-
+    
     // تأمين: إذا مر 7 ثوانٍ ولم ينتهِ التحميل، ادخل للموقع على أي حال
     const safetyTimeout = setTimeout(() => {
         console.warn("⚠️ تم تخطي التحميل بسبب التأخير (Safety Timeout)");
@@ -666,7 +666,7 @@ function loadImages() {
             loadedCount++;
             loadingProgress.completedSteps = loadedCount;
             updateLoadProgress();
-
+            
             if (loadedCount >= totalToLoad) {
                 clearTimeout(safetyTimeout);
                 finishLoading();
