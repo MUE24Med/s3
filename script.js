@@ -627,67 +627,62 @@ function renderNameInput() {
 
 function loadImages() {
     if (!mainSvg) return;
-    console.log(`🖼️ فحص الصور الجاهزة في الكاش...`);
+    console.log(`🖼️ بدء تحميل الصور...`);
 
     if (imageUrlsToLoad.length === 0) {
-        finishLoading();
+        setTimeout(finishLoading, 500); // تأخير بسيط لضمان استقرار الـ DOM
         return;
     }
 
     let loadedCount = 0;
     const totalToLoad = imageUrlsToLoad.length;
+    
+    // تأمين: إذا مر 7 ثوانٍ ولم ينتهِ التحميل، ادخل للموقع على أي حال
+    const safetyTimeout = setTimeout(() => {
+        console.warn("⚠️ تم تخطي التحميل بسبب التأخير (Safety Timeout)");
+        finishLoading();
+    }, 7000);
 
-    // دالة لتحديث الصورة في الـ SVG من الكاش فوراً
-    async function tryApplyFromCache(url) {
+    async function processImage(url) {
         try {
             const cache = await caches.open('semester-3-cache-v1');
             const cachedResponse = await cache.match(url);
-            
+            let finalUrl = url;
+
             if (cachedResponse) {
                 const blob = await cachedResponse.blob();
-                const imgUrl = URL.createObjectURL(blob);
-                
-                const allImages = [...mainSvg.querySelectorAll('image'), 
-                                 ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
-                
-                allImages.forEach(si => {
-                    if (si.getAttribute('data-src') === url) {
-                        si.setAttribute('href', imgUrl);
-                    }
-                });
-                return true; // الصورة وجدت وتم تطبيقها
+                finalUrl = URL.createObjectURL(blob);
             }
-        } catch (e) {
-            console.warn("Cache match error:", e);
-        }
-        return false; // الصورة غير موجودة في الكاش
-    }
 
-    // معالجة كل الصور
-    imageUrlsToLoad.forEach(async (url) => {
-        const isReady = await tryApplyFromCache(url);
-        
-        if (isReady) {
-            loadingProgress.completedSteps++;
+            const allImages = [...mainSvg.querySelectorAll('image')];
+            allImages.forEach(si => {
+                if (si.getAttribute('data-src') === url) {
+                    si.setAttribute('href', finalUrl);
+                }
+            });
+        } catch (e) {
+            console.error(`❌ فشل في معالجة الصورة: ${url}`, e);
+        } finally {
+            loadedCount++;
+            loadingProgress.completedSteps = loadedCount;
             updateLoadProgress();
-            if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
+            
+            if (loadedCount >= totalToLoad) {
+                clearTimeout(safetyTimeout);
                 finishLoading();
             }
-        } else {
-            // إذا لم تكن في الكاش (وهذا مستبعد لو الـ Preload اشتغل صح) حملها برمجياً
-            const img = new Image();
-            img.onload = function() {
-                const allImages = [...mainSvg.querySelectorAll('image')];
-                allImages.forEach(si => {
-                    if (si.getAttribute('data-src') === url) si.setAttribute('href', url);
-                });
-                loadingProgress.completedSteps++;
-                updateLoadProgress();
-                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) finishLoading();
-            };
-            img.src = url;
         }
-    });
+    }
+
+    imageUrlsToLoad.forEach(url => processImage(url));
+}
+
+function finishLoading() {
+    console.log("🏁 إنهاء التحميل وإظهار الموقع");
+    hideLoadingScreen(); // إخفاء شاشة التحميل
+    if (mainSvg) mainSvg.classList.add('loaded'); // إظهار الـ SVG
+    window.scan(); // تشغيل فحص المستطيلات (القطعة 8)
+    updateWoodInterface(); // بناء واجهة الخشب (القطعة 5)
 }
 
 /* ========================================
