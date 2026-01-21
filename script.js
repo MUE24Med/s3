@@ -87,39 +87,10 @@ if (jsToggle) {
 }
 
 /* ========================================
-   [001.5] متغيرات مساعدة إضافية
+   [001.5] متغيرات حالة الحاوية
    ======================================== */
 
-let isSearchVisible = localStorage.getItem('searchVisible') !== 'false';
-let eyeToggleStandaloneInitialized = false;
-
-// دالة لتهيئة زر العين العائم
-function initializeEyeToggleStandalone() {
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-    if (!eyeToggleStandalone || eyeToggleStandaloneInitialized) return;
-    
-    // إعداد الأنماط الأولية
-    Object.assign(eyeToggleStandalone.style, {
-        position: 'fixed',
-        right: '20px',
-        zIndex: '9999',
-        width: '50px',
-        height: '50px',
-        backgroundColor: 'rgba(0, 0, 0, 0.95)',
-        backdropFilter: 'blur(8px)',
-        borderRadius: '50%',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        display: isSearchVisible ? 'none' : 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '28px',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
-    });
-    
-    eyeToggleStandaloneInitialized = true;
-}
+let isContainerCollapsed = localStorage.getItem('containerCollapsed') === 'true';
 
 /* ========================================
    [002] نظام التنقل الخلفي - مُحسّن
@@ -716,8 +687,8 @@ function finishLoading() {
     console.log("🏁 إنهاء التحميل وإظهار الموقع");
     hideLoadingScreen(); // إخفاء شاشة التحميل
     if (mainSvg) mainSvg.classList.add('loaded'); // إظهار الـ SVG
-    window.scan(); // تشغيل فحص المستطيلات (القطعة 8)
-    updateWoodInterface(); // بناء واجهة الخشب (القطعة 5)
+    window.scan(); // تشغيل فحص المستطيلات
+    updateWoodInterface(); // بناء واجهة الخشب
 }
 
 /* ========================================
@@ -1130,126 +1101,80 @@ async function listCacheContents() {
 }
 
 /* ========================================
-   [011] معالجات زر العين والبحث - النسخة المصححة
+   [011] معالجات الحاوية - إما كاملة أو مطوية
    ======================================== */
 
-// تهيئة الوضع الأولي
-function initializeSearchState() {
-    const searchContainer = document.getElementById('search-container');
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+// دالة لتبديل حالة الحاوية
+function toggleContainerState() {
     const toggleContainer = document.getElementById('js-toggle-container');
+    const eyeToggle = document.getElementById('eye-toggle');
     
-    if (!searchContainer || !eyeToggleStandalone || !toggleContainer) return;
+    if (!toggleContainer || !eyeToggle) return;
     
-    // إذا كان البحث غير مرئي، نعرض الزر المنفرد فقط
-    if (!isSearchVisible) {
-        searchContainer.classList.add('hidden');
-        toggleContainer.style.display = 'none';
-        eyeToggleStandalone.style.display = 'flex';
-        updateEyeToggleStandalonePosition(); // ضبط الموضع فوراً
+    if (isContainerCollapsed) {
+        // توسيع الحاوية لعرض كل شيء
+        toggleContainer.classList.remove('collapsed');
+        isContainerCollapsed = false;
+        eyeToggle.textContent = '👁️'; // إرجاع رمز العين
+        console.log('📱 تم توسيع الحاوية');
     } else {
-        searchContainer.classList.remove('hidden');
-        toggleContainer.style.display = 'flex';
-        eyeToggleStandalone.style.display = 'none';
+        // طي الحاوية لعرض العين فقط
+        toggleContainer.classList.add('collapsed');
+        isContainerCollapsed = true;
+        eyeToggle.textContent = '👁️'; // الحفاظ على رمز العين
+        console.log('👁️ تم طي الحاوية');
     }
+    
+    localStorage.setItem('containerCollapsed', isContainerCollapsed.toString());
 }
 
-// النقر على زر العين داخل الحاوية
-if (eyeToggle) {
-    eyeToggle.addEventListener('click', function(e) {
+// تهيئة حالة الحاوية عند تحميل الصفحة
+function initializeContainerState() {
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const eyeToggle = document.getElementById('eye-toggle');
+    
+    if (!toggleContainer || !eyeToggle) return;
+    
+    if (isContainerCollapsed) {
+        toggleContainer.classList.add('collapsed');
+        eyeToggle.textContent = '👁️';
+        console.log('👁️ الحاوية في حالة مطوية');
+    } else {
+        toggleContainer.classList.remove('collapsed');
+        eyeToggle.textContent = '👁️';
+        console.log('📱 الحاوية في حالة موسعة');
+    }
+    
+    // إضافة حدث النقر للعين في كلتا الحالتين
+    eyeToggle.onclick = function(e) {
         e.preventDefault();
         e.stopPropagation();
-        
-        isSearchVisible = false;
-        localStorage.setItem('searchVisible', 'false');
-        
-        const searchContainer = document.getElementById('search-container');
-        const toggleContainer = document.getElementById('js-toggle-container');
-        const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-        
-        if (searchContainer) searchContainer.classList.add('hidden');
-        if (toggleContainer) toggleContainer.style.display = 'none';
-        if (eyeToggleStandalone) {
-            eyeToggleStandalone.style.display = 'flex';
-            setTimeout(() => updateEyeToggleStandalonePosition(), 50);
-        }
-        
-        console.log('👁️ تم إخفاء البحث');
-    });
-}
-
-// النقر على الزر المنفرد
-const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-if (eyeToggleStandalone) {
-    eyeToggleStandalone.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        isSearchVisible = true;
-        localStorage.setItem('searchVisible', 'true');
-        
-        const searchContainer = document.getElementById('search-container');
-        const toggleContainer = document.getElementById('js-toggle-container');
-        
-        if (searchContainer) searchContainer.classList.remove('hidden');
-        if (toggleContainer) toggleContainer.style.display = 'flex';
-        eyeToggleStandalone.style.display = 'none';
-        
-        console.log('👁️ تم إظهار البحث');
-    });
+        toggleContainerState(); // تبديل حالة الحاوية
+    };
 }
 
 // تهيئة عند تحميل الصفحة
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeSearchState);
+    document.addEventListener('DOMContentLoaded', initializeContainerState);
 } else {
-    initializeSearchState();
+    initializeContainerState();
 }
 
+// تحديث عند النقر على moveToggle
 if (moveToggle) {
     moveToggle.onclick = (e) => {
         e.preventDefault();
-        const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-
+        
+        const toggleContainer = document.getElementById('js-toggle-container');
         if (toggleContainer && toggleContainer.classList.contains('top')) {
             toggleContainer.classList.replace('top', 'bottom');
         } else if (toggleContainer) {
             toggleContainer.classList.replace('bottom', 'top');
         }
-        // تحديث الموضع بعد انتهاء أي حركة أنيميشن بسيطة
-        setTimeout(updateEyeToggleStandalonePosition, 100);
     };
 }
 
-if (searchIcon) {
-    searchIcon.onclick = (e) => {
-        e.preventDefault();
-        window.goToWood();
-    };
-}
-
-if (backButtonGroup) {
-    backButtonGroup.onclick = (e) => {
-        e.stopPropagation();
-        if (currentFolder !== "") {
-            console.log('📂 زر SVG: العودة للمجلد الأب');
-            let parts = currentFolder.split('/');
-            parts.pop();
-            currentFolder = parts.join('/');
-            updateWoodInterface();
-        } else {
-            console.log('🗺️ زر SVG: الذهاب لنهاية الخريطة');
-            window.goToMapEnd();
-        }
-    };
-}
-
-if (jsToggle) {
-    jsToggle.addEventListener('change', function() {
-        interactionEnabled = this.checked;
-    });
-}
-
+// البحث عند الضغط على Enter
 if (searchInput) {
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
@@ -1282,7 +1207,6 @@ if (searchInput) {
             }
 
             if (!isEmptySearch) {
-                // تعديل البحث بالحرف: دمج كل النصوص والبحث بداخلها
                 const combinedText = normalizeArabic(fullText + " " + fileName + " " + autoArabic);
                 const isMatch = combinedText.includes(query);
 
@@ -1298,6 +1222,36 @@ if (searchInput) {
 
         updateWoodInterface();
     }, 150));
+}
+
+// زر البحث - للذهاب للخشب
+if (searchIcon) {
+    searchIcon.onclick = (e) => {
+        e.preventDefault();
+        window.goToWood();
+    };
+}
+
+if (backButtonGroup) {
+    backButtonGroup.onclick = (e) => {
+        e.stopPropagation();
+        if (currentFolder !== "") {
+            console.log('📂 زر SVG: العودة للمجلد الأب');
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/');
+            updateWoodInterface();
+        } else {
+            console.log('🗺️ زر SVG: الذهاب لنهاية الخريطة');
+            window.goToMapEnd();
+        }
+    };
+}
+
+if (jsToggle) {
+    jsToggle.addEventListener('change', function() {
+        interactionEnabled = this.checked;
+    });
 }
 
 /* ========================================
@@ -2225,118 +2179,14 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [014] تحديث موضع زر العين العائم - نسخة مبسطة وثابتة
-   ======================================== */
-
-function updateEyeToggleStandalonePosition() {
-    const toggleContainer = document.getElementById('js-toggle-container');
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-    
-    if (!toggleContainer || !eyeToggleStandalone) return;
-    
-    // تأكد من أن العنصر موجود أولاً
-    if (!document.body.contains(toggleContainer)) return;
-    
-    // الحصول على حالة العرض
-    const isSearchHidden = document.getElementById('search-container')?.classList.contains('hidden');
-    
-    // فقط ضبط موضع إذا كان الزر المنفرد ظاهرًا والبحث مخفي
-    if (eyeToggleStandalone.style.display === 'flex' || isSearchHidden) {
-        const isTop = toggleContainer.classList.contains('top');
-        const containerRect = toggleContainer.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const safeGap = 20; // مسافة أمان من حواف الشاشة
-        
-        // إزالة أي أنماط قديمة قد تسبب مشاكل
-        eyeToggleStandalone.style.cssText = '';
-        
-        // تطبيق الأنماط الأساسية
-        Object.assign(eyeToggleStandalone.style, {
-            position: 'fixed',
-            right: '20px',
-            zIndex: '9999',
-            width: '50px',
-            height: '50px',
-            backgroundColor: 'rgba(0, 0, 0, 0.95)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: '50%',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '28px',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
-        });
-        
-        if (isTop) {
-            // الحاوية في الأعلى: ضع الزر أسفلها
-            const topPosition = containerRect.bottom + safeGap;
-            
-            // التأكد من أن الزر لا يخرج من أسفل الشاشة
-            if (topPosition + 50 < windowHeight) {
-                eyeToggleStandalone.style.top = topPosition + 'px';
-                eyeToggleStandalone.style.bottom = 'auto';
-            } else {
-                // إذا كان المكان غير كاف، ضعه فوق الحاوية
-                eyeToggleStandalone.style.bottom = (windowHeight - containerRect.top + safeGap) + 'px';
-                eyeToggleStandalone.style.top = 'auto';
-            }
-        } else {
-            // الحاوية في الأسفل: ضع الزر فوقها
-            const bottomPosition = windowHeight - containerRect.top + safeGap;
-            
-            // التأكد من أن الزر لا يخرج من أعلى الشاشة
-            if (bottomPosition + 50 < windowHeight) {
-                eyeToggleStandalone.style.bottom = bottomPosition + 'px';
-                eyeToggleStandalone.style.top = 'auto';
-            } else {
-                // إذا كان المكان غير كاف، ضعه أسفل الحاوية
-                eyeToggleStandalone.style.top = (containerRect.bottom + safeGap) + 'px';
-                eyeToggleStandalone.style.bottom = 'auto';
-            }
-        }
-        
-        // إزالة أي كلاسات قديمة وإضافة الصحيحة
-        eyeToggleStandalone.className = '';
-        if (isTop) {
-            eyeToggleStandalone.classList.add('top');
-        } else {
-            eyeToggleStandalone.classList.add('bottom');
-        }
-    }
-}
-
-/* ========================================
-   [015] تهيئة نهائية
+   [015] تهيئة نهائية - النسخة المبسطة
    ======================================== */
 
 // تهيئة عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
-    initializeEyeToggleStandalone();
-    initializeSearchState();
-    setTimeout(updateEyeToggleStandalonePosition, 100);
-    
-    // تحديث دوري للموضع (لكل حالات التغيير)
-    setInterval(updateEyeToggleStandalonePosition, 1000);
+    initializeContainerState();
+    setupBackButton();
+    console.log('✅ تم تهيئة الحاوية والنظام الخلفي');
 });
 
-// تحديث عند تغيير حجم النافذة
-window.addEventListener('resize', debounce(updateEyeToggleStandalonePosition, 100));
-
-// تحديث عند التمرير (في حالة وجود تأثيرات parallax)
-window.addEventListener('scroll', debounce(updateEyeToggleStandalonePosition, 50));
-
-// تحديث عند النقر على moveToggle
-if (moveToggle) {
-    const originalOnClick = moveToggle.onclick;
-    moveToggle.onclick = (e) => {
-        if (originalOnClick) originalOnClick.call(moveToggle, e);
-        setTimeout(updateEyeToggleStandalonePosition, 150);
-    };
-}
-
-// تهيئة نظام التنقل الخلفي
-setupBackButton();
-console.log('✅ script.js تم تحميله بالكامل مع التصحيحات');
+console.log('✅ script.js تم تحميله بالكامل مع النسخة المبسطة');
