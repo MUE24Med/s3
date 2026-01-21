@@ -120,9 +120,13 @@ h1 {
   box-shadow: 0 7px 20px rgba(46, 204, 113, 0.5);
 }
 
+.continue-btn:active {
+  transform: translateY(0);
+}
+
 .game-container {
   background: linear-gradient(180deg, #1a1a2e, #0f0f1e);
-  height: 500px; /* تم تكبير الحجم الافتراضي */
+  height: 500px;
   border-radius: 15px;
   position: relative;
   overflow: hidden;
@@ -153,7 +157,7 @@ h1 {
 
 .runner {
   position: absolute;
-  bottom: 20px;
+  bottom: 20px; /* هذه تجعله دائماً فوق الحافة السفلية بـ 20 بكسل مهما طالت الشاشة */
   left: 50%;
   transform: translateX(-50%);
   font-size: 35px;
@@ -201,6 +205,10 @@ h1 {
   transition: transform 0.2s ease;
 }
 
+.restart-btn:hover {
+  transform: scale(1.2);
+}
+
 .controls {
   display: flex;
   gap: 10px;
@@ -221,6 +229,11 @@ h1 {
   box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
 }
 
+.control-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+}
+
 .leaderboard {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
@@ -229,12 +242,78 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.leaderboard h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #f39c12;
+}
+
+.leaderboard-list {
+  list-style: none;
+  padding: 0;
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  margin: 5px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.leaderboard-rank {
+  font-weight: bold;
+  color: #3498db;
+  min-width: 30px;
+}
+
+.leaderboard-name {
+  flex: 1;
+  text-align: center;
+  color: #ecf0f1;
+}
+
+.leaderboard-score {
+  font-weight: bold;
+  color: #2ecc71;
+  min-width: 50px;
+  text-align: right;
+}
+
+.leaderboard-item.top1 .leaderboard-rank { color: #f39c12; }
+.leaderboard-item.top2 .leaderboard-rank { color: #95a5a6; }
+.leaderboard-item.top3 .leaderboard-rank { color: #cd7f32; }
+
 @media (max-width: 480px) {
   .container {
     padding: 15px;
   }
+
+  .logo {
+    font-size: 40px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
   .game-container {
-    height: 500px; /* الحفاظ على الارتفاع المطلوب حتى في الجوال */
+    height: 250px;
+  }
+
+  .runner {
+    font-size: 30px;
+  }
+
+  .falling-item {
+    font-size: 25px;
+  }
+
+  .game-stat {
+    font-size: 16px;
+    padding: 6px 12px;
   }
 }
 </style>
@@ -291,12 +370,19 @@ h1 {
   </div>
 </div>
 
+<script src="tracker.js"></script>
 <script>
-// قائمة الملفات
 const filesToLoad = [
-  'image/wood.webp', 'image/Upper_wood.webp', 'image/logo-A.webp',
-  'image/logo-B.webp', 'image/logo-C.webp', 'image/logo-D.webp',
-  'image/0.png', 'style.css', 'script.js', 'tracker.js'
+  'image/wood.webp',
+  'image/Upper_wood.webp',
+  'image/logo-A.webp',
+  'image/logo-B.webp',
+  'image/logo-C.webp',
+  'image/logo-D.webp',
+  'image/0.png',
+  'style.css',
+  'script.js',
+  'tracker.js'
 ];
 
 const progressBar = document.getElementById('progressBar');
@@ -312,32 +398,52 @@ function updateProgress() {
   progressBar.textContent = percentage + '%';
 }
 
-async function loadFile(url) {
-  try {
-    const cache = await caches.open('semester-3-cache-v1');
-    let cachedResponse = await cache.match(url);
+async function loadFile(url, index) {
+  return new Promise(async (resolve) => {
+    try {
+      const cache = await caches.open('semester-3-cache-v1');
+      let cachedResponse = await cache.match(url);
 
-    if (!cachedResponse) {
+      if (cachedResponse) {
+        console.log(`✅ من الكاش: ${url}`);
+        loadedFiles++;
+        updateProgress();
+        fileStatus.textContent = `✔ محفوظ: ${url.split('/').pop()}`;
+
+        setTimeout(resolve, 50);
+        return;
+      }
+
+      console.log(`🌐 تحميل: ${url}`);
       const response = await fetch(url);
+
       if (response.ok) {
         await cache.put(url, response.clone());
+        console.log(`💾 حفظ: ${url}`);
       }
+
+      loadedFiles++;
+      updateProgress();
+      fileStatus.textContent = `✔ تم: ${url.split('/').pop()}`;
+
+      setTimeout(resolve, 100);
+
+    } catch (error) {
+      console.error('❌ خطأ:', url, error);
+      loadedFiles++;
+      updateProgress();
+      resolve();
     }
-    
-    loadedFiles++;
-    updateProgress();
-    fileStatus.textContent = `✔ تم: ${url.split('/').pop()}`;
-  } catch (error) {
-    console.error('Error loading:', url);
-    loadedFiles++;
-    updateProgress();
-  }
+  });
 }
 
 async function startLoading() {
-  // تحميل الملفات بالتوازي وبدون أي setTimeout
-  await Promise.all(filesToLoad.map(file => loadFile(file)));
-  
+  const loadPromises = filesToLoad.map((file, index) => 
+    loadFile(file, index)
+  );
+
+  await Promise.all(loadPromises);
+
   fileStatus.textContent = '🎉 اكتمل التحميل!';
   continueBtn.style.display = 'block';
 }
@@ -345,13 +451,14 @@ async function startLoading() {
 startLoading();
 
 continueBtn.addEventListener('click', () => {
+  console.log('✅ حفظ حالة preload_done');
   localStorage.setItem('preload_done', 'true');
   localStorage.setItem('last_visit_timestamp', Date.now());
   window.location.replace('index.html');
 });
 
 // ====================
-// نظام اللعبة (محدث)
+// نظام اللعبة
 // ====================
 
 const gameContainer = document.getElementById('gameContainer');
@@ -369,7 +476,7 @@ let runnerPosition = 0;
 let hearts = 0;
 let score = 0;
 let gameActive = true;
-let fallSpeed = 2.0; // زيادة السرعة قليلاً لتناسب الشاشة الكبيرة
+let fallSpeed = 1.5;
 let activeItems = [];
 let waveCounter = 0;
 let usedLanesInWave = [];
@@ -394,9 +501,14 @@ document.addEventListener('keydown', (e) => {
 
 function spawnWave() {
   if (!gameActive) return;
+  waveCounter++;
+  usedLanesInWave = [];
   const itemsInWave = 2;
+
   for (let i = 0; i < itemsInWave; i++) {
-    spawnItem();
+    setTimeout(() => {
+      spawnItem();
+    }, i * 100);
   }
 }
 
@@ -404,14 +516,22 @@ function spawnItem() {
   const rand = Math.random();
   let emoji, type;
 
-  if (rand < 0.15) { emoji = '💊'; type = 'pill'; } 
-  else if (rand < 0.60) { emoji = '🦠'; type = 'bacteria'; } 
-  else { emoji = '👾'; type = 'virus'; }
+  if (rand < 0.15) {
+    emoji = '💊';
+    type = 'pill';
+  } else if (rand < 0.60) {
+    emoji = '🦠';
+    type = 'bacteria';
+  } else {
+    emoji = '👾';
+    type = 'virus';
+  }
 
   let availableLanes = [0, 1, 2].filter(lane => !usedLanesInWave.includes(lane));
+
   if (availableLanes.length === 0) {
-    usedLanesInWave = [];
     availableLanes = [0, 1, 2];
+    usedLanesInWave = [];
   }
 
   const laneIndex = availableLanes[Math.floor(Math.random() * availableLanes.length)];
@@ -423,78 +543,199 @@ function spawnItem() {
   item.dataset.type = type;
   item.dataset.lane = laneIndex;
   item.style.left = lanes[laneIndex] + '%';
-  item.style.top = '-40px';
 
   gameContainer.appendChild(item);
-  activeItems.push({ element: item, y: -40, lane: laneIndex, type: type });
+
+  const itemData = {
+    element: item,
+    y: -40,
+    lane: laneIndex,
+    type: type
+  };
+
+  activeItems.push(itemData);
 }
 
 function updateGame() {
   if (!gameActive) return;
 
-  const containerHeight = gameContainer.offsetHeight;
-
-  for (let i = activeItems.length - 1; i >= 0; i--) {
-    let itemData = activeItems[i];
+  activeItems.forEach((itemData, index) => {
     itemData.y += fallSpeed;
     itemData.element.style.top = itemData.y + 'px';
 
-    // التصادم
+    // الحصول على الارتفاع الحالي للحاوية (Game Container)
+    const containerHeight = gameContainer.offsetHeight;
+
+    // 1. منطق التصادم: يتم عندما يصل الإيموجي لمستوى اللاعب (تقريباً عند 80% من طول الشاشة)
+    // طرحنا 60px لضمان حدوث التصادم عند ملامسة جسم اللاعب
     if (itemData.y > containerHeight - 100 && itemData.y < containerHeight - 40) {
-      if (itemData.lane === (runnerPosition + 1)) {
-        if (itemData.type === 'pill') hearts++;
-        else if (itemData.type === 'bacteria') hearts--;
-        else if (itemData.type === 'virus') hearts -= 2;
+      const playerLane = runnerPosition + 1;
+
+      if (itemData.lane === playerLane) {
+        if (itemData.type === 'pill') {
+          hearts++;
+        } else if (itemData.type === 'bacteria') {
+          hearts--;
+        } else if (itemData.type === 'virus') {
+          hearts -= 2;
+        }
 
         heartsDisplay.textContent = hearts;
         itemData.element.remove();
-        activeItems.splice(i, 1);
-        if (hearts < 0) endGame();
-        continue;
+        activeItems.splice(index, 1);
+
+        if (hearts < 0) {
+          endGame();
+        }
       }
     }
 
-    // النجاح في التجنب
+    // 2. منطق حساب النقاط والاختفاء: يتم عندما يتجاوز الإيموجي أسفل الشاشة تماماً
     if (itemData.y > containerHeight) {
       score++;
       scoreDisplay.textContent = score;
       itemData.element.remove();
-      activeItems.splice(i, 1);
+      activeItems.splice(index, 1);
     }
+  });
+
+  if (gameActive) {
+    requestAnimationFrame(updateGame);
+  }
+}
+
+function getLocalLeaderboard() {
+  const saved = localStorage.getItem('gameLeaderboard');
+  return saved ? JSON.parse(saved) : [];
+}
+
+function saveLocalLeaderboard(leaderboard) {
+  localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
+}
+
+async function updateLeaderboard(playerName, playerScore) {
+  // إرسال للسيرفر
+  if (typeof trackGameScore === 'function') {
+    trackGameScore(playerScore);
   }
 
-  requestAnimationFrame(updateGame);
+  let leaderboard = getLocalLeaderboard();
+
+  leaderboard.push({
+    name: playerName,
+    score: playerScore,
+    date: new Date().toLocaleDateString('ar-EG')
+  });
+
+  leaderboard.sort((a, b) => b.score - a.score);
+  leaderboard = leaderboard.slice(0, 5);
+
+  saveLocalLeaderboard(leaderboard);
+  displayLeaderboard();
+}
+
+function displayLeaderboard() {
+  const leaderboard = getLocalLeaderboard();
+
+  if (leaderboard.length === 0) {
+    leaderboardList.innerHTML = `
+      <li class="leaderboard-item">
+        <span class="leaderboard-rank">-</span>
+        <span class="leaderboard-name">لا توجد نتائج بعد</span>
+        <span class="leaderboard-score">-</span>
+      </li>
+    `;
+    return;
+  }
+
+  leaderboardList.innerHTML = leaderboard.map((entry, index) => {
+    const topClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
+    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+
+    return `
+      <li class="leaderboard-item ${topClass}">
+        <span class="leaderboard-rank">${medal} #${index + 1}</span>
+        <span class="leaderboard-name">${entry.name}</span>
+        <span class="leaderboard-score">${entry.score} ⭐</span>
+      </li>
+    `;
+  }).join('');
 }
 
 function endGame() {
   gameActive = false;
   finalScore.textContent = `النقاط النهائية: ${score}`;
   gameOverlay.style.display = 'flex';
-  // منطق حفظ النتائج هنا
+
+  // الحصول على اسم اللاعب من UserTracker
+  let playerName = 'زائر';
+  if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
+    playerName = UserTracker.getDisplayName();
+  } else {
+    const realName = localStorage.getItem('user_real_name');
+    if (realName && realName.trim()) {
+      playerName = realName.trim();
+    } else {
+      playerName = localStorage.getItem('visitor_id') || 'زائر';
+    }
+  }
+
+  updateLeaderboard(playerName, score);
 }
 
 function restartGame() {
   activeItems.forEach(item => item.element.remove());
   activeItems = [];
-  hearts = 0; score = 0; runnerPosition = 0; fallSpeed = 2.0;
+
+  hearts = 0;
+  score = 0;
+  runnerPosition = 0;
+  fallSpeed = 1.5;
+  waveCounter = 0;
+  spawnInterval = 1800;
+  gameActive = true;
+
   heartsDisplay.textContent = hearts;
   scoreDisplay.textContent = score;
   runner.style.left = lanes[1] + '%';
   gameOverlay.style.display = 'none';
-  gameActive = true;
+
   updateGame();
+  startSpawning();
 }
 
 restartBtn.addEventListener('click', restartGame);
+
+displayLeaderboard();
 updateGame();
 
-setInterval(() => {
-  if (gameActive) {
-    spawnWave();
-    if (score > 0 && score % 10 === 0) fallSpeed += 0.1;
-  }
-}, 1500);
+let spawnerIntervalId;
 
+function startSpawning() {
+  if (spawnerIntervalId) {
+    clearInterval(spawnerIntervalId);
+  }
+
+  spawnerIntervalId = setInterval(() => {
+    if (gameActive) {
+      spawnWave();
+      waveCounter++;
+
+      if (waveCounter % 3 === 0) {
+        fallSpeed += 0.15;
+
+        if (spawnInterval > 800) {
+          spawnInterval -= 100;
+          clearInterval(spawnerIntervalId);
+          startSpawning();
+        }
+      }
+    }
+  }, spawnInterval);
+}
+
+startSpawning();
 </script>
+
 </body>
 </html>
