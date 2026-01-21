@@ -2183,7 +2183,7 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [014] تحديث موضع زر العين العائم
+   [014] تحديث موضع زر العين العائم - النسخة المصححة
    ======================================== */
 
 function updateEyeToggleStandalonePosition() {
@@ -2194,47 +2194,99 @@ function updateEyeToggleStandalonePosition() {
 
     const isTop = toggleContainer.classList.contains('top');
     const containerRect = toggleContainer.getBoundingClientRect();
-    const gap = 10;
+    const gap = 15; // مسافة ثابتة بين الحاوية والزر المنفرد
+
+    // تطبيق قاعدة !important عبر JS
+    eyeToggleStandalone.style.cssText = `
+        position: fixed !important;
+        right: 20px !important;
+        z-index: 9999 !important;
+        width: 50px !important;
+        height: 50px !important;
+        background-color: rgba(0, 0, 0, 0.95) !important;
+        backdrop-filter: blur(8px) !important;
+        border-radius: 50% !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 28px !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    `;
 
     if (isTop) {
-        const bottomPosition = containerRect.bottom + gap;
-        eyeToggleStandalone.style.top = `${bottomPosition}px`;
-        eyeToggleStandalone.style.bottom = 'auto';
+        // إذا كانت الحاوية في الأعلى، ضع الزر المنفرد أسفلها مباشرة
+        eyeToggleStandalone.style.top = 'auto';
+        eyeToggleStandalone.style.bottom = `${window.innerHeight - containerRect.bottom + gap}px`;
         eyeToggleStandalone.classList.add('top');
         eyeToggleStandalone.classList.remove('bottom');
     } else {
-        const topPosition = window.innerHeight - containerRect.top + gap;
-        eyeToggleStandalone.style.bottom = `${topPosition}px`;
-        eyeToggleStandalone.style.top = 'auto';
+        // إذا كانت الحاوية في الأسفل، ضع الزر المنفرد فوقها مباشرة
+        eyeToggleStandalone.style.top = `${containerRect.top - 50 - gap}px`; // 50 هو ارتفاع الزر
+        eyeToggleStandalone.style.bottom = 'auto';
         eyeToggleStandalone.classList.add('bottom');
         eyeToggleStandalone.classList.remove('top');
     }
+
+    // التأكد من أن الزر مرئي فقط عندما يكون البحث مخفيًا
+    const searchVisible = localStorage.getItem('searchVisible') !== 'false';
+    const searchContainer = document.getElementById('search-container');
+    
+    if (searchContainer && searchContainer.classList.contains('hidden') && !searchVisible) {
+        eyeToggleStandalone.style.display = 'flex';
+    } else {
+        eyeToggleStandalone.style.display = 'none';
+    }
 }
 
+// إضافة معالج الأحداث لضبط الموضع عند النقر على moveToggle
 if (moveToggle) {
     const originalOnClick = moveToggle.onclick;
     moveToggle.onclick = (e) => {
         if (originalOnClick) originalOnClick.call(moveToggle, e);
-        setTimeout(updateEyeToggleStandalonePosition, 100);
+        setTimeout(updateEyeToggleStandalonePosition, 50);
     };
 }
 
+// تحديث عند تحميل الصفحة
 window.addEventListener('load', () => {
     setTimeout(updateEyeToggleStandalonePosition, 200);
 });
 
-if (eyeToggle && document.getElementById('eye-toggle-standalone')) {
-    eyeToggle.addEventListener('click', () => {
-        setTimeout(updateEyeToggleStandalonePosition, 100);
-    });
+// تحديث عند تغيير حجم النافذة
+window.addEventListener('resize', debounce(updateEyeToggleStandalonePosition, 100));
 
-    document.getElementById('eye-toggle-standalone').addEventListener('click', () => {
+// تحديث عند النقر على زر العين
+if (eyeToggle) {
+    eyeToggle.addEventListener('click', () => {
         setTimeout(updateEyeToggleStandalonePosition, 100);
     });
 }
 
-window.addEventListener('resize', debounce(updateEyeToggleStandalonePosition, 200));
+// تحديث عند النقر على النسخة المنفردة
+const eyeStandalone = document.getElementById('eye-toggle-standalone');
+if (eyeStandalone) {
+    eyeStandalone.addEventListener('click', () => {
+        setTimeout(updateEyeToggleStandalonePosition, 100);
+    });
+}
 
-setupBackButton();
+// مراقبة تغييرات DOM للتأكد من بقاء الزر في مكانه
+if (window.MutationObserver) {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && 
+                (mutation.target === document.getElementById('js-toggle-container') ||
+                 mutation.target === document.getElementById('eye-toggle-standalone'))) {
+                setTimeout(updateEyeToggleStandalonePosition, 50);
+            }
+        });
+    });
 
-console.log('✅ script.js تم تحميله بالكامل (2300+ سطر)');
+    const toggleContainer = document.getElementById('js-toggle-container');
+    if (toggleContainer) {
+        observer.observe(toggleContainer, { attributes: true });
+    }
+}
