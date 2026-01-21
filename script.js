@@ -627,109 +627,67 @@ function renderNameInput() {
 
 function loadImages() {
     if (!mainSvg) return;
-    console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);
+    console.log(`🖼️ فحص الصور الجاهزة في الكاش...`);
+
     if (imageUrlsToLoad.length === 0) {
-        console.warn('⚠️ لا توجد صور للتحميل!');
         finishLoading();
         return;
     }
-    const MAX_CONCURRENT = 3;
-    let currentIndex = 0;
-    async function loadNextBatch() {
-        while (currentIndex < imageUrlsToLoad.length && currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {
-            const url = imageUrlsToLoad[currentIndex];
-            currentIndex++;
-            try {
-                const cache = await caches.open('semester-3-cache-v1');
-                const cachedImg = await cache.match(url);
-                if (cachedImg) {
-                    console.log(`✅ الصورة موجودة في الكاش: ${url.split('/').pop()}`);
-                    const blob = await cachedImg.blob();
-                    const imgUrl = URL.createObjectURL(blob);
-                    const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
-                    allImages.forEach(si => {
-                        const dataSrc = si.getAttribute('data-src');
-                        if (dataSrc === url) {
-                            si.setAttribute('href', imgUrl);
-                        }
-                    });
-                    loadingProgress.completedSteps++;
-                    updateLoadProgress();
-                    if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
-                        finishLoading();
-                    } else {
-                        loadNextBatch();
-                    }
-                    continue;
-                }
-            } catch (cacheError) {
-                console.warn(`⚠️ خطأ في الوصول للكاش: ${cacheError}`);
-            }
-            const img = new Image();
-            img.onload = async function() {
-                const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
+
+    let loadedCount = 0;
+    const totalToLoad = imageUrlsToLoad.length;
+
+    // دالة لتحديث الصورة في الـ SVG من الكاش فوراً
+    async function tryApplyFromCache(url) {
+        try {
+            const cache = await caches.open('semester-3-cache-v1');
+            const cachedResponse = await cache.match(url);
+            
+            if (cachedResponse) {
+                const blob = await cachedResponse.blob();
+                const imgUrl = URL.createObjectURL(blob);
+                
+                const allImages = [...mainSvg.querySelectorAll('image'), 
+                                 ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
+                
                 allImages.forEach(si => {
-                    const dataSrc = si.getAttribute('data-src');
-                    if (dataSrc === url) {
-                        si.setAttribute('href', this.src);
-                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);
+                    if (si.getAttribute('data-src') === url) {
+                        si.setAttribute('href', imgUrl);
                     }
                 });
-                try {
-                    const cache = await caches.open('semester-3-cache-v1');
-                    const imgResponse = await fetch(url);
-                    if (imgResponse.ok) {
-                        await cache.put(url, imgResponse);
-                        console.log(`💾 تم حفظ الصورة في الكاش: ${url.split('/').pop()}`);
-                    }
-                } catch (cacheError) {
-                    console.warn(`⚠️ فشل حفظ الصورة في الكاش: ${cacheError}`);
-                }
+                return true; // الصورة وجدت وتم تطبيقها
+            }
+        } catch (e) {
+            console.warn("Cache match error:", e);
+        }
+        return false; // الصورة غير موجودة في الكاش
+    }
+
+    // معالجة كل الصور
+    imageUrlsToLoad.forEach(async (url) => {
+        const isReady = await tryApplyFromCache(url);
+        
+        if (isReady) {
+            loadingProgress.completedSteps++;
+            updateLoadProgress();
+            if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
+                finishLoading();
+            }
+        } else {
+            // إذا لم تكن في الكاش (وهذا مستبعد لو الـ Preload اشتغل صح) حملها برمجياً
+            const img = new Image();
+            img.onload = function() {
+                const allImages = [...mainSvg.querySelectorAll('image')];
+                allImages.forEach(si => {
+                    if (si.getAttribute('data-src') === url) si.setAttribute('href', url);
+                });
                 loadingProgress.completedSteps++;
                 updateLoadProgress();
-                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
-                    finishLoading();
-                } else {
-                    loadNextBatch();
-                }
-            };
-            img.onerror = function() {
-                console.error(`❌ خطأ في تحميل ${url}`);
-                loadingProgress.completedSteps++;
-                updateLoadProgress();
-                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
-                    finishLoading();
-                } else {
-                    loadNextBatch();
-                }
+                if (loadingProgress.completedSteps >= loadingProgress.totalSteps) finishLoading();
             };
             img.src = url;
         }
-    }
-    loadNextBatch();
-}
-window.loadImages = loadImages;
-
-function finishLoading() {
-    loadingProgress.completedSteps = loadingProgress.totalSteps;
-    loadingProgress.currentPercentage = 100;
-    updateLoadProgress();
-    console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
-    setTimeout(() => {
-        window.updateDynamicSizes();
-        scan();
-        updateWoodInterface();
-        window.goToWood();
-        if (mainSvg) {
-            mainSvg.style.opacity = '1';
-            mainSvg.style.visibility = 'visible';
-            mainSvg.classList.add('loaded');
-        }
-        setTimeout(() => {
-            hideLoadingScreen();
-            console.log('🎉 اكتمل التحميل والعرض');
-        }, 300);
-    }, 200);
+    });
 }
 
 /* ========================================
