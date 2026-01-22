@@ -286,6 +286,17 @@ h1 {
 .leaderboard-item.top2 .leaderboard-rank { color: #95a5a6; }
 .leaderboard-item.top3 .leaderboard-rank { color: #cd7f32; }
 
+.leaderboard-item.current-player {
+  background: rgba(52, 152, 219, 0.3);
+  border: 2px solid #3498db;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 @media (max-width: 480px) {
   .container {
     padding: 15px;
@@ -359,7 +370,7 @@ h1 {
   </div>
 
   <div class="leaderboard">
-    <h3>🏆 أفضل 5 لاعبين</h3>
+    <h3>🏆 أفضل 5 لاعبين عالمياً</h3>
     <ul class="leaderboard-list" id="leaderboardList">
       <li class="leaderboard-item">
         <span class="leaderboard-rank">-</span>
@@ -449,8 +460,10 @@ continueBtn.addEventListener('click', () => {
 });
 
 // ====================
-// نظام اللعبة
+// نظام اللعبة مع القائمة العالمية
 // ====================
+
+const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
 
 const gameContainer = document.getElementById('gameContainer');
 const runner = document.getElementById('runner');
@@ -591,37 +604,91 @@ function updateGame() {
   }
 }
 
-function getLocalLeaderboard() {
-  const saved = localStorage.getItem('gameLeaderboard');
-  return saved ? JSON.parse(saved) : [];
-}
-
-function saveLocalLeaderboard(leaderboard) {
-  localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
-}
-
-async function updateLeaderboard(playerName, playerScore) {
-  if (typeof trackGameScore === 'function') {
-    trackGameScore(playerScore);
+// جلب القائمة العالمية من السيرفر
+async function fetchGlobalLeaderboard() {
+  try {
+    console.log('🔄 جلب القائمة العالمية...');
+    
+    // نستخدم Storage API للحصول على البيانات
+    if (typeof window.storage !== 'undefined') {
+      const result = await window.storage.list('game_score:', true);
+      
+      if (result && result.keys) {
+        const scores = [];
+        
+        for (const key of result.keys) {
+          try {
+            const data = await window.storage.get(key, true);
+            if (data && data.value) {
+              const parsed = JSON.parse(data.value);
+              scores.push(parsed);
+            }
+          } catch (err) {
+            console.warn('⚠️ خطأ في قراءة:', key);
+          }
+        }
+        
+        scores.sort((a, b) => b.score - a.score);
+        const top5 = scores.slice(0, 5);
+        
+        console.log('✅ تم جلب القائمة:', top5);
+        return top5;
+      }
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('❌ خطأ في جلب القائمة:', error);
+    return [];
   }
-
-  let leaderboard = getLocalLeaderboard();
-
-  leaderboard.push({
-    name: playerName,
-    score: playerScore,
-    date: new Date().toLocaleDateString('ar-EG')
-  });
-
-  leaderboard.sort((a, b) => b.score - a.score);
-  leaderboard = leaderboard.slice(0, 5);
-
-  saveLocalLeaderboard(leaderboard);
-  displayLeaderboard();
 }
 
-function displayLeaderboard() {
-  const leaderboard = getLocalLeaderboard();
+// إرسال النتيجة للسيرفر
+async function sendScoreToServer(playerName, playerScore, deviceId) {
+  try {
+    console.log('📤 إرسال النتيجة للسيرفر...');
+    
+    const timestamp = Date.now();
+    const scoreKey = `game_score:${deviceId}_${timestamp}`;
+    
+    const scoreData = {
+      name: playerName,
+      score: playerScore,
+      device_id: deviceId,
+      date: new Date().toLocaleDateString('ar-EG'),
+      timestamp: timestamp
+    };
+    
+    // حفظ في Storage API (shared)
+    if (typeof window.storage !== 'undefined') {
+      await window.storage.set(scoreKey, JSON.stringify(scoreData), true);
+      console.log('✅ تم حفظ النتيجة في Storage');
+    }
+    
+    // إرسال للـ Formspree كنسخة احتياطية
+    const formData = new FormData();
+    formData.append("Type", "Game_Score");
+    formData.append("Player_Name", playerName);
+    formData.append("Score", playerScore);
+    formData.append("Device_ID", deviceId);
+    formData.append("Timestamp", new Date().toLocaleString('ar-EG'));
+    
+    navigator.sendBeacon(FORMSPREE_URL, formData);
+    console.log('✅ تم إرسال النتيجة');
+    
+    return true;
+  } catch (error) {
+    console.error('❌ خطأ في الإرسال:', error);
+    return false;
+  }
+}
+
+// عرض القائمة
+async function displayLeaderboard() {
+  const leaderboard = await fetchGlobalLeaderboard();
+  
+  const currentPlayerName = getPlayerName();
+  const deviceId = getDeviceId();
 
   if (leaderboard.length === 0) {
     leaderboardList.innerHTML = `
@@ -637,9 +704,12 @@ function displayLeaderboard() {
   leaderboardList.innerHTML = leaderboard.map((entry, index) => {
     const topClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+    
+    const isCurrentPlayer = entry.device_id === deviceId;
+    const currentClass = isCurrentPlayer ? 'current-player' : '';
 
     return `
-      <li class="leaderboard-item ${topClass}">
+      <li class="leaderboard-item ${topClass} ${currentClass}">
         <span class="leaderboard-rank">${medal} #${index + 1}</span>
         <span class="leaderboard-name">${entry.name}</span>
         <span class="leaderboard-score">${entry.score} ⭐</span>
@@ -648,24 +718,50 @@ function displayLeaderboard() {
   }).join('');
 }
 
-function endGame() {
+function getPlayerName() {
+  if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
+    return UserTracker.getDisplayName();
+  }
+  
+  const realName = localStorage.getItem('user_real_name');
+  if (realName && realName.trim()) {
+    return realName.trim();
+  }
+  
+  return localStorage.getItem('visitor_id') || 'زائر';
+}
+
+function getDeviceId() {
+  if (typeof UserTracker !== 'undefined' && UserTracker.deviceFingerprint) {
+    return UserTracker.deviceFingerprint;
+  }
+  
+  const stored = localStorage.getItem('device_fingerprint');
+  if (stored) return stored;
+  
+  return localStorage.getItem('visitor_id') || 'unknown';
+}
+
+async function endGame() {
   gameActive = false;
   finalScore.textContent = `النقاط النهائية: ${score}`;
   gameOverlay.style.display = 'flex';
 
-  let playerName = 'زائر';
-  if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
-    playerName = UserTracker.getDisplayName();
-  } else {
-    const realName = localStorage.getItem('user_real_name');
-    if (realName && realName.trim()) {
-      playerName = realName.trim();
-    } else {
-      playerName = localStorage.getItem('visitor_id') || 'زائر';
-    }
+  const playerName = getPlayerName();
+  const deviceId = getDeviceId();
+  
+  console.log('🎮 انتهت اللعبة:', { playerName, score, deviceId });
+  
+  // إرسال النتيجة للسيرفر
+  await sendScoreToServer(playerName, score, deviceId);
+  
+  // تحديث القائمة
+  await displayLeaderboard();
+  
+  // تتبع النتيجة
+  if (typeof trackGameScore === 'function') {
+    trackGameScore(score);
   }
-
-  updateLeaderboard(playerName, score);
 }
 
 function restartGame() {
@@ -691,7 +787,16 @@ function restartGame() {
 
 restartBtn.addEventListener('click', restartGame);
 
+// تحميل القائمة عند بدء الصفحة
 displayLeaderboard();
+
+// تحديث القائمة كل 30 ثانية
+setInterval(() => {
+  if (!gameActive) {
+    displayLeaderboard();
+  }
+}, 30000);
+
 updateGame();
 
 let spawnerIntervalId;
