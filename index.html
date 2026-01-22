@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.18.006">
+<meta name="version" content="2025.01.22.001">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -25,18 +25,15 @@
   <link rel="stylesheet" href="style.css">
 
 <script>
+// التحقق من الزيارة الأولى فقط
 const preloadDone = localStorage.getItem("preload_done");
-const lastVisit = localStorage.getItem("last_visit_timestamp");
-const now = Date.now();
 
-const needsPreload = !preloadDone || !lastVisit || (now - lastVisit > 86400000);
-
-if (needsPreload) {
-    console.log('🔄 تحويل إلى شاشة التحميل المسبق');
+if (!preloadDone) {
+    console.log('🔄 أول زيارة - التحويل لشاشة التحميل المسبق');
     location.replace("preload.html");
 } else {
-    console.log('✅ الملفات محفوظة في الكاش');
-    localStorage.setItem("last_visit_timestamp", now);
+    console.log('✅ الملفات الأساسية محفوظة - تحميل مباشر');
+    localStorage.setItem("last_visit_timestamp", Date.now());
 }
 </script>
 </head>
@@ -180,7 +177,7 @@ if (needsPreload) {
 
     <!-- الطبقة الثانية: المحتوى الديناميكي -->
     <g id="dynamic-links-group" style="isolation: isolate;"></g>
-    
+
     <!-- الطبقة الثالثة: محتوى المجموعة -->
     <g id="group-specific-content" style="isolation: isolate;"></g>
 
