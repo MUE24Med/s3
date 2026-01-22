@@ -614,14 +614,6 @@ body {
   overflow: hidden;
 }
 
-#search-container.hidden {
-  opacity: 0;
-  pointer-events: none;
-  max-height: 0;
-  margin: 0;
-  padding: 0;
-}
-
 #search-input {
   padding: 8px 10px 8px 45px !important;
   border: 1px solid #444;
