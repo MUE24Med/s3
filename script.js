@@ -2124,6 +2124,76 @@ window.addEventListener('load', () => {
     if (!isVisible) toggleSearchInterface(false);
 });
 
+/* ========================================
+   نظام السحب الحر المطلق لزر العين
+   ======================================== */
+
+const dragItem = document.getElementById('eye-toggle-standalone');
+let isDragging = false;
+let currentX;
+let currentY;
+let initialX;
+let initialY;
+let xOffset = 0;
+let yOffset = 0;
+
+// الحصول على مكان الزر الحالي عند بدء السحب
+function dragStart(e) {
+    if (e.type === "touchstart") {
+        initialX = e.touches[0].clientX - xOffset;
+        initialY = e.touches[0].clientY - yOffset;
+    } else {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+    }
+
+    if (e.target === dragItem || dragItem.contains(e.target)) {
+        isDragging = true;
+    }
+}
+
+// إنهاء السحب
+function dragEnd() {
+    initialX = currentX;
+    initialY = currentY;
+    isDragging = false;
+}
+
+// عملية التحريك الفعلية
+function drag(e) {
+    if (isDragging) {
+        e.preventDefault();
+
+        if (e.type === "touchmove") {
+            currentX = e.touches[0].clientX - initialX;
+            currentY = e.touches[0].clientY - initialY;
+        } else {
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+        }
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        // استخدام transform بدلاً من top/left لأداء أسرع وأسلس
+        setTranslate(currentX, currentY, dragItem);
+    }
+}
+
+function setTranslate(xPos, yPos, el) {
+    el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+}
+
+// تفعيل أحداث الماوس واللمس
+window.addEventListener("touchstart", dragStart, { passive: false });
+window.addEventListener("touchend", dragEnd, { passive: false });
+window.addEventListener("touchmove", drag, { passive: false });
+
+window.addEventListener("mousedown", dragStart);
+window.addEventListener("mouseup", dragEnd);
+window.addEventListener("mousemove", drag);
+
+
 setupBackButton();
 
 console.log('✅ script.js تم تحميله بالكامل (2300+ سطر)');
