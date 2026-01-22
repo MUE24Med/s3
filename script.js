@@ -2125,70 +2125,66 @@ window.addEventListener('load', () => {
 });
 
 /* ========================================
-   نظام السحب الحر المطلق لزر العين
+   نظام السحب الحر المطور (يدعم الضغط والسحب معاً)
    ======================================== */
-
 const dragItem = document.getElementById('eye-toggle-standalone');
 let isDragging = false;
-let currentX;
-let currentY;
-let initialX;
-let initialY;
-let xOffset = 0;
-let yOffset = 0;
+let hasMoved = false; // متغير جديد للتمييز
+let currentX, currentY, initialX, initialY;
+let xOffset = 0, yOffset = 0;
 
-// الحصول على مكان الزر الحالي عند بدء السحب
 function dragStart(e) {
-    if (e.type === "touchstart") {
-        initialX = e.touches[0].clientX - xOffset;
-        initialY = e.touches[0].clientY - yOffset;
-    } else {
-        initialX = e.clientX - xOffset;
-        initialY = e.clientY - yOffset;
-    }
-
     if (e.target === dragItem || dragItem.contains(e.target)) {
         isDragging = true;
+        hasMoved = false; // إعادة تعيين عند كل لمسة
+        if (e.type === "touchstart") {
+            initialX = e.touches[0].clientX - xOffset;
+            initialY = e.touches[0].clientY - yOffset;
+        } else {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+        }
     }
 }
 
-// إنهاء السحب
+function drag(e) {
+    if (isDragging) {
+        e.preventDefault();
+        hasMoved = true; // إذا تحرك ولو بكسل واحد، نعتبرها سحبة وليس نقرة
+        
+        let clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+        let clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+        
+        currentX = clientX - initialX;
+        currentY = clientY - initialY;
+        xOffset = currentX;
+        yOffset = currentY;
+
+        setTranslate(currentX, currentY, dragItem);
+    }
+}
+
 function dragEnd() {
     initialX = currentX;
     initialY = currentY;
     isDragging = false;
 }
 
-// عملية التحريك الفعلية
-function drag(e) {
-    if (isDragging) {
-        e.preventDefault();
-
-        if (e.type === "touchmove") {
-            currentX = e.touches[0].clientX - initialX;
-            currentY = e.touches[0].clientY - initialY;
-        } else {
-            currentX = e.clientX - initialX;
-            currentY = e.clientY - initialY;
+// تعديل حدث الضغط ليعمل فقط إذا لم يتم السحب
+if (dragItem) {
+    dragItem.onclick = (e) => {
+        if (hasMoved) {
+            e.preventDefault(); // منع فتح البحث إذا كان المستخدم يسحب الزر فقط
+            return;
         }
-
-        xOffset = currentX;
-        yOffset = currentY;
-
-        // استخدام transform بدلاً من top/left لأداء أسرع وأسلس
-        setTranslate(currentX, currentY, dragItem);
-    }
+        toggleSearchInterface(true);
+    };
 }
 
-function setTranslate(xPos, yPos, el) {
-    el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
-}
-
-// تفعيل أحداث الماوس واللمس
+// تفعيل الأحداث
 window.addEventListener("touchstart", dragStart, { passive: false });
 window.addEventListener("touchend", dragEnd, { passive: false });
 window.addEventListener("touchmove", drag, { passive: false });
-
 window.addEventListener("mousedown", dragStart);
 window.addEventListener("mouseup", dragEnd);
 window.addEventListener("mousemove", drag);
