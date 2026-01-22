@@ -1094,7 +1094,7 @@ input:focus:not(:focus-visible) {
 }
 
 /* ========================================
-   [016] زر العين العائم - محسّن
+   [016] زر العين العائم - محسّن مع السحب
    ======================================== */
 
 #eye-toggle-standalone {
@@ -1111,8 +1111,19 @@ input:focus:not(:focus-visible) {
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  cursor: pointer;
+  cursor: grab;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#eye-toggle-standalone.dragging {
+  cursor: grabbing;
+  transform: scale(1.1);
+  box-shadow: 0 8px 24px rgba(255, 204, 0, 0.6);
+  transition: none;
 }
 
 #eye-toggle-standalone.top {
@@ -1125,13 +1136,13 @@ input:focus:not(:focus-visible) {
   bottom: auto;
 }
 
-#eye-toggle-standalone:hover {
+#eye-toggle-standalone:hover:not(.dragging) {
   transform: scale(1.15);
   background-color: rgba(0, 0, 0, 1);
   box-shadow: 0 6px 20px rgba(255, 204, 0, 0.4);
 }
 
-#eye-toggle-standalone:active {
+#eye-toggle-standalone:active:not(.dragging) {
   transform: scale(0.95);
 }
 
