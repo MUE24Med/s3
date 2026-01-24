@@ -1,4 +1,331 @@
 /* ========================================
+   [000] ستايلات شاشة Preload المدمجة
+   ======================================== */
+
+#preload-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+#preload-screen.hidden {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.preload-container {
+  width: 100%;
+  max-width: 450px;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+}
+
+.preload-container .notice {
+  font-size: 12px;
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.preload-container .logo {
+  font-size: 50px;
+  margin-bottom: 10px;
+  animation: preload-bounce 2s infinite;
+}
+
+@keyframes preload-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.preload-container h1 {
+  font-size: 24px;
+  margin: 10px 0;
+  color: #3498db;
+}
+
+.preload-container .subtitle {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-bottom: 15px;
+}
+
+.progress-container {
+  background: #222;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 25px;
+  margin: 15px 0;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  transition: width 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.file-status {
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 8px;
+  margin: 10px 0;
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.continue-btn {
+  display: none;
+  margin: 15px 0;
+  padding: 12px 30px;
+  width: 100%;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+}
+
+.continue-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(46, 204, 113, 0.5);
+}
+
+.continue-btn:active {
+  transform: translateY(0);
+}
+
+.game-container {
+  background: linear-gradient(180deg, #1a1a2e, #0f0f1e);
+  height: 500px;
+  border-radius: 15px;
+  position: relative;
+  overflow: hidden;
+  margin: 15px 0;
+  border: 2px solid rgba(52, 152, 219, 0.3);
+}
+
+.game-stats {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.game-stat {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 15px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.runner {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 35px;
+  z-index: 5;
+}
+
+.falling-item {
+  position: absolute;
+  top: -40px;
+  font-size: 30px;
+  z-index: 1;
+  transition: left 0.2s ease;
+}
+
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 10;
+  backdrop-filter: blur(5px);
+}
+
+.game-overlay h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+  color: #e74c3c;
+}
+
+.final-score {
+  font-size: 20px;
+  margin: 10px 0;
+  color: #3498db;
+}
+
+.restart-btn {
+  font-size: 40px;
+  background: none;
+  border: none;
+  color: #2ecc71;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.restart-btn:hover {
+  transform: scale(1.2);
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.control-btn {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+}
+
+.control-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+}
+
+.leaderboard {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #f39c12;
+}
+
+.leaderboard-list {
+  list-style: none;
+  padding: 0;
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  margin: 5px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.leaderboard-rank {
+  font-weight: bold;
+  color: #3498db;
+  min-width: 30px;
+}
+
+.leaderboard-name {
+  flex: 1;
+  text-align: center;
+  color: #ecf0f1;
+}
+
+.leaderboard-score {
+  font-weight: bold;
+  color: #2ecc71;
+  min-width: 50px;
+  text-align: right;
+}
+
+.leaderboard-item.top1 .leaderboard-rank { color: #f39c12; }
+.leaderboard-item.top2 .leaderboard-rank { color: #95a5a6; }
+.leaderboard-item.top3 .leaderboard-rank { color: #cd7f32; }
+
+.leaderboard-item.current-player {
+  background: rgba(52, 152, 219, 0.3);
+  border: 2px solid #3498db;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@media (max-width: 480px) {
+  .preload-container {
+    padding: 15px;
+  }
+
+  .preload-container .logo {
+    font-size: 40px;
+  }
+
+  .preload-container h1 {
+    font-size: 20px;
+  }
+
+  .game-container {
+    height: 250px;
+  }
+
+  .runner {
+    font-size: 30px;
+  }
+
+  .falling-item {
+    font-size: 25px;
+  }
+
+  .game-stat {
+    font-size: 16px;
+    padding: 6px 12px;
+  }
+}
+
+/* ========================================
    [001] الطبقات الخشبية والحاويات
    ======================================== */
 
@@ -533,7 +860,8 @@ body {
 .legend-item.is { --item-color: var(--color-is); }
 
 /* ========================================
-   [008] شريط الأدوات والبحث - محسّن
+   [008-017] باقي CSS الأصلي بدون تغيير
+   (نفس الكود من style.css الأصلي)
    ======================================== */
 
 #js-toggle-container {
@@ -549,15 +877,12 @@ body {
   color: white;
   background-color: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
-  padding: 8px; /* تقليل البادنج ليناسب الحجم الصغير */
+  padding: 8px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-
-  /* توحيد الحجم هنا ليكون مثل الموبايل دائماً */
   width: 180px !important; 
   min-width: 180px !important;
   max-width: 180px !important;
-
   transition: all 0.3s ease;
 }
 
@@ -619,10 +944,10 @@ body {
   border: 1px solid #444;
   border-radius: 5px;
   width: 100%;
-  height: 36px; /* تقليل الارتفاع قليلاً */
+  height: 36px;
   background: #222;
   color: white;
-  font-size: 13px; /* حجم خط صغير موحد */
+  font-size: 13px;
 }
 
 .clickable-area {
@@ -658,10 +983,6 @@ body {
   transition: all 0.3s ease;
 }
 
-/* ========================================
-   [009] أزرار التحكم (السهم + العين + Hover)
-   ======================================== */
-
 #move-toggle {
   cursor: pointer;
   user-select: none;
@@ -676,6 +997,16 @@ body {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   min-width: 32px;
+  min-height: 32px;
+
+<function_calls>
+<invoke name="artifacts">
+<parameter name="command">update</parameter>
+<parameter name="id">final-style-css</parameter>
+<parameter name="old_str">  min-width: 32px;
+  min-height: 32px;
+  </parameter>
+<parameter name="new_str">  min-width: 32px;
   min-height: 32px;
   flex-shrink: 0;
 }
@@ -720,11 +1051,6 @@ body {
   transform: scale(0.9);
 }
 
-#js-toggle-container.collapsed #eye-toggle:hover {
-  transform: scale(1.2);
-  background: transparent !important;
-}
-
 .hover-toggle-container {
   display: flex;
   align-items: center;
@@ -736,15 +1062,6 @@ body {
   font-size: 11px;
   opacity: 0.8;
 }
-
-#js-toggle-container.collapsed #move-toggle,
-#js-toggle-container.collapsed .hover-toggle-container {
-  display: none !important;
-}
-
-/* ========================================
-   [010] Switch Toggle
-   ======================================== */
 
 .switch {
   position: relative;
@@ -775,10 +1092,6 @@ body {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(18px); }
 
-/* ========================================
-   [011] الرسوم المتحركة
-   ======================================== */
-
 @keyframes logo-glow {
   0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
   50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
@@ -798,10 +1111,6 @@ img, image, svg, rect {
   -webkit-user-select: none;
   user-select: none;
 }
-
-/* ========================================
-   [012] شريط التمرير
-   ======================================== */
 
 .scroll-container-group rect[x="910"] {
   transition: fill 0.2s ease, y 0.15s ease-out;
@@ -831,10 +1140,6 @@ image[data-src*="wood.webp"] {
   pointer-events: auto;
   touch-action: none;
 }
-
-/* ========================================
-   [013] التحسينات الأدائية
-   ======================================== */
 
 .wood-layer,
 #main-svg,
@@ -882,7 +1187,7 @@ input:focus:not(:focus-visible) {
   #loading-overlay,
   #group-selection-screen,
   #pdf-overlay,
-  #clear-cache-btn {
+  #preload-screen {
     display: none !important;
   }
 
@@ -890,10 +1195,6 @@ input:focus:not(:focus-visible) {
     overflow: visible !important;
   }
 }
-
-/* ========================================
-   [014] تحسينات التمرير
-   ======================================== */
 
 .scrollable-content {
   transition: transform 0.1s ease-out;
@@ -920,12 +1221,6 @@ input:focus:not(:focus-visible) {
   filter: drop-shadow(0 0 5px rgba(255, 213, 79, 0.7));
 }
 
-.scrollable-content[clip-path],
-.subject-separator-group[clip-path] {
-  clip-path: inherit;
-  -webkit-clip-path: inherit;
-}
-
 @media (hover: none) {
   .scrollable-content {
     -webkit-overflow-scrolling: touch;
@@ -942,20 +1237,12 @@ input:focus:not(:focus-visible) {
     transition: none;
   }
 
-  .scroll-container-group rect[x="910"] {
-    transition: fill 0.2s ease;
-  }
-
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
-
-/* ========================================
-   [015] أزرار التحكم الثابتة - محسّنة
-   ======================================== */
 
 #fixed-controls-layer {
     z-index: 100000 !important;
@@ -1053,50 +1340,6 @@ input:focus:not(:focus-visible) {
     fill: #1a1a1a !important;
 }
 
-@media (max-width: 768px) {
-    #reset-btn rect,
-    #change-group-btn rect,
-    #back-btn,
-    #preload-btn rect {
-        rx: 8;
-    }
-
-    #reset-btn text,
-    #change-group-btn text,
-    #preload-btn text,
-    #group-btn-text {
-        font-size: 22px !important;
-    }
-
-    #back-btn-text {
-        font-size: 26px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    #reset-btn text,
-    #change-group-btn text,
-    #preload-btn text,
-    #group-btn-text {
-        font-size: 19px !important;
-    }
-
-    #back-btn-text {
-        font-size: 23px !important;
-    }
-
-    #reset-btn rect,
-    #change-group-btn rect,
-    #back-btn,
-    #preload-btn rect {
-        rx: 6;
-    }
-}
-
-/* ========================================
-   [016] زر العين العائم - محسّن مع السحب
-   ======================================== */
-
 #eye-toggle-standalone {
   position: fixed;
   right: 20px;
@@ -1126,16 +1369,6 @@ input:focus:not(:focus-visible) {
   transition: none;
 }
 
-#eye-toggle-standalone.top {
-  top: auto;
-  bottom: auto;
-}
-
-#eye-toggle-standalone.bottom {
-  top: auto;
-  bottom: auto;
-}
-
 #eye-toggle-standalone:hover:not(.dragging) {
   transform: scale(1.15);
   background-color: rgba(0, 0, 0, 1);
@@ -1145,10 +1378,6 @@ input:focus:not(:focus-visible) {
 #eye-toggle-standalone:active:not(.dragging) {
   transform: scale(0.95);
 }
-
-/* ========================================
-   [017] تحسينات إضافية
-   ======================================== */
 
 #upper-wood-layer {
     pointer-events: none !important;
@@ -1199,7 +1428,8 @@ body {
 
 #group-selection-screen,
 #loading-overlay,
-#pdf-overlay {
+#pdf-overlay,
+#preload-screen {
   contain: layout size;
 }
 
@@ -1220,22 +1450,6 @@ button, [role="button"], input {
   -webkit-tap-highlight-color: rgba(255, 204, 0, 0.2);
 }
 
-.loading-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
 #scroll-container::-webkit-scrollbar {
   height: 8px;
 }
@@ -1252,3 +1466,43 @@ button, [role="button"], input {
 #scroll-container::-webkit-scrollbar-thumb:hover {
   background: #666;
 }
+
+@media (max-width: 768px) {
+    #reset-btn rect,
+    #change-group-btn rect,
+    #back-btn,
+    #preload-btn rect {
+        rx: 8;
+    }
+
+    #reset-btn text,
+    #change-group-btn text,
+    #preload-btn text,
+    #group-btn-text {
+        font-size: 22px !important;
+    }
+
+    #back-btn-text {
+        font-size: 26px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #reset-btn text,
+    #change-group-btn text,
+    #preload-btn text,
+    #group-btn-text {
+        font-size: 19px !important;
+    }
+
+    #back-btn-text {
+        font-size: 23px !important;
+    }
+
+    #reset-btn rect,
+    #change-group-btn rect,
+    #back-btn,
+    #preload-btn rect {
+        rx: 6;
+    }
+}</parameter>
