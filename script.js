@@ -491,7 +491,6 @@ let currentFolder = "";
 let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
-let interactionEnabled = true;
 
 let imageUrlsToLoad = [];
 let loadingProgress = {
