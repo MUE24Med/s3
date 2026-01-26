@@ -860,8 +860,7 @@ body {
 .legend-item.is { --item-color: var(--color-is); }
 
 /* ========================================
-   [008-017] باقي CSS الأصلي بدون تغيير
-   (نفس الكود من style.css الأصلي)
+   [008] شريط الأدوات والبحث
    ======================================== */
 
 #js-toggle-container {
@@ -884,46 +883,6 @@ body {
   min-width: 180px !important;
   max-width: 180px !important;
   transition: all 0.3s ease;
-}
-
-#js-toggle-container.collapsed {
-  min-width: 50px !important;
-  max-width: 50px !important;
-  width: 50px !important;
-  height: 50px !important;
-  padding: 0 !important;
-  gap: 0 !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background-color: rgba(0, 0, 0, 0.95) !important;
-}
-
-#js-toggle-container.collapsed #search-container {
-  display: none !important;
-}
-
-#js-toggle-container.collapsed .controls-row {
-  display: none !important;
-}
-
-#js-toggle-container.collapsed #eye-toggle {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  opacity: 1 !important;
-  font-size: 28px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  min-width: auto !important;
-  min-height: auto !important;
-  width: auto !important;
-  height: auto !important;
-  position: static !important;
-  cursor: pointer !important;
 }
 
 #js-toggle-container.top { top: 20px; }
@@ -997,16 +956,6 @@ body {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   min-width: 32px;
-  min-height: 32px;
-
-<function_calls>
-<invoke name="artifacts">
-<parameter name="command">update</parameter>
-<parameter name="id">final-style-css</parameter>
-<parameter name="old_str">  min-width: 32px;
-  min-height: 32px;
-  </parameter>
-<parameter name="new_str">  min-width: 32px;
   min-height: 32px;
   flex-shrink: 0;
 }
@@ -1342,6 +1291,7 @@ input:focus:not(:focus-visible) {
 
 #eye-toggle-standalone {
   position: fixed;
+  top: 20px;
   right: 20px;
   z-index: 9999;
   width: 50px;
@@ -1359,7 +1309,7 @@ input:focus:not(:focus-visible) {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, top 0s, left 0s, right 0s, bottom 0s;
 }
 
 #eye-toggle-standalone.dragging {
@@ -1367,6 +1317,7 @@ input:focus:not(:focus-visible) {
   transform: scale(1.1);
   box-shadow: 0 8px 24px rgba(255, 204, 0, 0.6);
   transition: none;
+  z-index: 10001;
 }
 
 #eye-toggle-standalone:hover:not(.dragging) {
@@ -1505,4 +1456,4 @@ button, [role="button"], input {
     #preload-btn rect {
         rx: 6;
     }
-}</parameter>
+}
