@@ -303,5 +303,74 @@
 <rect x="0" y="874" height="438.76" class="m w l" data-href="#" />
 </g>
 </g>
+
+<!-- الاسبوع التاسع عشر -->
+<g transform="translate(18432,0)">
+<image data-src="image/B/19.webp" width="1024" height="2454" />
+
+<!-- Saturday 19 -->
+<g transform="translate(145.52,0)">
+
+<rect x="0" y="369.65" height="598.13" class="m w" data-href="#" />
+
+<rect x="0" y="969.44" height="547.39" class="m w" data-href="#" />
+
+<rect x="0" y="1516.53" height="548.48" class="m w" data-href="#" />
+</g>
+
+<!-- Sunday 19 -->
+<g transform="translate(267,0)">
+
+<rect x="0" y="370.15" height="598.15" class="m w" data-href="#" />
+
+<rect x="0" y="969.35" height="546.34" class="m w" data-href="#" />
+
+<rect x="0" y="1516.52" height="662.17" class="m w" data-href="#" />
+
+<rect x="0" y="2178.19" height="343.05" class="m w" data-href="#" />
+</g>
+
+<!-- Monday 19 -->
+<g transform="translate(388.11,0)">
+
+<rect x="0" y="368.66" height="598.50" class="m w" data-href="#" />
+
+<rect x="0" y="968.53" height="546.23" class="m w" data-href="#" />
+</g>
+
+<!-- Tuesday 19 -->
+<g transform="translate(507.91,0)">
+
+<rect x="0" y="368.67" height="600.19" class="m w" data-href="#" />
+
+<rect x="0" y="969.32" height="547.16" class="m w" data-href="#" />
+
+<rect x="0" y="1517.99" height="547.47" class="m w" data-href="#" />
+
+<rect x="0" y="2065.39" height="456.95" class="m w" data-href="#" />
+</g>
+
+<!-- Wednesday 19 -->
+<g transform="translate(629.90,0)">
+
+<rect x="0" y="368.67" height="600.19" class="m w" data-href="#" />
+
+<rect x="0" y="969.32" height="547.16" class="m w" data-href="#" />
+
+<rect x="0" y="1517.99" height="547.47" class="m w" data-href="#" />
+</g>
+
+<!-- Thursday 19 -->
+<g transform="translate(750,0)">
+
+<rect x="0" y="368.67" height="600.19" class="m w" data-href="#" />
+
+<rect x="0" y="969.32" height="547.16" class="m w" data-href="#" />
+
+<rect x="0" y="1517.99" height="547.47" class="m w" data-href="#" />
+
+<rect x="0" y="2065.39" height="456.95" class="m w" data-href="#" />
+</g>
+</g>
 <g id="dynamic-links-group"></g>
 </svg>
