@@ -304,8 +304,12 @@
 </g>
 </g>
 
-<!-- الاسبوع التاسع عشر -->
+<!-- الاسبوع الثامن عشر -->
 <g transform="translate(18432,0)">
+<image data-src="image/B/19.webp" width="1024" height="2454" />
+
+<!-- الاسبوع التاسع عشر -->
+<g transform="translate(19456,0)">
 <image data-src="image/B/19.webp" width="1024" height="2454" />
 
 <!-- Saturday 19 -->
