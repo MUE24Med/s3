@@ -314,7 +314,7 @@
 <!-- Saturday 19 -->
 <g transform="translate(140,0)">
 
-<rect x=0" y="330" height="539.5" class="image-mapper-shape" data-href="#" />
+<rect x="0" y="330" height="539.5" class="image-mapper-shape" data-href="#" />
 
 <rect x="0" y="868" height="490" class="m w" data-index="#" />
 
