@@ -306,6 +306,7 @@
 <!-- الاسبوع الثامن عشر -->
 <g transform="translate(18432,0)">
 <image data-src="image/B/18.webp" width="1024" height="2454" />
+</g>
 
 <!-- الاسبوع التاسع عشر -->
 <g transform="translate(19456,0)">
@@ -314,9 +315,9 @@
 <!-- Saturday 19 -->
 <g transform="translate(140,0)">
 
-<rect x="0" y="330" height="539.5" class="image-mapper-shape" data-href="#" />
+<rect x="0" y="330" height="539.5" class="m w" data-href="#" />
 
-<rect x="0" y="868" height="490" class="m w" data-index="#" />
+<rect x="0" y="868" height="490" class="m w" data-href="#" />
 
 <rect x="0" y="1358" height="492.4" class="m w" data-href="#" />
 </g>
@@ -326,9 +327,9 @@
 
 <rect x="0" y="331.6" height="658" class="m w s" data-href="HEM/Section/micro-1.pdf" />
 
-<rect x="0" y="990.5" height="368.5" class="m w s" data-index="HEM/Section/para-1.pdf" />
+<rect x="0" y="990.5" height="368.5" class="m w s" data-href="HEM/Section/para-1.pdf" />
 
-<rect x="0" y="1358.3" height="492" class="m w l" data-index="HEM/Lecture/patho-1.pdf" />
+<rect x="0" y="1358.3" height="492" class="m w l" data-href="HEM/Lecture/patho-1.pdf" />
 
 <rect x="0" y="1850" height="409.6" class="m w" data-href="#" />
 </g>
