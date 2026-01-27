@@ -1,18 +1,17 @@
 /* ========================================
+   script.js - الجزء 1 من 5
    [000] منطق شاشة Preload المدمجة
    ======================================== */
 
 (function initPreloadSystem() {
     const preloadDone = localStorage.getItem('preload_done');
     const preloadScreen = document.getElementById('preload-screen');
-    
+
     if (!preloadDone && preloadScreen) {
         console.log('🔄 أول زيارة - تفعيل شاشة Preload');
-        
-        // إظهار شاشة Preload
+
         preloadScreen.classList.remove('hidden');
-        
-        // إخفاء المحتوى الرئيسي
+
         const mainContent = [
             document.getElementById('group-selection-screen'),
             document.getElementById('js-toggle-container'),
@@ -22,8 +21,7 @@
         mainContent.forEach(el => {
             if (el) el.style.display = 'none';
         });
-        
-        // ========== منطق التحميل ==========
+
         const filesToLoad = [
             'image/wood.webp',
             'image/Upper_wood.webp',
@@ -97,22 +95,18 @@
             console.log('✅ حفظ حالة preload_done');
             localStorage.setItem('preload_done', 'true');
             localStorage.setItem('last_visit_timestamp', Date.now());
-            
-            // إخفاء شاشة Preload
+
             preloadScreen.classList.add('hidden');
-            
-            // إظهار المحتوى الرئيسي
+
             mainContent.forEach(el => {
                 if (el) el.style.display = '';
             });
-            
-            // إعادة تحميل الصفحة لبدء التطبيق الرئيسي
+
             setTimeout(() => {
                 window.location.reload();
             }, 500);
         });
 
-        // ========== نظام اللعبة ==========
         const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
 
         const gameContainer = document.getElementById('gameContainer');
@@ -463,11 +457,10 @@
         }
 
         startSpawning();
-        
+
     } else {
         console.log('✅ زيارة سابقة - تخطي Preload');
-        
-        // التأكد من إخفاء شاشة Preload
+
         if (preloadScreen) {
             preloadScreen.classList.add('hidden');
         }
@@ -475,7 +468,7 @@
 })();
 
 /* ========================================
-   [001] باقي script.js الأصلي بدون تغيير
+   [001] المتغيرات والإعدادات الأساسية
    ======================================== */
 
 const REPO_NAME = "semester-3";
@@ -562,8 +555,10 @@ if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
+/* انتهى الجزء 1 من 5 */
 /* ========================================
-   [002] نظام التنقل الخلفي - مُحسّن
+   script.js - الجزء 2 من 5
+   [002] نظام التنقل الخلفي والدوال المساعدة
    ======================================== */
 
 function pushNavigationState(state, data = {}) {
@@ -670,10 +665,6 @@ function setupBackButton() {
     console.log('✅ نظام التنقل الخلفي جاهز');
 }
 
-/* ========================================
-   [003] دوال مساعدة للنصوص
-   ======================================== */
-
 function normalizeArabic(text) {
     if (!text) return '';
     text = String(text);
@@ -716,10 +707,6 @@ function debounce(func, delay) {
     };
 }
 
-/* ========================================
-   [004] دوال جلب البيانات
-   ======================================== */
-
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return;
     try {
@@ -746,10 +733,6 @@ function loadSelectedGroup() {
     }
     return false;
 }
-
-/* ========================================
-   [005] إدارة شاشة التحميل
-   ======================================== */
 
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
@@ -788,10 +771,6 @@ function updateLoadProgress() {
     if (percentage >= 60) document.getElementById('bulb-2')?.classList.add('on');
     if (percentage >= 80) document.getElementById('bulb-1')?.classList.add('on');
 }
-
-/* ========================================
-   [006] تحميل SVG الخاص بالمجموعة
-   ======================================== */
 
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
@@ -894,10 +873,6 @@ async function initializeGroup(groupLetter) {
     window.loadImages();
 }
 
-/* ========================================
-   [007] عارض PDF ودوال مساعدة
-   ======================================== */
-
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
@@ -934,6 +909,12 @@ document.getElementById("shareBtn").onclick = () => {
             .catch(() => alert("❌ فشل النسخ"));
     }
 };
+
+/* انتهى الجزء 2 من 5 */
+/* ========================================
+   script.js - الجزء 3 من 5
+   [003] دوال PDF والتحميل والأحداث
+   ======================================== */
 
 async function smartOpen(item) {
     if (!item || !item.path) return;
@@ -1208,10 +1189,6 @@ function finishLoading() {
     }, 200);
 }
 
-/* ========================================
-   [008] البدء التلقائي ومعالجات الأحداث
-   ======================================== */
-
 document.querySelectorAll('.group-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const group = this.getAttribute('data-group');
@@ -1236,12 +1213,14 @@ if (preloadBtn) {
         console.log('🔄 العودة لشاشة التحميل المسبق');
         localStorage.removeItem('preload_done');
         localStorage.removeItem('last_visit_timestamp');
-        window.location.replace('preload.html');
+        window.location.reload();
     });
 }
 
+/* انتهى الجزء 3 من 5 */
 /* ========================================
-   [009] زر Reset الذكي جداً - GitHub API
+   script.js - الجزء 4 من 5
+   [004] زر Reset الذكي ومعالجات الأحداث
    ======================================== */
 
 const resetBtn = document.getElementById('reset-btn');
@@ -1439,239 +1418,15 @@ if (resetBtn) {
     });
 }
 
-/* ========================================
-   [010] دوال مساعدة للتحديثات
-   ======================================== */
-
-async function checkForUpdatesOnly() {
-    try {
-        console.log('🔍 فحص التحديثات...');
-
-        const commitResponse = await fetch(
-            `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
-            { 
-                cache: 'no-store',
-                headers: { 'Accept': 'application/vnd.github.v3+json' }
-            }
-        );
-
-        if (!commitResponse.ok) {
-            console.error('❌ فشل الاتصال بـ GitHub');
-            return null;
-        }
-
-        const commitData = await commitResponse.json();
-        const latestSha = commitData.sha.substring(0, 7);
-        const lastSha = localStorage.getItem('last_commit_sha');
-        const commitDate = new Date(commitData.commit.author.date);
-
-        console.log(`📅 آخر تحديث على GitHub: ${commitDate.toLocaleString('ar-EG')}`);
-        console.log(`🔖 SHA الحالي: ${lastSha || 'غير محفوظ'}`);
-        console.log(`🔖 SHA الجديد: ${latestSha}`);
-
-        if (!lastSha) {
-            console.log('⚠️ لا يوجد SHA محفوظ - تحتاج لعمل Reset');
-            return {
-                hasUpdate: true,
-                currentSha: lastSha,
-                latestSha: latestSha,
-                commitDate: commitDate,
-                message: commitData.commit.message
-            };
-        }
-
-        if (lastSha !== latestSha) {
-            console.log('🆕 يوجد تحديث جديد!');
-            console.log(`📝 رسالة الـ commit: ${commitData.commit.message}`);
-
-            const filesResponse = await fetch(
-                `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${commitData.sha}`,
-                { 
-                    cache: 'no-store',
-                    headers: { 'Accept': 'application/vnd.github.v3+json' }
-                }
-            );
-
-            if (filesResponse.ok) {
-                const filesData = await filesResponse.json();
-                console.log(`📋 الملفات المعدلة (${filesData.files.length}):`);
-                filesData.files.forEach(file => {
-                    console.log(`  • ${file.filename} (${file.status})`);
-                });
-            }
-
-            return {
-                hasUpdate: true,
-                currentSha: lastSha,
-                latestSha: latestSha,
-                commitDate: commitDate,
-                message: commitData.commit.message,
-                filesCount: filesResponse.ok ? filesData.files.length : 0
-            };
-        } else {
-            console.log('✅ الموقع محدّث');
-            return {
-                hasUpdate: false,
-                currentSha: lastSha,
-                latestSha: latestSha,
-                commitDate: commitDate
-            };
-        }
-
-    } catch (error) {
-        console.error('❌ خطأ في فحص التحديثات:', error);
-        return null;
-    }
-}
-
-async function updateSingleFile(filename) {
-    try {
-        console.log(`🔄 تحديث ملف واحد: ${filename}`);
-
-        const cacheNames = await caches.keys();
-        const semesterCache = cacheNames.find(name => name.startsWith('semester-3-cache-'));
-
-        if (!semesterCache) {
-            console.error('❌ الكاش غير موجود');
-            return false;
-        }
-
-        const cache = await caches.open(semesterCache);
-
-        await cache.delete(`./${filename}`);
-        await cache.delete(`/${filename}`);
-        await cache.delete(filename);
-
-        const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
-        const response = await fetch(newFileUrl, { 
-            cache: 'reload',
-            mode: 'cors'
-        });
-
-        if (response.ok) {
-            await cache.put(`./${filename}`, response.clone());
-            console.log(`✅ تم تحديث: ${filename}`);
-            return true;
-        } else {
-            console.error(`❌ فشل تحديث: ${filename}`);
-            return false;
-        }
-
-    } catch (error) {
-        console.error(`❌ خطأ في تحديث ${filename}:`, error);
-        return false;
-    }
-}
-
-async function listCacheContents() {
-    try {
-        const cacheNames = await caches.keys();
-
-        for (const cacheName of cacheNames) {
-            if (cacheName.startsWith('semester-3-cache-')) {
-                const cache = await caches.open(cacheName);
-                const keys = await cache.keys();
-
-                console.log(`\n📦 ${cacheName}:`);
-                console.log(`📄 عدد الملفات: ${keys.length}\n`);
-
-                const filesByType = {
-                    html: [],
-                    css: [],
-                    js: [],
-                    images: [],
-                    svg: [],
-                    other: []
-                };
-
-                keys.forEach(request => {
-                    const url = new URL(request.url);
-                    const path = url.pathname;
-
-                    if (path.endsWith('.html')) filesByType.html.push(path);
-                    else if (path.endsWith('.css')) filesByType.css.push(path);
-                    else if (path.endsWith('.js')) filesByType.js.push(path);
-                    else if (path.match(/\.(webp|png|jpg|jpeg|gif)$/)) filesByType.images.push(path);
-                    else if (path.endsWith('.svg')) filesByType.svg.push(path);
-                    else filesByType.other.push(path);
-                });
-
-                console.log('📝 HTML:', filesByType.html.length);
-                filesByType.html.forEach(f => console.log(`  • ${f}`));
-
-                console.log('\n🎨 CSS:', filesByType.css.length);
-                filesByType.css.forEach(f => console.log(`  • ${f}`));
-
-                console.log('\n⚙️ JavaScript:', filesByType.js.length);
-                filesByType.js.forEach(f => console.log(`  • ${f}`));
-
-                console.log('\n🖼️ صور:', filesByType.images.length);
-
-                console.log('\n📊 SVG:', filesByType.svg.length);
-
-                console.log('\n📦 أخرى:', filesByType.other.length);
-            }
-        }
-    } catch (error) {
-        console.error('❌ خطأ:', error);
-    }
-}
-
-/* ========================================
-   [011] معالجات زر العين والبحث - النسخة الكاملة والمعدلة
-   ======================================== */
-
-if (eyeToggle && searchContainer) {
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-    const searchVisible = localStorage.getItem('searchVisible') !== 'false';
-
-    if (!searchVisible) {
-        searchContainer.classList.add('hidden');
-        toggleContainer.style.display = 'none';
-        if (eyeToggleStandalone) {
-            eyeToggleStandalone.style.display = 'flex';
-            updateEyeToggleStandalonePosition(); // استدعاء لضبط الموضع فوراً
-        }
-    }
-
-    eyeToggle.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        searchContainer.classList.add('hidden');
-        toggleContainer.style.display = 'none';
-        localStorage.setItem('searchVisible', 'false');
-        if (eyeToggleStandalone) {
-            eyeToggleStandalone.style.display = 'flex';
-            updateEyeToggleStandalonePosition(); // استدعاء عند الإخفاء
-        }
-        console.log('👁️ تم إخفاء البحث');
-    });
-
-    if (eyeToggleStandalone) {
-        eyeToggleStandalone.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            searchContainer.classList.remove('hidden');
-            toggleContainer.style.display = 'flex';
-            eyeToggleStandalone.style.display = 'none';
-            localStorage.setItem('searchVisible', 'true');
-            console.log('👁️ تم إظهار البحث');
-        });
-    }
-}
-
 if (moveToggle) {
     moveToggle.onclick = (e) => {
         e.preventDefault();
-        const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
 
         if (toggleContainer && toggleContainer.classList.contains('top')) {
             toggleContainer.classList.replace('top', 'bottom');
         } else if (toggleContainer) {
             toggleContainer.classList.replace('bottom', 'top');
         }
-        // تحديث الموضع بعد انتهاء أي حركة أنيميشن بسيطة
-        setTimeout(updateEyeToggleStandalonePosition, 100);
     };
 }
 
@@ -1736,7 +1491,6 @@ if (searchInput) {
             }
 
             if (!isEmptySearch) {
-                // تعديل البحث بالحرف: دمج كل النصوص والبحث بداخلها
                 const combinedText = normalizeArabic(fullText + " " + fileName + " " + autoArabic);
                 const isMatch = combinedText.includes(query);
 
@@ -1754,36 +1508,167 @@ if (searchInput) {
     }, 150));
 }
 
-// دالة تحديث موضع زر العين المنفرد - النسخة المصححة للحالتين
-function updateEyeToggleStandalonePosition() {
-    const toggleContainer = document.getElementById('js-toggle-container');
+/* انتهى الجزء 4 من 5 */
+/* ========================================
+   script.js - الجزء 5 من 5 (الأخير)
+   [005] نظام زر العين والواجهات النهائية
+   ======================================== */
+
+if (eyeToggle && searchContainer) {
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-
-    if (!toggleContainer || !eyeToggleStandalone) return;
-
-    const isTop = toggleContainer.classList.contains('top');
-    const containerRect = toggleContainer.getBoundingClientRect();
-    const gap = 15;
-
-    if (isTop) {
-        // الحالة عندما تكون الحاوية في الأعلى
-        eyeToggleStandalone.style.top = `${containerRect.bottom + gap}px`;
+    
+    const savedTop = localStorage.getItem('eyeToggleTop');
+    const savedRight = localStorage.getItem('eyeToggleRight');
+    const savedLeft = localStorage.getItem('eyeToggleLeft');
+    
+    if (savedTop) {
+        eyeToggleStandalone.style.top = savedTop;
+        if (savedLeft && savedLeft !== 'auto') {
+            eyeToggleStandalone.style.left = savedLeft;
+            eyeToggleStandalone.style.right = 'auto';
+        } else if (savedRight && savedRight !== 'auto') {
+            eyeToggleStandalone.style.right = savedRight;
+        }
         eyeToggleStandalone.style.bottom = 'auto';
-        eyeToggleStandalone.classList.add('top');
-        eyeToggleStandalone.classList.remove('bottom');
-    } else {
-        // الحالة عندما تكون الحاوية في الأسفل
-        const distanceFromBottom = window.innerHeight - containerRect.top;
-        eyeToggleStandalone.style.bottom = `${distanceFromBottom + gap}px`;
-        eyeToggleStandalone.style.top = 'auto';
-        eyeToggleStandalone.classList.add('bottom');
-        eyeToggleStandalone.classList.remove('top');
+    }
+
+    const searchVisible = localStorage.getItem('searchVisible') !== 'false';
+
+    if (!searchVisible) {
+        searchContainer.classList.add('hidden');
+        toggleContainer.style.display = 'none';
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'flex';
+        }
+    }
+
+    eyeToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        searchContainer.classList.add('hidden');
+        toggleContainer.style.display = 'none';
+        localStorage.setItem('searchVisible', 'false');
+        if (eyeToggleStandalone) {
+            eyeToggleStandalone.style.display = 'flex';
+            eyeToggleStandalone.style.top = '20px';
+            eyeToggleStandalone.style.right = '20px';
+            eyeToggleStandalone.style.bottom = 'auto';
+            eyeToggleStandalone.style.left = 'auto';
+            
+            localStorage.setItem('eyeToggleTop', '20px');
+            localStorage.setItem('eyeToggleRight', '20px');
+            localStorage.removeItem('eyeToggleLeft');
+        }
+        console.log('👁️ تم إخفاء البحث وعرض الزر الدائري');
+    });
+
+    if (eyeToggleStandalone) {
+        let isDragging = false;
+        let dragTimeout;
+        let startX, startY;
+        let initialX, initialY;
+        let hasMoved = false;
+
+        const startDrag = (clientX, clientY) => {
+            startX = clientX;
+            startY = clientY;
+            hasMoved = false;
+
+            const rect = eyeToggleStandalone.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+
+            dragTimeout = setTimeout(() => {
+                isDragging = true;
+                eyeToggleStandalone.classList.add('dragging');
+                console.log('🖱️ بدأ السحب');
+            }, 200);
+        };
+
+        const doDrag = (clientX, clientY) => {
+            if (!isDragging) {
+                const deltaX = Math.abs(clientX - startX);
+                const deltaY = Math.abs(clientY - startY);
+                if (deltaX > 5 || deltaY > 5) {
+                    clearTimeout(dragTimeout);
+                }
+                return;
+            }
+
+            hasMoved = true;
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+
+            let newX = initialX + deltaX;
+            let newY = initialY + deltaY;
+
+            const maxX = window.innerWidth - eyeToggleStandalone.offsetWidth;
+            const maxY = window.innerHeight - eyeToggleStandalone.offsetHeight;
+
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            eyeToggleStandalone.style.left = `${newX}px`;
+            eyeToggleStandalone.style.top = `${newY}px`;
+            eyeToggleStandalone.style.right = 'auto';
+            eyeToggleStandalone.style.bottom = 'auto';
+        };
+
+        const endDrag = () => {
+            clearTimeout(dragTimeout);
+
+            if (isDragging) {
+                isDragging = false;
+                eyeToggleStandalone.classList.remove('dragging');
+
+                localStorage.setItem('eyeToggleTop', eyeToggleStandalone.style.top);
+                localStorage.setItem('eyeToggleRight', 'auto');
+                if (eyeToggleStandalone.style.left !== 'auto') {
+                    localStorage.setItem('eyeToggleLeft', eyeToggleStandalone.style.left);
+                }
+
+                console.log('✅ تم حفظ الموضع:', {
+                    top: eyeToggleStandalone.style.top,
+                    left: eyeToggleStandalone.style.left
+                });
+            } else if (!hasMoved) {
+                searchContainer.classList.remove('hidden');
+                toggleContainer.style.display = 'flex';
+                eyeToggleStandalone.style.display = 'none';
+                localStorage.setItem('searchVisible', 'true');
+                console.log('👁️ تم إظهار البحث');
+            }
+        };
+
+        eyeToggleStandalone.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            startDrag(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                doDrag(e.clientX, e.clientY);
+            }
+        });
+
+        window.addEventListener('mouseup', endDrag);
+
+        eyeToggleStandalone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            startDrag(touch.clientX, touch.clientY);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const touch = e.touches[0];
+                doDrag(touch.clientX, touch.clientY);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', endDrag);
     }
 }
-
-/* ========================================
-   [012] updateWoodInterface - واجهة الملفات الكاملة
-   ======================================== */
 
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
@@ -2334,12 +2219,6 @@ async function updateWoodInterface() {
     dynamicGroup.appendChild(scrollContainerGroup);
 }
 
-console.log('✅ script.js - updateWoodInterface تم تحميلها');
-
-/* ========================================
-   [013] معالجة المستطيلات والتفاعل
-   ======================================== */
-
 function getCumulativeTranslate(element) {
     let x = 0, y = 0, current = element;
     while (current && current.tagName !== 'svg') {
@@ -2705,59 +2584,10 @@ function scan() {
 }
 window.scan = scan;
 
-/* ========================================
-   [014] تحديث موضع زر العين العائم
-   ======================================== */
-
-function updateEyeToggleStandalonePosition() {
-    const toggleContainer = document.getElementById('js-toggle-container');
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-
-    if (!toggleContainer || !eyeToggleStandalone) return;
-
-    const isTop = toggleContainer.classList.contains('top');
-    const containerRect = toggleContainer.getBoundingClientRect();
-    const gap = 10;
-
-    if (isTop) {
-        const bottomPosition = containerRect.bottom + gap;
-        eyeToggleStandalone.style.top = `${bottomPosition}px`;
-        eyeToggleStandalone.style.bottom = 'auto';
-        eyeToggleStandalone.classList.add('top');
-        eyeToggleStandalone.classList.remove('bottom');
-    } else {
-        const topPosition = window.innerHeight - containerRect.top + gap;
-        eyeToggleStandalone.style.bottom = `${topPosition}px`;
-        eyeToggleStandalone.style.top = 'auto';
-        eyeToggleStandalone.classList.add('bottom');
-        eyeToggleStandalone.classList.remove('top');
-    }
-}
-
-if (moveToggle) {
-    const originalOnClick = moveToggle.onclick;
-    moveToggle.onclick = (e) => {
-        if (originalOnClick) originalOnClick.call(moveToggle, e);
-        setTimeout(updateEyeToggleStandalonePosition, 100);
-    };
-}
-
-window.addEventListener('load', () => {
-    setTimeout(updateEyeToggleStandalonePosition, 200);
-});
-
-if (eyeToggle && document.getElementById('eye-toggle-standalone')) {
-    eyeToggle.addEventListener('click', () => {
-        setTimeout(updateEyeToggleStandalonePosition, 100);
-    });
-
-    document.getElementById('eye-toggle-standalone').addEventListener('click', () => {
-        setTimeout(updateEyeToggleStandalonePosition, 100);
-    });
-}
-
-window.addEventListener('resize', debounce(updateEyeToggleStandalonePosition, 200));
-
 setupBackButton();
 
-console.log('✅ script.js تم تحميله بالكامل (2300+ سطر)');
+console.log('✅ script.js تم تحميله بالكامل - جميع الأجزاء الخمسة');
+
+/* ========================================
+   انتهى الجزء 5 من 5 - script.js كامل ✅
+   ======================================== */
