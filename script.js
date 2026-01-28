@@ -1516,11 +1516,11 @@ if (searchInput) {
 
 if (eyeToggle && searchContainer) {
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
-    
+
     const savedTop = localStorage.getItem('eyeToggleTop');
     const savedRight = localStorage.getItem('eyeToggleRight');
     const savedLeft = localStorage.getItem('eyeToggleLeft');
-    
+
     if (savedTop) {
         eyeToggleStandalone.style.top = savedTop;
         if (savedLeft && savedLeft !== 'auto') {
@@ -1537,6 +1537,7 @@ if (eyeToggle && searchContainer) {
     if (!searchVisible) {
         searchContainer.classList.add('hidden');
         toggleContainer.style.display = 'none';
+        toggleContainer.style.pointerEvents = 'none';
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
         }
@@ -1547,6 +1548,7 @@ if (eyeToggle && searchContainer) {
         e.stopPropagation();
         searchContainer.classList.add('hidden');
         toggleContainer.style.display = 'none';
+        toggleContainer.style.pointerEvents = 'none';
         localStorage.setItem('searchVisible', 'false');
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
@@ -1554,7 +1556,7 @@ if (eyeToggle && searchContainer) {
             eyeToggleStandalone.style.right = '20px';
             eyeToggleStandalone.style.bottom = 'auto';
             eyeToggleStandalone.style.left = 'auto';
-            
+
             localStorage.setItem('eyeToggleTop', '20px');
             localStorage.setItem('eyeToggleRight', '20px');
             localStorage.removeItem('eyeToggleLeft');
@@ -1634,6 +1636,7 @@ if (eyeToggle && searchContainer) {
             } else if (!hasMoved) {
                 searchContainer.classList.remove('hidden');
                 toggleContainer.style.display = 'flex';
+                toggleContainer.style.pointerEvents = 'auto';
                 eyeToggleStandalone.style.display = 'none';
                 localStorage.setItem('searchVisible', 'true');
                 console.log('👁️ تم إظهار البحث');
