@@ -859,6 +859,7 @@ body {
 .legend-item.yellow { --item-color: var(--color-l); }
 .legend-item.is { --item-color: var(--color-is); }
 
+
 /* ========================================
    [008] شريط الأدوات والبحث
    ======================================== */
@@ -883,6 +884,12 @@ body {
   min-width: 180px !important;
   max-width: 180px !important;
   transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+#js-toggle-container[style*="display: none"],
+#js-toggle-container[style*="display:none"] {
+  pointer-events: none !important;
 }
 
 #js-toggle-container.top { top: 20px; }
@@ -896,6 +903,10 @@ body {
   transition: all 0.3s ease;
   max-height: 500px;
   overflow: hidden;
+}
+
+#search-container.hidden {
+  pointer-events: none !important;
 }
 
 #search-input {
