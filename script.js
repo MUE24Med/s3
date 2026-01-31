@@ -1,5 +1,4 @@
 /* ========================================
-   script.js - الجزء 1 من 5
    [000] منطق شاشة Preload المدمجة
    ======================================== */
 
@@ -534,6 +533,8 @@ let activeState = {
     touchStartTime: 0, initialScrollLeft: 0
 };
 
+const shownErrors = new Set();
+
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
 const clipDefs = mainSvg?.querySelector('defs');
@@ -555,9 +556,7 @@ if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
-/* انتهى الجزء 1 من 5 */
 /* ========================================
-   script.js - الجزء 2 من 5
    [002] نظام التنقل الخلفي والدوال المساعدة
    ======================================== */
 
@@ -632,8 +631,11 @@ function handleBackNavigation(e) {
 
         console.log('🌲 العودة لاختيار المجموعة');
         popNavigationState();
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
-        if (toggleContainer) toggleContainer.style.display = 'none';
+        if (groupSelectionScreen) {
+            groupSelectionScreen.classList.remove('hidden');
+            groupSelectionScreen.style.display = 'flex';
+        }
+        if (toggleContainer) toggleContainer.classList.add('fully-hidden');
         if (scrollContainer) scrollContainer.style.display = 'none';
         navigationHistory = [];
         return;
@@ -853,7 +855,10 @@ function updateWoodLogo(groupLetter) {
     banner.style.pointerEvents = "auto";
     banner.onclick = (e) => {
         e.stopPropagation();
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+        if (groupSelectionScreen) {
+            groupSelectionScreen.classList.remove('hidden');
+            groupSelectionScreen.style.display = 'flex';
+        }
         window.goToWood();
         pushNavigationState(NAV_STATE.GROUP_SELECTION);
     };
@@ -862,13 +867,38 @@ function updateWoodLogo(groupLetter) {
 
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
+    
+    const previousGroup = localStorage.getItem('selectedGroup');
+    
+    if (previousGroup && previousGroup !== groupLetter) {
+        console.log(`🔄 تم تغيير الجروب من ${previousGroup} إلى ${groupLetter} - مسح الكاش القديم`);
+        
+        const cacheNames = await caches.keys();
+        for (const cacheName of cacheNames) {
+            if (cacheName.includes(`group-${previousGroup}`)) {
+                await caches.delete(cacheName);
+                console.log(`🗑️ تم مسح: ${cacheName}`);
+            }
+        }
+    }
+    
     saveSelectedGroup(groupLetter);
-    if (toggleContainer) toggleContainer.style.display = 'flex';
+    
+    if (toggleContainer) {
+        toggleContainer.classList.remove('fully-hidden');
+        toggleContainer.style.display = 'flex';
+    }
     if (scrollContainer) scrollContainer.style.display = 'block';
-    if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');
+    if (groupSelectionScreen) {
+        groupSelectionScreen.classList.add('hidden');
+        groupSelectionScreen.style.display = 'none';
+    }
+    
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
+    
     showLoadingScreen(groupLetter);
     await Promise.all([fetchGlobalTree(), loadGroupSVG(groupLetter)]);
+    
     window.updateDynamicSizes();
     window.loadImages();
 }
@@ -910,9 +940,13 @@ document.getElementById("shareBtn").onclick = () => {
     }
 };
 
-/* انتهى الجزء 2 من 5 */
+/* نهاية الجزء 1 - سأكمل في الملف التالي */
 /* ========================================
-   script.js - الجزء 3 من 5
+   script.js - الجزء 2 من 2 (التكملة)
+   ⚠️ ضع هذا الكود بعد الجزء 1 مباشرة
+   ======================================== */
+
+/* ========================================
    [003] دوال PDF والتحميل والأحداث
    ======================================== */
 
@@ -920,41 +954,55 @@ async function smartOpen(item) {
     if (!item || !item.path) return;
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     const fileName = item.path.split('/').pop();
+    
     try {
         const response = await fetch(url, {
             method: 'HEAD',
             mode: 'cors',
             cache: 'no-cache'
         });
+        
         if (!response.ok) {
-            alert(`❌ الملف "${fileName}" غير موجود`);
-            console.warn(`⚠️ الملف غير موجود: ${url}`);
+            if (!shownErrors.has(item.path)) {
+                alert(`❌ الملف "${fileName}" غير موجود`);
+                shownErrors.add(item.path);
+                console.warn(`⚠️ الملف غير موجود: ${url}`);
+            }
             return;
         }
+        
         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
+        
         let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
         history.push(item.path);
         localStorage.setItem('openedFilesHistory', JSON.stringify(history));
+        
         window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
+        
         if (typeof trackSvgOpen === 'function') {
             trackSvgOpen(item.path);
         }
+        
         pushNavigationState(NAV_STATE.PDF_VIEW, {
             path: item.path,
             scrollPosition: scrollPosition
         });
+        
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
         overlay.classList.remove("hidden");
         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
                         encodeURIComponent(url) + "#zoom=page-width";
+                        
     } catch (error) {
         console.warn(`⚠️ CORS Error, trying direct open:`, error);
+        
         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
         pushNavigationState(NAV_STATE.PDF_VIEW, {
             path: item.path,
             scrollPosition: scrollPosition
         });
+        
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
         overlay.classList.remove("hidden");
@@ -1200,7 +1248,10 @@ document.querySelectorAll('.group-btn').forEach(btn => {
 if (changeGroupBtn) {
     changeGroupBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+        if (groupSelectionScreen) {
+            groupSelectionScreen.classList.remove('hidden');
+            groupSelectionScreen.style.display = 'flex';
+        }
         window.goToWood();
         pushNavigationState(NAV_STATE.GROUP_SELECTION);
     });
@@ -1217,9 +1268,7 @@ if (preloadBtn) {
     });
 }
 
-/* انتهى الجزء 3 من 5 */
 /* ========================================
-   script.js - الجزء 4 من 5
    [004] زر Reset الذكي ومعالجات الأحداث
    ======================================== */
 
@@ -1509,7 +1558,6 @@ if (searchInput) {
 }
 
 /* ========================================
-   script.js - الجزء 5 من 5 (الأخير)
    [005] نظام زر العين والواجهات النهائية
    ======================================== */
 
@@ -1535,8 +1583,7 @@ if (eyeToggle && searchContainer) {
 
     if (!searchVisible) {
         searchContainer.classList.add('hidden');
-        toggleContainer.style.display = 'none';
-        toggleContainer.style.pointerEvents = 'none';
+        toggleContainer.classList.add('fully-hidden');
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
         }
@@ -1546,8 +1593,7 @@ if (eyeToggle && searchContainer) {
         e.preventDefault();
         e.stopPropagation();
         searchContainer.classList.add('hidden');
-        toggleContainer.style.display = 'none';
-        toggleContainer.style.pointerEvents = 'none';
+        toggleContainer.classList.add('fully-hidden');
         localStorage.setItem('searchVisible', 'false');
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
@@ -1634,8 +1680,7 @@ if (eyeToggle && searchContainer) {
                 });
             } else if (!hasMoved) {
                 searchContainer.classList.remove('hidden');
-                toggleContainer.style.display = 'flex';
-                toggleContainer.style.pointerEvents = 'auto';
+                toggleContainer.classList.remove('fully-hidden');
                 eyeToggleStandalone.style.display = 'none';
                 localStorage.setItem('searchVisible', 'true');
                 console.log('👁️ تم إظهار البحث');
@@ -1671,6 +1716,12 @@ if (eyeToggle && searchContainer) {
         window.addEventListener('touchend', endDrag);
     }
 }
+
+/* نهاية الجزء 2 - سأكمل في الملف التالي */
+/* ========================================
+   script.js - الجزء 3 من 3 (النهائي)
+   ⚠️ ضع هذا الكود بعد الجزء 2 مباشرة
+   ======================================== */
 
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
@@ -2455,7 +2506,10 @@ function processRect(r) {
                 const response = await fetch(href, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });
 
                 if (!response.ok) {
-                    alert(`❌ الملف "${fileName}" غير موجود`);
+                    if (!shownErrors.has(href)) {
+                        alert(`❌ الملف "${fileName}" غير موجود`);
+                        shownErrors.add(href);
+                    }
                     return;
                 }
 
@@ -2499,7 +2553,10 @@ function processRect(r) {
                         const response = await fetch(href, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });
 
                         if (!response.ok) {
-                            alert(`❌ الملف "${fileName}" غير موجود`);
+                            if (!shownErrors.has(href)) {
+                                alert(`❌ الملف "${fileName}" غير موجود`);
+                                shownErrors.add(href);
+                            }
                             cleanupHover();
                             return;
                         }
@@ -2586,10 +2643,37 @@ function scan() {
 }
 window.scan = scan;
 
+/* ========================================
+   [006] تحميل آخر جروب تلقائياً
+   ======================================== */
+
+(function autoLoadLastGroup() {
+    const preloadDone = localStorage.getItem('preload_done');
+    
+    if (!preloadDone) {
+        console.log('⏭️ أول زيارة - تخطي التحميل التلقائي');
+        return;
+    }
+
+    const savedGroup = localStorage.getItem('selectedGroup');
+    
+    if (savedGroup && /^[A-D]$/.test(savedGroup)) {
+        console.log(`🚀 تحميل آخر جروب تلقائياً: ${savedGroup}`);
+        
+        if (groupSelectionScreen) {
+            groupSelectionScreen.style.display = 'none';
+        }
+        
+        initializeGroup(savedGroup);
+    } else {
+        console.log('📋 لا يوجد جروب محفوظ - عرض شاشة الاختيار');
+    }
+})();
+
 setupBackButton();
 
-console.log('✅ script.js تم تحميله بالكامل - جميع الأجزاء الخمسة');
+console.log('✅ script.js تم تحميله بالكامل - جميع الإصلاحات مطبقة');
 
 /* ========================================
-   انتهى الجزء 5 من 5 - script.js كامل ✅
+   نهاية script.js - جميع الأجزاء الثلاثة
    ======================================== */
