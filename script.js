@@ -1,5 +1,6 @@
 /* ========================================
-   [000] منطق شاشة Preload المدمجة
+   script.js - الجزء 1 من 5
+   [000] منطق شاشة Preload المدمجة + اللعبة
    ======================================== */
 
 (function initPreloadSystem() {
@@ -99,9 +100,7 @@
                 if (el) el.style.display = '';
             });
 
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
+            window.location.reload();
         });
 
         const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
@@ -463,8 +462,8 @@
         }
     }
 })();
-
 /* ========================================
+   script.js - الجزء 2 من 5
    [001] المتغيرات والإعدادات الأساسية
    ======================================== */
 
@@ -595,8 +594,13 @@ function handleBackNavigation(e) {
 
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
-        pdfViewer.src = "";
-        overlay.classList.add("hidden");
+        
+        if (currentState.data.isPreview) {
+            closePDFPreview();
+        } else {
+            pdfViewer.src = "";
+            overlay.classList.add("hidden");
+        }
 
         if (currentState.data.scrollPosition !== undefined) {
             setTimeout(() => {
@@ -865,12 +869,12 @@ function updateWoodLogo(groupLetter) {
 
 async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
-    
+
     const previousGroup = localStorage.getItem('selectedGroup');
-    
+
     if (previousGroup && previousGroup !== groupLetter) {
         console.log(`🔄 تم تغيير الجروب من ${previousGroup} إلى ${groupLetter} - مسح الكاش القديم`);
-        
+
         const cacheNames = await caches.keys();
         for (const cacheName of cacheNames) {
             if (cacheName.includes(`group-${previousGroup}`)) {
@@ -879,9 +883,9 @@ async function initializeGroup(groupLetter) {
             }
         }
     }
-    
+
     saveSelectedGroup(groupLetter);
-    
+
     if (toggleContainer) {
         toggleContainer.classList.remove('fully-hidden');
         toggleContainer.style.display = 'flex';
@@ -891,12 +895,12 @@ async function initializeGroup(groupLetter) {
         groupSelectionScreen.classList.add('hidden');
         groupSelectionScreen.style.display = 'none';
     }
-    
+
     pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
-    
+
     showLoadingScreen(groupLetter);
     await Promise.all([fetchGlobalTree(), loadGroupSVG(groupLetter)]);
-    
+
     window.updateDynamicSizes();
     window.loadImages();
 }
@@ -937,29 +941,146 @@ document.getElementById("shareBtn").onclick = () => {
             .catch(() => alert("❌ فشل النسخ"));
     }
 };
-
-/* نهاية الجزء 1 - سأكمل في الملف التالي */
 /* ========================================
-   script.js - الجزء 2 من 2 (التكملة)
-   ⚠️ ضع هذا الكود بعد الجزء 1 مباشرة
+   script.js - الجزء 3 من 5
+   [003] نظام معاينة PDF المنبثقة والدوال الأساسية
    ======================================== */
 
-/* ========================================
-   [003] دوال PDF والتحميل والأحداث
-   ======================================== */
+let currentPreviewItem = null;
+
+async function showPDFPreview(item) {
+    if (!item || !item.path) return;
+    
+    const popup = document.getElementById('pdf-preview-popup');
+    const canvas = document.getElementById('preview-canvas');
+    const loading = document.getElementById('preview-loading');
+    const filenameEl = document.getElementById('preview-filename');
+    
+    if (!popup || !canvas) {
+        console.error('❌ عناصر المعاينة غير موجودة');
+        return;
+    }
+    
+    currentPreviewItem = item;
+    const fileName = item.path.split('/').pop();
+    const url = `${RAW_CONTENT_BASE}${item.path}`;
+    
+    popup.classList.add('active');
+    filenameEl.textContent = fileName.length > 30 ? fileName.substring(0, 27) + '...' : fileName;
+    loading.classList.remove('hidden');
+    canvas.style.display = 'none';
+    
+    pushNavigationState(NAV_STATE.PDF_VIEW, { 
+        path: item.path, 
+        isPreview: true 
+    });
+    
+    console.log('🔍 معاينة:', url);
+    
+    try {
+        const checkResponse = await fetch(url, { 
+            method: 'HEAD', 
+            mode: 'cors' 
+        });
+        
+        if (!checkResponse.ok) {
+            throw new Error('الملف غير موجود');
+        }
+        
+        if (typeof pdfjsLib === 'undefined') {
+            throw new Error('PDF.js غير محمل');
+        }
+        
+        const loadingTask = pdfjsLib.getDocument(url);
+        const pdf = await loadingTask.promise;
+        
+        console.log('📄 PDF محمل:', pdf.numPages, 'صفحة');
+        
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+        
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+        
+        await page.render(renderContext).promise;
+        
+        loading.classList.add('hidden');
+        canvas.style.display = 'block';
+        
+        console.log('✅ تم رسم الصفحة الأولى');
+        
+    } catch (error) {
+        console.error('❌ خطأ في المعاينة:', error);
+        loading.textContent = '❌ فشل تحميل المعاينة';
+    }
+}
+
+function closePDFPreview() {
+    const popup = document.getElementById('pdf-preview-popup');
+    const canvas = document.getElementById('preview-canvas');
+    
+    if (popup) {
+        popup.classList.remove('active');
+    }
+    
+    if (canvas) {
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    currentPreviewItem = null;
+    popNavigationState();
+    
+    console.log('🔒 تم إغلاق المعاينة');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('preview-close-btn');
+    const openBtn = document.getElementById('preview-open-btn');
+    const popup = document.getElementById('pdf-preview-popup');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePDFPreview);
+    }
+    
+    if (openBtn) {
+        openBtn.addEventListener('click', () => {
+            if (currentPreviewItem) {
+                closePDFPreview();
+                smartOpen(currentPreviewItem);
+            }
+        });
+    }
+    
+    if (popup) {
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                closePDFPreview();
+            }
+        });
+    }
+    
+    console.log('✅ معالجات المعاينة جاهزة');
+});
 
 async function smartOpen(item) {
     if (!item || !item.path) return;
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     const fileName = item.path.split('/').pop();
-    
+
     try {
         const response = await fetch(url, {
             method: 'HEAD',
             mode: 'cors',
             cache: 'no-cache'
         });
-        
+
         if (!response.ok) {
             if (!shownErrors.has(item.path)) {
                 alert(`❌ الملف "${fileName}" غير موجود`);
@@ -968,39 +1089,39 @@ async function smartOpen(item) {
             }
             return;
         }
-        
+
         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
-        
+
         let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
         history.push(item.path);
         localStorage.setItem('openedFilesHistory', JSON.stringify(history));
-        
+
         window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
-        
+
         if (typeof trackSvgOpen === 'function') {
             trackSvgOpen(item.path);
         }
-        
+
         pushNavigationState(NAV_STATE.PDF_VIEW, {
             path: item.path,
             scrollPosition: scrollPosition
         });
-        
+
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
         overlay.classList.remove("hidden");
         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
                         encodeURIComponent(url) + "#zoom=page-width";
-                        
+
     } catch (error) {
         console.warn(`⚠️ CORS Error, trying direct open:`, error);
-        
+
         const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
         pushNavigationState(NAV_STATE.PDF_VIEW, {
             path: item.path,
             scrollPosition: scrollPosition
         });
-        
+
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
         overlay.classList.remove("hidden");
@@ -1218,22 +1339,22 @@ function finishLoading() {
     loadingProgress.currentPercentage = 100;
     updateLoadProgress();
     console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
-    setTimeout(() => {
-        window.updateDynamicSizes();
-        scan();
-        updateWoodInterface();
-        window.goToWood();
-        if (mainSvg) {
-            mainSvg.style.opacity = '1';
-            mainSvg.style.visibility = 'visible';
-            mainSvg.classList.add('loaded');
-        }
-        setTimeout(() => {
-            hideLoadingScreen();
-            console.log('🎉 اكتمل التحميل والعرض');
-        }, 300);
-    }, 200);
+    window.updateDynamicSizes();
+    scan();
+    updateWoodInterface();
+    window.goToWood();
+    if (mainSvg) {
+        mainSvg.style.opacity = '1';
+        mainSvg.style.visibility = 'visible';
+        mainSvg.classList.add('loaded');
+    }
+    hideLoadingScreen();
+    console.log('🎉 اكتمل التحميل والعرض');
 }
+/* ========================================
+   script.js - الجزء 4 من 5
+   [004] معالجات الأحداث وزر Reset والأزرار
+   ======================================== */
 
 document.querySelectorAll('.group-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -1265,10 +1386,6 @@ if (preloadBtn) {
         window.location.reload();
     });
 }
-
-/* ========================================
-   [004] زر Reset الذكي ومعالجات الأحداث
-   ======================================== */
 
 const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
@@ -1442,9 +1559,7 @@ if (resetBtn) {
                     `🔄 إعادة التحميل...`
                 );
 
-                setTimeout(() => {
-                    window.location.reload(true);
-                }, 500);
+                window.location.reload(true);
 
             }, 2000);
 
@@ -1554,10 +1669,6 @@ if (searchInput) {
         updateWoodInterface();
     }, 150));
 }
-
-/* ========================================
-   [005] نظام زر العين والواجهات النهائية
-   ======================================== */
 
 if (eyeToggle && searchContainer) {
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
@@ -1715,10 +1826,21 @@ if (eyeToggle && searchContainer) {
     }
 }
 
-/* نهاية الجزء 2 - سأكمل في الملف التالي */
+document.addEventListener('contextmenu', (e) => {
+    const target = e.target;
+    
+    if (target.tagName === 'image' || 
+        target.tagName === 'IMG' || 
+        target.tagName === 'svg' ||
+        target.tagName === 'rect' ||
+        target.closest('svg')) {
+        e.preventDefault();
+        return false;
+    }
+});
 /* ========================================
-   script.js - الجزء 3 من 3 (النهائي)
-   ⚠️ ضع هذا الكود بعد الجزء 2 مباشرة
+   script.js - الجزء 5-أ من 6
+   [005-A] دالة updateWoodInterface - الجزء الأول
    ======================================== */
 
 async function updateWoodInterface() {
@@ -2005,9 +2127,52 @@ async function updateWoodInterface() {
                 g.appendChild(r);
                 g.appendChild(t);
 
+                // معالجات اللمس للضغط المطول - معاينة PDF
+                let longPressTimer = null;
+                let longPressTriggered = false;
+                let touchStartTime = 0;
+
+                g.addEventListener('touchstart', (e) => {
+                    touchStartTime = Date.now();
+                    longPressTriggered = false;
+                    
+                    longPressTimer = setTimeout(() => {
+                        longPressTriggered = true;
+                        
+                        if (item.type === 'file') {
+                            if (navigator.vibrate) {
+                                navigator.vibrate(50);
+                            }
+                            showPDFPreview(item);
+                        }
+                    }, 500);
+                }, { passive: true });
+
+                g.addEventListener('touchend', (e) => {
+                    clearTimeout(longPressTimer);
+                    const touchDuration = Date.now() - touchStartTime;
+                    
+                    if (!longPressTriggered && touchDuration < 500) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        
+                        if (item.type === 'dir') {
+                            currentFolder = item.path;
+                            updateWoodInterface();
+                        } else {
+                            smartOpen(item);
+                        }
+                    }
+                });
+
+                g.addEventListener('touchmove', (e) => {
+                    clearTimeout(longPressTimer);
+                }, { passive: true });
+
+                // نقرة الماوس العادية
                 g.addEventListener('click', (e) => {
                     e.stopPropagation();
-
+                    
                     if (item.type === 'dir') {
                         currentFolder = item.path;
                         updateWoodInterface();
@@ -2269,6 +2434,10 @@ async function updateWoodInterface() {
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
+/* ========================================
+   script.js - الجزء 5-ب من 6 (الأخير)
+   [005-B] دوال المعالجة ونظام scan والتهيئة
+   ======================================== */
 
 function getCumulativeTranslate(element) {
     let x = 0, y = 0, current = element;
@@ -2647,21 +2816,21 @@ window.scan = scan;
 
 (function autoLoadLastGroup() {
     const preloadDone = localStorage.getItem('preload_done');
-    
+
     if (!preloadDone) {
         console.log('⏭️ أول زيارة - تخطي التحميل التلقائي');
         return;
     }
 
     const savedGroup = localStorage.getItem('selectedGroup');
-    
+
     if (savedGroup && /^[A-D]$/.test(savedGroup)) {
         console.log(`🚀 تحميل آخر جروب تلقائياً: ${savedGroup}`);
-        
+
         if (groupSelectionScreen) {
             groupSelectionScreen.style.display = 'none';
         }
-        
+
         initializeGroup(savedGroup);
     } else {
         console.log('📋 لا يوجد جروب محفوظ - عرض شاشة الاختيار');
@@ -2673,5 +2842,5 @@ setupBackButton();
 console.log('✅ script.js تم تحميله بالكامل - جميع الإصلاحات مطبقة');
 
 /* ========================================
-   نهاية script.js - جميع الأجزاء الثلاثة
+   نهاية script.js - جميع الأجزاء الستة
    ======================================== */
