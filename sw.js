@@ -3,6 +3,7 @@ const PROTECTED_FILES = [
     'image/0.webp',
     'image/o.webp',
     'image/wood.webp', 
+    'image/Upper_wood.webp',
     'image/logo-A.webp',
     'image/logo-B.webp',
     'image/logo-C.webp',
