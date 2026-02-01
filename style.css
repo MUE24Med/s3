@@ -892,11 +892,11 @@ body {
   pointer-events: auto;
 }
 
-#js-toggle-container.fully-hidden {
-  display: none !important;
+#js-toggle-container.hidden {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
+  transform: scale(0.8);
 }
 
 #js-toggle-container[style*="display: none"],
