@@ -22,8 +22,6 @@
         });
 
         const filesToLoad = [
-            'image/wood.webp',
-            'image/Upper_wood.webp',
             'style.css',
             'script.js',
             'tracker.js'
