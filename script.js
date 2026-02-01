@@ -1692,7 +1692,15 @@ if (eyeToggle && searchContainer) {
 
     if (!searchVisible) {
         searchContainer.classList.add('hidden');
+        searchContainer.style.display = 'none';
+        searchContainer.style.pointerEvents = 'none';
+        searchContainer.style.zIndex = '-9999';
+        
         toggleContainer.classList.add('fully-hidden');
+        toggleContainer.style.display = 'none';
+        toggleContainer.style.pointerEvents = 'none';
+        toggleContainer.style.zIndex = '-9999';
+        
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
         }
@@ -1701,9 +1709,20 @@ if (eyeToggle && searchContainer) {
     eyeToggle.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        
+        // إخفاء كامل للحاوية
         searchContainer.classList.add('hidden');
+        searchContainer.style.display = 'none';
+        searchContainer.style.pointerEvents = 'none';
+        searchContainer.style.zIndex = '-9999';
+        
         toggleContainer.classList.add('fully-hidden');
+        toggleContainer.style.display = 'none';
+        toggleContainer.style.pointerEvents = 'none';
+        toggleContainer.style.zIndex = '-9999';
+        
         localStorage.setItem('searchVisible', 'false');
+        
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
             eyeToggleStandalone.style.top = '20px';
@@ -1788,8 +1807,17 @@ if (eyeToggle && searchContainer) {
                     left: eyeToggleStandalone.style.left
                 });
             } else if (!hasMoved) {
+                // إظهار كامل للحاوية
                 searchContainer.classList.remove('hidden');
+                searchContainer.style.display = '';
+                searchContainer.style.pointerEvents = '';
+                searchContainer.style.zIndex = '';
+                
                 toggleContainer.classList.remove('fully-hidden');
+                toggleContainer.style.display = 'flex';
+                toggleContainer.style.pointerEvents = 'auto';
+                toggleContainer.style.zIndex = '10000';
+                
                 eyeToggleStandalone.style.display = 'none';
                 localStorage.setItem('searchVisible', 'true');
                 console.log('👁️ تم إظهار البحث');
@@ -1838,6 +1866,41 @@ document.addEventListener('contextmenu', (e) => {
         return false;
     }
 });
+
+// منع أي تفاعل مع الحاوية المخفية
+if (toggleContainer) {
+    const preventInteractionWhenHidden = (e) => {
+        if (toggleContainer.classList.contains('fully-hidden') || 
+            toggleContainer.style.display === 'none') {
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+        }
+    };
+    
+    toggleContainer.addEventListener('click', preventInteractionWhenHidden, true);
+    toggleContainer.addEventListener('touchstart', preventInteractionWhenHidden, true);
+    toggleContainer.addEventListener('touchend', preventInteractionWhenHidden, true);
+    toggleContainer.addEventListener('mousedown', preventInteractionWhenHidden, true);
+    toggleContainer.addEventListener('mouseup', preventInteractionWhenHidden, true);
+}
+
+if (searchContainer) {
+    const preventSearchInteraction = (e) => {
+        if (searchContainer.classList.contains('hidden') || 
+            searchContainer.style.display === 'none') {
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+        }
+    };
+    
+    searchContainer.addEventListener('click', preventSearchInteraction, true);
+    searchContainer.addEventListener('touchstart', preventSearchInteraction, true);
+    searchContainer.addEventListener('touchend', preventSearchInteraction, true);
+    searchContainer.addEventListener('mousedown', preventSearchInteraction, true);
+    searchContainer.addEventListener('mouseup', preventSearchInteraction, true);
+}
 /* ========================================
    script.js - الجزء 5-أ من 6
    [005-A] دالة updateWoodInterface - الجزء الأول
