@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.23.001">
+<meta name="version" content="2025.01.23.002">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -195,6 +195,23 @@
   ></iframe>
 </div>
 
+<!-- نافذة معاينة PDF المنبثقة -->
+<div id="pdf-preview-popup">
+  <div class="preview-container">
+    <div class="preview-header">
+      <div class="preview-title" id="preview-filename">معاينة الملف</div>
+      <div class="preview-actions">
+        <button class="preview-btn" id="preview-open-btn">📄 فتح كامل</button>
+        <button class="preview-btn" id="preview-close-btn">❌ إغلاق</button>
+      </div>
+    </div>
+    <div class="preview-canvas-container">
+      <div class="preview-loading" id="preview-loading">⏳ جاري التحميل...</div>
+      <canvas id="preview-canvas"></canvas>
+    </div>
+  </div>
+</div>
+
 <div id="scroll-container">
   <svg 
     id="main-svg" 
@@ -286,6 +303,16 @@
     </g>
   </svg>
 </div>
+
+<!-- مكتبة PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  // تهيئة PDF.js
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    console.log('✅ PDF.js جاهز');
+  }
+</script>
 
 <script defer src="script.js"></script>
 <script defer src="tracker.js"></script>
@@ -413,6 +440,5 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 </script>
-
 </body>
 </html>
