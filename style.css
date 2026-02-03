@@ -283,8 +283,27 @@
 .leaderboard-item.top3 .leaderboard-rank { color: #cd7f32; }
 
 .leaderboard-item.current-player {
-  background: rgba(52, 152, 219, 0.3);
-  border: 2px solid #3498db;
+  background: rgba(255, 204, 0, 0.2) !important;
+  border: 2px solid rgba(255, 204, 0, 0.5) !important;
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
+  transform: scale(1.02);
+}
+
+.leaderboard-item.current-player .leaderboard-name {
+  color: #ffcc00 !important;
+  font-weight: 700;
+}
+
+.leaderboard-item.current-player .leaderboard-score {
+  color: #ffcc00 !important;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+.no-scores {
+  color: #999;
+  text-align: center;
+  padding: 30px;
+  font-size: 16px;
 }
 
 @media (max-width: 480px) {
@@ -459,6 +478,157 @@
 
 .method-btn:active {
   transform: translateY(0) scale(0.98);
+}
+
+/* ════════════════════════════════════════════════════════════
+   نافذة خيارات الفتح الإضافية
+   ════════════════════════════════════════════════════════════ */
+
+#open-options-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 100000;
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.3s ease;
+}
+
+#open-options-overlay.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.options-container {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 25px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(255, 204, 0, 0.3);
+    border: 3px solid #ffca28;
+    animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.options-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ffca28;
+}
+
+.options-header h2 {
+    margin: 0;
+    color: #ffca28;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.close-options-btn {
+    background: transparent;
+    border: 2px solid #ff5252;
+    color: #ff5252;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.close-options-btn:hover {
+    background: #ff5252;
+    color: white;
+    transform: rotate(90deg);
+}
+
+.options-filename {
+    text-align: center;
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 25px;
+    padding: 10px;
+    background: rgba(255, 204, 40, 0.1);
+    border-radius: 10px;
+    word-break: break-word;
+}
+
+.options-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.option-btn {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+    border: 2px solid #555;
+    border-radius: 15px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.option-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255, 204, 40, 0.4);
+}
+
+.option-btn.mozilla-btn:hover {
+    border-color: #4CAF50;
+    background: linear-gradient(135deg, #2d4a2d 0%, #1a2d1a 100%);
+}
+
+.option-btn.drive-btn:hover {
+    border-color: #2196F3;
+    background: linear-gradient(135deg, #2d3a4a 0%, #1a2433 100%);
+}
+
+.option-btn.browser-btn:hover {
+    border-color: #FF9800;
+    background: linear-gradient(135deg, #4a3d2d 0%, #332a1a 100%);
+}
+
+.btn-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.btn-text {
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.btn-desc {
+    color: #aaa;
+    font-size: 14px;
 }
 
 /* [001] الإعدادات الأساسية */
@@ -654,6 +824,12 @@ html, body {
   border-bottom: 1px solid #555;
 }
 
+#pdf-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 #pdfFrame {
   flex: 1;
   width: 100%;
@@ -661,7 +837,7 @@ html, body {
   background: #fff;
 }
 
-.toolbar-btn {
+.toolbar-btn, .pdf-control-btn {
   background: #555;
   color: white;
   border: 1px solid #777;
@@ -669,6 +845,51 @@ html, body {
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   زر التوسيع لشريط أدوات Mozilla
+   ════════════════════════════════════════════════════════════ */
+
+#expand-toolbar-btn {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+}
+
+#expand-toolbar-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.6);
+}
+
+#expand-toolbar-btn:active {
+    transform: scale(0.95);
+}
+
+/* ════════════════════════════════════════════════════════════
+   وضع ملء الشاشة لـ Mozilla Viewer
+   ════════════════════════════════════════════════════════════ */
+
+#pdf-overlay.fullscreen-mode #pdf-controls {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-100%);
+    transition: all 0.3s ease;
+}
+
+#pdf-overlay.fullscreen-mode:hover #pdf-controls {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+}
+
+#pdf-overlay.fullscreen-mode #expand-toolbar-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
 }
 
 /* [005] نافذة معاينة PDF */
@@ -1142,6 +1363,10 @@ img, image, svg, rect {
   cursor: grabbing;
 }
 
+.scrollable-content.grabbing {
+    cursor: grabbing !important;
+}
+
 .scroll-handle {
   transition: y 0.1s ease-out;
 }
@@ -1163,27 +1388,42 @@ img, image, svg, rect {
   border-radius: 4px;
 }
 
-@media (max-width: 768px) {
-  #reset-btn text, #change-group-btn text, 
-  #preload-btn text, #group-btn-text { font-size: 22px; }
-  #back-btn-text { font-size: 26px; }
+/* ════════════════════════════════════════════════════════════
+   تحسينات لنظام الضغط المطول
+   ════════════════════════════════════════════════════════════ */
+
+.wood-folder-group,
+.wood-file-group {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
-@media (max-width: 480px) {
-  #reset-btn text, #change-group-btn text, 
-  #preload-btn text, #group-btn-text { font-size: 19px; }
-  #back-btn-text { font-size: 23px; }
+.wood-folder-group:active,
+.wood-file-group:active {
+    opacity: 0.7;
 }
 
-@media print {
-  #js-toggle-container, #loading-overlay, #group-selection-screen,
-  #pdf-overlay, #preload-screen, #pdf-preview-popup, #open-method-popup {
-    display: none !important;
-  }
+/* ════════════════════════════════════════════════════════════
+   تأثيرات بصرية للضغط المطول
+   ════════════════════════════════════════════════════════════ */
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 204, 40, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(255, 204, 40, 0.8);
+    }
+}
+
+.long-press-active {
+    animation: pulseGlow 1s infinite;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   [FIXES] نمط الإخفاء الكامل لحل مشكلة زر العين
+   [FIXES] نمط الإخفاء الكامل
    ══════════════════════════════════════════════════════════════════════════════ */
 .fully-hidden {
   display: none !important;
@@ -1193,258 +1433,72 @@ img, image, svg, rect {
   z-index: -9999 !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   [FIXES] نافذة اختيار طريقة فتح الملف
-   ══════════════════════════════════════════════════════════════════════════════ */
-#open-method-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100000;
-  padding: 20px;
-  animation: fadeIn 0.3s ease;
-}
-
-#open-method-popup.hidden {
-  display: none;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.method-container {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-  border-radius: 20px;
-  padding: 30px;
-  max-width: 600px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-  border: 2px solid rgba(255, 204, 0, 0.3);
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.method-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid rgba(255, 204, 0, 0.3);
-}
-
-.method-header h2 {
-  color: #ffcc00;
-  font-size: 26px;
-  font-weight: 700;
-  margin: 0;
-  text-shadow: 0 2px 8px rgba(255, 204, 0, 0.4);
-}
-
-.method-close {
-  cursor: pointer;
-  font-size: 24px;
-  color: #fff;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
-}
-
-.method-close:hover {
-  background: rgba(255, 0, 0, 0.8);
-  transform: rotate(90deg) scale(1.1);
-}
-
-.method-preview {
-  width: 100%;
-  height: 350px;
-  background: #000;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 2px solid rgba(255, 204, 0, 0.2);
-  position: relative;
-}
-
-#method-preview-canvas {
-  max-width: 100%;
-  max-height: 100%;
-  display: none;
-  border-radius: 8px;
-}
-
-.method-loading {
-  color: #ffcc00;
-  font-size: 18px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.method-filename {
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 25px;
-  padding: 10px;
-  background: rgba(255, 204, 0, 0.1);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 204, 0, 0.3);
-}
-
-.method-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.method-btn {
-  background: linear-gradient(135deg, #333 0%, #1a1a1a 100%);
-  color: #fff;
-  border: 2px solid rgba(255, 204, 0, 0.3);
-  padding: 20px;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.method-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(255, 204, 0, 0.4);
-  border-color: #ffcc00;
-}
-
-.method-btn:active:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.method-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.mozilla-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
-}
-
-.browser-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4dabf7 0%, #1971c2 100%);
-}
-
-.drive-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #51cf66 0%, #2b8a3e 100%);
-}
-
-.method-hint {
-  font-size: 13px;
-  font-weight: 400;
-  opacity: 0.8;
-  color: #ccc;
-}
-
-/* استجابة للشاشات الصغيرة */
 @media (max-width: 768px) {
-  .method-container {
+  #reset-btn text, #change-group-btn text, 
+  #preload-btn text, #group-btn-text { font-size: 22px; }
+  #back-btn-text { font-size: 26px; }
+  
+  .options-container {
     padding: 20px;
   }
-  
-  .method-header h2 {
+
+  .options-header h2 {
     font-size: 22px;
   }
-  
+
   .method-preview {
     height: 250px;
   }
-  
-  .method-btn {
+
+  .method-btn, .option-btn {
     padding: 15px;
-    font-size: 16px;
   }
 }
 
 @media (max-width: 480px) {
-  .method-container {
+  #reset-btn text, #change-group-btn text, 
+  #preload-btn text, #group-btn-text { font-size: 19px; }
+  #back-btn-text { font-size: 23px; }
+  
+  .method-container, .options-container {
     padding: 15px;
     max-width: 95%;
   }
-  
-  .method-header h2 {
+
+  .method-header h2, .options-header h2 {
     font-size: 18px;
   }
-  
+
   .method-preview {
     height: 200px;
   }
-  
-  .method-btn {
+
+  .method-btn, .option-btn {
     padding: 12px;
     font-size: 14px;
   }
-  
-  .method-filename {
+
+  .method-filename, .options-filename {
     font-size: 14px;
+  }
+  
+  .btn-icon {
+    font-size: 28px;
+  }
+  
+  .btn-text {
+    font-size: 16px;
+  }
+  
+  .btn-desc {
+    font-size: 12px;
   }
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   [FIXES] تحديثات أنماط الترتيب العالمي للعبة
-   ══════════════════════════════════════════════════════════════════════════════ */
-.leaderboard-item.current-player {
-  background: rgba(255, 204, 0, 0.2) !important;
-  border: 2px solid rgba(255, 204, 0, 0.5) !important;
-  box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
-  transform: scale(1.02);
-}
-
-.leaderboard-item.current-player .leaderboard-name {
-  color: #ffcc00 !important;
-  font-weight: 700;
-}
-
-.leaderboard-item.current-player .leaderboard-score {
-  color: #ffcc00 !important;
-  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
-}
-
-.no-scores {
-  color: #999;
-  text-align: center;
-  padding: 30px;
-  font-size: 16px;
+@media print {
+  #js-toggle-container, #loading-overlay, #group-selection-screen,
+  #pdf-overlay, #preload-screen, #pdf-preview-popup, #open-method-popup,
+  #open-options-overlay {
+    display: none !important;
+  }
 }
