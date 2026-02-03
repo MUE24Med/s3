@@ -10,29 +10,29 @@ function generateUniqueID() {
 
     // جلب جميع الـ IDs المستخدمة من الكاش
     const usedIDs = JSON.parse(localStorage.getItem('all_used_ids') || '[]');
-    
+
     let newID;
     let attempts = 0;
     const maxAttempts = 10000; // لتجنب حلقة لا نهائية
-    
+
     do {
         // توليد رقم عشوائي من 4 أرقام (1000-9999)
         const randomNumber = Math.floor(1000 + Math.random() * 9000);
         newID = 'ID-' + randomNumber;
         attempts++;
-        
+
         if (attempts >= maxAttempts) {
             // في حالة نادرة جداً، استخدم timestamp
             newID = 'ID-' + Date.now().toString().slice(-4);
             break;
         }
     } while (usedIDs.includes(newID));
-    
+
     // حفظ الـ ID الجديد
     usedIDs.push(newID);
     localStorage.setItem('all_used_ids', JSON.stringify(usedIDs));
     localStorage.setItem('visitor_id', newID);
-    
+
     console.log(`✅ تم توليد ID فريد: ${newID}`);
     return newID;
 }
@@ -238,12 +238,12 @@ const UserTracker = {
         if (realName === 'زائر مجهول' || realName === 'زائر') {
             localStorage.removeItem('user_real_name');
         }
-        
+
         // التأكد من وجود ID فريد
         if (!localStorage.getItem('visitor_id')) {
             generateUniqueID();
         }
-        
+
         const cleanRealName = localStorage.getItem('user_real_name');
         return (cleanRealName && cleanRealName.trim()) ? cleanRealName.trim() : localStorage.getItem('visitor_id');
     },
