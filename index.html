@@ -195,20 +195,18 @@
   ></iframe>
 </div>
 
-<!-- نافذة معاينة PDF المنبثقة -->
-<div id="pdf-preview-popup">
+<!-- نافذة معاينة PDF المنبثقة العائمة -->
+<div id="pdf-preview-popup" class="floating-preview">
   <div class="preview-container">
     <div class="preview-header">
       <div class="preview-title" id="preview-filename">معاينة الملف</div>
-      <div class="preview-actions">
-        <button class="preview-btn" id="preview-open-btn">📄 فتح كامل</button>
-        <button class="preview-btn" id="preview-close-btn">❌ إغلاق</button>
-      </div>
+      <button class="preview-btn preview-open-btn" id="preview-open-btn">📄 فتح</button>
     </div>
     <div class="preview-canvas-container">
       <div class="preview-loading" id="preview-loading">⏳ جاري التحميل...</div>
       <canvas id="preview-canvas"></canvas>
     </div>
+    <div class="preview-hint">✋ ارفع إصبعك لإغلاق المعاينة</div>
   </div>
 </div>
 
