@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.01.23.002">
+<meta name="version" content="2025.02.03.FINAL">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -14,9 +14,6 @@
   <meta name="color-scheme" content="only light">
   <meta name="supported-color-schemes" content="light">
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="خريطة تفاعلية للمنهج الطبي - تصفح المحاضرات والأسئلة بسهولة">
-  <meta name="keywords" content="طب، منهج، خريطة تفاعلية، محاضرات، أسئلة">
-
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="preconnect" href="https://api.github.com" crossorigin>
   <link rel="dns-prefetch" href="https://mozilla.github.io">
@@ -26,9 +23,41 @@
 </head>
 <body>
 
-<!-- ========================================
-     شاشة Preload - تظهر عند أول زيارة فقط
-     ======================================== -->
+<!-- شاشة اختيار طريقة الفتح -->
+<div id="open-method-popup" class="hidden">
+  <div class="method-container">
+    <div class="method-header">
+      <h2>اختر طريقة الفتح</h2>
+      <span class="method-close" id="method-close-btn">✖️</span>
+    </div>
+    
+    <div class="method-preview">
+      <canvas id="method-preview-canvas"></canvas>
+      <div class="method-loading" id="method-loading">⏳ جاري التحميل...</div>
+    </div>
+    
+    <div class="method-filename" id="method-filename">اسم الملف</div>
+    
+    <div class="method-buttons">
+      <button class="method-btn mozilla-btn" id="open-mozilla-btn">
+        📄 فتح في Mozilla PDF
+        <span class="method-hint">عارض متقدم مع أدوات</span>
+      </button>
+      
+      <button class="method-btn browser-btn" id="open-browser-btn">
+        🌐 فتح في المتصفح
+        <span class="method-hint">فتح مباشر بسيط</span>
+      </button>
+      
+      <button class="method-btn drive-btn" id="open-drive-btn">
+        💾 حفظ في Drive
+        <span class="method-hint">رفع للسحابة</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- شاشة Preload -->
 <div id="preload-screen" class="hidden">
   <div class="preload-container">
     <div class="notice">
@@ -49,7 +78,7 @@
 
     <div class="game-container" id="gameContainer">
       <div class="game-stats">
-        <div class="game-stat">❤️ <span id="heartsDisplay">0</span></div>
+        <div class="game-stat">❤️ <span id="heartsDisplay">3</span></div>
         <div class="game-stat">⭐ <span id="scoreDisplay">0</span></div>
       </div>
 
@@ -80,28 +109,25 @@
   </div>
 </div>
 
-<!-- ========================================
-     المحتوى الرئيسي للموقع
-     ======================================== -->
-
+<!-- شاشة اختيار المجموعة -->
 <div id="group-selection-screen">
   <div id="group-selection-content">
-    <img id="main-logo" src="image/0.png" alt="شعار الكلية" loading="eager" />
+    <img id="main-logo" src="image/0.png" alt="شعار الكلية" />
     <h1>اختر مجموعتك</h1>
     <div id="group-buttons">
-      <button class="group-btn" data-group="A" aria-label="اختر المجموعة A">
+      <button class="group-btn" data-group="A">
         <span class="group-letter">A</span>
         <span class="group-label">Group A</span>
       </button>
-      <button class="group-btn" data-group="B" aria-label="اختر المجموعة B">
+      <button class="group-btn" data-group="B">
         <span class="group-letter">B</span>
         <span class="group-label">Group B</span>
       </button>
-      <button class="group-btn" data-group="C" aria-label="اختر المجموعة C">
+      <button class="group-btn" data-group="C">
         <span class="group-letter">C</span>
         <span class="group-label">Group C</span>
       </button>
-      <button class="group-btn" data-group="D" aria-label="اختر المجموعة D">
+      <button class="group-btn" data-group="D">
         <span class="group-letter">D</span>
         <span class="group-label">Group D</span>
       </button>
@@ -112,6 +138,7 @@
   </div>
 </div>
 
+<!-- شريط الأدوات -->
 <div id="js-toggle-container" class="top">
   <div id="search-container">
     <input 
@@ -119,51 +146,32 @@
       id="search-input" 
       placeholder="ابحث باسم الملف..."
       autocomplete="off"
-      aria-label="حقل البحث"
     >
-    <span id="search-icon" class="clickable-area" role="button" aria-label="بحث">🔙</span>
+    <span id="search-icon" class="clickable-area">🔙</span>
   </div>
 
   <div class="controls-row">
-    <span 
-      id="move-toggle" 
-      role="button" 
-      aria-label="تحريك شريط الأدوات"
-      tabindex="0"
-    >↕️</span>
-
-    <span 
-      id="eye-toggle" 
-      role="button" 
-      aria-label="إخفاء/إظهار شريط البحث"
-      tabindex="0"
-      title="إخفاء/إظهار البحث"
-    >👁️</span>
+    <span id="move-toggle">↕️</span>
+    <span id="eye-toggle" title="إخفاء/إظهار البحث">👁️</span>
 
     <div class="hover-toggle-container">
       <span>Hover</span>
       <label class="switch">
-        <input type="checkbox" id="js-toggle" checked aria-label="تفعيل التفاعل">
+        <input type="checkbox" id="js-toggle" checked>
         <span class="slider round"></span>
       </label>
     </div>
   </div>
 </div>
 
-<div id="eye-toggle-standalone" class="top" role="button" aria-label="إظهار شريط البحث" tabindex="0">
-  👁️
-</div>
+<div id="eye-toggle-standalone" class="top">👁️</div>
 
+<!-- شاشة التحميل -->
 <div id="loading-overlay">
   <div id="loading-content">
-    <img 
-      id="splash-image" 
-      src="image/0.png" 
-      alt="شعار التحميل"
-      loading="eager"
-    />
+    <img id="splash-image" src="image/0.png" alt="شعار التحميل" />
     <h1 id="project-loading-title">جاري التحميل...</h1>
-    <div id="loader-lights" role="progressbar" aria-label="تقدم التحميل">
+    <div id="loader-lights">
       <div class="light-bulb" id="bulb-1"></div>
       <div class="light-bulb" id="bulb-2"></div>
       <div class="light-bulb" id="bulb-3"></div>
@@ -180,22 +188,17 @@
   </div>
 </div>
 
+<!-- عارض PDF -->
 <div id="pdf-overlay" class="hidden">
   <div id="toolbar">
-    <button id="closePdfBtn" class="toolbar-btn" aria-label="إغلاق">❌ إغلاق</button>
-    <button id="downloadBtn" class="toolbar-btn" aria-label="تحميل">⬇ تحميل</button>
-    <button id="shareBtn" class="toolbar-btn" aria-label="مشاركة">🔗 مشاركة</button>
+    <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
+    <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
+    <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
   </div>
-  <iframe 
-    id="pdfFrame" 
-    src="" 
-    loading="lazy"
-    title="عارض PDF"
-    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-  ></iframe>
+  <iframe id="pdfFrame" src="" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
 </div>
 
-<!-- نافذة معاينة PDF المنبثقة العائمة -->
+<!-- نافذة معاينة PDF -->
 <div id="pdf-preview-popup" class="floating-preview">
   <div class="preview-container">
     <div class="preview-header">
@@ -210,126 +213,71 @@
   </div>
 </div>
 
+<!-- الخريطة التفاعلية -->
 <div id="scroll-container">
-  <svg 
-    id="main-svg" 
-    xmlns="http://www.w3.org/2000/svg" 
-    xmlns:xlink="http://www.w3.org/1999/xlink" 
-    preserveAspectRatio="xMinYMin meet"
-    role="img"
-    aria-label="الخريطة التفاعلية"
-  >
+  <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
     <defs></defs>
 
-    <g transform="translate(0,0)" id="files-list-container" style="isolation: isolate;">
-      <image 
-        data-src="image/wood.webp" 
-        x="0" 
-        y="0" 
-        width="1024" 
-        height="2454"
-        aria-hidden="true"
-        style="pointer-events: none;"
-      />
+    <g transform="translate(0,0)" id="files-list-container">
+      <image data-src="image/wood.webp" x="0" y="0" width="1024" height="2454" style="pointer-events: none;" />
     </g>
 
-    <g id="dynamic-links-group" style="isolation: isolate;"></g>
-    <g id="group-specific-content" style="isolation: isolate;"></g>
+    <g id="dynamic-links-group"></g>
+    <g id="group-specific-content"></g>
 
-    <g id="upper-wood-layer" style="isolation: isolate; pointer-events: none; z-index: 99999;">
-      <image 
-        data-src="image/Upper_wood.webp" 
-        x="0" 
-        y="0" 
-        width="1024" 
-        height="250"
-        aria-hidden="true"
-        style="pointer-events: none;"
-      />
+    <g id="upper-wood-layer" style="pointer-events: none; z-index: 99999;">
+      <image data-src="image/Upper_wood.webp" x="0" y="0" width="1024" height="250" style="pointer-events: none;" />
     </g>
 
-    <g id="fixed-controls-layer" style="isolation: isolate;">
-      <g id="change-group-btn" style="cursor: pointer;" role="button" tabindex="0">
+    <g id="fixed-controls-layer">
+      <g id="change-group-btn" style="cursor: pointer;">
         <rect x="120" y="100" width="250" height="50" rx="10"/>
-        <text 
-          id="group-btn-text" 
-          x="245" 
-          y="130" 
-          text-anchor="middle"
-          dominant-baseline="middle"
-        >Change Group 🔄</text>
+        <text id="group-btn-text" x="245" y="130" text-anchor="middle" dominant-baseline="middle">Change Group 🔄</text>
       </g>
 
-      <g id="preload-btn" style="cursor: pointer;" role="button" tabindex="0">
+      <g id="preload-btn" style="cursor: pointer;">
         <rect x="387" y="100" width="250" height="50" rx="10"/>
-        <text 
-          x="512" 
-          y="130" 
-          text-anchor="middle"
-          dominant-baseline="middle"
-        >🔄 شاشة التحميل</text>
+        <text x="512" y="130" text-anchor="middle" dominant-baseline="middle">🔄 شاشة التحميل</text>
       </g>
 
-      <g id="reset-btn" style="cursor: pointer;" role="button" tabindex="0">
+      <g id="reset-btn" style="cursor: pointer;">
         <rect x="654" y="100" width="250" height="50" rx="10"/>
-        <text 
-          id="reset-btn-text" 
-          x="779" 
-          y="130" 
-          text-anchor="middle"
-          dominant-baseline="middle"
-        >🔄 Reset</text>
+        <text id="reset-btn-text" x="779" y="130" text-anchor="middle" dominant-baseline="middle">🔄 Reset</text>
       </g>
 
-      <g id="back-button-group" style="cursor: pointer;" role="button" tabindex="0">
-        <rect 
-          id="back-btn" 
-          x="112" 
-          y="160" 
-          width="800" 
-          height="70" 
-          rx="15"
-        />
-        <text 
-          x="512" 
-          y="195" 
-          id="back-btn-text" 
-          text-anchor="middle"
-          dominant-baseline="middle"
-        >➡️ إلى الخريطة ➡️</text>
+      <g id="back-button-group" style="cursor: pointer;">
+        <rect id="back-btn" x="112" y="160" width="800" height="70" rx="15" />
+        <text x="512" y="195" id="back-btn-text" text-anchor="middle" dominant-baseline="middle">➡️ إلى الخريطة ➡️</text>
       </g>
     </g>
   </svg>
 </div>
 
-<!-- مكتبة PDF.js -->
+<!-- المكتبات -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-  // تهيئة PDF.js
   if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    console.log('✅ PDF.js جاهز');
   }
 </script>
 
-<script defer src="script.js"></script>
-<script defer src="tracker.js"></script>
+<!-- السكريبتات الرئيسية -->
+<script src="script.js"></script>
+<script src="tracker.js"></script>
+<script src="zoom-reset-fix.js"></script>
+<script src="script-complete.js"></script>
 
+<!-- Service Worker -->
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(registration => {
-        console.log('✅ Service Worker مسجل:', registration.scope);
-
+        console.log('✅ Service Worker مسجل');
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
-          console.log('🔄 Service Worker جديد يتم تثبيته...');
-
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('✅ تحديث جديد متاح');
-
               if (confirm('🔄 يوجد تحديث جديد. هل تريد إعادة التحميل؟')) {
                 newWorker.postMessage({ action: 'skipWaiting' });
                 window.location.reload();
@@ -337,52 +285,31 @@ if ('serviceWorker' in navigator) {
             }
           });
         });
-
-        setInterval(() => {
-          registration.update();
-        }, 5 * 60 * 1000);
-      })
-      .catch(err => {
-        console.error('❌ فشل تسجيل Service Worker:', err);
       });
-  });
-
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (event.data.type === 'FILE_UPDATED') {
-      console.log('📢 تحديث ملف:', event.data.filename);
-    }
   });
 
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!refreshing) {
       refreshing = true;
-      console.log('🔄 Service Worker محدث - إعادة تحميل الصفحة');
       window.location.reload();
     }
   });
 }
 </script>
 
+<!-- فحص التحديثات -->
 <script>
 async function checkForUpdates() {
   try {
     const lastCheck = localStorage.getItem('last_update_check');
     const now = Date.now();
 
-    if (lastCheck && (now - parseInt(lastCheck)) < 300000) {
-      console.log('⏱️ تم الفحص مؤخراً');
-      return;
-    }
-
-    console.log('🔍 فحص التحديثات...');
+    if (lastCheck && (now - parseInt(lastCheck)) < 300000) return;
 
     const response = await fetch(
       'https://api.github.com/repos/MUE24Med/semester-3/commits/main',
-      { 
-        cache: 'no-store',
-        headers: { 'Accept': 'application/vnd.github.v3+json' }
-      }
+      { cache: 'no-store', headers: { 'Accept': 'application/vnd.github.v3+json' } }
     );
 
     if (!response.ok) return;
@@ -394,48 +321,26 @@ async function checkForUpdates() {
     if (!lastSha) {
       localStorage.setItem('last_commit_sha', latestSha);
       localStorage.setItem('last_update_check', now.toString());
-      console.log(`✅ SHA الحالي: ${latestSha}`);
       return;
     }
 
     if (lastSha !== latestSha) {
-      console.log(`🆕 تحديث جديد: ${lastSha} → ${latestSha}`);
-
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
-
       localStorage.setItem('last_commit_sha', latestSha);
       localStorage.removeItem('preload_done');
-
-      console.log('🔄 إعادة التحميل...');
       window.location.reload(true);
     } else {
       localStorage.setItem('last_update_check', now.toString());
-      console.log(`✅ محدث (${latestSha})`);
     }
-
   } catch (error) {
     console.error('⚠️ خطأ في الفحص:', error);
   }
 }
 
-let updateCheckScheduled = false;
-
-window.addEventListener('load', () => {
-  if (!updateCheckScheduled) {
-    updateCheckScheduled = true;
-    setTimeout(checkForUpdates, 5000);
-  }
-});
-
+window.addEventListener('load', checkForUpdates);
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && !updateCheckScheduled) {
-    updateCheckScheduled = true;
-    setTimeout(() => {
-      checkForUpdates();
-      updateCheckScheduled = false;
-    }, 3000);
-  }
+  if (!document.hidden) checkForUpdates();
 });
 </script>
 </body>
