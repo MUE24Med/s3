@@ -3257,3 +3257,55 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
 
     console.log('✅ مراقبة z-index وظهور/اختفاء الشاشات مفعّلة');
 })();
+/* ========================================
+   إضافة تأثير حركة الإصبع عند الضغط على العين 👁️
+   ======================================== */
+if (eyeToggle) {
+    eyeToggle.addEventListener('click', function() {
+        // 1. إنشاء عنصر اليد (إصبع السحب)
+        const handCursor = document.createElement('div');
+        handCursor.innerHTML = '☝️'; // يمكنك استبداله بصورة SVG لو أردت
+        Object.assign(handCursor.style, {
+            position: 'fixed',
+            fontSize: '40px',
+            zIndex: '9999',
+            transition: 'all 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95)',
+            pointerEvents: 'none',
+            display: 'none',
+            filter: 'drop-shadow(2px 2px 5px rgba(0,0,0,0.3))'
+        });
+        document.body.appendChild(handCursor);
+
+        // 2. تفعيل الحركة بعد 0.1 ثانية
+        setTimeout(() => {
+            const eyeRect = eyeToggleStandalone.getBoundingClientRect();
+            
+            // تحديد موضع البداية (فوق الزر تماماً)
+            handCursor.style.display = 'block';
+            handCursor.style.left = eyeRect.left + 'px';
+            handCursor.style.top = eyeRect.top + 'px';
+
+            // 3. بدء حركة السحب إلى أقصى اليمين الأعلى
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    // الموضع النهائي
+                    handCursor.style.left = (window.innerWidth - 60) + 'px';
+                    handCursor.style.top = '10px';
+                    
+                    // تحريك زر العين الفعلي مع اليد لمحاكاة السحب
+                    eyeToggleStandalone.style.transition = 'all 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95)';
+                    eyeToggleStandalone.style.left = 'auto';
+                    eyeToggleStandalone.style.right = '10px';
+                    eyeToggleStandalone.style.top = '10px';
+                }, 50);
+            });
+
+            // 4. إخفاء اليد بعد اكتمال الحركة
+            setTimeout(() => {
+                handCursor.style.opacity = '0';
+                setTimeout(() => handCursor.remove(), 500);
+            }, 900);
+
+        }, 100); // التأخير المطلوب 0.1 ثانية
+    });
+}
