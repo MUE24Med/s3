@@ -1,12 +1,12 @@
 /* ========================================
-   COMPLETE STYLE.CSS - FULL VERSION
+   COMPLETE STYLE.CSS - FIXED VERSION
    ======================================== */
 
 /* [000] شاشة Preload */
 #preload-screen {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 5;
   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   display: flex;
   justify-content: center;
@@ -136,7 +136,7 @@
   right: 10px;
   display: flex;
   justify-content: space-between;
-  z-index: 10;
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -156,7 +156,7 @@
   left: 50%;
   transform: translateX(-50%);
   font-size: 35px;
-  z-index: 5;
+  z-index: 1;
   transition: left 0.2s ease;
 }
 
@@ -175,7 +175,7 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  z-index: 10;
+  z-index: 2;
   backdrop-filter: blur(5px);
 }
 
@@ -312,16 +312,16 @@
   .falling-item { font-size: 25px; }
 }
 
-/* [000-B] شاشة اختيار طريقة الفتح */
+/* [000-B] شاشة اختيار طريقة الفتح - محدثة */
 #open-method-popup {
   position: fixed;
   inset: 0;
-  z-index: 11;
-  background: rgba(0, 0, 0, 0.75);
+  z-index: 4;
+  background: rgba(0, 0, 0, 0.75); /* خلفية شفافة */
   display: none;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(10px);
 }
 
 #open-method-popup.active {
@@ -372,6 +372,7 @@
   background: rgba(255, 0, 0, 0.4);
 }
 
+/* شريط الأزرار تحت المعاينة */
 .method-preview {
   background: #000;
   border-radius: 10px;
@@ -381,7 +382,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: 15px;
+  margin-bottom: 0; /* إزالة الهامش لإلصاق الأزرار */
   position: relative;
 }
 
@@ -389,7 +390,6 @@
   max-width: 100%;
   max-height: 100%;
   display: block;
-  object-fit: contain;
 }
 
 .method-loading {
@@ -412,39 +412,46 @@
   color: #ffcc00;
   font-size: 14px;
   font-weight: bold;
-  margin-bottom: 15px;
+  margin: 10px 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* شريط الأزرار المحدث - صف واحد صغير */
 .method-buttons {
   display: flex;
-  gap: 10px;
-  justify-content: space-between;
+  flex-direction: row;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 0 0 10px 10px;
 }
 
 .method-btn {
   flex: 1;
-  padding: 12px 10px;
+  padding: 10px 8px;
   border: 2px solid;
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  min-height: 70px;
+  min-width: 0;
 }
 
-.method-hint {
-  font-size: 10px;
-  font-weight: normal;
-  opacity: 0.8;
+.method-btn-icon {
+  font-size: 20px;
+}
+
+.method-btn-text {
+  font-size: 11px;
   text-align: center;
+  line-height: 1.2;
 }
 
 .mozilla-btn {
@@ -564,7 +571,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  z-index: 3;
   transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 
@@ -657,7 +664,7 @@ html, body {
   position: fixed;
   inset: 0;
   background: #000;
-  z-index: 12;
+  z-index: 4;
   display: flex;
   flex-direction: column;
 }
@@ -741,12 +748,12 @@ html, body {
 #pdf-preview-popup {
   position: fixed;
   inset: 0;
-  z-index: 10;
-  background: rgba(0, 0, 0, 0.75);
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.75); /* خلفية شفافة */
   display: none;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(10px);
 }
 
 #pdf-preview-popup.active {
@@ -828,7 +835,7 @@ html, body {
   background: rgba(0, 0, 0, 0.8);
   color: #ffcc00;
   font-size: 20px;
-  z-index: 10;
+  z-index: 1;
 }
 
 .preview-loading.hidden {
@@ -851,7 +858,7 @@ html, body {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 9;
+  z-index: 2;
   transition: opacity 0.3s ease-out;
   opacity: 0;
   pointer-events: none;
@@ -966,7 +973,7 @@ html, body {
 #js-toggle-container {
   position: fixed;
   right: 20px;
-  z-index: 8;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1027,7 +1034,7 @@ html, body {
   justify-content: center;
   font-size: 18px;
   cursor: pointer;
-  z-index: 5;
+  z-index: 1;
 }
 
 .controls-row {
@@ -1112,7 +1119,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 7;
+  z-index: 2;
   width: 40px;
   height: 40px;
   background-color: rgba(0, 0, 0, 0.95);
@@ -1134,7 +1141,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   cursor: grabbing;
   transform: scale(1.1);
   box-shadow: 0 8px 24px rgba(255, 204, 0, 0.6);
-  z-index: 10001;
+  z-index: 3;
 }
 
 #eye-toggle-standalone:hover:not(.dragging) {
@@ -1144,7 +1151,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 /* [008] الأزرار الثابتة */
 #fixed-controls-layer {
-  z-index: 6;
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -1267,31 +1274,13 @@ img, image, svg, rect {
   z-index: -1 !important;
 }
 
-/* الأزرار الثلاثة على الهاتف */
 @media (max-width: 768px) {
-  .method-buttons {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .method-btn {
-    width: 100%;
-    min-height: 60px;
-  }
-
-  .method-preview {
-    min-height: 200px;
-  }
-
   #reset-btn text, #change-group-btn text, 
   #preload-btn text, #group-btn-text { font-size: 22px; }
   #back-btn-text { font-size: 26px; }
-}
 
-@media (max-width: 480px) {
   .method-container {
-    padding: 15px;
-    max-width: 95%;
+    padding: 20px;
   }
 
   .method-header h2 {
@@ -1299,21 +1288,49 @@ img, image, svg, rect {
   }
 
   .method-preview {
+    height: 250px;
+  }
+
+  .method-btn {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .method-btn-icon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  #reset-btn text, #change-group-btn text, 
+  #preload-btn text, #group-btn-text { font-size: 19px; }
+  #back-btn-text { font-size: 23px; }
+
+  .method-container {
+    padding: 15px;
+    max-width: 95%;
+  }
+
+  .method-header h2 {
+    font-size: 16px;
+  }
+
+  .method-preview {
     height: 200px;
   }
 
   .method-btn {
-    padding: 10px;
-    font-size: 13px;
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+
+  .method-btn-icon {
+    font-size: 16px;
   }
 
   .method-filename {
-    font-size: 13px;
+    font-size: 12px;
   }
-
-  #reset-btn text, #change-group-btn text, 
-  #preload-btn text, #group-btn-text { font-size: 19px; }
-  #back-btn-text { font-size: 23px; }
 }
 
 @media print {
