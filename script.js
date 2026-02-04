@@ -3189,3 +3189,71 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
 /* ========================================
    🎉 نهاية script.js - جميع الأجزاء الستة 🎉
    ======================================== */
+
+// ============================================
+// Reset Zoom عند أي تغيير Z-Index أو ظهور شاشة
+// ============================================
+
+(function observeZIndexChanges() {
+    let zoomTimeout;
+
+    const shouldTriggerReset = (el) => {
+        if (!el || !el.style) return false;
+
+        const zIndex = window.getComputedStyle(el).zIndex;
+        const display = window.getComputedStyle(el).display;
+        const visibility = window.getComputedStyle(el).visibility;
+        const opacity = window.getComputedStyle(el).opacity;
+
+        return (
+            zIndex !== 'auto' &&
+            parseInt(zIndex) >= 10 &&        // أي عنصر طالع فوق
+            display !== 'none' &&
+            visibility !== 'hidden' &&
+            opacity !== '0'
+        );
+    };
+
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            const target = mutation.target;
+
+            if (mutation.type === 'attributes') {
+                if (
+                    mutation.attributeName === 'style' ||
+                    mutation.attributeName === 'class'
+                ) {
+                    if (shouldTriggerReset(target)) {
+                        clearTimeout(zoomTimeout);
+                        zoomTimeout = setTimeout(() => {
+                            console.log('🧠 تغيير z-index / ظهور شاشة → Reset Zoom');
+                            resetBrowserZoom();
+                        }, 80);
+                        break;
+                    }
+                }
+            }
+
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && shouldTriggerReset(node)) {
+                        clearTimeout(zoomTimeout);
+                        zoomTimeout = setTimeout(() => {
+                            console.log('🧠 إضافة شاشة جديدة → Reset Zoom');
+                            resetBrowserZoom();
+                        }, 80);
+                    }
+                });
+            }
+        }
+    });
+
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+        childList: true,
+        subtree: true
+    });
+
+    console.log('✅ مراقبة z-index وظهور/اختفاء الشاشات مفعّلة');
+})();
