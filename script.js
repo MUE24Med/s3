@@ -617,12 +617,9 @@ function handleBackNavigation(e) {
 
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
-        const methodPopup = document.getElementById('open-method-popup');
 
         if (currentState.data.isPreview) {
             closePDFPreview();
-        } else if (methodPopup && methodPopup.classList.contains('active')) {
-            closeOpenOptions();
         } else {
             pdfViewer.src = "";
             overlay.classList.add("hidden");
@@ -699,12 +696,8 @@ function setupBackButton() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const pdfOverlay = document.getElementById('pdf-overlay');
-            const methodPopup = document.getElementById('open-method-popup');
-            
             if (pdfOverlay && pdfOverlay.classList.contains('fullscreen-mode')) {
                 toggleMozillaToolbar();
-            } else if (methodPopup && methodPopup.classList.contains('active')) {
-                closeOpenOptions();
             }
         }
     });
@@ -1046,90 +1039,57 @@ function closePDFPreview() {
 }
 
 function showOpenOptions(item) {
-    const popup = document.getElementById('open-method-popup');
-    const canvas = document.getElementById('method-preview-canvas');
-    const loading = document.getElementById('method-loading');
-    const filenameEl = document.getElementById('method-filename');
+    const optionsOverlay = document.getElementById('open-options-overlay');
+    const optionsContainer = document.getElementById('open-options-container');
 
-    if (!popup || !canvas) {
-        console.error('❌ عناصر نافذة الفتح غير موجودة');
+    if (!optionsOverlay || !optionsContainer) {
+        console.error('❌ عناصر خيارات الفتح غير موجودة');
         openWithMozilla(item);
         return;
     }
 
     currentPreviewItem = item;
     const fileName = item.path.split('/').pop();
-    const url = `${RAW_CONTENT_BASE}${item.path}`;
 
-    popup.classList.add('active');
-    filenameEl.textContent = fileName.length > 40 
+    document.getElementById('options-filename').textContent = fileName.length > 40 
         ? fileName.substring(0, 37) + '...' 
         : fileName;
 
-    loading.classList.remove('hidden');
-    canvas.style.display = 'none';
+    optionsOverlay.classList.add('active');
 
-    pushNavigationState(NAV_STATE.PDF_VIEW, { 
-        path: item.path, 
-        isOpenOptions: true 
+    const mozillaBtn = document.getElementById('open-mozilla-btn');
+    const driveBtn = document.getElementById('open-drive-btn');
+    const browserBtn = document.getElementById('open-browser-btn');
+
+    const newMozillaBtn = mozillaBtn.cloneNode(true);
+    const newDriveBtn = driveBtn.cloneNode(true);
+    const newBrowserBtn = browserBtn.cloneNode(true);
+
+    mozillaBtn.parentNode.replaceChild(newMozillaBtn, mozillaBtn);
+    driveBtn.parentNode.replaceChild(newDriveBtn, driveBtn);
+    browserBtn.parentNode.replaceChild(newBrowserBtn, browserBtn);
+
+    newMozillaBtn.addEventListener('click', () => {
+        openWithMozilla(item);
+        closeOpenOptions();
     });
 
-    console.log('📋 فتح خيارات:', url);
+    newDriveBtn.addEventListener('click', () => {
+        openWithDrive(item);
+        closeOpenOptions();
+    });
 
-    // رسم الصفحة الأولى
-    (async () => {
-        try {
-            const checkResponse = await fetch(url, { 
-                method: 'HEAD', 
-                mode: 'cors' 
-            });
-
-            if (!checkResponse.ok) {
-                throw new Error('الملف غير موجود');
-            }
-
-            if (typeof pdfjsLib === 'undefined') {
-                throw new Error('PDF.js غير محمل');
-            }
-
-            const loadingTask = pdfjsLib.getDocument(url);
-            const pdf = await loadingTask.promise;
-
-            console.log('📄 PDF محمل:', pdf.numPages, 'صفحة');
-
-            const page = await pdf.getPage(1);
-            const viewport = page.getViewport({ scale: 1.5 });
-
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
-
-            await page.render(renderContext).promise;
-
-            loading.classList.add('hidden');
-            canvas.style.display = 'block';
-
-            console.log('✅ تم رسم الصفحة الأولى');
-
-        } catch (error) {
-            console.error('❌ خطأ في المعاينة:', error);
-            loading.textContent = '❌ فشل تحميل المعاينة';
-        }
-    })();
+    newBrowserBtn.addEventListener('click', () => {
+        openWithBrowser(item);
+        closeOpenOptions();
+    });
 }
 
 function closeOpenOptions() {
-    const popup = document.getElementById('open-method-popup');
-    if (popup) {
-        popup.classList.remove('active');
+    const optionsOverlay = document.getElementById('open-options-overlay');
+    if (optionsOverlay) {
+        optionsOverlay.classList.remove('active');
     }
-    popNavigationState();
-    console.log('🔒 تم إغلاق نافذة الخيارات');
 }
 
 function openWithMozilla(item) {
@@ -1148,13 +1108,9 @@ function openWithMozilla(item) {
     pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
                     encodeURIComponent(url) + "#zoom=page-fit";
 
-    closeOpenOptions();
-
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
-
-    console.log('📖 فتح في Mozilla PDF Viewer:', item.path);
 }
 
 function openWithDrive(item) {
@@ -1162,25 +1118,19 @@ function openWithDrive(item) {
     const driveUrl = `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(url)}`;
 
     window.open(driveUrl, '_blank');
-    closeOpenOptions();
 
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
-
-    console.log('☁️ فتح في Google Drive:', item.path);
 }
 
 function openWithBrowser(item) {
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     window.open(url, '_blank');
-    closeOpenOptions();
 
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
-
-    console.log('🌐 فتح في المتصفح الافتراضي:', item.path);
 }
 
 function toggleMozillaToolbar() {
@@ -1203,91 +1153,6 @@ function toggleMozillaToolbar() {
 }
 
 /* نهاية الجزء 2 من 5 */
-```
-
-الآن أضف هذا في نهاية **DOMContentLoaded** في الجزء 3:
-
-```javascript
-// في الجزء 3 - داخل DOMContentLoaded - أضف هذا:
-
-document.addEventListener('DOMContentLoaded', () => {
-    // معالجات نافذة الفتح
-    const methodCloseBtn = document.getElementById('method-close-btn');
-    const mozillaBtn = document.getElementById('open-mozilla-btn');
-    const driveBtn = document.getElementById('open-drive-btn');
-    const browserBtn = document.getElementById('open-browser-btn');
-    const methodPopup = document.getElementById('open-method-popup');
-
-    if (methodCloseBtn) {
-        methodCloseBtn.addEventListener('click', closeOpenOptions);
-    }
-
-    if (mozillaBtn) {
-        mozillaBtn.addEventListener('click', () => {
-            if (currentPreviewItem) {
-                openWithMozilla(currentPreviewItem);
-            }
-        });
-    }
-
-    if (driveBtn) {
-        driveBtn.addEventListener('click', () => {
-            if (currentPreviewItem) {
-                openWithDrive(currentPreviewItem);
-            }
-        });
-    }
-
-    if (browserBtn) {
-        browserBtn.addEventListener('click', () => {
-            if (currentPreviewItem) {
-                openWithBrowser(currentPreviewItem);
-            }
-        });
-    }
-
-    if (methodPopup) {
-        methodPopup.addEventListener('click', (e) => {
-            if (e.target === methodPopup) {
-                closeOpenOptions();
-            }
-        });
-    }
-
-    // معالجات المعاينة القديمة
-    const closeBtn = document.getElementById('preview-close-btn');
-    const openBtn = document.getElementById('preview-open-btn');
-    const previewPopup = document.getElementById('pdf-preview-popup');
-    const expandToolbarBtn = document.getElementById('expand-toolbar-btn');
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closePDFPreview);
-    }
-
-    if (openBtn) {
-        openBtn.addEventListener('click', () => {
-            if (currentPreviewItem) {
-                closePDFPreview();
-                showOpenOptions(currentPreviewItem);
-            }
-        });
-    }
-
-    if (previewPopup) {
-        previewPopup.addEventListener('click', (e) => {
-            if (e.target === previewPopup) {
-                closePDFPreview();
-            }
-        });
-    }
-
-    if (expandToolbarBtn) {
-        expandToolbarBtn.addEventListener('click', toggleMozillaToolbar);
-    }
-
-    console.log('✅ جميع معالجات الفتح والمعاينة جاهزة');
-});
-
 /* ========================================
    script.js - الجزء 3 من 5
    [004] معالجات الأحداث والأزرار
@@ -1486,7 +1351,7 @@ if (resetBtn) {
                         await cache.put(`./${filename}`, response.clone());
                         updatedCount++;
                         updateDetails(`✅ ${filename}`);
-                        
+
                         // ⭐ تفعيل Service Worker فوراً إذا تم تحديثه
                         if (filename.includes('sw.js') && navigator.serviceWorker) {
                             const reg = await navigator.serviceWorker.getRegistration();
@@ -1839,13 +1704,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('preview-close-btn');
     const openBtn = document.getElementById('preview-open-btn');
     const popup = document.getElementById('pdf-preview-popup');
-    
+
     const expandToolbarBtn = document.getElementById('expand-toolbar-btn');
-    
+
     if (closeBtn) {
         closeBtn.addEventListener('click', closePDFPreview);
     }
-    
+
     if (openBtn) {
         openBtn.addEventListener('click', () => {
             if (currentPreviewItem) {
@@ -1854,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     if (popup) {
         popup.addEventListener('click', (e) => {
             if (e.target === popup) {
@@ -1862,11 +1727,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     if (expandToolbarBtn) {
         expandToolbarBtn.addEventListener('click', toggleMozillaToolbar);
     }
-    
+
     const optionsOverlay = document.getElementById('open-options-overlay');
     if (optionsOverlay) {
         optionsOverlay.addEventListener('click', (e) => {
@@ -1875,12 +1740,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     const closeOptionsBtn = document.getElementById('close-options-btn');
     if (closeOptionsBtn) {
         closeOptionsBtn.addEventListener('click', closeOpenOptions);
     }
-    
+
     console.log('✅ معالجات المعاينة والفتح جاهزة');
 });
 
@@ -2621,12 +2486,12 @@ async function updateWoodInterface() {
             const target = e.target;
             if (target.classList && target.classList.contains('scroll-handle')) return;
             if (target.closest('.wood-folder-group, .wood-file-group')) return;
-            
+
             longPressTimer = setTimeout(() => {
                 isLongPressing = true;
                 startContentDrag(e.clientY);
             }, 500);
-            
+
             e.preventDefault();
         });
 
@@ -2639,7 +2504,7 @@ async function updateWoodInterface() {
             const target = e.target;
             if (target.classList && target.classList.contains('scroll-handle')) return;
             if (target.closest('.wood-folder-group, .wood-file-group')) return;
-            
+
             longPressTimer = setTimeout(() => {
                 isLongPressing = true;
                 if (navigator.vibrate) {
@@ -3106,12 +2971,12 @@ document.getElementById("closePdfBtn").onclick = () => {
     const pdfViewer = document.getElementById("pdfFrame");
     pdfViewer.src = "";
     overlay.classList.add("hidden");
-    
+
     if (overlay.classList.contains('fullscreen-mode')) {
         overlay.classList.remove('fullscreen-mode');
         isToolbarExpanded = false;
     }
-    
+
     popNavigationState();
 };
 
@@ -3151,32 +3016,32 @@ document.getElementById("shareBtn").onclick = () => {
 function preventInteractionWhenHidden() {
     const toggleContainer = document.getElementById('js-toggle-container');
     const searchContainer = document.getElementById('search-container');
-    
+
     if (!toggleContainer || !searchContainer) {
         console.warn('⚠️ لم يتم العثور على الحاويات، إعادة المحاولة...');
         setTimeout(preventInteractionWhenHidden, 500);
         return;
     }
-    
+
     const blockAllEvents = (e) => {
         e.stopPropagation();
         e.preventDefault();
         return false;
     };
-    
+
     const eventsToBlock = [
         'click', 'touchstart', 'touchend', 'mousedown', 'mouseup', 
         'pointerdown', 'pointerup', 'mouseover', 'mouseout',
         'touchmove', 'contextmenu'
     ];
-    
+
     const toggleObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
                 const isHidden = toggleContainer.classList.contains('hidden') || 
                                 toggleContainer.classList.contains('fully-hidden') ||
                                 toggleContainer.style.display === 'none';
-                
+
                 if (isHidden) {
                     toggleContainer.style.pointerEvents = 'none';
                     toggleContainer.style.zIndex = '-9999';
@@ -3195,13 +3060,13 @@ function preventInteractionWhenHidden() {
             }
         });
     });
-    
+
     const searchObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
                 const isHidden = searchContainer.classList.contains('hidden') ||
                                 searchContainer.style.display === 'none';
-                
+
                 if (isHidden) {
                     searchContainer.style.pointerEvents = 'none';
                     searchContainer.style.zIndex = '-9999';
@@ -3220,17 +3085,17 @@ function preventInteractionWhenHidden() {
             }
         });
     });
-    
+
     toggleObserver.observe(toggleContainer, { 
         attributes: true, 
         attributeFilter: ['class', 'style'] 
     });
-    
+
     searchObserver.observe(searchContainer, { 
         attributes: true, 
         attributeFilter: ['class', 'style'] 
     });
-    
+
     if (toggleContainer.classList.contains('hidden') || 
         toggleContainer.classList.contains('fully-hidden') ||
         toggleContainer.style.display === 'none') {
@@ -3238,14 +3103,14 @@ function preventInteractionWhenHidden() {
         toggleContainer.style.zIndex = '-9999';
         toggleContainer.style.visibility = 'hidden';
     }
-    
+
     if (searchContainer.classList.contains('hidden') ||
         searchContainer.style.display === 'none') {
         searchContainer.style.pointerEvents = 'none';
         searchContainer.style.zIndex = '-9999';
         searchContainer.style.visibility = 'hidden';
     }
-    
+
     console.log('✅ إصلاح زر العين 👁️ نشط');
 }
 
