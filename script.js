@@ -25,11 +25,9 @@
         const filesToLoad = [
             'style.css',
             'script.js',
-            'index.html',
             'zoom-reset-fix.js',
             'script-additions.js',
-            'tracker.js',
-            'sw.js'
+            'tracker.js'
         ];
 
         const progressBar = document.getElementById('progressBar');
@@ -1201,6 +1199,8 @@ if (resetBtn) {
             '• فحص الملفات المعدلة على GitHub\n' +
             '• تحديث الملفات المعدلة فقط\n' +
             '• الاحتفاظ بكل شيء آخر\n' +
+            '🔒 الصور المحمية لن تُحدّث\n' +
+            '⚙️ sw.js سيطلب تأكيد منفصل\n' +
             '• إعادة تحميل الصفحة\n\n' +
             'هل تريد المتابعة؟'
         );
@@ -1295,45 +1295,72 @@ if (resetBtn) {
 
             const cache = await caches.open(semesterCache);
 
-            updateStatus('🔄 تحديث الملفات المعدلة...');
+            updateStatus('🔄 فحص ملفات التحديث...');
 
             let updatedCount = 0;
+            let protectedCount = 0;
             const filesToUpdate = [];
 
+            // --- بداية التعديل الجديد ---
             for (const file of modifiedFiles) {
                 const filename = file.filename;
 
-                if (filename.startsWith('.') || 
-                    filename.includes('README') || 
-                    filename.includes('.md')) {
+                // تجاهل ملفات النظام
+                if (filename.startsWith('.') || filename.includes('README')) continue;
+
+                // 🔒 فحص الحماية
+                if (typeof isProtectedFile === 'function' && isProtectedFile(filename)) {
+                    console.log(`🔒 محمي: ${filename}`);
+                    updateDetails(`🔒 محمي: ${filename}`);
+                    protectedCount++;
                     continue;
+                }
+
+                // ⚙️ إذن خاص لملف sw.js
+                if (filename === 'sw.js' || filename.endsWith('/sw.js')) {
+                    const updateSW = confirm("⚙️ اكتشفنا تحديثاً لملف النظام (sw.js).\nهل تريد تحديثه الآن؟");
+                    if (!updateSW) {
+                        updateDetails('🚫 تم تخطي sw.js');
+                        continue; 
+                    }
                 }
 
                 filesToUpdate.push(filename);
             }
+            // --- نهاية التعديل الجديد ---
 
-            console.log(`📦 ملفات للتحديث: ${filesToUpdate.length}`);
             updateDetails(`📦 سيتم تحديث ${filesToUpdate.length} ملف`);
+            if (protectedCount > 0) {
+                updateDetails(`🔒 ${protectedCount} ملف محمي`);
+            }
 
             for (const filename of filesToUpdate) {
                 try {
-                    const deleted = await cache.delete(`./${filename}`);
-                    if (!deleted) {
-                        await cache.delete(`/${filename}`);
-                        await cache.delete(filename);
-                    }
+                    // حذف النسخ القديمة بكل المسارات المحتملة
+                    await cache.delete(`./${filename}`);
+                    await cache.delete(`/${filename}`);
+                    await cache.delete(filename);
 
                     const newFileUrl = `${RAW_CONTENT_BASE}${filename}`;
                     const response = await fetch(newFileUrl, { 
-                        cache: 'reload',
+                        cache: 'reload', 
                         mode: 'cors'
                     });
 
                     if (response.ok) {
                         await cache.put(`./${filename}`, response.clone());
                         updatedCount++;
-                        console.log(`✅ تم تحديث: ${filename}`);
                         updateDetails(`✅ ${filename}`);
+                        
+                        // ⭐ تفعيل Service Worker فوراً إذا تم تحديثه
+                        if (filename.includes('sw.js') && navigator.serviceWorker) {
+                            const reg = await navigator.serviceWorker.getRegistration();
+                            if (reg) {
+                                await reg.update();
+                                console.log('🔄 تم تحديث Service Worker');
+                                updateDetails('🔄 تم تفعيل Service Worker');
+                            }
+                        }
                     } else {
                         console.warn(`⚠️ فشل تحديث: ${filename}`);
                         updateDetails(`⚠️ فشل: ${filename}`);
@@ -1348,6 +1375,9 @@ if (resetBtn) {
             localStorage.setItem('last_update_check', Date.now().toString());
 
             console.log(`✅ تم تحديث ${updatedCount} من ${filesToUpdate.length} ملف`);
+            if (protectedCount > 0) {
+                console.log(`🔒 تم حماية ${protectedCount} ملف`);
+            }
 
             updateStatus('✅ اكتمل التحديث!');
             updateDetails(`<br><strong>✅ تم تحديث ${updatedCount} ملف</strong>`);
@@ -1359,8 +1389,9 @@ if (resetBtn) {
                     `✅ تم التحديث بنجاح!\n\n` +
                     `📊 الإحصائيات:\n` +
                     `• الملفات المعدلة: ${modifiedFiles.length}\n` +
-                    `• تم التحديث: ${updatedCount}\n\n` +
-                    `🔄 إعادة التحميل...`
+                    `• تم التحديث: ${updatedCount}\n` +
+                    (protectedCount > 0 ? `🔒 محمي: ${protectedCount}\n` : '') +
+                    `\n🔄 إعادة التحميل...`
                 );
 
                 window.location.reload(true);
