@@ -3259,7 +3259,7 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
 })();
 
 /* ========================================
-   [011] محاكاة سحب زر العين باليد 👆
+   [011] محاكاة سحب زر العين باليد 👆 + ظل + صوت
    ======================================== */
 
 (function addRealisticFingerDrag() {
@@ -3268,6 +3268,81 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
     if (!eyeToggleStandalone) {
         console.warn('⚠️ زر العين الدائري غير موجود');
         return;
+    }
+
+    // إنشاء AudioContext للأصوات
+    let audioContext;
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+        console.warn('⚠️ الصوت غير مدعوم في هذا المتصفح');
+    }
+
+    // دالة إنشاء صوت النقر
+    function playTapSound() {
+        if (!audioContext) return;
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+    }
+
+    // دالة إنشاء صوت السحب
+    function playSwipeSound(duration) {
+        if (!audioContext) return;
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        const filter = audioContext.createBiquadFilter();
+        
+        oscillator.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + duration / 1000);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1000, audioContext.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(3000, audioContext.currentTime + duration / 1000);
+        
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration / 1000);
+    }
+
+    // دالة صوت الوصول
+    function playArriveSound() {
+        if (!audioContext) return;
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 1200;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.15);
     }
 
     // إنشاء SVG للحركة
@@ -3281,10 +3356,28 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 999999;
+        z-index: 999998;
         display: none;
     `;
     document.body.appendChild(animationSvg);
+
+    // إنشاء ظل متحرك
+    const shadowEllipse = document.createElementNS(svgNS, "ellipse");
+    shadowEllipse.setAttribute("fill", "rgba(0,0,0,0.3)");
+    shadowEllipse.setAttribute("rx", "30");
+    shadowEllipse.setAttribute("ry", "15");
+    shadowEllipse.style.filter = "blur(8px)";
+    animationSvg.appendChild(shadowEllipse);
+
+    // إنشاء خط المسار
+    const pathLine = document.createElementNS(svgNS, "path");
+    pathLine.setAttribute("stroke", "#ffca28");
+    pathLine.setAttribute("stroke-width", "3");
+    pathLine.setAttribute("fill", "none");
+    pathLine.setAttribute("stroke-dasharray", "8,4");
+    pathLine.style.opacity = "0.5";
+    pathLine.style.filter = "drop-shadow(0 0 5px #ffca28)";
+    animationSvg.appendChild(pathLine);
 
     // إنشاء لوجو اليد 👆
     const handEmoji = document.createElementNS(svgNS, "text");
@@ -3293,14 +3386,13 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
     handEmoji.style.filter = "drop-shadow(0 0 8px rgba(255,202,40,0.8))";
     animationSvg.appendChild(handEmoji);
 
-    // إنشاء خط المسار (اختياري)
-    const pathLine = document.createElementNS(svgNS, "path");
-    pathLine.setAttribute("stroke", "#ffca28");
-    pathLine.setAttribute("stroke-width", "3");
-    pathLine.setAttribute("fill", "none");
-    pathLine.setAttribute("stroke-dasharray", "8,4");
-    pathLine.style.opacity = "0.5";
-    animationSvg.appendChild(pathLine);
+    // إنشاء تأثير الضغط (دائرة صغيرة)
+    const pressCircle = document.createElementNS(svgNS, "circle");
+    pressCircle.setAttribute("r", "0");
+    pressCircle.setAttribute("fill", "rgba(255,202,40,0.4)");
+    pressCircle.setAttribute("stroke", "#ffca28");
+    pressCircle.setAttribute("stroke-width", "2");
+    animationSvg.appendChild(pressCircle);
 
     let isAnimating = false;
 
@@ -3308,44 +3400,54 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
         if (isAnimating) return;
         isAnimating = true;
 
-        // الحصول على موقع الزر الحالي
+        // تشغيل صوت النقر
+        playTapSound();
+
+        // اهتزاز خفيف
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+
         const startRect = eyeToggleStandalone.getBoundingClientRect();
         const startX = startRect.left + startRect.width / 2;
         const startY = startRect.top + startRect.height / 2;
 
-        // نقطة النهاية (أقصى اليمين الأعلى)
         const endX = window.innerWidth - 40;
         const endY = 40;
 
-        // حفظ الموقع الأصلي
-        const originalTop = eyeToggleStandalone.style.top;
-        const originalLeft = eyeToggleStandalone.style.left;
-        const originalRight = eyeToggleStandalone.style.right;
-
-        // إظهار SVG
         animationSvg.style.display = "block";
 
-        // تأخير 0.1 ثانية قبل البدء
+        // تأخير 0.1 ثانية
         setTimeout(() => {
-            const duration = 1000; // مدة الحركة
+            const duration = 1000;
             const startTime = Date.now();
 
-            // إضافة class للإشارة أن الزر يتحرك
+            // تشغيل صوت السحب
+            playSwipeSound(duration);
+
             eyeToggleStandalone.classList.add('being-dragged');
             eyeToggleStandalone.style.transition = 'none';
 
+            // إضافة ظل للزر نفسه
+            const originalBoxShadow = eyeToggleStandalone.style.boxShadow;
+            eyeToggleStandalone.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+
             let pathData = `M ${startX} ${startY}`;
+
+            // تأثير الضغط الأولي
+            pressCircle.setAttribute("cx", startX);
+            pressCircle.setAttribute("cy", startY);
+            let pressAnimation = 0;
 
             function animate() {
                 const elapsed = Date.now() - startTime;
                 const progress = Math.min(elapsed / duration, 1);
 
-                // تسهيل الحركة (easing)
+                // easing للحركة الطبيعية
                 const eased = progress < 0.5
                     ? 2 * progress * progress
                     : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-                // حساب الموقع الحالي
                 const currentX = startX + (endX - startX) * eased;
                 const currentY = startY + (endY - startY) * eased;
 
@@ -3353,10 +3455,24 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
                 handEmoji.setAttribute("x", currentX - 25);
                 handEmoji.setAttribute("y", currentY + 20);
 
-                // تحريك زر العين معها
+                // تحريك الظل (قليلاً للأسفل وللخلف)
+                shadowEllipse.setAttribute("cx", currentX + 5);
+                shadowEllipse.setAttribute("cy", currentY + 35);
+                
+                // تغيير حجم الظل حسب السرعة
+                const speed = Math.abs(eased - (progress - 0.01 < 0 ? 0 : progress - 0.01));
+                const shadowSize = 30 + speed * 100;
+                shadowEllipse.setAttribute("rx", shadowSize);
+                shadowEllipse.setAttribute("ry", shadowSize * 0.5);
+
+                // تحريك زر العين
                 eyeToggleStandalone.style.left = `${currentX - startRect.width / 2}px`;
                 eyeToggleStandalone.style.top = `${currentY - startRect.height / 2}px`;
                 eyeToggleStandalone.style.right = 'auto';
+
+                // إضافة ظل ديناميكي للزر
+                const shadowBlur = 10 + speed * 200;
+                eyeToggleStandalone.style.boxShadow = `0 ${10 + speed * 50}px ${shadowBlur}px rgba(0,0,0,${0.3 + speed * 0.4})`;
 
                 // رسم المسار
                 if (progress > 0.05) {
@@ -3364,40 +3480,68 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
                     pathLine.setAttribute("d", pathData);
                 }
 
+                // تأثير الضغط في البداية
+                if (pressAnimation < 0.2) {
+                    pressAnimation += 0.02;
+                    const pressRadius = 40 * (pressAnimation / 0.2);
+                    const pressOpacity = 1 - (pressAnimation / 0.2);
+                    pressCircle.setAttribute("r", pressRadius);
+                    pressCircle.style.opacity = pressOpacity;
+                }
+
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    // الانتهاء - حفظ الموقع الجديد
+                    // الانتهاء
+                    playArriveSound();
+                    
+                    if (navigator.vibrate) {
+                        navigator.vibrate([30, 50, 30]);
+                    }
+
+                    // تأثير الوصول
+                    let arrivalPulse = 0;
+                    function pulseArrival() {
+                        arrivalPulse += 0.1;
+                        const pulseRadius = 50 + Math.sin(arrivalPulse * 3) * 10;
+                        pressCircle.setAttribute("cx", endX);
+                        pressCircle.setAttribute("cy", endY);
+                        pressCircle.setAttribute("r", pulseRadius);
+                        pressCircle.style.opacity = Math.max(0, 1 - arrivalPulse);
+
+                        if (arrivalPulse < 1) {
+                            requestAnimationFrame(pulseArrival);
+                        }
+                    }
+                    pulseArrival();
+
                     setTimeout(() => {
-                        // حفظ الموقع النهائي في localStorage
                         localStorage.setItem('eyeToggleTop', eyeToggleStandalone.style.top);
                         localStorage.setItem('eyeToggleLeft', eyeToggleStandalone.style.left);
                         localStorage.removeItem('eyeToggleRight');
 
-                        // إخفاء الحركة
                         animationSvg.style.display = "none";
                         pathLine.setAttribute("d", "");
+                        pressCircle.setAttribute("r", "0");
                         
                         eyeToggleStandalone.classList.remove('being-dragged');
+                        eyeToggleStandalone.style.boxShadow = originalBoxShadow;
                         isAnimating = false;
 
                         console.log('✅ تم نقل زر العين إلى:', {
                             top: eyeToggleStandalone.style.top,
                             left: eyeToggleStandalone.style.left
                         });
-                    }, 300);
+                    }, 500);
                 }
             }
 
             animate();
-        }, 100); // تأخير 0.1 ثانية
+        }, 100);
     }
 
-    // ربط الحركة بالضغط على زر العين
-    const originalClickHandler = eyeToggleStandalone.onclick;
-    
+    // ربط الحركة بالضغط
     eyeToggleStandalone.addEventListener('click', function(e) {
-        // تشغيل الحركة فقط عند الإظهار (ليس عند السحب)
         const searchContainer = document.getElementById('search-container');
         const isHidden = searchContainer && searchContainer.classList.contains('hidden');
         
@@ -3406,23 +3550,29 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
             e.stopPropagation();
             startDragAnimation();
         }
-    }, true); // استخدام capture phase
+    }, true);
 
-    console.log('✅ محاكاة سحب زر العين باليد جاهزة 👆');
+    console.log('✅ محاكاة سحب زر العين باليد جاهزة 👆 + ظل + صوت');
 })();
 
-/* إضافة CSS لتحسين الحركة */
+/* إضافة CSS للتحسينات */
 (function addDragAnimationStyles() {
     const style = document.createElement('style');
     style.textContent = `
         #eye-toggle-standalone.being-dragged {
             transition: none !important;
-            will-change: top, left;
+            will-change: top, left, box-shadow;
+            z-index: 999999;
         }
         
         #finger-drag-animation {
             user-select: none;
             -webkit-user-select: none;
+        }
+
+        @keyframes hand-wiggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
         }
     `;
     document.head.appendChild(style);
