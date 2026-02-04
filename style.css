@@ -6,7 +6,7 @@
 #preload-screen {
   position: fixed;
   inset: 0;
-  z-index: 99999;
+  z-index: 50;
   background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
   display: flex;
   justify-content: center;
@@ -316,7 +316,7 @@
 #open-method-popup {
   position: fixed;
   inset: 0;
-  z-index: 20000;
+  z-index: 40;
   background: rgba(0, 0, 0, 0.95);
   display: none;
   align-items: center;
@@ -492,7 +492,7 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.9);
-    z-index: 100000;
+    z-index: 41;
     backdrop-filter: blur(10px);
     animation: fadeIn 0.3s ease;
 }
@@ -631,6 +631,185 @@
     font-size: 14px;
 }
 
+/* ════════════════════════════════════════════════════════════
+   أزرار الفتح تحت المعاينة - خلفية شفافة
+   ════════════════════════════════════════════════════════════ */
+
+#pdf-preview-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(15px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#pdf-preview-popup.active {
+  display: flex !important;
+}
+
+.preview-container {
+  background: rgba(26, 26, 26, 0.95);
+  border-radius: 20px;
+  padding: 20px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 50px rgba(255, 204, 0, 0.5);
+  border: 2px solid #ffcc00;
+  z-index: 61;
+  position: relative;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 204, 0, 0.3);
+}
+
+.preview-title {
+  color: #ffcc00;
+  font-size: 18px;
+  font-weight: bold;
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-btn {
+  background: rgba(255, 204, 0, 0.2);
+  border: 1px solid #ffcc00;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.preview-btn:hover {
+  background: rgba(255, 204, 0, 0.4);
+  transform: scale(1.05);
+}
+
+.preview-canvas-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+  border-radius: 10px;
+  position: relative;
+  min-height: 400px;
+}
+
+#preview-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.preview-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffcc00;
+  font-size: 20px;
+  z-index: 10;
+}
+
+.preview-loading.hidden {
+  display: none;
+}
+
+.preview-buttons-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 0 10px;
+    z-index: 62;
+    position: relative;
+}
+
+.preview-action-btn {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0,0,0,0.3);
+    z-index: 63;
+    position: relative;
+}
+
+.preview-action-btn .btn-icon {
+    font-size: 24px;
+}
+
+.preview-action-btn .btn-text {
+    font-size: 12px;
+}
+
+.preview-action-btn.mozilla {
+    border-color: #ff4500;
+    color: #ff4500;
+}
+
+.preview-action-btn.mozilla:hover {
+    background: rgba(255, 69, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.preview-action-btn.drive {
+    border-color: #4caf50;
+    color: #4caf50;
+}
+
+.preview-action-btn.drive:hover {
+    background: rgba(76, 175, 80, 0.2);
+    transform: translateY(-2px);
+}
+
+.preview-action-btn.browser {
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.preview-action-btn.browser:hover {
+    background: rgba(52, 152, 219, 0.2);
+    transform: translateY(-2px);
+}
+
+.preview-action-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.preview-hint {
+  margin-top: 10px;
+  text-align: center;
+  color: rgba(255, 204, 0, 0.8);
+  font-size: 11px;
+}
+
 /* [001] الإعدادات الأساسية */
 *, *::before, *::after {
   box-sizing: border-box !important;
@@ -668,6 +847,7 @@ html, body {
   direction: ltr;
   scrollbar-width: thin;
   scrollbar-color: #444 black;
+  z-index: 1;
 }
 
 #main-svg {
@@ -711,7 +891,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: 30;
   transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 
@@ -795,6 +975,19 @@ html, body {
   }
   .group-letter { font-size: 2.5rem; }
   #main-logo { width: 200px; }
+  
+  .preview-buttons-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .preview-action-btn {
+    padding: 10px;
+  }
+  
+  .preview-action-btn .btn-icon {
+    font-size: 20px;
+  }
 }
 
 /* [004] عارض PDF */
@@ -804,7 +997,7 @@ html, body {
   position: fixed;
   inset: 0;
   background: #000;
-  z-index: 20000;
+  z-index: 45;
   display: flex;
   flex-direction: column;
 }
@@ -892,111 +1085,6 @@ html, body {
     background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
 }
 
-/* [005] نافذة معاينة PDF */
-#pdf-preview-popup {
-  position: fixed;
-  inset: 0;
-  z-index: 15000;
-  background: rgba(0, 0, 0, 0.95);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-}
-
-#pdf-preview-popup.active {
-  display: flex;
-}
-
-.preview-container {
-  background: #1a1a1a;
-  border-radius: 20px;
-  padding: 20px;
-  max-width: 90vw;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 0 50px rgba(255, 204, 0, 0.5);
-  border: 2px solid #ffcc00;
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 204, 0, 0.3);
-}
-
-.preview-title {
-  color: #ffcc00;
-  font-size: 18px;
-  font-weight: bold;
-  flex: 1;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.preview-btn {
-  background: rgba(255, 204, 0, 0.2);
-  border: 1px solid #ffcc00;
-  color: white;
-  padding: 8px 15px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.preview-btn:hover {
-  background: rgba(255, 204, 0, 0.4);
-  transform: scale(1.05);
-}
-
-.preview-canvas-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: #000;
-  border-radius: 10px;
-  position: relative;
-  min-height: 400px;
-}
-
-#preview-canvas {
-  max-width: 100%;
-  max-height: 100%;
-  display: block;
-}
-
-.preview-loading {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.8);
-  color: #ffcc00;
-  font-size: 20px;
-  z-index: 10;
-}
-
-.preview-loading.hidden {
-  display: none;
-}
-
-.preview-hint {
-  margin-top: 10px;
-  text-align: center;
-  color: rgba(255, 204, 0, 0.8);
-  font-size: 11px;
-}
-
 /* [006] شاشة التحميل */
 #loading-overlay {
   position: fixed;
@@ -1006,7 +1094,7 @@ html, body {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 20;
   transition: opacity 0.3s ease-out;
   opacity: 0;
   pointer-events: none;
@@ -1121,7 +1209,7 @@ html, body {
 #js-toggle-container {
   position: fixed;
   right: 20px;
-  z-index: 10000;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1267,7 +1355,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 9999;
+  z-index: 9;
   width: 40px;
   height: 40px;
   background-color: rgba(0, 0, 0, 0.95);
@@ -1289,7 +1377,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   cursor: grabbing;
   transform: scale(1.1);
   box-shadow: 0 8px 24px rgba(255, 204, 0, 0.6);
-  z-index: 10001;
+  z-index: 11;
 }
 
 #eye-toggle-standalone:hover:not(.dragging) {
@@ -1299,7 +1387,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 /* [008] الأزرار الثابتة */
 #fixed-controls-layer {
-  z-index: 100000;
+  z-index: 5;
   pointer-events: none;
 }
 
@@ -1430,14 +1518,14 @@ img, image, svg, rect {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
-  z-index: -9999 !important;
+  z-index: -1 !important;
 }
 
 @media (max-width: 768px) {
   #reset-btn text, #change-group-btn text, 
   #preload-btn text, #group-btn-text { font-size: 22px; }
   #back-btn-text { font-size: 26px; }
-  
+
   .options-container {
     padding: 20px;
   }
@@ -1459,7 +1547,7 @@ img, image, svg, rect {
   #reset-btn text, #change-group-btn text, 
   #preload-btn text, #group-btn-text { font-size: 19px; }
   #back-btn-text { font-size: 23px; }
-  
+
   .method-container, .options-container {
     padding: 15px;
     max-width: 95%;
@@ -1481,15 +1569,15 @@ img, image, svg, rect {
   .method-filename, .options-filename {
     font-size: 14px;
   }
-  
+
   .btn-icon {
     font-size: 28px;
   }
-  
+
   .btn-text {
     font-size: 16px;
   }
-  
+
   .btn-desc {
     font-size: 12px;
   }
