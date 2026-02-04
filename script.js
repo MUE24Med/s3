@@ -1,3 +1,6 @@
+احذف مراقب الزوم لأعتم علي ملف 
+zoom-reset-fix.js
+و اضف مكانه مراقب لزر العين لمنع ظهور الحاويه ان لم اضغط علي الزر و ارسل السدس المعدل
 /* ========================================
    script.js - الجزء 1 من 6
    [000-001] Preload System + المتغيرات الأساسية
@@ -2749,77 +2752,113 @@ window.addEventListener('groupChanged', (e) => {
 console.log('✅ تم ربط resetBrowserZoom بتغيير الجروب');
 
 /* ========================================
-   [008] إصلاح زر العين - الحماية الصارمة من الظهور التلقائي
+   [008] إصلاح زر العين - منع التفاعل مع الحاويات المخفية
    ======================================== */
 
 function preventInteractionWhenHidden() {
     const toggleContainer = document.getElementById('js-toggle-container');
     const searchContainer = document.getElementById('search-container');
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
 
-    if (!toggleContainer || !searchContainer) return;
+    if (!toggleContainer || !searchContainer) {
+        console.warn('⚠️ لم يتم العثور على الحاويات، إعادة المحاولة...');
+        setTimeout(preventInteractionWhenHidden, 500);
+        return;
+    }
 
-    // دالة لفرض الإخفاء ومنع أي تفاعل نهائياً
-    const enforceHiddenState = () => {
-        const isSearchHidden = localStorage.getItem('searchVisible') === 'false';
-        
-        if (isSearchHidden) {
-            // إخفاء حاوية البحث والتطبيقات تماماً
-            [toggleContainer, searchContainer].forEach(el => {
-                el.style.setProperty('display', 'none', 'important');
-                el.style.setProperty('visibility', 'hidden', 'important');
-                el.style.setProperty('pointer-events', 'none', 'important');
-                el.style.setProperty('opacity', '0', 'important');
-            });
-            
-            // التأكد من ظهور زر العين الصغير
-            if (eyeToggleStandalone) {
-                eyeToggleStandalone.style.setProperty('display', 'flex', 'important');
-            }
-        }
+    const blockAllEvents = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
     };
 
-    // مراقب التغييرات: إذا حاول أي كود آخر إظهارها، سنعيد إخفاءها فوراً
-    const lockObserver = new MutationObserver((mutations) => {
-        const isSearchHidden = localStorage.getItem('searchVisible') === 'false';
-        if (isSearchHidden) {
-            mutations.forEach(mutation => {
-                if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
-                    enforceHiddenState();
+    const eventsToBlock = [
+        'click', 'touchstart', 'touchend', 'mousedown', 'mouseup', 
+        'pointerdown', 'pointerup', 'mouseover', 'mouseout',
+        'touchmove', 'contextmenu'
+    ];
+
+    const toggleObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+                const isHidden = toggleContainer.classList.contains('hidden') || 
+                                toggleContainer.classList.contains('fully-hidden') ||
+                                toggleContainer.style.display === 'none';
+
+                if (isHidden) {
+                    toggleContainer.style.pointerEvents = 'none';
+                    toggleContainer.style.visibility = 'hidden';
+                    eventsToBlock.forEach(eventType => {
+                        toggleContainer.addEventListener(eventType, blockAllEvents, true);
+                    });
+                } else {
+                    toggleContainer.style.pointerEvents = '';
+                    toggleContainer.style.visibility = '';
+                    eventsToBlock.forEach(eventType => {
+                        toggleContainer.removeEventListener(eventType, blockAllEvents, true);
+                    });
                 }
-            });
-        }
+            }
+        });
     });
 
-    lockObserver.observe(toggleContainer, { attributes: true });
-    lockObserver.observe(searchContainer, { attributes: true });
+    const searchObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+                const isHidden = searchContainer.classList.contains('hidden') ||
+                                searchContainer.style.display === 'none';
 
-    // تفعيل الإخفاء فور تشغيل الكود
-    enforceHiddenState();
-
-    // تعديل وظيفة الضغط على زر العين الصغير (الإظهار)
-    if (eyeToggleStandalone) {
-        // نعدل حدث endDrag أو click الخاص به ليعمل بشكل صحيح
-        eyeToggleStandalone.addEventListener('click', () => {
-            localStorage.setItem('searchVisible', 'true');
-            
-            [toggleContainer, searchContainer].forEach(el => {
-                el.style.removeProperty('display');
-                el.style.removeProperty('visibility');
-                el.style.removeProperty('pointer-events');
-                el.style.removeProperty('opacity');
-            });
-            
-            eyeToggleStandalone.style.display = 'none';
-            console.log('👁️ تم استعادة الواجهة عبر زر العين');
+                if (isHidden) {
+                    searchContainer.style.pointerEvents = 'none';
+                    searchContainer.style.visibility = 'hidden';
+                    eventsToBlock.forEach(eventType => {
+                        searchContainer.addEventListener(eventType, blockAllEvents, true);
+                    });
+                } else {
+                    searchContainer.style.pointerEvents = '';
+                    searchContainer.style.visibility = '';
+                    eventsToBlock.forEach(eventType => {
+                        searchContainer.removeEventListener(eventType, blockAllEvents, true);
+                    });
+                }
+            }
         });
+    });
+
+    toggleObserver.observe(toggleContainer, { 
+        attributes: true, 
+        attributeFilter: ['class', 'style'] 
+    });
+
+    searchObserver.observe(searchContainer, { 
+        attributes: true, 
+        attributeFilter: ['class', 'style'] 
+    });
+
+    if (toggleContainer.classList.contains('hidden') || 
+        toggleContainer.classList.contains('fully-hidden') ||
+        toggleContainer.style.display === 'none') {
+        toggleContainer.style.pointerEvents = 'none';
+        toggleContainer.style.visibility = 'hidden';
     }
+
+    if (searchContainer.classList.contains('hidden') ||
+        searchContainer.style.display === 'none') {
+        searchContainer.style.pointerEvents = 'none';
+        searchContainer.style.visibility = 'hidden';
+    }
+
+    console.log('✅ إصلاح زر العين 👁️ نشط');
 }
 
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', preventInteractionWhenHidden);
+} else {
+    preventInteractionWhenHidden();
+}
 
 /* نهاية الجزء 5 من 6 */
 /* ========================================
-   script.js - الجزء 6 من 6 (الأخير)
+   script.js - الجزء 6 من 6 (الأخير) - النسخة المعدلة
    [009] دوال معالجة SVG + scan + الإصلاحات النهائية
    ======================================== */
 
@@ -3183,7 +3222,6 @@ document.getElementById("closePdfBtn").onclick = () => {
     }
 
     popNavigationState();
-    resetBrowserZoom();
 };
 
 document.getElementById("downloadBtn").onclick = () => {
@@ -3242,21 +3280,238 @@ document.getElementById("shareBtn").onclick = () => {
     }
 })();
 
+/* ========================================
+   [012] إصلاح زر العين المحسّن - منع ظهور الحاويات إلا بالضغط
+   ======================================== */
+
+function preventInteractionWhenHidden() {
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const searchContainer = document.getElementById('search-container');
+    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+
+    if (!toggleContainer || !searchContainer) {
+        console.warn('⚠️ لم يتم العثور على الحاويات، إعادة المحاولة...');
+        setTimeout(preventInteractionWhenHidden, 500);
+        return;
+    }
+
+    const blockAllEvents = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
+    };
+
+    const eventsToBlock = [
+        'click', 'touchstart', 'touchend', 'mousedown', 'mouseup', 
+        'pointerdown', 'pointerup', 'mouseover', 'mouseout',
+        'touchmove', 'contextmenu', 'dblclick', 'wheel'
+    ];
+
+    // دالة لفرض الحالة المخفية بشكل صارم
+    const enforceHiddenState = () => {
+        const isHidden = localStorage.getItem('searchVisible') === 'false';
+        
+        if (isHidden) {
+            // إخفاء كامل وصارم
+            [toggleContainer, searchContainer].forEach(el => {
+                el.classList.add('hidden', 'fully-hidden');
+                el.style.setProperty('display', 'none', 'important');
+                el.style.setProperty('visibility', 'hidden', 'important');
+                el.style.setProperty('pointer-events', 'none', 'important');
+                el.style.setProperty('opacity', '0', 'important');
+                el.style.setProperty('z-index', '-9999', 'important');
+            });
+            
+            // إظهار زر العين
+            if (eyeToggleStandalone) {
+                eyeToggleStandalone.style.setProperty('display', 'flex', 'important');
+                eyeToggleStandalone.style.setProperty('visibility', 'visible', 'important');
+                eyeToggleStandalone.style.setProperty('pointer-events', 'auto', 'important');
+            }
+        } else {
+            // إظهار كامل
+            [toggleContainer, searchContainer].forEach(el => {
+                el.classList.remove('hidden', 'fully-hidden');
+                el.style.removeProperty('display');
+                el.style.removeProperty('visibility');
+                el.style.removeProperty('pointer-events');
+                el.style.removeProperty('opacity');
+                el.style.removeProperty('z-index');
+            });
+            
+            // إخفاء زر العين
+            if (eyeToggleStandalone) {
+                eyeToggleStandalone.style.display = 'none';
+            }
+        }
+    };
+
+    // مراقب صارم يمنع أي تغيير غير مصرح به
+    const strictObserver = new MutationObserver((mutations) => {
+        const isHidden = localStorage.getItem('searchVisible') === 'false';
+        if (isHidden) {
+            enforceHiddenState();
+        }
+    });
+
+    // مراقبة كلا الحاويتين
+    strictObserver.observe(toggleContainer, { 
+        attributes: true, 
+        attributeFilter: ['class', 'style'],
+        childList: false,
+        subtree: false
+    });
+
+    strictObserver.observe(searchContainer, { 
+        attributes: true, 
+        attributeFilter: ['class', 'style'],
+        childList: false,
+        subtree: false
+    });
+
+    // حظر جميع الأحداث على الحاويات المخفية
+    const applyEventBlockers = () => {
+        const isHidden = localStorage.getItem('searchVisible') === 'false';
+        
+        if (isHidden) {
+            eventsToBlock.forEach(eventType => {
+                toggleContainer.addEventListener(eventType, blockAllEvents, true);
+                searchContainer.addEventListener(eventType, blockAllEvents, true);
+            });
+        } else {
+            eventsToBlock.forEach(eventType => {
+                toggleContainer.removeEventListener(eventType, blockAllEvents, true);
+                searchContainer.removeEventListener(eventType, blockAllEvents, true);
+            });
+        }
+    };
+
+    // تطبيق الحالة الأولية
+    enforceHiddenState();
+    applyEventBlockers();
+
+    // معالج الضغط على زر العين الصغير (للإظهار فقط)
+    if (eyeToggleStandalone) {
+        let isDragging = false;
+        let dragTimeout;
+        let startX, startY;
+        let initialX, initialY;
+        let hasMoved = false;
+
+        const startDrag = (clientX, clientY) => {
+            startX = clientX;
+            startY = clientY;
+            hasMoved = false;
+
+            const rect = eyeToggleStandalone.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+
+            dragTimeout = setTimeout(() => {
+                isDragging = true;
+                eyeToggleStandalone.classList.add('dragging');
+            }, 200);
+        };
+
+        const doDrag = (clientX, clientY) => {
+            if (!isDragging) {
+                const deltaX = Math.abs(clientX - startX);
+                const deltaY = Math.abs(clientY - startY);
+                if (deltaX > 5 || deltaY > 5) {
+                    clearTimeout(dragTimeout);
+                }
+                return;
+            }
+
+            hasMoved = true;
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+
+            let newX = initialX + deltaX;
+            let newY = initialY + deltaY;
+
+            const maxX = window.innerWidth - eyeToggleStandalone.offsetWidth;
+            const maxY = window.innerHeight - eyeToggleStandalone.offsetHeight;
+
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            eyeToggleStandalone.style.left = `${newX}px`;
+            eyeToggleStandalone.style.top = `${newY}px`;
+            eyeToggleStandalone.style.right = 'auto';
+            eyeToggleStandalone.style.bottom = 'auto';
+        };
+
+        const endDrag = () => {
+            clearTimeout(dragTimeout);
+
+            if (isDragging) {
+                isDragging = false;
+                eyeToggleStandalone.classList.remove('dragging');
+
+                localStorage.setItem('eyeToggleTop', eyeToggleStandalone.style.top);
+                localStorage.setItem('eyeToggleLeft', eyeToggleStandalone.style.left);
+                localStorage.removeItem('eyeToggleRight');
+
+            } else if (!hasMoved) {
+                // ضغطة عادية - إظهار الواجهة
+                localStorage.setItem('searchVisible', 'true');
+                enforceHiddenState();
+                applyEventBlockers();
+                console.log('👁️ تم إظهار الواجهة');
+            }
+        };
+
+        // أحداث الماوس
+        eyeToggleStandalone.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            startDrag(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                doDrag(e.clientX, e.clientY);
+            }
+        });
+
+        window.addEventListener('mouseup', endDrag);
+
+        // أحداث اللمس
+        eyeToggleStandalone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            startDrag(touch.clientX, touch.clientY);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const touch = e.touches[0];
+                doDrag(touch.clientX, touch.clientY);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', endDrag);
+    }
+
+    console.log('✅ نظام حماية زر العين 👁️ المحسّن نشط');
+}
+
+// تفعيل النظام
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', preventInteractionWhenHidden);
+} else {
+    preventInteractionWhenHidden();
+}
+
 setupBackButton();
 
 console.log('✅ script.js تم تحميله بالكامل - جميع التحديثات مطبقة');
-console.log('🎯 المميزات الجديدة:');
-console.log('   ✅ معاينة PDF محسّنة مع خيارات فتح متعددة');
-console.log('   ✅ شريط أدوات Mozilla مع زر التوسيع');
-console.log('   ✅ نظام الضغط المطول للتمرير الرأسي');
-console.log('   ✅ إصلاح نظام القلوب في اللعبة (1 قلب للفيروس)');
-console.log('   ✅ حماية الصور المحمية');
-console.log('   ✅ إصلاح زر العين 👁️');
-console.log('   ✅ z-index بأرقام بسيطة (1-5)');
-console.log('   ✅ خلفية المعاينة شفافة');
-console.log('   ✅ نظام Zoom Reset مدمج');
-console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة');
+console.log('🎯 التحديثات في هذا الجزء:');
+console.log('   ✅ إزالة مراقب الزوم من zoom-reset-fix.js');
+console.log('   ✅ إضافة مراقب محسّن لزر العين');
+console.log('   ✅ منع ظهور الحاويات إلا بالضغط على زر العين');
+console.log('   ✅ حماية صارمة من التفاعلات غير المصرح بها');
 
 /* ========================================
-   🎉 نهاية script.js - جميع الأجزاء الستة 🎉
-   ======================================== */ 
+   🎉 نهاية script.js - الجزء السادس المعدل 🎉
+   ======================================== */
