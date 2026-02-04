@@ -25,6 +25,7 @@
         const filesToLoad = [
             'style.css',
             'script.js',
+            'index.html',
             'zoom-reset-fix.js',
             'script-additions.js',
             'tracker.js'
