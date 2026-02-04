@@ -467,7 +467,7 @@
    [001] المتغيرات والإعدادات الأساسية
    ======================================== */
 
-const REPO_timestam"S3";
+const REPO_NAME = "s3";
 const GITHUB_USER = "MUE24Med";
 
 const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
