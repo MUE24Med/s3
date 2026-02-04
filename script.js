@@ -1084,14 +1084,15 @@ function showOpenOptions(item) {
             
             // 🎯 حساب المقاس الأمثل لشاشة الخيارات
             const container = document.querySelector('.method-preview');
-            const maxWidth = container.clientWidth - 40;
-            const maxHeight = container.clientHeight - 40;
+            const maxWidth = container.clientWidth - 20; // هامش أقل
+            const maxHeight = container.clientHeight - 20;
             
             const viewport = page.getViewport({ scale: 1 });
             
+            // حساب Scale بحيث الصورة تملأ المساحة بدون تكبير زائد
             const scaleX = maxWidth / viewport.width;
             const scaleY = maxHeight / viewport.height;
-            const optimalScale = Math.min(scaleX, scaleY, 2.0); // حد أقصى 2.0x
+            const optimalScale = Math.min(scaleX, scaleY, 1.5); // حد أقصى 1.5x بدلاً من 2.0
             
             const scaledViewport = page.getViewport({ scale: optimalScale });
 
