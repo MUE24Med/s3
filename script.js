@@ -28,7 +28,8 @@
             'index.html',
             'zoom-reset-fix.js',
             'script-additions.js',
-            'tracker.js'
+            'tracker.js',
+            'sw.js'
         ];
 
         const progressBar = document.getElementById('progressBar');
