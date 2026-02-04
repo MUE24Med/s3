@@ -1,6 +1,6 @@
 /* ========================================
-   script.js - الجزء 1 من 5
-   [000-001] Preload + المتغيرات الأساسية
+   script.js - الجزء 1 من 6
+   [000-001] Preload System + المتغيرات الأساسية
    ======================================== */
 
 (function initPreloadSystem() {
@@ -25,8 +25,6 @@
         const filesToLoad = [
             'style.css',
             'script.js',
-            'zoom-reset-fix.js',
-            'script-additions.js',
             'tracker.js'
         ];
 
@@ -220,7 +218,7 @@
                         } else if (itemData.type === 'bacteria') {
                             hearts--;
                         } else if (itemData.type === 'virus') {
-                            hearts -= 1; // ✅ تم التعديل من 2 إلى 1
+                            hearts -= 1;
                         }
 
                         heartsDisplay.textContent = hearts;
@@ -476,7 +474,6 @@ const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/c
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
-// 🔒 قائمة الصور المحمية (للتكامل مع sw.js)
 const PROTECTED_FILES = [
     'image/0.webp',
     'image/wood.webp',
@@ -572,9 +569,9 @@ if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
-/* نهاية الجزء 1 من 5 */
+/* نهاية الجزء 1 من 6 */
 /* ========================================
-   script.js - الجزء 2 من 5
+   script.js - الجزء 2 من 6
    [002-003] نظام التنقل + دوال مساعدة + معاينة PDF
    ======================================== */
 
@@ -1039,10 +1036,12 @@ function closePDFPreview() {
 }
 
 function showOpenOptions(item) {
-    const optionsOverlay = document.getElementById('open-options-overlay');
-    const optionsContainer = document.getElementById('open-options-container');
+    const popup = document.getElementById('open-method-popup');
+    const canvas = document.getElementById('method-preview-canvas');
+    const loading = document.getElementById('method-loading');
+    const filenameEl = document.getElementById('method-filename');
 
-    if (!optionsOverlay || !optionsContainer) {
+    if (!popup || !canvas) {
         console.error('❌ عناصر خيارات الفتح غير موجودة');
         openWithMozilla(item);
         return;
@@ -1050,46 +1049,52 @@ function showOpenOptions(item) {
 
     currentPreviewItem = item;
     const fileName = item.path.split('/').pop();
+    const url = `${RAW_CONTENT_BASE}${item.path}`;
 
-    document.getElementById('options-filename').textContent = fileName.length > 40 
-        ? fileName.substring(0, 37) + '...' 
-        : fileName;
+    popup.classList.add('active');
+    filenameEl.textContent = fileName.length > 40 ? fileName.substring(0, 37) + '...' : fileName;
+    loading.classList.remove('hidden');
+    canvas.style.display = 'none';
 
-    optionsOverlay.classList.add('active');
+    console.log('📋 عرض خيارات الفتح:', url);
 
-    const mozillaBtn = document.getElementById('open-mozilla-btn');
-    const driveBtn = document.getElementById('open-drive-btn');
-    const browserBtn = document.getElementById('open-browser-btn');
+    // تحميل المعاينة
+    (async () => {
+        try {
+            if (typeof pdfjsLib === 'undefined') {
+                throw new Error('PDF.js غير محمل');
+            }
 
-    const newMozillaBtn = mozillaBtn.cloneNode(true);
-    const newDriveBtn = driveBtn.cloneNode(true);
-    const newBrowserBtn = browserBtn.cloneNode(true);
+            const loadingTask = pdfjsLib.getDocument(url);
+            const pdf = await loadingTask.promise;
+            const page = await pdf.getPage(1);
+            const viewport = page.getViewport({ scale: 1.5 });
 
-    mozillaBtn.parentNode.replaceChild(newMozillaBtn, mozillaBtn);
-    driveBtn.parentNode.replaceChild(newDriveBtn, driveBtn);
-    browserBtn.parentNode.replaceChild(newBrowserBtn, browserBtn);
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
 
-    newMozillaBtn.addEventListener('click', () => {
-        openWithMozilla(item);
-        closeOpenOptions();
-    });
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
 
-    newDriveBtn.addEventListener('click', () => {
-        openWithDrive(item);
-        closeOpenOptions();
-    });
+            loading.classList.add('hidden');
+            canvas.style.display = 'block';
 
-    newBrowserBtn.addEventListener('click', () => {
-        openWithBrowser(item);
-        closeOpenOptions();
-    });
+        } catch (error) {
+            console.error('❌ خطأ في المعاينة:', error);
+            loading.textContent = '❌ فشل التحميل';
+        }
+    })();
 }
 
 function closeOpenOptions() {
-    const optionsOverlay = document.getElementById('open-options-overlay');
-    if (optionsOverlay) {
-        optionsOverlay.classList.remove('active');
+    const popup = document.getElementById('open-method-popup');
+    if (popup) {
+        popup.classList.remove('active');
     }
+    currentPreviewItem = null;
 }
 
 function openWithMozilla(item) {
@@ -1111,6 +1116,8 @@ function openWithMozilla(item) {
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
+
+    closeOpenOptions();
 }
 
 function openWithDrive(item) {
@@ -1122,6 +1129,8 @@ function openWithDrive(item) {
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
+
+    closeOpenOptions();
 }
 
 function openWithBrowser(item) {
@@ -1131,6 +1140,8 @@ function openWithBrowser(item) {
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
+
+    closeOpenOptions();
 }
 
 function toggleMozillaToolbar() {
@@ -1152,10 +1163,10 @@ function toggleMozillaToolbar() {
     }
 }
 
-/* نهاية الجزء 2 من 5 */
+/* نهاية الجزء 2 من 6 */
 /* ========================================
-   script.js - الجزء 3 من 5
-   [004] معالجات الأحداث والأزرار
+   script.js - الجزء 3 من 6
+   [004] معالجات الأحداث والأزرار + Reset Button
    ======================================== */
 
 document.querySelectorAll('.group-btn').forEach(btn => {
@@ -1214,7 +1225,7 @@ if (resetBtn) {
         loadingMsg.innerHTML = `
             <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
                         background: rgba(0,0,0,0.9); color: white; padding: 30px; 
-                        border-radius: 15px; z-index: 99999; text-align: center;
+                        border-radius: 15px; z-index: 10; text-align: center;
                         box-shadow: 0 0 30px rgba(255,204,0,0.5);">
                 <h2 style="margin: 0 0 15px 0; color: #ffca28;">🔍 جاري الفحص...</h2>
                 <p style="margin: 5px 0;" id="update-status">يتم الاتصال بـ GitHub...</p>
@@ -1301,14 +1312,11 @@ if (resetBtn) {
             let protectedCount = 0;
             const filesToUpdate = [];
 
-            // --- بداية التعديل الجديد ---
             for (const file of modifiedFiles) {
                 const filename = file.filename;
 
-                // تجاهل ملفات النظام
                 if (filename.startsWith('.') || filename.includes('README')) continue;
 
-                // 🔒 فحص الحماية
                 if (typeof isProtectedFile === 'function' && isProtectedFile(filename)) {
                     console.log(`🔒 محمي: ${filename}`);
                     updateDetails(`🔒 محمي: ${filename}`);
@@ -1316,7 +1324,6 @@ if (resetBtn) {
                     continue;
                 }
 
-                // ⚙️ إذن خاص لملف sw.js
                 if (filename === 'sw.js' || filename.endsWith('/sw.js')) {
                     const updateSW = confirm("⚙️ اكتشفنا تحديثاً لملف النظام (sw.js).\nهل تريد تحديثه الآن؟");
                     if (!updateSW) {
@@ -1327,7 +1334,6 @@ if (resetBtn) {
 
                 filesToUpdate.push(filename);
             }
-            // --- نهاية التعديل الجديد ---
 
             updateDetails(`📦 سيتم تحديث ${filesToUpdate.length} ملف`);
             if (protectedCount > 0) {
@@ -1336,7 +1342,6 @@ if (resetBtn) {
 
             for (const filename of filesToUpdate) {
                 try {
-                    // حذف النسخ القديمة بكل المسارات المحتملة
                     await cache.delete(`./${filename}`);
                     await cache.delete(`/${filename}`);
                     await cache.delete(filename);
@@ -1352,7 +1357,6 @@ if (resetBtn) {
                         updatedCount++;
                         updateDetails(`✅ ${filename}`);
 
-                        // ⭐ تفعيل Service Worker فوراً إذا تم تحديثه
                         if (filename.includes('sw.js') && navigator.serviceWorker) {
                             const reg = await navigator.serviceWorker.getRegistration();
                             if (reg) {
@@ -1529,12 +1533,10 @@ if (eyeToggle && searchContainer) {
         searchContainer.classList.add('hidden');
         searchContainer.style.display = 'none';
         searchContainer.style.pointerEvents = 'none';
-        searchContainer.style.zIndex = '-9999';
 
         toggleContainer.classList.add('fully-hidden');
         toggleContainer.style.display = 'none';
         toggleContainer.style.pointerEvents = 'none';
-        toggleContainer.style.zIndex = '-9999';
 
         if (eyeToggleStandalone) {
             eyeToggleStandalone.style.display = 'flex';
@@ -1548,12 +1550,10 @@ if (eyeToggle && searchContainer) {
         searchContainer.classList.add('hidden');
         searchContainer.style.display = 'none';
         searchContainer.style.pointerEvents = 'none';
-        searchContainer.style.zIndex = '-9999';
 
         toggleContainer.classList.add('fully-hidden');
         toggleContainer.style.display = 'none';
         toggleContainer.style.pointerEvents = 'none';
-        toggleContainer.style.zIndex = '-9999';
 
         localStorage.setItem('searchVisible', 'false');
 
@@ -1644,12 +1644,10 @@ if (eyeToggle && searchContainer) {
                 searchContainer.classList.remove('hidden');
                 searchContainer.style.display = '';
                 searchContainer.style.pointerEvents = '';
-                searchContainer.style.zIndex = '';
 
                 toggleContainer.classList.remove('fully-hidden');
                 toggleContainer.style.display = 'flex';
                 toggleContainer.style.pointerEvents = 'auto';
-                toggleContainer.style.zIndex = '10000';
 
                 eyeToggleStandalone.style.display = 'none';
                 localStorage.setItem('searchVisible', 'true');
@@ -1706,6 +1704,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const popup = document.getElementById('pdf-preview-popup');
 
     const expandToolbarBtn = document.getElementById('expand-toolbar-btn');
+    const methodCloseBtn = document.getElementById('method-close-btn');
 
     if (closeBtn) {
         closeBtn.addEventListener('click', closePDFPreview);
@@ -1732,18 +1731,37 @@ document.addEventListener('DOMContentLoaded', () => {
         expandToolbarBtn.addEventListener('click', toggleMozillaToolbar);
     }
 
-    const optionsOverlay = document.getElementById('open-options-overlay');
-    if (optionsOverlay) {
-        optionsOverlay.addEventListener('click', (e) => {
-            if (e.target === optionsOverlay) {
-                closeOpenOptions();
+    if (methodCloseBtn) {
+        methodCloseBtn.addEventListener('click', closeOpenOptions);
+    }
+
+    // ربط الأزرار الثلاثة
+    const mozillaBtn = document.getElementById('open-mozilla-btn');
+    const browserBtn = document.getElementById('open-browser-btn');
+    const driveBtn = document.getElementById('open-drive-btn');
+
+    if (mozillaBtn) {
+        mozillaBtn.addEventListener('click', () => {
+            if (currentPreviewItem) {
+                openWithMozilla(currentPreviewItem);
             }
         });
     }
 
-    const closeOptionsBtn = document.getElementById('close-options-btn');
-    if (closeOptionsBtn) {
-        closeOptionsBtn.addEventListener('click', closeOpenOptions);
+    if (browserBtn) {
+        browserBtn.addEventListener('click', () => {
+            if (currentPreviewItem) {
+                openWithBrowser(currentPreviewItem);
+            }
+        });
+    }
+
+    if (driveBtn) {
+        driveBtn.addEventListener('click', () => {
+            if (currentPreviewItem) {
+                openWithDrive(currentPreviewItem);
+            }
+        });
     }
 
     console.log('✅ معالجات المعاينة والفتح جاهزة');
@@ -1873,10 +1891,10 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-/* نهاية الجزء 3 من 5 */
+/* نهاية الجزء 3 من 6 */
 /* ========================================
-   script.js - الجزء 4 من 5
-   [005] loadImages + updateWoodInterface + نظام الضغط المطول
+   script.js - الجزء 4 من 6
+   [005] loadImages + updateWoodInterface (الجزء الأول)
    ======================================== */
 
 function loadImages() {
@@ -2369,6 +2387,23 @@ async function updateWoodInterface() {
 
     console.log(`📊 المحتوى: ${totalContentHeight}px، التمرير المتاح: ${maxScroll}px`);
 
+    // سيتم إضافة نظام التمرير في الجزء 5
+
+    dynamicGroup.appendChild(scrollContainerGroup);
+}
+
+/* نهاية الجزء 4 من 6 */
+/* ========================================
+   script.js - الجزء 5 من 6
+   [006] نظام التمرير الرأسي + zoom reset
+   ======================================== */
+
+// هذا الجزء يُضاف داخل دالة updateWoodInterface بعد حساب maxScroll
+
+// نظام التمرير الرأسي (يُضاف في نهاية updateWoodInterface)
+function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight) {
+    let scrollOffset = 0;
+    
     if (maxScroll > 0) {
         const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         scrollBarGroup.setAttribute("class", "scroll-bar-group");
@@ -2401,7 +2436,6 @@ async function updateWoodInterface() {
             scrollBarHandle.setAttribute("y", handleY);
         }
 
-        // نظام الضغط المطول المحسّن للتمرير
         let isDraggingContent = false;
         let isLongPressing = false;
         let longPressTimer = null;
@@ -2481,7 +2515,6 @@ async function updateWoodInterface() {
         woodViewRect.style.pointerEvents = "all";
         woodViewRect.style.cursor = "grab";
 
-        // معالج الضغط المطول على الماوس
         woodViewRect.addEventListener('mousedown', (e) => {
             const target = e.target;
             if (target.classList && target.classList.contains('scroll-handle')) return;
@@ -2499,7 +2532,6 @@ async function updateWoodInterface() {
             clearTimeout(longPressTimer);
         });
 
-        // معالج الضغط المطول على اللمس
         woodViewRect.addEventListener('touchstart', (e) => {
             const target = e.target;
             if (target.classList && target.classList.contains('scroll-handle')) return;
@@ -2549,7 +2581,6 @@ async function updateWoodInterface() {
             }
         });
 
-        // معالج شريط التمرير
         let isDraggingHandle = false;
         let handleStartY = 0;
         let handleStartOffset = 0;
@@ -2608,14 +2639,235 @@ async function updateWoodInterface() {
         scrollBarGroup.appendChild(scrollBarHandle);
         scrollContainerGroup.appendChild(scrollBarGroup);
     }
-
-    dynamicGroup.appendChild(scrollContainerGroup);
 }
 
-/* نهاية الجزء 4 من 5 */
 /* ========================================
-   script.js - الجزء 5 من 5 (الأخير)
-   [006] دوال معالجة SVG + scan + الإصلاحات النهائية
+   [007] نظام Zoom Reset المدمج
+   ======================================== */
+
+function resetBrowserZoom() {
+    if (document.body.style.zoom && document.body.style.zoom !== '100%') {
+        document.body.style.zoom = '100%';
+        console.log('🔄 تم إعادة تعيين body.style.zoom');
+    }
+
+    if (document.body.style.transform && document.body.style.transform.includes('scale')) {
+        document.body.style.transform = 'scale(1)';
+        console.log('🔄 تم إعادة تعيين transform scale');
+    }
+
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        const currentContent = viewport.getAttribute('content');
+        const resetContent = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no';
+
+        if (currentContent !== resetContent) {
+            viewport.setAttribute('content', resetContent);
+            console.log('🔄 تم إعادة تعيين viewport meta');
+        }
+    }
+
+    document.documentElement.style.zoom = '100%';
+    document.body.style.zoom = '100%';
+
+    try {
+        window.dispatchEvent(new Event('resize'));
+        console.log('🔄 تم إرسال حدث resize');
+    } catch (e) {
+        console.warn('⚠️ فشل إرسال حدث resize:', e);
+    }
+
+    console.log('✅ تم إعادة تعيين جميع أنواع الزوم إلى 100%');
+}
+
+// تطبيق resetBrowserZoom على الدوال الرئيسية
+const originalGoToWood = window.goToWood;
+if (originalGoToWood) {
+    window.goToWood = function() {
+        console.log('🔄 goToWood تم استدعاؤها');
+        resetBrowserZoom();
+        return originalGoToWood.call(this);
+    };
+}
+
+const originalGoToMapEnd = window.goToMapEnd;
+if (originalGoToMapEnd) {
+    window.goToMapEnd = function() {
+        console.log('🔄 goToMapEnd تم استدعاؤها');
+        resetBrowserZoom();
+        return originalGoToMapEnd.call(this);
+    };
+}
+
+// مراقبة التمرير
+if (scrollContainer) {
+    let scrollTimeout;
+
+    scrollContainer.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+
+        scrollTimeout = setTimeout(() => {
+            const currentScroll = scrollContainer.scrollLeft;
+            const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+            const THRESHOLD = 50;
+
+            const isAtRight = currentScroll <= THRESHOLD;
+            const isAtLeft = currentScroll >= (maxScrollRight - THRESHOLD);
+
+            if (isAtRight || isAtLeft) {
+                console.log(`🔄 وصول لأقصى ${isAtRight ? 'اليمين' : 'اليسار'}`);
+                resetBrowserZoom();
+            }
+        }, 300);
+    });
+
+    console.log('✅ تم ربط resetBrowserZoom بحدث التمرير');
+}
+
+// مراقبة فتح/إغلاق Mozilla PDF
+const pdfOverlay = document.getElementById('pdf-overlay');
+if (pdfOverlay) {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                const isHidden = pdfOverlay.classList.contains('hidden');
+
+                if (isHidden) {
+                    console.log('🔄 تم إغلاق Mozilla PDF');
+                    setTimeout(resetBrowserZoom, 100);
+                } else {
+                    console.log('🔄 تم فتح Mozilla PDF');
+                    setTimeout(resetBrowserZoom, 100);
+                }
+            }
+        });
+    });
+
+    observer.observe(pdfOverlay, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+
+    console.log('✅ تم ربط resetBrowserZoom بفتح/إغلاق Mozilla');
+}
+
+// مراقبة تغيير الجروب
+window.addEventListener('groupChanged', (e) => {
+    console.log('🔄 تم تغيير الجروب إلى:', e.detail);
+    resetBrowserZoom();
+});
+
+console.log('✅ تم ربط resetBrowserZoom بتغيير الجروب');
+
+/* ========================================
+   [008] إصلاح زر العين - منع التفاعل مع الحاويات المخفية
+   ======================================== */
+
+function preventInteractionWhenHidden() {
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const searchContainer = document.getElementById('search-container');
+
+    if (!toggleContainer || !searchContainer) {
+        console.warn('⚠️ لم يتم العثور على الحاويات، إعادة المحاولة...');
+        setTimeout(preventInteractionWhenHidden, 500);
+        return;
+    }
+
+    const blockAllEvents = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
+    };
+
+    const eventsToBlock = [
+        'click', 'touchstart', 'touchend', 'mousedown', 'mouseup', 
+        'pointerdown', 'pointerup', 'mouseover', 'mouseout',
+        'touchmove', 'contextmenu'
+    ];
+
+    const toggleObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+                const isHidden = toggleContainer.classList.contains('hidden') || 
+                                toggleContainer.classList.contains('fully-hidden') ||
+                                toggleContainer.style.display === 'none';
+
+                if (isHidden) {
+                    toggleContainer.style.pointerEvents = 'none';
+                    toggleContainer.style.visibility = 'hidden';
+                    eventsToBlock.forEach(eventType => {
+                        toggleContainer.addEventListener(eventType, blockAllEvents, true);
+                    });
+                } else {
+                    toggleContainer.style.pointerEvents = '';
+                    toggleContainer.style.visibility = '';
+                    eventsToBlock.forEach(eventType => {
+                        toggleContainer.removeEventListener(eventType, blockAllEvents, true);
+                    });
+                }
+            }
+        });
+    });
+
+    const searchObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+                const isHidden = searchContainer.classList.contains('hidden') ||
+                                searchContainer.style.display === 'none';
+
+                if (isHidden) {
+                    searchContainer.style.pointerEvents = 'none';
+                    searchContainer.style.visibility = 'hidden';
+                    eventsToBlock.forEach(eventType => {
+                        searchContainer.addEventListener(eventType, blockAllEvents, true);
+                    });
+                } else {
+                    searchContainer.style.pointerEvents = '';
+                    searchContainer.style.visibility = '';
+                    eventsToBlock.forEach(eventType => {
+                        searchContainer.removeEventListener(eventType, blockAllEvents, true);
+                    });
+                }
+            }
+        });
+    });
+
+    toggleObserver.observe(toggleContainer, { 
+        attributes: true, 
+        attributeFilter: ['class', 'style'] 
+    });
+
+    searchObserver.observe(searchContainer, { 
+        attributes: true, 
+        attributeFilter: ['class', 'style'] 
+    });
+
+    if (toggleContainer.classList.contains('hidden') || 
+        toggleContainer.classList.contains('fully-hidden') ||
+        toggleContainer.style.display === 'none') {
+        toggleContainer.style.pointerEvents = 'none';
+        toggleContainer.style.visibility = 'hidden';
+    }
+
+    if (searchContainer.classList.contains('hidden') ||
+        searchContainer.style.display === 'none') {
+        searchContainer.style.pointerEvents = 'none';
+        searchContainer.style.visibility = 'hidden';
+    }
+
+    console.log('✅ إصلاح زر العين 👁️ نشط');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', preventInteractionWhenHidden);
+} else {
+    preventInteractionWhenHidden();
+}
+
+/* نهاية الجزء 5 من 6 */
+/* ========================================
+   script.js - الجزء 6 من 6 (الأخير)
+   [009] دوال معالجة SVG + scan + الإصلاحات النهائية
    ======================================== */
 
 function getCumulativeTranslate(element) {
@@ -2963,7 +3215,7 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [007] معالجات PDF Viewer
+   [010] معالجات PDF Viewer
    ======================================== */
 
 document.getElementById("closePdfBtn").onclick = () => {
@@ -2978,6 +3230,7 @@ document.getElementById("closePdfBtn").onclick = () => {
     }
 
     popNavigationState();
+    resetBrowserZoom();
 };
 
 document.getElementById("downloadBtn").onclick = () => {
@@ -3010,118 +3263,7 @@ document.getElementById("shareBtn").onclick = () => {
 };
 
 /* ========================================
-   [008] إصلاح زر العين - منع التفاعل مع الحاويات المخفية
-   ======================================== */
-
-function preventInteractionWhenHidden() {
-    const toggleContainer = document.getElementById('js-toggle-container');
-    const searchContainer = document.getElementById('search-container');
-
-    if (!toggleContainer || !searchContainer) {
-        console.warn('⚠️ لم يتم العثور على الحاويات، إعادة المحاولة...');
-        setTimeout(preventInteractionWhenHidden, 500);
-        return;
-    }
-
-    const blockAllEvents = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        return false;
-    };
-
-    const eventsToBlock = [
-        'click', 'touchstart', 'touchend', 'mousedown', 'mouseup', 
-        'pointerdown', 'pointerup', 'mouseover', 'mouseout',
-        'touchmove', 'contextmenu'
-    ];
-
-    const toggleObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
-                const isHidden = toggleContainer.classList.contains('hidden') || 
-                                toggleContainer.classList.contains('fully-hidden') ||
-                                toggleContainer.style.display === 'none';
-
-                if (isHidden) {
-                    toggleContainer.style.pointerEvents = 'none';
-                    toggleContainer.style.zIndex = '-9999';
-                    toggleContainer.style.visibility = 'hidden';
-                    eventsToBlock.forEach(eventType => {
-                        toggleContainer.addEventListener(eventType, blockAllEvents, true);
-                    });
-                } else {
-                    toggleContainer.style.pointerEvents = '';
-                    toggleContainer.style.zIndex = '';
-                    toggleContainer.style.visibility = '';
-                    eventsToBlock.forEach(eventType => {
-                        toggleContainer.removeEventListener(eventType, blockAllEvents, true);
-                    });
-                }
-            }
-        });
-    });
-
-    const searchObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
-                const isHidden = searchContainer.classList.contains('hidden') ||
-                                searchContainer.style.display === 'none';
-
-                if (isHidden) {
-                    searchContainer.style.pointerEvents = 'none';
-                    searchContainer.style.zIndex = '-9999';
-                    searchContainer.style.visibility = 'hidden';
-                    eventsToBlock.forEach(eventType => {
-                        searchContainer.addEventListener(eventType, blockAllEvents, true);
-                    });
-                } else {
-                    searchContainer.style.pointerEvents = '';
-                    searchContainer.style.zIndex = '';
-                    searchContainer.style.visibility = '';
-                    eventsToBlock.forEach(eventType => {
-                        searchContainer.removeEventListener(eventType, blockAllEvents, true);
-                    });
-                }
-            }
-        });
-    });
-
-    toggleObserver.observe(toggleContainer, { 
-        attributes: true, 
-        attributeFilter: ['class', 'style'] 
-    });
-
-    searchObserver.observe(searchContainer, { 
-        attributes: true, 
-        attributeFilter: ['class', 'style'] 
-    });
-
-    if (toggleContainer.classList.contains('hidden') || 
-        toggleContainer.classList.contains('fully-hidden') ||
-        toggleContainer.style.display === 'none') {
-        toggleContainer.style.pointerEvents = 'none';
-        toggleContainer.style.zIndex = '-9999';
-        toggleContainer.style.visibility = 'hidden';
-    }
-
-    if (searchContainer.classList.contains('hidden') ||
-        searchContainer.style.display === 'none') {
-        searchContainer.style.pointerEvents = 'none';
-        searchContainer.style.zIndex = '-9999';
-        searchContainer.style.visibility = 'hidden';
-    }
-
-    console.log('✅ إصلاح زر العين 👁️ نشط');
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', preventInteractionWhenHidden);
-} else {
-    preventInteractionWhenHidden();
-}
-
-/* ========================================
-   [009] تحميل آخر جروب تلقائياً
+   [011] تحميل آخر جروب تلقائياً
    ======================================== */
 
 (function autoLoadLastGroup() {
@@ -3157,7 +3299,11 @@ console.log('   ✅ نظام الضغط المطول للتمرير الرأسي
 console.log('   ✅ إصلاح نظام القلوب في اللعبة (1 قلب للفيروس)');
 console.log('   ✅ حماية الصور المحمية');
 console.log('   ✅ إصلاح زر العين 👁️');
+console.log('   ✅ z-index بأرقام بسيطة (1-5)');
+console.log('   ✅ خلفية المعاينة شفافة');
+console.log('   ✅ نظام Zoom Reset مدمج');
+console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة');
 
 /* ========================================
-   🎉 نهاية script.js - جميع الأجزاء الخمسة 🎉
+   🎉 نهاية script.js - جميع الأجزاء الستة 🎉
    ======================================== */
