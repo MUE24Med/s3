@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.02.04.UPDATED">
+<meta name="version" content="2025.02.03.FINAL">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -24,34 +24,34 @@
 <body>
 
 <!-- شاشة اختيار طريقة الفتح -->
-<div id="open-method-popup">
+<div id="open-method-popup" class="hidden">
   <div class="method-container">
     <div class="method-header">
       <h2>اختر طريقة الفتح</h2>
       <span class="method-close" id="method-close-btn">✖️</span>
     </div>
-
+    
     <div class="method-preview">
       <canvas id="method-preview-canvas"></canvas>
       <div class="method-loading" id="method-loading">⏳ جاري التحميل...</div>
     </div>
-
+    
     <div class="method-filename" id="method-filename">اسم الملف</div>
-
+    
     <div class="method-buttons">
       <button class="method-btn mozilla-btn" id="open-mozilla-btn">
-        📄 Mozilla
-        <span class="method-hint">عارض متقدم</span>
+        📄 فتح في Mozilla PDF
+        <span class="method-hint">عارض متقدم مع أدوات</span>
       </button>
-
+      
       <button class="method-btn browser-btn" id="open-browser-btn">
-        🌐 متصفح
-        <span class="method-hint">فتح مباشر</span>
+        🌐 فتح في المتصفح
+        <span class="method-hint">فتح مباشر بسيط</span>
       </button>
-
+      
       <button class="method-btn drive-btn" id="open-drive-btn">
-        💾 Drive
-        <span class="method-hint">Google Drive</span>
+        💾 حفظ في Drive
+        <span class="method-hint">رفع للسحابة</span>
       </button>
     </div>
   </div>
@@ -191,12 +191,9 @@
 <!-- عارض PDF -->
 <div id="pdf-overlay" class="hidden">
   <div id="toolbar">
-    <div id="pdf-controls">
-      <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
-      <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
-      <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
-      <button id="expand-toolbar-btn" class="pdf-control-btn" title="إخفاء الأزرار">🔼</button>
-    </div>
+    <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
+    <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
+    <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
   </div>
   <iframe id="pdfFrame" src="" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
 </div>
