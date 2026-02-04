@@ -376,20 +376,34 @@
 .method-preview {
   background: #000;
   border-radius: 10px;
-  min-height: 300px;
+  height: 300px; /* ارتفاع ثابت */
   max-height: 50vh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: 0; /* إزالة الهامش لإلصاق الأزرار */
+  margin-bottom: 0;
   position: relative;
+  padding: 10px; /* هامش داخلي */
 }
 
 #method-preview-canvas {
   max-width: 100%;
   max-height: 100%;
+  width: auto;
+  height: auto;
   display: block;
+  object-fit: contain; /* مهم جداً */
+@media (max-width: 768px) {
+  .method-preview {
+    height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .method-preview {
+    height: 200px;
+  }
 }
 
 .method-loading {
