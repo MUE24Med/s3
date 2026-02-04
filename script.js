@@ -2642,7 +2642,7 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
 }
 
 /* ========================================
-   [008] إصلاح زر العين - منع التفاعل مع الحاويات المخفية
+   [007] إصلاح زر العين - منع التفاعل مع الحاويات المخفية
    ======================================== */
 
 function preventInteractionWhenHidden() {
@@ -2749,7 +2749,7 @@ if (document.readyState === 'loading') {
 /* نهاية الجزء 5 من 6 */
 /* ========================================
    script.js - الجزء 6 من 6 (الأخير)
-   [009] دوال معالجة SVG + scan + الإصلاحات النهائية
+   [008] دوال معالجة SVG + scan + الإصلاحات النهائية
    ======================================== */
 
 function getCumulativeTranslate(element) {
@@ -3097,7 +3097,7 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [010] معالجات PDF Viewer
+   [009] معالجات PDF Viewer
    ======================================== */
 
 document.getElementById("closePdfBtn").onclick = () => {
@@ -3145,7 +3145,7 @@ document.getElementById("shareBtn").onclick = () => {
 };
 
 /* ========================================
-   [011] تحميل آخر جروب تلقائياً
+   [010] تحميل آخر جروب تلقائياً
    ======================================== */
 
 (function autoLoadLastGroup() {
