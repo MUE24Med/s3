@@ -3259,22 +3259,21 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
 })();
 
 /* ========================================
-   [011] حركة الإصبع التوضيحية لزر العين 👁️
+   [011] محاكاة سحب زر العين باليد 👆
    ======================================== */
 
-(function addFingerGestureAnimation() {
-    const eyeToggle = document.getElementById('eye-toggle');
+(function addRealisticFingerDrag() {
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
 
-    if (!eyeToggle && !eyeToggleStandalone) {
-        console.warn('⚠️ زر العين غير موجود');
+    if (!eyeToggleStandalone) {
+        console.warn('⚠️ زر العين الدائري غير موجود');
         return;
     }
 
     // إنشاء SVG للحركة
     const svgNS = "http://www.w3.org/2000/svg";
     const animationSvg = document.createElementNS(svgNS, "svg");
-    animationSvg.id = "finger-animation-svg";
+    animationSvg.id = "finger-drag-animation";
     animationSvg.style.cssText = `
         position: fixed;
         top: 0;
@@ -3287,91 +3286,144 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
     `;
     document.body.appendChild(animationSvg);
 
-    // إنشاء الخط
-    const animationLine = document.createElementNS(svgNS, "line");
-    animationLine.setAttribute("stroke", "#ffca28");
-    animationLine.setAttribute("stroke-width", "4");
-    animationLine.setAttribute("stroke-linecap", "round");
-    animationLine.setAttribute("stroke-dasharray", "10,5");
-    animationLine.style.filter = "drop-shadow(0 0 8px #ffca28)";
-    animationSvg.appendChild(animationLine);
-
     // إنشاء لوجو اليد 👆
     const handEmoji = document.createElementNS(svgNS, "text");
     handEmoji.textContent = "👆";
-    handEmoji.setAttribute("font-size", "48");
-    handEmoji.style.filter = "drop-shadow(0 0 5px white)";
+    handEmoji.setAttribute("font-size", "64");
+    handEmoji.style.filter = "drop-shadow(0 0 8px rgba(255,202,40,0.8))";
     animationSvg.appendChild(handEmoji);
 
-    function triggerFingerAnimation(button) {
-        const rect = button.getBoundingClientRect();
-        
-        // نقطة البداية (وسط الزر)
-        const startX = rect.left + rect.width / 2;
-        const startY = rect.top + rect.height / 2;
+    // إنشاء خط المسار (اختياري)
+    const pathLine = document.createElementNS(svgNS, "path");
+    pathLine.setAttribute("stroke", "#ffca28");
+    pathLine.setAttribute("stroke-width", "3");
+    pathLine.setAttribute("fill", "none");
+    pathLine.setAttribute("stroke-dasharray", "8,4");
+    pathLine.style.opacity = "0.5";
+    animationSvg.appendChild(pathLine);
+
+    let isAnimating = false;
+
+    function startDragAnimation() {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        // الحصول على موقع الزر الحالي
+        const startRect = eyeToggleStandalone.getBoundingClientRect();
+        const startX = startRect.left + startRect.width / 2;
+        const startY = startRect.top + startRect.height / 2;
 
         // نقطة النهاية (أقصى اليمين الأعلى)
-        const endX = window.innerWidth - 20;
-        const endY = 20;
+        const endX = window.innerWidth - 40;
+        const endY = 40;
+
+        // حفظ الموقع الأصلي
+        const originalTop = eyeToggleStandalone.style.top;
+        const originalLeft = eyeToggleStandalone.style.left;
+        const originalRight = eyeToggleStandalone.style.right;
 
         // إظهار SVG
         animationSvg.style.display = "block";
 
-        // تأخير 0.1 ثانية
+        // تأخير 0.1 ثانية قبل البدء
         setTimeout(() => {
-            let progress = 0;
-            const duration = 800; // مدة الحركة بالميلي ثانية
+            const duration = 1000; // مدة الحركة
             const startTime = Date.now();
+
+            // إضافة class للإشارة أن الزر يتحرك
+            eyeToggleStandalone.classList.add('being-dragged');
+            eyeToggleStandalone.style.transition = 'none';
+
+            let pathData = `M ${startX} ${startY}`;
 
             function animate() {
                 const elapsed = Date.now() - startTime;
-                progress = Math.min(elapsed / duration, 1);
+                const progress = Math.min(elapsed / duration, 1);
+
+                // تسهيل الحركة (easing)
+                const eased = progress < 0.5
+                    ? 2 * progress * progress
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
                 // حساب الموقع الحالي
-                const currentX = startX + (endX - startX) * progress;
-                const currentY = startY + (endY - startY) * progress;
+                const currentX = startX + (endX - startX) * eased;
+                const currentY = startY + (endY - startY) * eased;
 
-                // تحديث الخط
-                animationLine.setAttribute("x1", startX);
-                animationLine.setAttribute("y1", startY);
-                animationLine.setAttribute("x2", currentX);
-                animationLine.setAttribute("y2", currentY);
+                // تحريك اليد
+                handEmoji.setAttribute("x", currentX - 25);
+                handEmoji.setAttribute("y", currentY + 20);
 
-                // تحديث اليد
-                handEmoji.setAttribute("x", currentX - 20);
-                handEmoji.setAttribute("y", currentY + 15);
+                // تحريك زر العين معها
+                eyeToggleStandalone.style.left = `${currentX - startRect.width / 2}px`;
+                eyeToggleStandalone.style.top = `${currentY - startRect.height / 2}px`;
+                eyeToggleStandalone.style.right = 'auto';
+
+                // رسم المسار
+                if (progress > 0.05) {
+                    pathData += ` L ${currentX} ${currentY}`;
+                    pathLine.setAttribute("d", pathData);
+                }
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    // إخفاء بعد الانتهاء
+                    // الانتهاء - حفظ الموقع الجديد
                     setTimeout(() => {
+                        // حفظ الموقع النهائي في localStorage
+                        localStorage.setItem('eyeToggleTop', eyeToggleStandalone.style.top);
+                        localStorage.setItem('eyeToggleLeft', eyeToggleStandalone.style.left);
+                        localStorage.removeItem('eyeToggleRight');
+
+                        // إخفاء الحركة
                         animationSvg.style.display = "none";
-                    }, 500);
+                        pathLine.setAttribute("d", "");
+                        
+                        eyeToggleStandalone.classList.remove('being-dragged');
+                        isAnimating = false;
+
+                        console.log('✅ تم نقل زر العين إلى:', {
+                            top: eyeToggleStandalone.style.top,
+                            left: eyeToggleStandalone.style.left
+                        });
+                    }, 300);
                 }
             }
 
             animate();
-        }, 100); // 0.1 ثانية
+        }, 100); // تأخير 0.1 ثانية
     }
 
-    // ربط الحركة بزر العين العادي
-    if (eyeToggle) {
-        eyeToggle.addEventListener('click', function(e) {
-            triggerFingerAnimation(this);
-        });
-    }
+    // ربط الحركة بالضغط على زر العين
+    const originalClickHandler = eyeToggleStandalone.onclick;
+    
+    eyeToggleStandalone.addEventListener('click', function(e) {
+        // تشغيل الحركة فقط عند الإظهار (ليس عند السحب)
+        const searchContainer = document.getElementById('search-container');
+        const isHidden = searchContainer && searchContainer.classList.contains('hidden');
+        
+        if (isHidden && !eyeToggleStandalone.classList.contains('dragging')) {
+            e.preventDefault();
+            e.stopPropagation();
+            startDragAnimation();
+        }
+    }, true); // استخدام capture phase
 
-    // ربط الحركة بزر العين الدائري
-    if (eyeToggleStandalone) {
-        eyeToggleStandalone.addEventListener('click', function(e) {
-            // لا نشغل الحركة إذا كان يتم السحب
-            const isDragging = eyeToggleStandalone.classList.contains('dragging');
-            if (!isDragging) {
-                triggerFingerAnimation(this);
-            }
-        });
-    }
+    console.log('✅ محاكاة سحب زر العين باليد جاهزة 👆');
+})();
 
-    console.log('✅ حركة الإصبع التوضيحية جاهزة 👆');
+/* إضافة CSS لتحسين الحركة */
+(function addDragAnimationStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        #eye-toggle-standalone.being-dragged {
+            transition: none !important;
+            will-change: top, left;
+        }
+        
+        #finger-drag-animation {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    `;
+    document.head.appendChild(style);
 })();
