@@ -2645,10 +2645,21 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
    [007] نظام Zoom Reset المدمج
    ======================================== */
 
+function resetBrowserZoom() {
+    if (document.body.style.zoom && document.body.style.zoom !== '100%') {
+        document.body.style.zoom = '100%';
+        console.log('🔄 تم إعادة تعيين body.style.zoom');
+    }
+
+    if (document.body.style.transform && document.body.style.transform.includes('scale')) {
+        document.body.style.transform = 'scale(1)';
+        console.log('🔄 تم إعادة تعيين transform scale');
+    }
+
     const viewport = document.querySelector('meta[name="viewport"]');
     if (viewport) {
         const currentContent = viewport.getAttribute('content');
-        const resetContent = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=yes';
+        const resetContent = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no';
 
         if (currentContent !== resetContent) {
             viewport.setAttribute('content', resetContent);
