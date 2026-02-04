@@ -992,28 +992,15 @@ async function showPDFPreview(item) {
         console.log('📄 PDF محمل:', pdf.numPages, 'صفحة');
 
         const page = await pdf.getPage(1);
-        
-        // 🎯 حساب المقاس الأمثل
-        const container = document.querySelector('.preview-canvas-container');
-        const maxWidth = container.clientWidth - 40; // هامش 20px من كل جانب
-        const maxHeight = container.clientHeight - 40;
-        
-        const viewport = page.getViewport({ scale: 1 });
-        
-        // حساب Scale الأمثل للشاشة
-        const scaleX = maxWidth / viewport.width;
-        const scaleY = maxHeight / viewport.height;
-        const optimalScale = Math.min(scaleX, scaleY, 2.5); // حد أقصى 2.5x
-        
-        const scaledViewport = page.getViewport({ scale: optimalScale });
+        const viewport = page.getViewport({ scale: 1.5 });
 
         const context = canvas.getContext('2d');
-        canvas.height = scaledViewport.height;
-        canvas.width = scaledViewport.width;
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
 
         const renderContext = {
             canvasContext: context,
-            viewport: scaledViewport
+            viewport: viewport
         };
 
         await page.render(renderContext).promise;
@@ -1021,7 +1008,7 @@ async function showPDFPreview(item) {
         loading.classList.add('hidden');
         canvas.style.display = 'block';
 
-        console.log(`✅ تم رسم الصفحة بمقاس: ${canvas.width}x${canvas.height} (Scale: ${optimalScale.toFixed(2)})`);
+        console.log('✅ تم رسم الصفحة الأولى');
 
     } catch (error) {
         console.error('❌ خطأ في المعاينة:', error);
@@ -1081,34 +1068,19 @@ function showOpenOptions(item) {
             const loadingTask = pdfjsLib.getDocument(url);
             const pdf = await loadingTask.promise;
             const page = await pdf.getPage(1);
-            
-            // 🎯 حساب المقاس الأمثل لشاشة الخيارات
-            const container = document.querySelector('.method-preview');
-            const maxWidth = container.clientWidth - 20; // هامش أقل
-            const maxHeight = container.clientHeight - 20;
-            
-            const viewport = page.getViewport({ scale: 1 });
-            
-            // حساب Scale بحيث الصورة تملأ المساحة بدون تكبير زائد
-            const scaleX = maxWidth / viewport.width;
-            const scaleY = maxHeight / viewport.height;
-            const optimalScale = Math.min(scaleX, scaleY, 1.5); // حد أقصى 1.5x بدلاً من 2.0
-            
-            const scaledViewport = page.getViewport({ scale: optimalScale });
+            const viewport = page.getViewport({ scale: 1.5 });
 
             const context = canvas.getContext('2d');
-            canvas.height = scaledViewport.height;
-            canvas.width = scaledViewport.width;
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
 
             await page.render({
                 canvasContext: context,
-                viewport: scaledViewport
+                viewport: viewport
             }).promise;
 
             loading.classList.add('hidden');
             canvas.style.display = 'block';
-
-            console.log(`✅ معاينة الخيارات: ${canvas.width}x${canvas.height} (Scale: ${optimalScale.toFixed(2)})`);
 
         } catch (error) {
             console.error('❌ خطأ في المعاينة:', error);
