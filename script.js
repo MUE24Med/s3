@@ -1,3 +1,4 @@
+هل ممكن اضيف سطر بعد الضغط علي زر العين ب0.1 ثانيه يتم سحبه بالاصبع الي اقصي اليمين الأعلي كأنها حركه اصبع عاديه دون التعديل في الكود القديم
 /* ========================================
    script.js - الجزء 1 من 6
    [000-001] Preload System + المتغيرات الأساسية
@@ -3257,55 +3258,121 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
 
     console.log('✅ مراقبة z-index وظهور/اختفاء الشاشات مفعّلة');
 })();
+
 /* ========================================
-   إضافة تأثير حركة الإصبع عند الضغط على العين 👁️
+   [011] حركة الإصبع التوضيحية لزر العين 👁️
    ======================================== */
-if (eyeToggle) {
-    eyeToggle.addEventListener('click', function() {
-        // 1. إنشاء عنصر اليد (إصبع السحب)
-        const handCursor = document.createElement('div');
-        handCursor.innerHTML = '☝️'; // يمكنك استبداله بصورة SVG لو أردت
-        Object.assign(handCursor.style, {
-            position: 'fixed',
-            fontSize: '40px',
-            zIndex: '9999',
-            transition: 'all 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95)',
-            pointerEvents: 'none',
-            display: 'none',
-            filter: 'drop-shadow(2px 2px 5px rgba(0,0,0,0.3))'
-        });
-        document.body.appendChild(handCursor);
 
-        // 2. تفعيل الحركة بعد 0.1 ثانية
+(function addFingerGestureAnimation() {
+    const eyeToggle = document.getElementById('eye-toggle');
+    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+
+    if (!eyeToggle && !eyeToggleStandalone) {
+        console.warn('⚠️ زر العين غير موجود');
+        return;
+    }
+
+    // إنشاء SVG للحركة
+    const svgNS = "http://www.w3.org/2000/svg";
+    const animationSvg = document.createElementNS(svgNS, "svg");
+    animationSvg.id = "finger-animation-svg";
+    animationSvg.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 999999;
+        display: none;
+    `;
+    document.body.appendChild(animationSvg);
+
+    // إنشاء الخط
+    const animationLine = document.createElementNS(svgNS, "line");
+    animationLine.setAttribute("stroke", "#ffca28");
+    animationLine.setAttribute("stroke-width", "4");
+    animationLine.setAttribute("stroke-linecap", "round");
+    animationLine.setAttribute("stroke-dasharray", "10,5");
+    animationLine.style.filter = "drop-shadow(0 0 8px #ffca28)";
+    animationSvg.appendChild(animationLine);
+
+    // إنشاء لوجو اليد 👆
+    const handEmoji = document.createElementNS(svgNS, "text");
+    handEmoji.textContent = "👆";
+    handEmoji.setAttribute("font-size", "48");
+    handEmoji.style.filter = "drop-shadow(0 0 5px white)";
+    animationSvg.appendChild(handEmoji);
+
+    function triggerFingerAnimation(button) {
+        const rect = button.getBoundingClientRect();
+        
+        // نقطة البداية (وسط الزر)
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+
+        // نقطة النهاية (أقصى اليمين الأعلى)
+        const endX = window.innerWidth - 20;
+        const endY = 20;
+
+        // إظهار SVG
+        animationSvg.style.display = "block";
+
+        // تأخير 0.1 ثانية
         setTimeout(() => {
-            const eyeRect = eyeToggleStandalone.getBoundingClientRect();
-            
-            // تحديد موضع البداية (فوق الزر تماماً)
-            handCursor.style.display = 'block';
-            handCursor.style.left = eyeRect.left + 'px';
-            handCursor.style.top = eyeRect.top + 'px';
+            let progress = 0;
+            const duration = 800; // مدة الحركة بالميلي ثانية
+            const startTime = Date.now();
 
-            // 3. بدء حركة السحب إلى أقصى اليمين الأعلى
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    // الموضع النهائي
-                    handCursor.style.left = (window.innerWidth - 60) + 'px';
-                    handCursor.style.top = '10px';
-                    
-                    // تحريك زر العين الفعلي مع اليد لمحاكاة السحب
-                    eyeToggleStandalone.style.transition = 'all 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95)';
-                    eyeToggleStandalone.style.left = 'auto';
-                    eyeToggleStandalone.style.right = '10px';
-                    eyeToggleStandalone.style.top = '10px';
-                }, 50);
-            });
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                progress = Math.min(elapsed / duration, 1);
 
-            // 4. إخفاء اليد بعد اكتمال الحركة
-            setTimeout(() => {
-                handCursor.style.opacity = '0';
-                setTimeout(() => handCursor.remove(), 500);
-            }, 900);
+                // حساب الموقع الحالي
+                const currentX = startX + (endX - startX) * progress;
+                const currentY = startY + (endY - startY) * progress;
 
-        }, 100); // التأخير المطلوب 0.1 ثانية
-    });
-}
+                // تحديث الخط
+                animationLine.setAttribute("x1", startX);
+                animationLine.setAttribute("y1", startY);
+                animationLine.setAttribute("x2", currentX);
+                animationLine.setAttribute("y2", currentY);
+
+                // تحديث اليد
+                handEmoji.setAttribute("x", currentX - 20);
+                handEmoji.setAttribute("y", currentY + 15);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // إخفاء بعد الانتهاء
+                    setTimeout(() => {
+                        animationSvg.style.display = "none";
+                    }, 500);
+                }
+            }
+
+            animate();
+        }, 100); // 0.1 ثانية
+    }
+
+    // ربط الحركة بزر العين العادي
+    if (eyeToggle) {
+        eyeToggle.addEventListener('click', function(e) {
+            triggerFingerAnimation(this);
+        });
+    }
+
+    // ربط الحركة بزر العين الدائري
+    if (eyeToggleStandalone) {
+        eyeToggleStandalone.addEventListener('click', function(e) {
+            // لا نشغل الحركة إذا كان يتم السحب
+            const isDragging = eyeToggleStandalone.classList.contains('dragging');
+            if (!isDragging) {
+                triggerFingerAnimation(this);
+            }
+        });
+    }
+
+    console.log('✅ حركة الإصبع التوضيحية جاهزة 👆');
+})();
