@@ -617,9 +617,12 @@ function handleBackNavigation(e) {
 
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
+        const methodPopup = document.getElementById('open-method-popup');
 
         if (currentState.data.isPreview) {
             closePDFPreview();
+        } else if (methodPopup && methodPopup.classList.contains('active')) {
+            closeOpenOptions();
         } else {
             pdfViewer.src = "";
             overlay.classList.add("hidden");
@@ -696,8 +699,12 @@ function setupBackButton() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const pdfOverlay = document.getElementById('pdf-overlay');
+            const methodPopup = document.getElementById('open-method-popup');
+            
             if (pdfOverlay && pdfOverlay.classList.contains('fullscreen-mode')) {
                 toggleMozillaToolbar();
+            } else if (methodPopup && methodPopup.classList.contains('active')) {
+                closeOpenOptions();
             }
         }
     });
@@ -1038,12 +1045,94 @@ function closePDFPreview() {
     console.log('🔒 تم إغلاق المعاينة');
 }
 
-function openWithMozilla(item) {
-    if (!item || !item.path) {
-        console.error('❌ لا يوجد ملف للفتح');
+function showOpenOptions(item) {
+    const popup = document.getElementById('open-method-popup');
+    const canvas = document.getElementById('method-preview-canvas');
+    const loading = document.getElementById('method-loading');
+    const filenameEl = document.getElementById('method-filename');
+
+    if (!popup || !canvas) {
+        console.error('❌ عناصر نافذة الفتح غير موجودة');
+        openWithMozilla(item);
         return;
     }
 
+    currentPreviewItem = item;
+    const fileName = item.path.split('/').pop();
+    const url = `${RAW_CONTENT_BASE}${item.path}`;
+
+    popup.classList.add('active');
+    filenameEl.textContent = fileName.length > 40 
+        ? fileName.substring(0, 37) + '...' 
+        : fileName;
+
+    loading.classList.remove('hidden');
+    canvas.style.display = 'none';
+
+    pushNavigationState(NAV_STATE.PDF_VIEW, { 
+        path: item.path, 
+        isOpenOptions: true 
+    });
+
+    console.log('📋 فتح خيارات:', url);
+
+    // رسم الصفحة الأولى
+    (async () => {
+        try {
+            const checkResponse = await fetch(url, { 
+                method: 'HEAD', 
+                mode: 'cors' 
+            });
+
+            if (!checkResponse.ok) {
+                throw new Error('الملف غير موجود');
+            }
+
+            if (typeof pdfjsLib === 'undefined') {
+                throw new Error('PDF.js غير محمل');
+            }
+
+            const loadingTask = pdfjsLib.getDocument(url);
+            const pdf = await loadingTask.promise;
+
+            console.log('📄 PDF محمل:', pdf.numPages, 'صفحة');
+
+            const page = await pdf.getPage(1);
+            const viewport = page.getViewport({ scale: 1.5 });
+
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+
+            loading.classList.add('hidden');
+            canvas.style.display = 'block';
+
+            console.log('✅ تم رسم الصفحة الأولى');
+
+        } catch (error) {
+            console.error('❌ خطأ في المعاينة:', error);
+            loading.textContent = '❌ فشل تحميل المعاينة';
+        }
+    })();
+}
+
+function closeOpenOptions() {
+    const popup = document.getElementById('open-method-popup');
+    if (popup) {
+        popup.classList.remove('active');
+    }
+    popNavigationState();
+    console.log('🔒 تم إغلاق نافذة الخيارات');
+}
+
+function openWithMozilla(item) {
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     const scrollPosition = scrollContainer ? scrollContainer.scrollLeft : 0;
 
@@ -1055,66 +1144,43 @@ function openWithMozilla(item) {
 
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
-    
-    if (!overlay || !pdfViewer) {
-        console.error('❌ عناصر Mozilla PDF غير موجودة');
-        return;
-    }
-
     overlay.classList.remove("hidden");
     pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
                     encodeURIComponent(url) + "#zoom=page-fit";
 
-    console.log('✅ تم فتح الملف في Mozilla PDF Viewer');
+    closeOpenOptions();
 
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
+
+    console.log('📖 فتح في Mozilla PDF Viewer:', item.path);
 }
 
 function openWithDrive(item) {
-    if (!item || !item.path) {
-        console.error('❌ لا يوجد ملف للفتح');
-        return;
-    }
-
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     const driveUrl = `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(url)}`;
 
-    const opened = window.open(driveUrl, '_blank', 'noopener,noreferrer');
-    
-    if (!opened) {
-        alert('⚠️ يرجى السماح بالنوافذ المنبثقة لفتح Google Drive Viewer');
-        return;
-    }
-
-    console.log('✅ تم فتح الملف في Google Drive Viewer');
+    window.open(driveUrl, '_blank');
+    closeOpenOptions();
 
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
+
+    console.log('☁️ فتح في Google Drive:', item.path);
 }
 
 function openWithBrowser(item) {
-    if (!item || !item.path) {
-        console.error('❌ لا يوجد ملف للفتح');
-        return;
-    }
-
     const url = `${RAW_CONTENT_BASE}${item.path}`;
-    
-    const opened = window.open(url, '_blank', 'noopener,noreferrer');
-    
-    if (!opened) {
-        alert('⚠️ يرجى السماح بالنوافذ المنبثقة لفتح الملف في المتصفح');
-        return;
-    }
-
-    console.log('✅ تم فتح الملف في المتصفح الافتراضي');
+    window.open(url, '_blank');
+    closeOpenOptions();
 
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
+
+    console.log('🌐 فتح في المتصفح الافتراضي:', item.path);
 }
 
 function toggleMozillaToolbar() {
@@ -1136,54 +1202,80 @@ function toggleMozillaToolbar() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const closeBtn = document.getElementById('preview-close-btn');
-    const mozillaBtn = document.getElementById('preview-mozilla-btn');
-    const driveBtn = document.getElementById('preview-drive-btn');
-    const browserBtn = document.getElementById('preview-browser-btn');
-    const popup = document.getElementById('pdf-preview-popup');
-    const expandToolbarBtn = document.getElementById('expand-toolbar-btn');
+/* نهاية الجزء 2 من 5 */
+```
 
-    if (closeBtn) {
-        closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closePDFPreview();
-        });
+الآن أضف هذا في نهاية **DOMContentLoaded** في الجزء 3:
+
+```javascript
+// في الجزء 3 - داخل DOMContentLoaded - أضف هذا:
+
+document.addEventListener('DOMContentLoaded', () => {
+    // معالجات نافذة الفتح
+    const methodCloseBtn = document.getElementById('method-close-btn');
+    const mozillaBtn = document.getElementById('open-mozilla-btn');
+    const driveBtn = document.getElementById('open-drive-btn');
+    const browserBtn = document.getElementById('open-browser-btn');
+    const methodPopup = document.getElementById('open-method-popup');
+
+    if (methodCloseBtn) {
+        methodCloseBtn.addEventListener('click', closeOpenOptions);
     }
 
     if (mozillaBtn) {
-        mozillaBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        mozillaBtn.addEventListener('click', () => {
             if (currentPreviewItem) {
-                closePDFPreview();
                 openWithMozilla(currentPreviewItem);
             }
         });
     }
 
     if (driveBtn) {
-        driveBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        driveBtn.addEventListener('click', () => {
             if (currentPreviewItem) {
-                closePDFPreview();
                 openWithDrive(currentPreviewItem);
             }
         });
     }
 
     if (browserBtn) {
-        browserBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+        browserBtn.addEventListener('click', () => {
             if (currentPreviewItem) {
-                closePDFPreview();
                 openWithBrowser(currentPreviewItem);
             }
         });
     }
 
-    if (popup) {
-        popup.addEventListener('click', (e) => {
-            if (e.target === popup) {
+    if (methodPopup) {
+        methodPopup.addEventListener('click', (e) => {
+            if (e.target === methodPopup) {
+                closeOpenOptions();
+            }
+        });
+    }
+
+    // معالجات المعاينة القديمة
+    const closeBtn = document.getElementById('preview-close-btn');
+    const openBtn = document.getElementById('preview-open-btn');
+    const previewPopup = document.getElementById('pdf-preview-popup');
+    const expandToolbarBtn = document.getElementById('expand-toolbar-btn');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closePDFPreview);
+    }
+
+    if (openBtn) {
+        openBtn.addEventListener('click', () => {
+            if (currentPreviewItem) {
+                closePDFPreview();
+                showOpenOptions(currentPreviewItem);
+            }
+        });
+    }
+
+    if (previewPopup) {
+        previewPopup.addEventListener('click', (e) => {
+            if (e.target === previewPopup) {
                 closePDFPreview();
             }
         });
@@ -1193,129 +1285,9 @@ document.addEventListener('DOMContentLoaded', () => {
         expandToolbarBtn.addEventListener('click', toggleMozillaToolbar);
     }
 
-    console.log('✅ معالجات أزرار المعاينة جاهزة');
+    console.log('✅ جميع معالجات الفتح والمعاينة جاهزة');
 });
 
-window.goToWood = () => {
-    if (scrollContainer) {
-        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-    const currentState = getCurrentNavigationState();
-    if (!currentState || currentState.state !== NAV_STATE.WOOD_VIEW) {
-        pushNavigationState(NAV_STATE.WOOD_VIEW, { folder: currentFolder });
-    }
-};
-
-window.goToMapEnd = () => {
-    if (!scrollContainer) return;
-    const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-    scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' });
-    pushNavigationState(NAV_STATE.MAP_VIEW);
-};
-
-function updateDynamicSizes() {
-    if (!mainSvg) return;
-    const allImages = mainSvg.querySelectorAll('image[width][height]');
-    console.log(`📏 عدد جميع الصور: ${allImages.length}`);
-    if (allImages.length === 0) {
-        console.warn('⚠️ لم يتم العثور على صور');
-        return;
-    }
-    let maxX = 0;
-    let maxY = 2454;
-    allImages.forEach(img => {
-        const g = img.closest('g[transform]');
-        let translateX = 0;
-        if (g) {
-            const transform = g.getAttribute('transform');
-            const match = transform.match(/translate\s*\(([\d.-]+)(?:[ ,]+([\d.-]+))?\s*\)/);
-            if (match) {
-                translateX = parseFloat(match[1]) || 0;
-            }
-        }
-        const imgWidth = parseFloat(img.getAttribute('width')) || 0;
-        const imgHeight = parseFloat(img.getAttribute('height')) || 0;
-        const imgX = parseFloat(img.getAttribute('x')) || 0;
-        const totalX = translateX + imgX + imgWidth;
-        if (totalX > maxX) maxX = totalX;
-        if (imgHeight > maxY) maxY = imgHeight;
-    });
-    mainSvg.setAttribute('viewBox', `0 0 ${maxX} ${maxY}`);
-    console.log(`✅ viewBox محدّث ديناميكيًا: 0 0 ${maxX} ${maxY}`);
-}
-window.updateDynamicSizes = updateDynamicSizes;
-
-function getDisplayName() {
-    const realName = localStorage.getItem('user_real_name');
-    if (realName && realName.trim()) {
-        return realName.trim();
-    }
-    const visitorId = localStorage.getItem('visitor_id');
-    return visitorId || 'زائر';
-}
-
-function updateWelcomeMessages() {
-    const displayName = getDisplayName();
-    const groupScreenH1 = document.querySelector('#group-selection-screen h1');
-    if (groupScreenH1) {
-        groupScreenH1.innerHTML = `مرحباً بك يا <span style="color: #ffca28;">${displayName}</span> إختر جروبك`;
-    }
-    const loadingH1 = document.querySelector('#loading-content h1');
-    if (loadingH1 && currentGroup) {
-        loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span><br>في ${REPO_NAME.toUpperCase()}`;
-    }
-}
-
-function renderNameInput() {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-    if (!dynamicGroup) return;
-    const oldInput = dynamicGroup.querySelector('.name-input-group');
-    if (oldInput) oldInput.remove();
-    const inputGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    inputGroup.setAttribute("class", "name-input-group");
-    const containerWidth = 1024;
-    const inputWidth = 780;
-    const centerX = (containerWidth - inputWidth) / 2;
-    const inputY = 1980;
-    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    bg.setAttribute("x", centerX);
-    bg.setAttribute("y", inputY);
-    bg.setAttribute("width", inputWidth);
-    bg.setAttribute("height", "60");
-    bg.setAttribute("rx", "10");
-    bg.style.fill = "rgba(0,0,0,0.7)";
-    bg.style.stroke = "#ffca28";
-    bg.style.strokeWidth = "2";
-    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    label.setAttribute("x", containerWidth / 2);
-    label.setAttribute("y", inputY + 30);
-    label.setAttribute("text-anchor", "middle");
-    label.setAttribute("fill", "white");
-    label.style.fontSize = "18px";
-    label.style.fontWeight = "bold";
-    const currentName = localStorage.getItem('user_real_name');
-    label.textContent = currentName ? `مرحباً ${currentName} - اضغط للتعديل` : "اضغط هنا لإدخال اسمك";
-    inputGroup.appendChild(bg);
-    inputGroup.appendChild(label);
-    inputGroup.style.cursor = "pointer";
-    inputGroup.onclick = () => {
-        const currentName = localStorage.getItem('user_real_name');
-        const promptMessage = currentName ? `الاسم الحالي: ${currentName}\nأدخل اسم جديد أو اترك فارغاً للإلغاء:` : "ما اسمك؟";
-        const name = prompt(promptMessage, currentName || "");
-        if (name !== null && name.trim()) {
-            localStorage.setItem('user_real_name', name.trim());
-            if (typeof trackNameChange === 'function') {
-                trackNameChange(name.trim());
-            }
-            updateWelcomeMessages();
-            updateWoodInterface();
-            alert("أهلاً بك يا " + name.trim());
-        }
-    };
-    dynamicGroup.appendChild(inputGroup);
-}
-
-/* نهاية الجزء 2 من 5 */
 /* ========================================
    script.js - الجزء 3 من 5
    [004] معالجات الأحداث والأزرار
