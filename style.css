@@ -743,17 +743,17 @@ html, body {
 #pdf-overlay.fullscreen-mode #expand-toolbar-btn {
   background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
 }
-
-/* [005] نافذة معاينة PDF */
+/* [005] نافذة معاينة PDF - محسّنة */
 #pdf-preview-popup {
   position: fixed;
   inset: 0;
   z-index: 3;
-  background: rgba(0, 0, 0, 0.75); /* خلفية شفافة */
+  background: rgba(0, 0, 0, 0.85);
   display: none;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
+  padding: 20px;
 }
 
 #pdf-preview-popup.active {
@@ -761,11 +761,12 @@ html, body {
 }
 
 .preview-container {
-  background: #1a1a1a;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border-radius: 20px;
   padding: 20px;
-  max-width: 90vw;
-  max-height: 90vh;
+  width: 95%;
+  max-width: 1200px;
+  height: 90vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 0 50px rgba(255, 204, 0, 0.5);
@@ -779,6 +780,7 @@ html, body {
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(255, 204, 0, 0.3);
+  flex-shrink: 0;
 }
 
 .preview-title {
@@ -801,6 +803,7 @@ html, body {
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .preview-btn:hover {
@@ -813,17 +816,20 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: auto; /* تمكين التمرير للصور الكبيرة */
   background: #000;
   border-radius: 10px;
   position: relative;
-  min-height: 400px;
+  min-height: 0; /* مهم للـ flexbox */
 }
 
 #preview-canvas {
+  display: block;
   max-width: 100%;
   max-height: 100%;
-  display: block;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .preview-loading {
@@ -832,10 +838,11 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
   color: #ffcc00;
   font-size: 20px;
   z-index: 1;
+  border-radius: 10px;
 }
 
 .preview-loading.hidden {
@@ -847,6 +854,40 @@ html, body {
   text-align: center;
   color: rgba(255, 204, 0, 0.8);
   font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .preview-container {
+    width: 98%;
+    height: 85vh;
+    padding: 15px;
+  }
+
+  .preview-title {
+    font-size: 16px;
+  }
+
+  .preview-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .preview-container {
+    padding: 10px;
+    border-radius: 15px;
+  }
+
+  .preview-header {
+    margin-bottom: 10px;
+  }
+
+  .preview-title {
+    font-size: 14px;
+  }
 }
 
 /* [006] شاشة التحميل */
