@@ -1,10 +1,13 @@
+سأقوم بتحديث ملف `index.html` لإضافة الميزة المطلوبة لزر Mozilla (إخفاء كل شيء عند الضغط عليه):
+
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.02.04.FINAL">
+<meta name="version" content="2025.02.04.FINAL.v2">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -78,7 +81,7 @@
 
     <div class="game-container" id="gameContainer">
       <div class="game-stats">
-        <div class="game-stat">❤️ <span id="heartsDisplay">3</span></div>
+        <div class="game-stat">❤️ <span id="heartsDisplay">0</span></div>
         <div class="game-stat">⭐ <span id="scoreDisplay">0</span></div>
       </div>
 
@@ -195,7 +198,7 @@
       <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
       <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
       <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
-      <button id="expand-toolbar-btn" class="pdf-control-btn" title="إخفاء الأزرار">🔼</button>
+      <button id="expand-toolbar-btn" class="pdf-control-btn" title="ملء الشاشة">🔼</button>
     </div>
   </div>
   <iframe id="pdfFrame" src="" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
@@ -212,7 +215,6 @@
       <div class="preview-loading" id="preview-loading">⏳ جاري التحميل...</div>
       <canvas id="preview-canvas"></canvas>
     </div>
-    <div class="preview-hint">✋ ارفع إصبعك لإغلاق المعاينة</div>
   </div>
 </div>
 
