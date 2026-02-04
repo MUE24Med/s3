@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="version" content="2025.02.04.UPDATED">
+<meta name="version" content="2025.02.04.FINAL">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>semester-3 / خريطة الكلية التفاعلية</title>
@@ -24,34 +24,34 @@
 <body>
 
 <!-- شاشة اختيار طريقة الفتح -->
-<div id="open-method-popup">
+<div id="open-method-popup" class="hidden">
   <div class="method-container">
     <div class="method-header">
       <h2>اختر طريقة الفتح</h2>
       <span class="method-close" id="method-close-btn">✖️</span>
     </div>
 
+    <div class="method-filename" id="method-filename">اسم الملف</div>
+
     <div class="method-preview">
       <canvas id="method-preview-canvas"></canvas>
       <div class="method-loading" id="method-loading">⏳ جاري التحميل...</div>
     </div>
 
-    <div class="method-filename" id="method-filename">اسم الملف</div>
-
     <div class="method-buttons">
       <button class="method-btn mozilla-btn" id="open-mozilla-btn">
-        📄 Mozilla
-        <span class="method-hint">عارض متقدم</span>
+        <span class="method-btn-icon">📄</span>
+        <span class="method-btn-text">Mozilla PDF</span>
       </button>
 
       <button class="method-btn browser-btn" id="open-browser-btn">
-        🌐 متصفح
-        <span class="method-hint">فتح مباشر</span>
+        <span class="method-btn-icon">🌐</span>
+        <span class="method-btn-text">المتصفح</span>
       </button>
 
       <button class="method-btn drive-btn" id="open-drive-btn">
-        💾 Drive
-        <span class="method-hint">Google Drive</span>
+        <span class="method-btn-icon">💾</span>
+        <span class="method-btn-text">Google Drive</span>
       </button>
     </div>
   </div>
@@ -228,7 +228,7 @@
     <g id="dynamic-links-group"></g>
     <g id="group-specific-content"></g>
 
-    <g id="upper-wood-layer" style="pointer-events: none; z-index: 99999;">
+    <g id="upper-wood-layer" style="pointer-events: none; z-index: 3;">
       <image data-src="image/Upper_wood.webp" x="0" y="0" width="1024" height="250" style="pointer-events: none;" />
     </g>
 
@@ -267,9 +267,6 @@
 <!-- السكريبتات الرئيسية -->
 <script src="script.js"></script>
 <script src="tracker.js"></script>
-<script src="zoom-reset-fix.js"></script>
-<script src="script-complete.js"></script>
-<script defer src="script-fixes.js"></script>
 
 <!-- Service Worker -->
 <script>
