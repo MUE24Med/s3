@@ -64,22 +64,22 @@
             <h2>🔍 اختر طريقة الفتح</h2>
             <button id="close-options-btn" class="close-options-btn">✖</button>
         </div>
-        
+
         <div class="options-filename" id="options-filename">اسم الملف.pdf</div>
-        
+
         <div class="options-buttons">
             <button id="open-mozilla-btn-alt" class="option-btn mozilla-btn">
                 <span class="btn-icon">📖</span>
                 <span class="btn-text">Mozilla PDF Viewer</span>
                 <span class="btn-desc">عارض متقدم مع أدوات كاملة</span>
             </button>
-            
+
             <button id="open-drive-btn-alt" class="option-btn drive-btn">
                 <span class="btn-icon">☁️</span>
                 <span class="btn-text">Google Drive Viewer</span>
                 <span class="btn-desc">معاينة سريعة عبر Google</span>
             </button>
-            
+
             <button id="open-browser-btn-alt" class="option-btn browser-btn">
                 <span class="btn-icon">🌐</span>
                 <span class="btn-text">المتصفح الافتراضي</span>
@@ -233,17 +233,36 @@
   <iframe id="pdfFrame" src="" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
 </div>
 
-<!-- نافذة معاينة PDF -->
+<!-- نافذة معاينة PDF المحدثة -->
 <div id="pdf-preview-popup" class="floating-preview">
   <div class="preview-container">
     <div class="preview-header">
       <div class="preview-title" id="preview-filename">معاينة الملف</div>
-      <button class="preview-btn preview-open-btn" id="preview-open-btn">📄 فتح</button>
+      <button class="preview-btn preview-close-btn" id="preview-close-btn">✖️ إغلاق</button>
     </div>
     <div class="preview-canvas-container">
       <div class="preview-loading" id="preview-loading">⏳ جاري التحميل...</div>
       <canvas id="preview-canvas"></canvas>
     </div>
+    
+    <!-- ✅ الأزرار الجديدة تحت المعاينة -->
+    <div class="preview-buttons-row">
+      <button class="preview-action-btn mozilla" id="preview-mozilla-btn">
+        <span class="btn-icon">📖</span>
+        <span class="btn-text">Mozilla</span>
+      </button>
+      
+      <button class="preview-action-btn drive" id="preview-drive-btn">
+        <span class="btn-icon">☁️</span>
+        <span class="btn-text">Drive</span>
+      </button>
+      
+      <button class="preview-action-btn browser" id="preview-browser-btn">
+        <span class="btn-icon">🌐</span>
+        <span class="btn-text">Browser</span>
+      </button>
+    </div>
+    
     <div class="preview-hint">✋ ارفع إصبعك لإغلاق المعاينة</div>
   </div>
 </div>
