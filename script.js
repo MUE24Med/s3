@@ -3594,3 +3594,67 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
     `;
     document.head.appendChild(style);
 })();
+function lockInterfaceWhenEyeHidden() {
+    const searchCont = document.getElementById('search-container');
+    const toggleCont = document.getElementById('js-toggle-container');
+    const eyeBtn      = document.getElementById('eye-toggle-standalone');
+
+    if (!searchCont || !toggleCont || !eyeBtn) return;
+
+    const reallyHidden = 
+        (searchCont.classList.contains('hidden') || searchCont.style.display === 'none') &&
+        (toggleCont.classList.contains('fully-hidden') || toggleCont.classList.contains('hidden') || toggleCont.style.display === 'none');
+
+    if (reallyHidden) {
+        // قفل كامل للطبقة العلوية
+        document.body.style.pointerEvents = 'none';
+        eyeBtn.style.pointerEvents = 'auto';           // الزر نفسه يبقى نشط
+        eyeBtn.style.zIndex = '999999';               // فوق الجميع
+
+        // منع أي حدث يمكن أن يُعيد الظهور
+        const block = e => {
+            if (e.target !== eyeBtn && !eyeBtn.contains(e.target)) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        };
+
+        ['click','mousedown','mouseup','touchstart','touchend','pointerdown','pointerup']
+            .forEach(ev => document.addEventListener(ev, block, { capture: true }));
+
+        // تنظيف عند إعادة الظهور
+        const unlock = () => {
+            document.body.style.pointerEvents = '';
+            ['click','mousedown','mouseup','touchstart','touchend','pointerdown','pointerup']
+                .forEach(ev => document.removeEventListener(ev, block, { capture: true }));
+        };
+
+        // راقب عودة الظهور
+        const observer = new MutationObserver(() => {
+            const nowVisible = 
+                !searchCont.classList.contains('hidden') && searchCont.style.display !== 'none' ||
+                !toggleCont.classList.contains('fully-hidden') && !toggleCont.classList.contains('hidden') && toggleCont.style.display !== 'none';
+
+            if (nowVisible) {
+                unlock();
+                observer.disconnect();
+            }
+        });
+
+        observer.observe(searchCont, { attributes: true, attributeFilter: ['class','style'] });
+        observer.observe(toggleCont,  { attributes: true, attributeFilter: ['class','style'] });
+
+    } else {
+        document.body.style.pointerEvents = '';
+    }
+}
+
+// نفّذها عند الضغط على زر العين
+document.getElementById('eye-toggle')?.addEventListener('click', () => {
+    setTimeout(lockInterfaceWhenEyeHidden, 50);   // تأخير بسيط بعد إخفاء العناصر
+});
+
+// وأيضًا عند الضغط على الزر الدائري للإظهار
+document.getElementById('eye-toggle-standalone')?.addEventListener('click', () => {
+    setTimeout(lockInterfaceWhenEyeHidden, 100);
+});
