@@ -1023,10 +1023,9 @@ canvas.parentNode.appendChild(previewImg);
 loading.classList.add('hidden');
 console.log('✅ تم تحويل المعاينة إلى صورة PNG');
 
-// اختياري: بعد ما تضيف الصورة
-setTimeout(() => {
-    canvas.remove();  // أو canvas.style.display = 'none';
-}, 100);
+previewImg.style.maxHeight = '80vh';  // عشان ما تطلعش بره الشاشة
+canvas.style.display = 'none';
+previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
 
     } catch (error) {
         console.error('❌ خطأ في المعاينة:', error);
