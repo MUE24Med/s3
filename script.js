@@ -3274,387 +3274,147 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
 
     console.log('✅ مراقبة z-index وظهور/اختفاء الشاشات مفعّلة');
 })();
+// ────────────────────────────────────────────────
+//  أنيميشن وهمي: يد تسحب زر العين لأعلى يمين
+// ────────────────────────────────────────────────
 
-/* ========================================
-   [011] محاكاة سحب زر العين باليد 👆 + ظل + صوت
-   ======================================== */
+(function fakeEyeDragToTopRight() {
+    const eyeBtn = document.getElementById('eye-toggle-standalone');
+    if (!eyeBtn) return;
 
-(function addRealisticFingerDrag() {
-    const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
+    // إنشاء طبقة أنيميشن مؤقتة فوق كل شيء
+    const animLayer = document.createElement('div');
+    animLayer.id = 'fake-drag-layer';
+    Object.assign(animLayer.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '9999999',
+        pointerEvents: 'none',
+        overflow: 'hidden',
+        background: 'transparent'
+    });
+    document.body.appendChild(animLayer);
 
-    if (!eyeToggleStandalone) {
-        console.warn('⚠️ زر العين الدائري غير موجود');
-        return;
+    // ── يد متحركة (يمكن استبدالها بصورة يد أو emoji أكبر) ──
+    const hand = document.createElement('div');
+    hand.textContent = '👆';
+    Object.assign(hand.style, {
+        position: 'absolute',
+        fontSize: '80px',
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+        filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
+        zIndex: '10000000'
+    });
+    animLayer.appendChild(hand);
+
+    // ظل اليد
+    const shadow = document.createElement('div');
+    Object.assign(shadow.style, {
+        position: 'absolute',
+        width: '80px',
+        height: '40px',
+        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%)',
+        filter: 'blur(12px)',
+        transform: 'translate(-50%, -20%)',
+        pointerEvents: 'none',
+        zIndex: '9999998'
+    });
+    animLayer.appendChild(shadow);
+
+    // ── موقع البداية والنهاية ──
+    const rect = eyeBtn.getBoundingClientRect();
+    const startX = rect.left + rect.width / 2;
+    const startY = rect.top + rect.height / 2;
+
+    const targetX = window.innerWidth - 60;   // أعلى يمين + هامش
+    const targetY = 60;
+
+    // ── إعداد الأنيميشن ──
+    let startTime = null;
+    const duration = 1400; // مللي ثانية
+
+    function animate(ts) {
+        if (!startTime) startTime = ts;
+        const progress = Math.min((ts - startTime) / duration, 1);
+
+        // easing مريح (easeOutBack قليلاً لإحساس طبيعي)
+        const ease = progress < 0.5 
+            ? 4 * progress * progress * progress 
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+        const currentX = startX + (targetX - startX) * ease;
+        const currentY = startY + (targetY - startY) * ease;
+
+        hand.style.left   = currentX + 'px';
+        hand.style.top    = currentY + 'px';
+
+        shadow.style.left = currentX + 'px';
+        shadow.style.top  = currentY + 'px';
+
+        // اليد تتحرك مع الزر في الوهم
+        eyeBtn.style.transition = 'none';
+        eyeBtn.style.left = currentX - rect.width/2 + 'px';
+        eyeBtn.style.top  = currentY - rect.height/2 + 'px';
+        eyeBtn.style.right = 'auto';
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            // النهاية: إخفاء الحاويات + تثبيت الزر
+            finishFakeDrag();
+        }
     }
 
-    // إنشاء AudioContext للأصوات
-    let audioContext;
-    try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (e) {
-        console.warn('⚠️ الصوت غير مدعوم في هذا المتصفح');
-    }
+    function finishFakeDrag() {
+        // إخفاء الحاويات كما في الكود الأصلي
+        const searchCont = document.getElementById('search-container');
+        const toggleCont = document.getElementById('js-toggle-container');
 
-    // دالة إنشاء صوت النقر
-    function playTapSound() {
-        if (!audioContext) return;
-        
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
-    }
-
-    // دالة إنشاء صوت السحب
-    function playSwipeSound(duration) {
-        if (!audioContext) return;
-        
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        const filter = audioContext.createBiquadFilter();
-        
-        oscillator.connect(filter);
-        filter.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.type = 'sawtooth';
-        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + duration / 1000);
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(1000, audioContext.currentTime);
-        filter.frequency.exponentialRampToValueAtTime(3000, audioContext.currentTime + duration / 1000);
-        
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + duration / 1000);
-    }
-
-    // دالة صوت الوصول
-    function playArriveSound() {
-        if (!audioContext) return;
-        
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 1200;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.15);
-    }
-
-    // إنشاء SVG للحركة
-    const svgNS = "http://www.w3.org/2000/svg";
-    const animationSvg = document.createElementNS(svgNS, "svg");
-    animationSvg.id = "finger-drag-animation";
-    animationSvg.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 999998;
-        display: none;
-    `;
-    document.body.appendChild(animationSvg);
-
-    // إنشاء ظل متحرك
-    const shadowEllipse = document.createElementNS(svgNS, "ellipse");
-    shadowEllipse.setAttribute("fill", "rgba(0,0,0,0.3)");
-    shadowEllipse.setAttribute("rx", "30");
-    shadowEllipse.setAttribute("ry", "15");
-    shadowEllipse.style.filter = "blur(8px)";
-    animationSvg.appendChild(shadowEllipse);
-
-    // إنشاء خط المسار
-    const pathLine = document.createElementNS(svgNS, "path");
-    pathLine.setAttribute("stroke", "#ffca28");
-    pathLine.setAttribute("stroke-width", "3");
-    pathLine.setAttribute("fill", "none");
-    pathLine.setAttribute("stroke-dasharray", "8,4");
-    pathLine.style.opacity = "0.5";
-    pathLine.style.filter = "drop-shadow(0 0 5px #ffca28)";
-    animationSvg.appendChild(pathLine);
-
-    // إنشاء لوجو اليد 👆
-    const handEmoji = document.createElementNS(svgNS, "text");
-    handEmoji.textContent = "👆";
-    handEmoji.setAttribute("font-size", "64");
-    handEmoji.style.filter = "drop-shadow(0 0 8px rgba(255,202,40,0.8))";
-    animationSvg.appendChild(handEmoji);
-
-    // إنشاء تأثير الضغط (دائرة صغيرة)
-    const pressCircle = document.createElementNS(svgNS, "circle");
-    pressCircle.setAttribute("r", "0");
-    pressCircle.setAttribute("fill", "rgba(255,202,40,0.4)");
-    pressCircle.setAttribute("stroke", "#ffca28");
-    pressCircle.setAttribute("stroke-width", "2");
-    animationSvg.appendChild(pressCircle);
-
-    let isAnimating = false;
-
-    function startDragAnimation() {
-        if (isAnimating) return;
-        isAnimating = true;
-
-        // تشغيل صوت النقر
-        playTapSound();
-
-        // اهتزاز خفيف
-        if (navigator.vibrate) {
-            navigator.vibrate(50);
+        if (searchCont) {
+            searchCont.classList.add('hidden');
+            searchCont.style.display = 'none';
+            searchCont.style.pointerEvents = 'none';
         }
 
-        const startRect = eyeToggleStandalone.getBoundingClientRect();
-        const startX = startRect.left + startRect.width / 2;
-        const startY = startRect.top + startRect.height / 2;
-
-        const endX = window.innerWidth - 40;
-        const endY = 40;
-
-        animationSvg.style.display = "block";
-
-        // تأخير 0.1 ثانية
-        setTimeout(() => {
-            const duration = 1000;
-            const startTime = Date.now();
-
-            // تشغيل صوت السحب
-            playSwipeSound(duration);
-
-            eyeToggleStandalone.classList.add('being-dragged');
-            eyeToggleStandalone.style.transition = 'none';
-
-            // إضافة ظل للزر نفسه
-            const originalBoxShadow = eyeToggleStandalone.style.boxShadow;
-            eyeToggleStandalone.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
-
-            let pathData = `M ${startX} ${startY}`;
-
-            // تأثير الضغط الأولي
-            pressCircle.setAttribute("cx", startX);
-            pressCircle.setAttribute("cy", startY);
-            let pressAnimation = 0;
-
-            function animate() {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-
-                // easing للحركة الطبيعية
-                const eased = progress < 0.5
-                    ? 2 * progress * progress
-                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-                const currentX = startX + (endX - startX) * eased;
-                const currentY = startY + (endY - startY) * eased;
-
-                // تحريك اليد
-                handEmoji.setAttribute("x", currentX - 25);
-                handEmoji.setAttribute("y", currentY + 20);
-
-                // تحريك الظل (قليلاً للأسفل وللخلف)
-                shadowEllipse.setAttribute("cx", currentX + 5);
-                shadowEllipse.setAttribute("cy", currentY + 35);
-                
-                // تغيير حجم الظل حسب السرعة
-                const speed = Math.abs(eased - (progress - 0.01 < 0 ? 0 : progress - 0.01));
-                const shadowSize = 30 + speed * 100;
-                shadowEllipse.setAttribute("rx", shadowSize);
-                shadowEllipse.setAttribute("ry", shadowSize * 0.5);
-
-                // تحريك زر العين
-                eyeToggleStandalone.style.left = `${currentX - startRect.width / 2}px`;
-                eyeToggleStandalone.style.top = `${currentY - startRect.height / 2}px`;
-                eyeToggleStandalone.style.right = 'auto';
-
-                // إضافة ظل ديناميكي للزر
-                const shadowBlur = 10 + speed * 200;
-                eyeToggleStandalone.style.boxShadow = `0 ${10 + speed * 50}px ${shadowBlur}px rgba(0,0,0,${0.3 + speed * 0.4})`;
-
-                // رسم المسار
-                if (progress > 0.05) {
-                    pathData += ` L ${currentX} ${currentY}`;
-                    pathLine.setAttribute("d", pathData);
-                }
-
-                // تأثير الضغط في البداية
-                if (pressAnimation < 0.2) {
-                    pressAnimation += 0.02;
-                    const pressRadius = 40 * (pressAnimation / 0.2);
-                    const pressOpacity = 1 - (pressAnimation / 0.2);
-                    pressCircle.setAttribute("r", pressRadius);
-                    pressCircle.style.opacity = pressOpacity;
-                }
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    // الانتهاء
-                    playArriveSound();
-                    
-                    if (navigator.vibrate) {
-                        navigator.vibrate([30, 50, 30]);
-                    }
-
-                    // تأثير الوصول
-                    let arrivalPulse = 0;
-                    function pulseArrival() {
-                        arrivalPulse += 0.1;
-                        const pulseRadius = 50 + Math.sin(arrivalPulse * 3) * 10;
-                        pressCircle.setAttribute("cx", endX);
-                        pressCircle.setAttribute("cy", endY);
-                        pressCircle.setAttribute("r", pulseRadius);
-                        pressCircle.style.opacity = Math.max(0, 1 - arrivalPulse);
-
-                        if (arrivalPulse < 1) {
-                            requestAnimationFrame(pulseArrival);
-                        }
-                    }
-                    pulseArrival();
-
-                    setTimeout(() => {
-                        localStorage.setItem('eyeToggleTop', eyeToggleStandalone.style.top);
-                        localStorage.setItem('eyeToggleLeft', eyeToggleStandalone.style.left);
-                        localStorage.removeItem('eyeToggleRight');
-
-                        animationSvg.style.display = "none";
-                        pathLine.setAttribute("d", "");
-                        pressCircle.setAttribute("r", "0");
-                        
-                        eyeToggleStandalone.classList.remove('being-dragged');
-                        eyeToggleStandalone.style.boxShadow = originalBoxShadow;
-                        isAnimating = false;
-
-                        console.log('✅ تم نقل زر العين إلى:', {
-                            top: eyeToggleStandalone.style.top,
-                            left: eyeToggleStandalone.style.left
-                        });
-                    }, 500);
-                }
-            }
-
-            animate();
-        }, 100);
-    }
-
-    // ربط الحركة بالضغط
-    eyeToggleStandalone.addEventListener('click', function(e) {
-        const searchContainer = document.getElementById('search-container');
-        const isHidden = searchContainer && searchContainer.classList.contains('hidden');
-        
-        if (isHidden && !eyeToggleStandalone.classList.contains('dragging')) {
-            e.preventDefault();
-            e.stopPropagation();
-            startDragAnimation();
-        }
-    }, true);
-
-    console.log('✅ محاكاة سحب زر العين باليد جاهزة 👆 + ظل + صوت');
-})();
-
-/* إضافة CSS للتحسينات */
-(function addDragAnimationStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        #eye-toggle-standalone.being-dragged {
-            transition: none !important;
-            will-change: top, left, box-shadow;
-            z-index: 999999;
-        }
-        
-        #finger-drag-animation {
-            user-select: none;
-            -webkit-user-select: none;
+        if (toggleCont) {
+            toggleCont.classList.add('fully-hidden');
+            toggleCont.style.display = 'none';
+            toggleCont.style.pointerEvents = 'none';
         }
 
-        @keyframes hand-wiggle {
-            0%, 100% { transform: rotate(-5deg); }
-            50% { transform: rotate(5deg); }
-        }
-    `;
-    document.head.appendChild(style);
-})();
-function lockInterfaceWhenEyeHidden() {
-    const searchCont = document.getElementById('search-container');
-    const toggleCont = document.getElementById('js-toggle-container');
-    const eyeBtn      = document.getElementById('eye-toggle-standalone');
+        localStorage.setItem('searchVisible', 'false');
 
-    if (!searchCont || !toggleCont || !eyeBtn) return;
-
-    const reallyHidden = 
-        (searchCont.classList.contains('hidden') || searchCont.style.display === 'none') &&
-        (toggleCont.classList.contains('fully-hidden') || toggleCont.classList.contains('hidden') || toggleCont.style.display === 'none');
-
-    if (reallyHidden) {
-        // قفل كامل للطبقة العلوية
-        document.body.style.pointerEvents = 'none';
-        eyeBtn.style.pointerEvents = 'auto';           // الزر نفسه يبقى نشط
-        eyeBtn.style.zIndex = '999999';               // فوق الجميع
-
-        // منع أي حدث يمكن أن يُعيد الظهور
-        const block = e => {
-            if (e.target !== eyeBtn && !eyeBtn.contains(e.target)) {
-                e.stopPropagation();
-                e.preventDefault();
-            }
-        };
-
-        ['click','mousedown','mouseup','touchstart','touchend','pointerdown','pointerup']
-            .forEach(ev => document.addEventListener(ev, block, { capture: true }));
-
-        // تنظيف عند إعادة الظهور
-        const unlock = () => {
-            document.body.style.pointerEvents = '';
-            ['click','mousedown','mouseup','touchstart','touchend','pointerdown','pointerup']
-                .forEach(ev => document.removeEventListener(ev, block, { capture: true }));
-        };
-
-        // راقب عودة الظهور
-        const observer = new MutationObserver(() => {
-            const nowVisible = 
-                !searchCont.classList.contains('hidden') && searchCont.style.display !== 'none' ||
-                !toggleCont.classList.contains('fully-hidden') && !toggleCont.classList.contains('hidden') && toggleCont.style.display !== 'none';
-
-            if (nowVisible) {
-                unlock();
-                observer.disconnect();
-            }
+        // تثبيت الزر في أعلى يمين بشكل نهائي
+        Object.assign(eyeBtn.style, {
+            top: '20px',
+            right: '20px',
+            left: 'auto',
+            bottom: 'auto',
+            transition: 'all 0.3s ease'
         });
 
-        observer.observe(searchCont, { attributes: true, attributeFilter: ['class','style'] });
-        observer.observe(toggleCont,  { attributes: true, attributeFilter: ['class','style'] });
+        // تنظيف الأنيميشن
+        animLayer.remove();
 
-    } else {
-        document.body.style.pointerEvents = '';
+        // اهتزاز خفيف عند الوصول (اختياري)
+        if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
     }
-}
 
-// نفّذها عند الضغط على زر العين
-document.getElementById('eye-toggle')?.addEventListener('click', () => {
-    setTimeout(lockInterfaceWhenEyeHidden, 50);   // تأخير بسيط بعد إخفاء العناصر
-});
+    // ── تشغيل الأنيميشن عند الضغط على الزر ──
+    eyeBtn.addEventListener('click', function(e) {
+        // إذا كان البحث ظاهر → لا نعمل الأنيميشن الوهمي
+        if (!document.getElementById('search-container')?.classList.contains('hidden')) {
+            return; // السلوك الطبيعي
+        }
 
-// وأيضًا عند الضغط على الزر الدائري للإظهار
-document.getElementById('eye-toggle-standalone')?.addEventListener('click', () => {
-    setTimeout(lockInterfaceWhenEyeHidden, 100);
-});
+        e.preventDefault();
+        e.stopPropagation();
+
+        requestAnimationFrame(animate);
+    }, { once: false }); // يمكن تكراره
+
+    console.log("🎭 أنيميشن وهمي لسحب زر العين جاهز");
+})();
+
+hand.style.transform = `translate(-50%, -50%) rotate(${ease * 30 - 15}deg)`;
