@@ -1,6 +1,7 @@
+```json
 {
   "name": "medical-curriculum-map",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "خريطة المنهج الطبي التفاعلية - نظام تعليمي متكامل للطلاب",
   "keywords": [
     "medical",
@@ -13,54 +14,142 @@
     "pdf-viewer",
     "students",
     "learning",
-    "responsive"
+    "responsive",
+    "pwa",
+    "game",
+    "offline"
   ],
-  "homepage": "https://github.com/MUE24Med/semester-3#readme",
+  "homepage": "https://mue24med.github.io/s3/",
   "bugs": {
-    "url": "https://github.com/MUE24Med/semester-3/issues",
+    "url": "https://github.com/MUE24Med/s3/issues",
     "email": "dr.george.r.n@gmail.com"
   },
   "license": "MIT",
   "author": {
-    "name": "MUE24Med",
+    "name": "جورج رضا",
     "email": "dr.george.r.n@gmail.com",
-    "url": "https://github.com/MUE24Med"
+    "url": "https://linktr.ee/George_Reda"
   },
   "contributors": [
     {
       "name": "طلاب الطب",
-      "url": "https://github.com/MUE24Med/semester-3/graphs/contributors"
+      "url": "https://github.com/MUE24Med/s3/graphs/contributors"
     }
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MUE24Med/semester-3.git"
+    "url": "git+https://github.com/MUE24Med/s3.git"
   },
   "main": "index.html",
   "browserslist": [
     "last 2 Chrome versions",
     "last 2 Firefox versions",
     "last 2 Safari versions",
-    "last 2 Edge versions"
+    "last 2 Edge versions",
+    "last 2 Samsung Internet versions"
   ],
   "engines": {
-    "browser": ">= Chrome 80, Firefox 75, Safari 13, Edge 80"
+    "browser": ">= Chrome 80, Firefox 75, Safari 13, Edge 80",
+    "node": ">= 14.0.0"
   },
   "scripts": {
-    "start": "echo '✅ افتح index.html مباشرة في المتصفح' && exit 0",
-    "dev": "echo '🚀 لتشغيل سيرفر تطوير: npx serve . أو npx live-server'",
-    "test": "echo '⚠️ لا توجد اختبارات حالياً - قيد التطوير'",
+    "start": "echo '🚀 افتح index.html مباشرة في المتصفح' && exit 0",
+    "dev": "echo '💻 لتشغيل سيرفر تطوير: npx serve . أو npx live-server'",
+    "test": "echo '🧪 لا توجد اختبارات حالياً - قيد التطوير'",
     "lint": "echo '🔍 يمكن إضافة ESLint لاحقاً'",
     "format": "echo '🎨 يمكن إضافة Prettier لاحقاً'",
+    "build": "echo '🏗️ لا توجد عملية بناء - موقع ثابت'",
     "deploy": "echo '🌐 رفع إلى GitHub Pages: git push origin main'",
     "clean": "echo '🧹 تنظيف ملفات مؤقتة'",
+    "cache:clear": "echo '🗑️ مسح الكاش: npx caches.delete()'",
+    "update": "echo '🔄 تحديث الملفات من GitHub'",
     "help": "echo '📚 راجع README.md للحصول على المساعدة الكاملة'"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pdfjs-dist": "^3.11.174"
+  },
   "devDependencies": {},
   "private": true,
   "funding": {
     "type": "individual",
     "url": "https://github.com/sponsors/MUE24Med"
+  },
+  "pwa": {
+    "name": "خريطة المنهج الطبي",
+    "short_name": "MedicalMap",
+    "description": "خريطة تفاعلية للمنهج الطبي - الفصل الدراسي الثالث",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#ffcc00",
+    "icons": [
+      {
+        "src": "image/0.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      }
+    ]
+  },
+  "features": [
+    "Interactive SVG Map",
+    "PDF Preview & Viewer",
+    "Offline Support (PWA)",
+    "Smart Search System",
+    "Interactive Loading Game",
+    "GitHub Sync & Updates",
+    "Device Fingerprinting",
+    "Multi-group Support",
+    "Arabic & English Search",
+    "Touch & Mouse Support"
+  ],
+  "metrics": {
+    "fileCount": "1000+",
+    "supportedGroups": ["A", "B", "C", "D"],
+    "subjects": ["Anatomy", "Physiology", "Histology", "Pathology", "Pharmacology", "Microbiology", "Parasitology", "Biochemistry"],
+    "supportedLanguages": ["Arabic", "English"],
+    "fileTypes": [".pdf", ".webp", ".svg", ".html", ".css", ".js"]
+  },
+  "contact": {
+    "developer": "https://linktr.ee/George_Reda",
+    "github": "https://github.com/MUE24Med",
+    "email": "dr.george.r.n@gmail.com"
   }
 }
+```
+
+🔄 التحديثات التي تمت:
+
+✅ الإصدار: 2.0.0 → 2.1.0
+
+· زيادة إصدار بسيط للتغييرات الجديدة
+
+🔗 تحديث الروابط:
+
+· repository.url: semester-3 → s3
+· homepage: إلى GitHub Pages الفعلي
+· author.url: GitHub → Linktree
+
+📱 إضافات جديدة:
+
+· قسم pwa لإعدادات Progressive Web App
+· قسم features يوضح المميزات الرئيسية
+· قسم metrics بإحصائيات المشروع
+· قسم contact منظم للتواصل
+
+🎯 تحسينات:
+
+· كلمات مفتاحية جديدة (pwa, game, offline)
+· تحديث browserslist بإضافة Samsung Internet
+· تحديث engines بإضافة Node.js
+· إضافة dependencies لـ PDF.js (المستخدم فعلياً)
+· إضافة scripts جديدة (cache:clear, update)
+
+🌍 للمستخدمين العرب:
+
+· وصف أوضح للميزات بالعربية في features
+· أسماء المواد الطبية في metrics.subjects
+
+🚀 للتواصل:
+
+· contact.developer: رابط Linktree كخيار رئيسي
+· الحفاظ على GitHub وEmail كخيارات بديلة
