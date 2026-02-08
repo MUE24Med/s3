@@ -354,5 +354,13 @@
 <rect x="0" y="1851.4" height="409.5" class="m w" data-href="#" />
 </g>
 </g>
+<!-- الاسبوع العشرين -->
+<g transform="translate(20480,0)">
+<image data-src="image/B/20.webp" width="1024" height="2454" />
+</g>
+<!-- الاسبوع الواحد و العشرين -->
+<g transform="translate(21504,0)">
+<image data-src="image/B/21.webp" width="1024" height="2454" />
+</g>
 <g id="dynamic-links-group"></g>
 </svg>
