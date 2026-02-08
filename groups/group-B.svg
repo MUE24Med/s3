@@ -315,11 +315,11 @@
 <!-- Saturday 19 -->
 <g transform="translate(140,0)">
 
-<rect y="330" height="539.5" class="m w" data-href="#" />
+<rect x="0" y="330" height="539.5" class="m w" data-href="#" />
 
-<rect y="868" height="490" class="m w" data-href="#" />
+<rect x="0" y="868" height="490" class="m w" data-href="#" />
 
-<rect y="1358" height="492.4" class="m w" data-href="#" />
+<rect x="0" y="1358" height="492.4" class="m w" data-href="#" />
 </g>
 
 <!-- Monday 19 -->
@@ -366,46 +366,46 @@
 <!-- Saturday 21 -->
 <g transform="translate(139,0)">
 
-<rect y="1128.5" height="376.5" class="m w" data-href="#" />
+<rect x="0" y="1128.5" height="376.5" class="m w" data-href="#" />
 
-<rect y="150.8" height="378" class="m w" data-href="#"/>
+<rect x="0" y="150.8" height="378" class="m w" data-href="#"/>
 
-<rect y="1886.2" height="287" class="m w" data-href="4"/>
+<rect x="0" y="1886.2" height="287" class="m w" data-href="#"/>
 
 <!-- Sunday 21 -->
 <g transform="translate(254,0)">
 
-<rect y="1128.3" height="376.71" class="m w" data-href="5" />
+<rect x="0" y="1128.3" height="376.71" class="m w" data-href="#" />
 
-<rect y="1505.7" height="378.8" class="m w" data-href="6" />
+<rect x="0" y="1505.7" height="378.8" class="m w" data-href="#" />
 
-<rect y="1885.5" height="289.5" class="m w" data-href="7" />
+<rect x="0" y="1885.5" height="289.5" class="m w" data-href="#" />
 
 </g>
 <!-- Monday 21 -->
 <g transform="translate(368.5,0)">
 
-<rect y="289.3" height="448.1" class="m w" data-href="8" />
+<rect x="0" y="289.3" height="448.1" class="m w" data-href="#" />
 
-<rect y="853.5" height="547.6" class="m w" data-href="9" />
+<rect x="0" y="853.5" height="547.6" class="m w" data-href="#" />
 
-<rect y="1886.3" height="384.2" class="m w" data-href="10" />
+<rect x="0" y="1886.3" height="384.2" class="m w" data-href="#" />
 
 </g>
 <!-- Wednesday 21 -->
 <g transform="translate(597.758,0)">
 
-<rect y="1403" height="481" class="m w" data-href="11" />
+<rect x="0" y="1403" height="481" class="m w" data-href="#" />
 
 </g>
 <!-- Thursday 21 -->
 <g transform="translate(713,0)">
 
-<rect y="391.2" height="461" class="m w" date-href="#" />
+<rect x="0" y="391.2" height="461" class="m w" date-href="#" />
 
-<rect y="854" height="547" class="m w" data-href="13" />
+<rect x="0" y="854" height="547" class="m w" data-href="#" />
 
-<rect y="1403.1" height="482.6" class="m w" date-href="#" />
+<rect x="0" y="1403.1" height="482.6" class="m w" date-href="#" />
 </g>
 </g>
 <g id="dynamic-links-group"></g>
