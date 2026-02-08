@@ -375,11 +375,11 @@
 <!-- Sunday 21 -->
 <g transform="translate(254,0)">
 
-<rect x="0" y="1128.3" height="376.71" class="m w" data-href="#" />
+<rect x="0" y="1128.3" height="376.71" class="m w l" data-href="HEM/Lecture/para-01.pdf" />
 
-<rect x="0" y="1505.7" height="378.8" class="m w" data-href="#" />
+<rect x="0" y="1505.7" height="378.8" class="m w s" data-href="#" />
 
-<rect x="0" y="1885.5" height="289.5" class="m w" data-href="#" />
+<rect x="0" y="1885.5" height="289.5" class="m w l" data-href="HEM/Lecture/physio-02.pdf" />
 
 </g>
 <!-- Monday 21 -->
