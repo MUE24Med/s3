@@ -467,6 +467,21 @@
    [001] المتغيرات والإعدادات الأساسية
    ======================================== */
 
+// إضافة متغيرات النظام الناقصة
+window.momentumAnimation = null;
+
+// دوال التتبع الوهمية للتجنب الأخطاء
+function trackSearch(query) { console.log('🔍 بحث:', query); }
+function trackNameChange(name) { console.log('👤 تغيير اسم:', name); }
+function trackGameScore(score) { console.log('🎮 نتيجة لعبة:', score); }
+function trackSvgOpen(path) { console.log('📁 فتح ملف:', path); }
+function resetBrowserZoom() { 
+    document.body.style.zoom = "1";
+    if (document.documentElement.style.zoom !== undefined) {
+        document.documentElement.style.zoom = "1";
+    }
+}
+
 const REPO_NAME = "s3";
 const GITHUB_USER = "MUE24Med";
 
@@ -1003,29 +1018,10 @@ async function showPDFPreview(item) {
             viewport: viewport
         };
 
-await page.render(renderContext).promise;
+        await page.render(renderContext).promise;
 
-// ─── تحويل الـ canvas لصورة PNG حقيقية ───────────────
-const imgData = canvas.toDataURL('image/png');
-
-const previewImg = document.createElement('img');
-previewImg.src = imgData;
-previewImg.style.width = '100%';
-previewImg.style.height = 'auto';
-previewImg.style.display = 'block';
-previewImg.style.objectFit = 'contain';
-
-// إخفاء الـ canvas وإظهار الصورة بداله
-canvas.style.display = 'none';
-canvas.parentNode.appendChild(previewImg);
-
-// تحديث حالة التحميل
-loading.classList.add('hidden');
-console.log('✅ تم تحويل المعاينة إلى صورة PNG');
-
-previewImg.style.maxHeight = '80vh';  // عشان ما تطلعش بره الشاشة
-canvas.style.display = 'none';
-previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
+        loading.classList.add('hidden');
+        canvas.style.display = 'block';
 
     } catch (error) {
         console.error('❌ خطأ في المعاينة:', error);
@@ -1917,13 +1913,16 @@ function renderNameInput() {
 function loadImages() {
     if (!mainSvg) return;
     console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);
+    
     if (imageUrlsToLoad.length === 0) {
         console.warn('⚠️ لا توجد صور للتحميل!');
         finishLoading();
         return;
     }
+    
     const MAX_CONCURRENT = 3;
     let currentIndex = 0;
+    
     async function loadNextBatch() {
         while (currentIndex < imageUrlsToLoad.length && currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {
             const url = imageUrlsToLoad[currentIndex];
@@ -1935,13 +1934,16 @@ function loadImages() {
                     console.log(`✅ الصورة موجودة في الكاش: ${url.split('/').pop()}`);
                     const blob = await cachedImg.blob();
                     const imgUrl = URL.createObjectURL(blob);
-                    const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
+                    
+                    // إصلاح: استخدام فقط الصور الموجودة في mainSvg
+                    const allImages = mainSvg.querySelectorAll('image');
                     allImages.forEach(si => {
                         const dataSrc = si.getAttribute('data-src');
                         if (dataSrc === url) {
                             si.setAttribute('href', imgUrl);
                         }
                     });
+                    
                     loadingProgress.completedSteps++;
                     updateLoadProgress();
                     if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
@@ -1954,9 +1956,11 @@ function loadImages() {
             } catch (cacheError) {
                 console.warn(`⚠️ خطأ في الوصول للكاش: ${cacheError}`);
             }
+            
             const img = new Image();
             img.onload = async function() {
-                const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
+                // إصلاح: استخدام فقط الصور الموجودة في mainSvg
+                const allImages = mainSvg.querySelectorAll('image');
                 allImages.forEach(si => {
                     const dataSrc = si.getAttribute('data-src');
                     if (dataSrc === url) {
@@ -1964,6 +1968,7 @@ function loadImages() {
                         console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);
                     }
                 });
+                
                 try {
                     const cache = await caches.open('semester-3-cache-v1');
                     const imgResponse = await fetch(url);
@@ -1974,6 +1979,7 @@ function loadImages() {
                 } catch (cacheError) {
                     console.warn(`⚠️ فشل حفظ الصورة في الكاش: ${cacheError}`);
                 }
+                
                 loadingProgress.completedSteps++;
                 updateLoadProgress();
                 if (loadingProgress.completedSteps >= loadingProgress.totalSteps) {
@@ -1982,6 +1988,7 @@ function loadImages() {
                     loadNextBatch();
                 }
             };
+            
             img.onerror = function() {
                 console.error(`❌ خطأ في تحميل ${url}`);
                 loadingProgress.completedSteps++;
@@ -1992,9 +1999,11 @@ function loadImages() {
                     loadNextBatch();
                 }
             };
+            
             img.src = url;
         }
     }
+    
     loadNextBatch();
 }
 window.loadImages = loadImages;
@@ -2400,11 +2409,13 @@ async function updateWoodInterface() {
     scrollContainerGroup.appendChild(scrollContent);
 
     const maxScroll = Math.max(0, totalContentHeight - 1700);
-    let scrollOffset = 0;
 
     console.log(`📊 المحتوى: ${totalContentHeight}px، التمرير المتاح: ${maxScroll}px`);
 
-    // سيتم إضافة نظام التمرير في الجزء 5
+    // إضافة نظام التمرير عند الحاجة
+    if (needsScroll) {
+        addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight);
+    }
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
@@ -2415,9 +2426,7 @@ async function updateWoodInterface() {
    [006] نظام التمرير الرأسي + zoom reset
    ======================================== */
 
-// هذا الجزء يُضاف داخل دالة updateWoodInterface بعد حساب maxScroll
-
-// نظام التمرير الرأسي (يُضاف في نهاية updateWoodInterface)
+// نظام التمرير الرأسي
 function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight) {
     let scrollOffset = 0;
 
