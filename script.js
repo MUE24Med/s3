@@ -1,6 +1,7 @@
 /* ========================================
-   script.js - الجزء 1 من 6
-   [000-001] Preload System + المتغيرات الأساسية
+   script.js - Part 1 of 6
+   [000-001] Preload System + Core Variables
+   ⚠️ NO setTimeout - All removed
    ======================================== */
 
 (function initPreloadSystem() {
@@ -103,6 +104,7 @@
             window.location.reload();
         });
 
+        // Game Variables - moved here to avoid duplication
         const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
 
         const gameContainer = document.getElementById('gameContainer');
@@ -150,9 +152,7 @@
             const itemsInWave = 2;
 
             for (let i = 0; i < itemsInWave; i++) {
-                setTimeout(() => {
-                    spawnItem();
-                }, i * 100);
+                spawnItem();
             }
         }
 
@@ -464,7 +464,7 @@
 })();
 
 /* ========================================
-   [001] المتغيرات والإعدادات الأساسية
+   [001] Core Variables and Settings
    ======================================== */
 
 const REPO_NAME = "s3";
@@ -569,13 +569,14 @@ if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
-/* نهاية الجزء 1 من 6 */
+/* End of Part 1 */
 /* ========================================
-   script.js - الجزء 2 من 6
-   [002-003] نظام التنقل + دوال مساعدة + معاينة PDF
+   script.js - Part 2 of 6
+   [002-003] Navigation System + Helper Functions + PDF Preview
+   ⚠️ NO setTimeout - All removed
    ======================================== */
 
-/* [002] نظام التنقل الخلفي */
+/* [002] Back Navigation System */
 
 function pushNavigationState(state, data = {}) {
     navigationHistory.push({ state, data, timestamp: Date.now() });
@@ -627,11 +628,9 @@ function handleBackNavigation(e) {
         }
 
         if (currentState.data.scrollPosition !== undefined) {
-            setTimeout(() => {
-                if (scrollContainer) {
-                    scrollContainer.scrollLeft = currentState.data.scrollPosition;
-                }
-            }, 100);
+            if (scrollContainer) {
+                scrollContainer.scrollLeft = currentState.data.scrollPosition;
+            }
         }
         return;
     }
@@ -740,7 +739,8 @@ function debounce(func, delay) {
     let timeoutId;
     return function() {
         clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func.apply(this, arguments), delay);
+        timeoutId = delay;
+        func.apply(this, arguments);
     };
 }
 
@@ -938,7 +938,7 @@ async function initializeGroup(groupLetter) {
     window.loadImages();
 }
 
-/* [003] نظام معاينة PDF المحسّن مع خيارات الفتح */
+/* [003] PDF Preview System - Enhanced */
 
 let currentPreviewItem = null;
 let isToolbarExpanded = false;
@@ -1003,29 +1003,26 @@ async function showPDFPreview(item) {
             viewport: viewport
         };
 
-await page.render(renderContext).promise;
+        await page.render(renderContext).promise;
 
-// ─── تحويل الـ canvas لصورة PNG حقيقية ───────────────
-const imgData = canvas.toDataURL('image/png');
+        const imgData = canvas.toDataURL('image/png');
 
-const previewImg = document.createElement('img');
-previewImg.src = imgData;
-previewImg.style.width = '100%';
-previewImg.style.height = 'auto';
-previewImg.style.display = 'block';
-previewImg.style.objectFit = 'contain';
+        const previewImg = document.createElement('img');
+        previewImg.src = imgData;
+        previewImg.style.width = '100%';
+        previewImg.style.height = 'auto';
+        previewImg.style.display = 'block';
+        previewImg.style.objectFit = 'contain';
 
-// إخفاء الـ canvas وإظهار الصورة بداله
-canvas.style.display = 'none';
-canvas.parentNode.appendChild(previewImg);
+        canvas.style.display = 'none';
+        canvas.parentNode.appendChild(previewImg);
 
-// تحديث حالة التحميل
-loading.classList.add('hidden');
-console.log('✅ تم تحويل المعاينة إلى صورة PNG');
+        loading.classList.add('hidden');
+        console.log('✅ تم تحويل المعاينة إلى صورة PNG');
 
-previewImg.style.maxHeight = '80vh';  // عشان ما تطلعش بره الشاشة
-canvas.style.display = 'none';
-previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
+        previewImg.style.maxHeight = '80vh';
+        canvas.style.display = 'none';
+        previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
 
     } catch (error) {
         console.error('❌ خطأ في المعاينة:', error);
@@ -1075,7 +1072,6 @@ function showOpenOptions(item) {
 
     console.log('📋 عرض خيارات الفتح:', url);
 
-    // تحميل المعاينة
     (async () => {
         try {
             if (typeof pdfjsLib === 'undefined') {
@@ -1180,10 +1176,12 @@ function toggleMozillaToolbar() {
     }
 }
 
-/* نهاية الجزء 2 من 6 */
+/* End of Part 2 */
 /* ========================================
-   script.js - الجزء 3 من 6
-   [004] معالجات الأحداث والأزرار + Reset Button
+   script.js - Part 3 of 6
+   [004] Event Handlers and Buttons + Reset Button
+   ⚠️ NO setTimeout - All removed
+   ⚠️ NO images in loading screen
    ======================================== */
 
 document.querySelectorAll('.group-btn').forEach(btn => {
@@ -1305,10 +1303,10 @@ if (resetBtn) {
 
             if (modifiedFiles.length === 0) {
                 updateStatus('✅ لا توجد تحديثات جديدة!');
-                setTimeout(() => {
+                requestAnimationFrame(() => {
                     document.body.removeChild(loadingMsg);
                     alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
-                }, 1500);
+                });
                 return;
             }
 
@@ -1403,7 +1401,7 @@ if (resetBtn) {
             updateStatus('✅ اكتمل التحديث!');
             updateDetails(`<br><strong>✅ تم تحديث ${updatedCount} ملف</strong>`);
 
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 document.body.removeChild(loadingMsg);
 
                 alert(
@@ -1416,8 +1414,7 @@ if (resetBtn) {
                 );
 
                 window.location.reload(true);
-
-            }, 2000);
+            });
 
         } catch (error) {
             console.error('❌ خطأ في التحديث:', error);
@@ -1604,22 +1601,13 @@ if (eyeToggle && searchContainer) {
             initialX = rect.left;
             initialY = rect.top;
 
-            dragTimeout = setTimeout(() => {
-                isDragging = true;
-                eyeToggleStandalone.classList.add('dragging');
-                console.log('🖱️ بدأ السحب');
-            }, 200);
+            isDragging = true;
+            eyeToggleStandalone.classList.add('dragging');
+            console.log('🖱️ بدأ السحب');
         };
 
         const doDrag = (clientX, clientY) => {
-            if (!isDragging) {
-                const deltaX = Math.abs(clientX - startX);
-                const deltaY = Math.abs(clientY - startY);
-                if (deltaX > 5 || deltaY > 5) {
-                    clearTimeout(dragTimeout);
-                }
-                return;
-            }
+            if (!isDragging) return;
 
             hasMoved = true;
             const deltaX = clientX - startX;
@@ -1641,8 +1629,6 @@ if (eyeToggle && searchContainer) {
         };
 
         const endDrag = () => {
-            clearTimeout(dragTimeout);
-
             if (isDragging) {
                 isDragging = false;
                 eyeToggleStandalone.classList.remove('dragging');
@@ -1752,7 +1738,6 @@ document.addEventListener('DOMContentLoaded', () => {
         methodCloseBtn.addEventListener('click', closeOpenOptions);
     }
 
-    // ربط الأزرار الثلاثة
     const mozillaBtn = document.getElementById('open-mozilla-btn');
     const browserBtn = document.getElementById('open-browser-btn');
     const driveBtn = document.getElementById('open-drive-btn');
@@ -1908,10 +1893,11 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-/* نهاية الجزء 3 من 6 */
+/* End of Part 3 */
 /* ========================================
-   script.js - الجزء 4 من 6
-   [005] loadImages + updateWoodInterface (الجزء الأول)
+   script.js - Part 4 of 6
+   [005] loadImages + updateWoodInterface (Part 1)
+   ⚠️ NO setTimeout - All removed
    ======================================== */
 
 function loadImages() {
@@ -2301,7 +2287,6 @@ async function updateWoodInterface() {
                 g.appendChild(r);
                 g.appendChild(t);
 
-                // نظام الضغط المطول للمعاينة
                 let longPressTimer = null;
                 let longPressTriggered = false;
                 let touchStartTime = 0;
@@ -2310,20 +2295,17 @@ async function updateWoodInterface() {
                     touchStartTime = Date.now();
                     longPressTriggered = false;
 
-                    longPressTimer = setTimeout(() => {
-                        longPressTriggered = true;
+                    longPressTriggered = true;
 
-                        if (item.type === 'file') {
-                            if (navigator.vibrate) {
-                                navigator.vibrate(50);
-                            }
-                            showPDFPreview(item);
+                    if (item.type === 'file') {
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50);
                         }
-                    }, 500);
+                        showPDFPreview(item);
+                    }
                 }, { passive: true });
 
                 g.addEventListener('touchend', (e) => {
-                    clearTimeout(longPressTimer);
                     const touchDuration = Date.now() - touchStartTime;
 
                     if (!longPressTriggered && touchDuration < 500) {
@@ -2340,7 +2322,6 @@ async function updateWoodInterface() {
                 });
 
                 g.addEventListener('touchmove', (e) => {
-                    clearTimeout(longPressTimer);
                 }, { passive: true });
 
                 g.addEventListener('click', (e) => {
@@ -2404,20 +2385,20 @@ async function updateWoodInterface() {
 
     console.log(`📊 المحتوى: ${totalContentHeight}px، التمرير المتاح: ${maxScroll}px`);
 
-    // سيتم إضافة نظام التمرير في الجزء 5
+    if (maxScroll > 0) {
+        addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight);
+    }
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
 
-/* نهاية الجزء 4 من 6 */
+/* End of Part 4 */
 /* ========================================
-   script.js - الجزء 5 من 6
-   [006] نظام التمرير الرأسي + zoom reset
+   script.js - Part 5 of 6
+   [006] Vertical Scroll System + Eye Toggle Fix
+   ⚠️ NO setTimeout - All removed
    ======================================== */
 
-// هذا الجزء يُضاف داخل دالة updateWoodInterface بعد حساب maxScroll
-
-// نظام التمرير الرأسي (يُضاف في نهاية updateWoodInterface)
 function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight) {
     let scrollOffset = 0;
 
@@ -2455,7 +2436,6 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
 
         let isDraggingContent = false;
         let isLongPressing = false;
-        let longPressTimer = null;
         let dragStartY = 0;
         let dragStartOffset = 0;
         let dragVelocity = 0;
@@ -2537,16 +2517,12 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
             if (target.classList && target.classList.contains('scroll-handle')) return;
             if (target.closest('.wood-folder-group, .wood-file-group')) return;
 
-            longPressTimer = setTimeout(() => {
-                isLongPressing = true;
-                startContentDrag(e.clientY);
-            }, 500);
-
+            isLongPressing = true;
+            startContentDrag(e.clientY);
             e.preventDefault();
         });
 
         woodViewRect.addEventListener('mouseup', () => {
-            clearTimeout(longPressTimer);
         });
 
         woodViewRect.addEventListener('touchstart', (e) => {
@@ -2554,17 +2530,14 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
             if (target.classList && target.classList.contains('scroll-handle')) return;
             if (target.closest('.wood-folder-group, .wood-file-group')) return;
 
-            longPressTimer = setTimeout(() => {
-                isLongPressing = true;
-                if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                }
-                startContentDrag(e.touches[0].clientY);
-            }, 500);
+            isLongPressing = true;
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            startContentDrag(e.touches[0].clientY);
         }, { passive: true });
 
         woodViewRect.addEventListener('touchend', () => {
-            clearTimeout(longPressTimer);
         });
 
         scrollContainerGroup.insertBefore(woodViewRect, scrollContent);
@@ -2572,13 +2545,10 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
         window.addEventListener('mousemove', (e) => {
             if (isDraggingContent && isLongPressing) {
                 doContentDrag(e.clientY);
-            } else if (longPressTimer) {
-                clearTimeout(longPressTimer);
             }
         });
 
         window.addEventListener('mouseup', () => {
-            clearTimeout(longPressTimer);
             if (isLongPressing) {
                 endContentDrag();
             }
@@ -2592,7 +2562,6 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
-            clearTimeout(longPressTimer);
             if (isLongPressing) {
                 endContentDrag();
             }
@@ -2659,7 +2628,7 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
 }
 
 /* ========================================
-   [007] إصلاح زر العين - منع التفاعل مع الحاويات المخفية
+   [007] Eye Toggle Fix - Prevent Interaction with Hidden Containers
    ======================================== */
 
 function preventInteractionWhenHidden() {
@@ -2668,7 +2637,7 @@ function preventInteractionWhenHidden() {
 
     if (!toggleContainer || !searchContainer) {
         console.warn('⚠️ لم يتم العثور على الحاويات، إعادة المحاولة...');
-        setTimeout(preventInteractionWhenHidden, 500);
+        requestAnimationFrame(preventInteractionWhenHidden);
         return;
     }
 
@@ -2763,10 +2732,11 @@ if (document.readyState === 'loading') {
     preventInteractionWhenHidden();
 }
 
-/* نهاية الجزء 5 من 6 */
+/* End of Part 5 */
 /* ========================================
-   script.js - الجزء 6 من 6 (الأخير)
-   [008] دوال معالجة SVG + scan + الإصلاحات النهائية
+   script.js - Part 6 of 6 (FINAL)
+   [008] SVG Processing + scan + Final Fixes + Auto-load Group
+   ⚠️ NO setTimeout - All removed
    ======================================== */
 
 function getCumulativeTranslate(element) {
@@ -3114,7 +3084,7 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [009] معالجات PDF Viewer
+   [009] PDF Viewer Handlers
    ======================================== */
 
 document.getElementById("closePdfBtn").onclick = () => {
@@ -3162,7 +3132,7 @@ document.getElementById("shareBtn").onclick = () => {
 };
 
 /* ========================================
-   [010] تحميل آخر جروب تلقائياً
+   [010] Auto-load Last Group
    ======================================== */
 
 (function autoLoadLastGroup() {
@@ -3202,14 +3172,11 @@ console.log('   ✅ z-index بأرقام بسيطة (1-5)');
 console.log('   ✅ خلفية المعاينة شفافة');
 console.log('   ✅ نظام Zoom Reset مدمج');
 console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة');
+console.log('   ⚠️ NO setTimeout - تم إزالة كل setTimeout');
 
 /* ========================================
-   🎉 نهاية script.js - جميع الأجزاء الستة 🎉
+   [011] Zoom Reset on Z-Index Changes
    ======================================== */
-
-// ============================================
-// Reset Zoom عند أي تغيير Z-Index أو ظهور شاشة
-// ============================================
 
 (function observeZIndexChanges() {
     let zoomTimeout;
@@ -3224,7 +3191,7 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
 
         return (
             zIndex !== 'auto' &&
-            parseInt(zIndex) >= 10 &&        // أي عنصر طالع فوق
+            parseInt(zIndex) >= 10 &&
             display !== 'none' &&
             visibility !== 'hidden' &&
             opacity !== '0'
@@ -3241,11 +3208,8 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
                     mutation.attributeName === 'class'
                 ) {
                     if (shouldTriggerReset(target)) {
-                        clearTimeout(zoomTimeout);
-                        zoomTimeout = setTimeout(() => {
-                            console.log('🧠 تغيير z-index / ظهور شاشة → Reset Zoom');
-                            resetBrowserZoom();
-                        }, 80);
+                        console.log('🧠 تغيير z-index / ظهور شاشة → Reset Zoom');
+                        resetBrowserZoom();
                         break;
                     }
                 }
@@ -3254,11 +3218,8 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
             if (mutation.type === 'childList') {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === 1 && shouldTriggerReset(node)) {
-                        clearTimeout(zoomTimeout);
-                        zoomTimeout = setTimeout(() => {
-                            console.log('🧠 إضافة شاشة جديدة → Reset Zoom');
-                            resetBrowserZoom();
-                        }, 80);
+                        console.log('🧠 إضافة شاشة جديدة → Reset Zoom');
+                        resetBrowserZoom();
                     }
                 });
             }
@@ -3274,3 +3235,7 @@ console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة')
 
     console.log('✅ مراقبة z-index وظهور/اختفاء الشاشات مفعّلة');
 })();
+
+/* ========================================
+   🎉 END OF script.js - ALL 6 PARTS 🎉
+   ======================================== */
