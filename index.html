@@ -115,8 +115,6 @@
       <div class="game-overlay" id="gameOverlay">
         <h2>انتهت اللعبة!</h2>
         <div class="final-score" id="finalScore">النقاط: 0</div>
-        <!-- إضافة عرض أعلى نتيجة هنا -->
-        <div class="highest-score" id="highestScoreDisplay" style="display: none; margin: 10px 0; color: #ffca28; font-weight: bold;"></div>
         <button class="restart-btn" id="restartBtn">🔄</button>
       </div>
     </div>
@@ -142,8 +140,7 @@
 <!-- شاشة اختيار المجموعة -->
 <div id="group-selection-screen">
   <div id="group-selection-content">
-    <!-- تم تغيير النص إلى صورة الشعار -->
-    <img id="main-logo" src="image/0.webp" alt="شعار الكلية" />
+    <img id="main-logo" src="image/0.png" alt="شعار الكلية" />
     <h1>اختر مجموعتك</h1>
     <div id="group-buttons">
       <button class="group-btn" data-group="A">
@@ -200,8 +197,7 @@
 <!-- شاشة التحميل -->
 <div id="loading-overlay">
   <div id="loading-content">
-    <!-- تم تغيير النص إلى صورة الشعار -->
-    <img id="splash-image" src="image/0.webp" alt="شعار الكلية" />
+    <img id="splash-image" src="image/0.png" alt="شعار التحميل" />
     <h1 id="project-loading-title">جاري التحميل...</h1>
     <div id="loader-lights">
       <div class="light-bulb" id="bulb-1"></div>
@@ -295,9 +291,9 @@
   }
 </script>
 
-<!-- السكريبتات الرئيسية - تم تعديل الترتيب -->
-<script src="tracker.js"></script>
+<!-- السكريبتات الرئيسية -->
 <script src="script.js"></script>
+<script src="tracker.js"></script>
 
 <!-- Service Worker -->
 <script>
