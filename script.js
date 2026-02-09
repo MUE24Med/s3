@@ -1,9 +1,6 @@
 /* ========================================
    script.js - Part 1 of 6 - ENHANCED PRELOAD
    [000-001] Preload System + Core Variables
-   ⚠️ Files load BEFORE group selection
-   ⚠️ Images (including 0.webp) load AFTER with bulbs
-   ⚠️ NO logo-A/B/C/D.webp images (deleted)
    ======================================== */
 
 (function initPreloadSystem() {
@@ -25,7 +22,7 @@
             if (el) el.style.display = 'none';
         });
 
-        // ✅ الملفات التي تحمل قبل اختيار الجروب
+        // الملفات التي تحمل قبل اختيار الجروب
         const filesToLoad = [
             'index.html',
             'package.json', 
@@ -111,7 +108,10 @@
             window.location.reload();
         });
 
-        // Game Variables - moved here to avoid duplication
+        // ========================================
+        // GAME VARIABLES - لعبة القلوب المعدلة
+        // ========================================
+
         const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
 
         const gameContainer = document.getElementById('gameContainer');
@@ -120,13 +120,14 @@
         const scoreDisplay = document.getElementById('scoreDisplay');
         const gameOverlay = document.getElementById('gameOverlay');
         const finalScore = document.getElementById('finalScore');
+        const highestScoreDisplay = document.getElementById('highestScoreDisplay');
         const restartBtn = document.getElementById('restartBtn');
         const leftBtn = document.getElementById('leftBtn');
         const rightBtn = document.getElementById('rightBtn');
         const leaderboardList = document.getElementById('leaderboardList');
 
         let runnerPosition = 0;
-        let hearts = 0;
+        let hearts = 3; // بداية بثلاثة قلوب
         let score = 0;
         let gameActive = true;
         let fallSpeed = 1.5;
@@ -136,6 +137,13 @@
         let spawnInterval = 1800;
 
         const lanes = [20, 50, 80];
+
+        // تحديث عرض القلوب
+        heartsDisplay.textContent = hearts;
+
+        // ========================================
+        // GAME FUNCTIONS - دوال اللعبة
+        // ========================================
 
         function moveRunner(direction) {
             if (!gameActive) return;
@@ -222,17 +230,19 @@
                     if (itemData.lane === playerLane) {
                         if (itemData.type === 'pill') {
                             hearts++;
+                            heartsDisplay.textContent = hearts;
                         } else if (itemData.type === 'bacteria') {
                             hearts--;
+                            heartsDisplay.textContent = hearts;
                         } else if (itemData.type === 'virus') {
                             hearts -= 1;
+                            heartsDisplay.textContent = hearts;
                         }
 
-                        heartsDisplay.textContent = hearts;
                         itemData.element.remove();
                         activeItems.splice(index, 1);
 
-                        if (hearts < 0) {
+                        if (hearts <= 0) {
                             endGame();
                         }
                     }
@@ -396,16 +406,48 @@
             await sendScoreToServer(playerName, score, deviceId);
             await displayLeaderboard();
 
+            // ========================================
+            // ✅ تحديث ونشر أعلى نتيجة - إضافة رئيسية
+            // ========================================
+            
+            // تتبع نتيجة اللعبة وحفظ أعلى نتيجة
             if (typeof trackGameScore === 'function') {
                 trackGameScore(score);
+            }
+            
+            // عرض أعلى نتيجة للاعب
+            if (typeof UserTracker !== 'undefined') {
+                // تحميل أعلى نتيجة
+                const highestScore = UserTracker.getHighestScore();
+                
+                if (highestScoreDisplay) {
+                    if (highestScore > 0) {
+                        highestScoreDisplay.style.display = 'block';
+                        highestScoreDisplay.textContent = `🏆 أعلى نتيجة لك: ${highestScore} نقطة`;
+                        
+                        // إضافة رسالة خاصة إذا حقق رقم قياسي جديد
+                        if (score > highestScore) {
+                            highestScoreDisplay.innerHTML = `🏆🏆 <span style="color: #ff5722;">رقم قياسي جديد! ${score} نقطة</span> 🏆🏆`;
+                        }
+                    } else {
+                        highestScoreDisplay.style.display = 'none';
+                    }
+                }
+                
+                // عرض أعلى نتيجة باستخدام دالة UserTracker
+                if (typeof UserTracker.displayHighestScore === 'function') {
+                    UserTracker.displayHighestScore();
+                }
             }
         }
 
         function restartGame() {
+            // تنظيف العناصر الساقطة
             activeItems.forEach(item => item.element.remove());
             activeItems = [];
 
-            hearts = 0;
+            // إعادة تعيين المتغيرات
+            hearts = 3;
             score = 0;
             runnerPosition = 0;
             fallSpeed = 1.5;
@@ -413,17 +455,25 @@
             spawnInterval = 1800;
             gameActive = true;
 
+            // تحديث العرض
             heartsDisplay.textContent = hearts;
             scoreDisplay.textContent = score;
             runner.style.left = lanes[1] + '%';
             gameOverlay.style.display = 'none';
+            
+            // إخفاء عرض أعلى نتيجة في لعبة جديدة
+            if (highestScoreDisplay) {
+                highestScoreDisplay.style.display = 'none';
+            }
 
+            // إعادة تشغيل اللعبة
             updateGame();
             startSpawning();
         }
 
         restartBtn.addEventListener('click', restartGame);
 
+        // عرض القائمة العالمية أول مرة
         displayLeaderboard();
 
         function updateLeaderboardPeriodically() {
@@ -436,6 +486,7 @@
         }
         updateLeaderboardPeriodically();
 
+        // بدء اللعبة
         updateGame();
 
         let spawnerIntervalId;
@@ -473,7 +524,6 @@
         }
     }
 })();
-
 /* ========================================
    [001] Core Variables and Settings
    ======================================== */
