@@ -426,11 +426,15 @@
 
         displayLeaderboard();
 
-        setInterval(() => {
+        function updateLeaderboardPeriodically() {
             if (!gameActive) {
                 displayLeaderboard();
             }
-        }, 30000);
+            requestAnimationFrame(() => {
+                updateLeaderboardPeriodically();
+            });
+        }
+        updateLeaderboardPeriodically();
 
         updateGame();
 
@@ -572,16 +576,9 @@ if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
-/* End of Part 1 */
 /* ========================================
-   script.js - Part 2 of 6
-   [002-003] Navigation System + Helper Functions + PDF Preview
-   ⚠️ NO setTimeout - All removed
-   ⚠️ NO logo-A/B/C/D.webp images (deleted)
-   ⚠️ Text-based group welcome instead
+   [002] Back Navigation System
    ======================================== */
-
-/* [002] Back Navigation System */
 
 function pushNavigationState(state, data = {}) {
     navigationHistory.push({ state, data, timestamp: Date.now() });
@@ -778,21 +775,19 @@ function loadSelectedGroup() {
 
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
-    
-    // ✅ إخفاء الصورة (المحذوفة)
+
     const splashImage = document.getElementById('splash-image');
     if (splashImage) {
         splashImage.style.display = 'none';
     }
-    
-    // ✅ إضافة رسالة ترحيب نصية بدلاً من الصورة
+
     const loadingContent = document.getElementById('loading-content');
     if (loadingContent) {
         const welcomeMsg = loadingContent.querySelector('.welcome-group-msg');
         if (welcomeMsg) {
             welcomeMsg.remove();
         }
-        
+
         const msgDiv = document.createElement('div');
         msgDiv.className = 'welcome-group-msg';
         msgDiv.style.cssText = `
@@ -804,10 +799,10 @@ function showLoadingScreen(groupLetter) {
             animation: pulse 2s ease-in-out infinite;
         `;
         msgDiv.textContent = `مجموعة ${groupLetter}`;
-        
+
         loadingContent.insertBefore(msgDiv, loadingContent.firstChild);
     }
-    
+
     loadingProgress = {
         totalSteps: 0,
         completedSteps: 0,
@@ -875,25 +870,23 @@ async function loadGroupSVG(groupLetter) {
             console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
             console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
-            
-            // ✅ إضافة الصور الأساسية + 0.webp
+
             imageUrlsToLoad = [
                 'image/wood.webp', 
                 'image/Upper_wood.webp',
-                'image/0.webp'  // ✅ إضافة صورة الخلفية
+                'image/0.webp'
             ];
-            
+
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
                 if (src && !imageUrlsToLoad.includes(src)) {
-                    // ✅ تحميل فقط صور المجموعة المختارة (بدون logo-X.webp)
                     const isGroupImage = src.includes(`image/${groupLetter}/`);
                     if (isGroupImage) {
                         imageUrlsToLoad.push(src);
                     }
                 }
             });
-            
+
             loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
@@ -915,18 +908,15 @@ async function loadGroupSVG(groupLetter) {
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup) return;
-    
-    // حذف البانر القديم
+
     const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');
     if (oldBanner) oldBanner.remove();
-    
+
     if (currentFolder !== "") return;
-    
-    // ✅ إنشاء نص بدلاً من صورة logo المحذوفة
+
     const bannerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     bannerGroup.setAttribute("class", "wood-banner-animation");
-    
-    // خلفية النص
+
     const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     bg.setAttribute("x", "197");
     bg.setAttribute("y", "2074");
@@ -936,11 +926,10 @@ function updateWoodLogo(groupLetter) {
     bg.style.fill = "rgba(0,0,0,0.7)";
     bg.style.stroke = "#ffca28";
     bg.style.strokeWidth = "4";
-    
-    // النص
+
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", "512"); // منتصف العرض
-    text.setAttribute("y", "2212"); // منتصف الارتفاع
+    text.setAttribute("x", "512");
+    text.setAttribute("y", "2212");
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("dominant-baseline", "middle");
     text.style.fontSize = "72px";
@@ -948,10 +937,10 @@ function updateWoodLogo(groupLetter) {
     text.style.fill = "#ffca28";
     text.style.fontFamily = "Arial, sans-serif";
     text.textContent = `مجموعة ${groupLetter}`;
-    
+
     bannerGroup.appendChild(bg);
     bannerGroup.appendChild(text);
-    
+
     bannerGroup.style.cursor = "pointer";
     bannerGroup.onclick = (e) => {
         e.stopPropagation();
@@ -962,7 +951,7 @@ function updateWoodLogo(groupLetter) {
         window.goToWood();
         pushNavigationState(NAV_STATE.GROUP_SELECTION);
     };
-    
+
     dynamicGroup.appendChild(bannerGroup);
 }
 
@@ -1004,8 +993,9 @@ async function initializeGroup(groupLetter) {
     window.loadImages();
 }
 
-
-/* [003] PDF Preview System - Enhanced */
+/* ========================================
+   [003] PDF Preview System - Enhanced
+   ======================================== */
 
 let currentPreviewItem = null;
 let isToolbarExpanded = false;
@@ -1027,7 +1017,6 @@ async function showPDFPreview(item) {
     const fileName = item.path.split('/').pop();
     const url = `${RAW_CONTENT_BASE}${item.path}`;
 
-    // ✅ تنظيف أي صور قديمة
     const oldImages = popup.querySelectorAll('img');
     oldImages.forEach(img => img.remove());
 
@@ -1076,7 +1065,6 @@ async function showPDFPreview(item) {
 
         await page.render(renderContext).promise;
 
-        // ✅ تحويل Canvas لصورة PNG
         const imgData = canvas.toDataURL('image/png');
 
         const previewImg = document.createElement('img');
@@ -1088,7 +1076,6 @@ async function showPDFPreview(item) {
         previewImg.style.maxHeight = '80vh';
         previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
 
-        // ✅ إخفاء Canvas وإضافة الصورة
         canvas.style.display = 'none';
         canvas.parentNode.appendChild(previewImg);
 
@@ -1107,8 +1094,7 @@ function closePDFPreview() {
 
     if (popup) {
         popup.classList.remove('active');
-        
-        // ✅ تنظيف الصور
+
         const images = popup.querySelectorAll('img');
         images.forEach(img => img.remove());
     }
@@ -1116,7 +1102,7 @@ function closePDFPreview() {
     if (canvas) {
         const context = canvas.getContext('2d');
         context.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.style.display = 'block'; // إعادة إظهار Canvas للمرة القادمة
+        canvas.style.display = 'block';
     }
 
     currentPreviewItem = null;
@@ -1142,7 +1128,7 @@ function showOpenOptions(item) {
     const url = `${RAW_CONTENT_BASE}${item.path}`;
 
     popup.classList.add('active');
-    popup.classList.remove('hidden'); // ✅ إضافة
+    popup.classList.remove('hidden');
     filenameEl.textContent = fileName.length > 40 ? fileName.substring(0, 37) + '...' : fileName;
     loading.classList.remove('hidden');
     canvas.style.display = 'none';
@@ -1183,7 +1169,7 @@ function closeOpenOptions() {
     const popup = document.getElementById('open-method-popup');
     if (popup) {
         popup.classList.remove('active');
-        popup.classList.add('hidden'); // ✅ إضافة
+        popup.classList.add('hidden');
     }
     currentPreviewItem = null;
 }
@@ -1254,12 +1240,8 @@ function toggleMozillaToolbar() {
     }
 }
 
-/* End of Part 2 */
 /* ========================================
-   script.js - Part 3 of 6
    [004] Event Handlers and Buttons + Reset Button
-   ⚠️ NO setTimeout - All removed
-   ⚠️ NO images in loading screen
    ======================================== */
 
 document.querySelectorAll('.group-btn').forEach(btn => {
@@ -1381,10 +1363,8 @@ if (resetBtn) {
 
             if (modifiedFiles.length === 0) {
                 updateStatus('✅ لا توجد تحديثات جديدة!');
-                requestAnimationFrame(() => {
-                    document.body.removeChild(loadingMsg);
-                    alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
-                });
+                document.body.removeChild(loadingMsg);
+                alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
                 return;
             }
 
@@ -1479,20 +1459,18 @@ if (resetBtn) {
             updateStatus('✅ اكتمل التحديث!');
             updateDetails(`<br><strong>✅ تم تحديث ${updatedCount} ملف</strong>`);
 
-            requestAnimationFrame(() => {
-                document.body.removeChild(loadingMsg);
+            document.body.removeChild(loadingMsg);
 
-                alert(
-                    `✅ تم التحديث بنجاح!\n\n` +
-                    `📊 الإحصائيات:\n` +
-                    `• الملفات المعدلة: ${modifiedFiles.length}\n` +
-                    `• تم التحديث: ${updatedCount}\n` +
-                    (protectedCount > 0 ? `🔒 محمي: ${protectedCount}\n` : '') +
-                    `\n🔄 إعادة التحميل...`
-                );
+            alert(
+                `✅ تم التحديث بنجاح!\n\n` +
+                `📊 الإحصائيات:\n` +
+                `• الملفات المعدلة: ${modifiedFiles.length}\n` +
+                `• تم التحديث: ${updatedCount}\n` +
+                (protectedCount > 0 ? `🔒 محمي: ${protectedCount}\n` : '') +
+                `\n🔄 إعادة التحميل...`
+            );
 
-                window.location.reload(true);
-            });
+            window.location.reload(true);
 
         } catch (error) {
             console.error('❌ خطأ في التحديث:', error);
@@ -1971,11 +1949,8 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
-/* End of Part 3 */
 /* ========================================
-   script.js - Part 4 of 6
    [005] loadImages + updateWoodInterface (Part 1)
-   ⚠️ NO setTimeout - All removed
    ======================================== */
 
 function loadImages() {
@@ -2470,11 +2445,8 @@ async function updateWoodInterface() {
     dynamicGroup.appendChild(scrollContainerGroup);
 }
 
-/* End of Part 4 */
 /* ========================================
-   script.js - Part 5 of 6
    [006] Vertical Scroll System + Eye Toggle Fix
-   ⚠️ NO setTimeout - All removed
    ======================================== */
 
 function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight) {
@@ -2810,11 +2782,8 @@ if (document.readyState === 'loading') {
     preventInteractionWhenHidden();
 }
 
-/* End of Part 5 */
 /* ========================================
-   script.js - Part 6 of 6 (FINAL)
    [008] SVG Processing + scan + Final Fixes + Auto-load Group
-   ⚠️ NO setTimeout - All removed
    ======================================== */
 
 function getCumulativeTranslate(element) {
@@ -3177,7 +3146,6 @@ document.getElementById("closePdfBtn").onclick = () => {
     }
 
     popNavigationState();
-    resetBrowserZoom();
 };
 
 document.getElementById("downloadBtn").onclick = () => {
@@ -3250,70 +3218,3 @@ console.log('   ✅ z-index بأرقام بسيطة (1-5)');
 console.log('   ✅ خلفية المعاينة شفافة');
 console.log('   ✅ نظام Zoom Reset مدمج');
 console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة');
-console.log('   ⚠️ NO setTimeout - تم إزالة كل setTimeout');
-
-/* ========================================
-   [011] Zoom Reset on Z-Index Changes
-   ======================================== */
-
-(function observeZIndexChanges() {
-    let zoomTimeout;
-
-    const shouldTriggerReset = (el) => {
-        if (!el || !el.style) return false;
-
-        const zIndex = window.getComputedStyle(el).zIndex;
-        const display = window.getComputedStyle(el).display;
-        const visibility = window.getComputedStyle(el).visibility;
-        const opacity = window.getComputedStyle(el).opacity;
-
-        return (
-            zIndex !== 'auto' &&
-            parseInt(zIndex) >= 10 &&
-            display !== 'none' &&
-            visibility !== 'hidden' &&
-            opacity !== '0'
-        );
-    };
-
-    const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            const target = mutation.target;
-
-            if (mutation.type === 'attributes') {
-                if (
-                    mutation.attributeName === 'style' ||
-                    mutation.attributeName === 'class'
-                ) {
-                    if (shouldTriggerReset(target)) {
-                        console.log('🧠 تغيير z-index / ظهور شاشة → Reset Zoom');
-                        resetBrowserZoom();
-                        break;
-                    }
-                }
-            }
-
-            if (mutation.type === 'childList') {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1 && shouldTriggerReset(node)) {
-                        console.log('🧠 إضافة شاشة جديدة → Reset Zoom');
-                        resetBrowserZoom();
-                    }
-                });
-            }
-        }
-    });
-
-    observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['style', 'class'],
-        childList: true,
-        subtree: true
-    });
-
-    console.log('✅ مراقبة z-index وظهور/اختفاء الشاشات مفعّلة');
-})();
-
-/* ========================================
-   🎉 END OF script.js - ALL 6 PARTS 🎉
-   ======================================== */
