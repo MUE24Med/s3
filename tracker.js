@@ -44,7 +44,6 @@ function generateUniqueID() {
 const UserTracker = {
     activities: [],
     deviceFingerprint: null,
-    highestGameScore: 0,
 
     async generateFingerprint() {
         const storedFingerprint = localStorage.getItem('device_fingerprint');
@@ -225,11 +224,6 @@ const UserTracker = {
         return plugins.join(',');
     },
 
-    getConnectionInfo() {
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
-    },
-
     async hashString(str) {
         const encoder = new TextEncoder();
         const data = encoder.encode(str);
@@ -238,80 +232,6 @@ const UserTracker = {
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         return hashHex.substring(0, 16);
     },
-
-    // ========================================
-    // نظام حفظ وعرض أعلى نتيجة في اللعبة
-    // ========================================
-
-    updateHighestScore(score) {
-        // تحميل أعلى نتيجة سابقة
-        const storedHighest = localStorage.getItem('user_highest_game_score');
-        const currentHighest = storedHighest ? parseInt(storedHighest) : 0;
-        
-        // إذا كانت النتيجة الجديدة أعلى
-        if (score > currentHighest) {
-            localStorage.setItem('user_highest_game_score', score);
-            this.highestGameScore = score;
-            console.log(`🏆 رقم قياسي جديد! ${score} نقطة`);
-            return true;
-        }
-        
-        this.highestGameScore = currentHighest;
-        return false;
-    },
-
-    getHighestScore() {
-        const storedHighest = localStorage.getItem('user_highest_game_score');
-        return storedHighest ? parseInt(storedHighest) : 0;
-    },
-
-    displayHighestScore() {
-        const highestScore = this.getHighestScore();
-        const gameOverlay = document.getElementById('gameOverlay');
-        
-        if (gameOverlay) {
-            // البحث عن عنصر عرض أعلى نتيجة أو إنشاؤه
-            let highestScoreElement = gameOverlay.querySelector('.highest-score');
-            
-            if (!highestScoreElement) {
-                // إنشاء عنصر جديد لعرض أعلى نتيجة
-                highestScoreElement = document.createElement('div');
-                highestScoreElement.className = 'highest-score';
-                highestScoreElement.style.cssText = `
-                    position: absolute;
-                    top: 120px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: rgba(0, 0, 0, 0.8);
-                    color: #ffca28;
-                    padding: 10px 20px;
-                    border-radius: 10px;
-                    font-size: 18px;
-                    font-weight: bold;
-                    border: 2px solid #ffca28;
-                    box-shadow: 0 0 15px rgba(255, 202, 40, 0.5);
-                    z-index: 10;
-                    text-align: center;
-                `;
-                
-                // إدراجه بعد النتيجة النهائية
-                const finalScoreElement = document.getElementById('finalScore');
-                if (finalScoreElement) {
-                    finalScoreElement.parentNode.insertBefore(highestScoreElement, finalScoreElement.nextSibling);
-                } else {
-                    gameOverlay.appendChild(highestScoreElement);
-                }
-            }
-            
-            highestScoreElement.innerHTML = `🏆 أعلى نتيجة لك: <span style="color: white; font-size: 20px;">${highestScore}</span> نقطة`;
-        }
-        
-        return highestScore;
-    },
-
-    // ========================================
-    // دوال أخرى
-    // ========================================
 
     getDisplayName() {
         const realName = localStorage.getItem('user_real_name');
@@ -349,6 +269,11 @@ const UserTracker = {
         return "Unknown OS";
     },
 
+    getConnectionInfo() {
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
+    },
+
     logActivity(type, details = {}) {
         this.activities.push({
             time: new Date().toLocaleTimeString('ar-EG'),
@@ -369,10 +294,7 @@ const UserTracker = {
         data.append("03-Visitor_ID", localStorage.getItem('visitor_id') || 'Unknown');
         data.append("04-Group", localStorage.getItem('selectedGroup') || 'لم يختر بعد');
         data.append("05-Action", action);
-        
-        // إضافة أعلى نتيجة في اللعبة
-        data.append("18-Highest_Game_Score", this.getHighestScore());
-        
+
         if (isFinal && this.activities.length > 0) {
             data.append("06-Activities", JSON.stringify(this.activities, null, 2));
         }
@@ -406,13 +328,6 @@ window.addEventListener('load', async () => {
     await UserTracker.generateFingerprint();
     console.log(`🔒 Device Fingerprint: ${UserTracker.deviceFingerprint.substring(0, 8)}...`);
     console.log(`🆔 Visitor ID: ${localStorage.getItem('visitor_id')}`);
-    
-    // تحميل وعرض أعلى نتيجة عند تحميل الصفحة
-    const highestScore = UserTracker.getHighestScore();
-    if (highestScore > 0) {
-        console.log(`🏆 أعلى نتيجة لك: ${highestScore} نقطة`);
-    }
-    
     UserTracker.send("دخول الموقع");
 });
 
@@ -425,69 +340,7 @@ function trackSearch(query) { UserTracker.logActivity("بحث", { query: query }
 function trackSvgOpen(name) { UserTracker.logActivity("فتح ملف SVG", { file: name }); }
 function trackApiOpen(endpoint) { UserTracker.logActivity("فتح API", { api: endpoint }); }
 function trackNameChange(newName) { UserTracker.logActivity("تغيير اسم", { name: newName }); }
-
-// دالة تتبع نتيجة اللعبة مع حفظ أعلى نتيجة
-function trackGameScore(score) {
-    UserTracker.logActivity("نتيجة اللعبة", { score: score });
-    
-    // تحديث أعلى نتيجة
-    const isNewRecord = UserTracker.updateHighestScore(score);
-    
-    // عرض أعلى نتيجة
-    UserTracker.displayHighestScore();
-    
-    if (isNewRecord) {
-        // إشعار برقم قياسي جديد
-        showNewRecordNotification(score);
-    }
-}
-
-// عرض إشعار برقم قياسي جديد
-function showNewRecordNotification(score) {
-    const notification = document.createElement('div');
-    notification.id = 'new-record-notification';
-    notification.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(135deg, #ffca28, #ff9800);
-        color: #000;
-        padding: 25px 40px;
-        border-radius: 20px;
-        font-size: 28px;
-        font-weight: bold;
-        text-align: center;
-        box-shadow: 0 0 50px rgba(255, 202, 40, 0.8);
-        z-index: 10000;
-        border: 5px solid #ff5722;
-        animation: recordPulse 0.8s infinite alternate;
-    `;
-    
-    notification.innerHTML = `
-        🏆🏆🏆<br>
-        <div style="font-size: 32px; margin: 10px 0;">رقم قياسي جديد!</div>
-        <div style="font-size: 40px; color: #d32f2f;">${score} نقطة</div>
-        <div style="font-size: 18px; margin-top: 10px; opacity: 0.9;">مبروك! هذه أعلى نتيجة لك</div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // إزالة الإشعار بعد 5 ثوانٍ
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            notification.style.transition = 'all 0.5s ease';
-            
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 500);
-        }
-    }, 5000);
-}
+function trackGameScore(score) { UserTracker.logActivity("نتيجة اللعبة", { score: score }); }
 
 // إرسال دوري كل 60 ثانية
 setInterval(() => {
@@ -514,34 +367,4 @@ window.addEventListener('beforeunload', () => {
 
 console.log('%c🔒 Device Fingerprint System Active', 'color: #00ff00; font-size: 16px; font-weight: bold;');
 console.log('%c🆔 Unique Visitor ID System Active', 'color: #ffcc00; font-size: 14px; font-weight: bold;');
-console.log('%c🏆 Highest Game Score System Active', 'color: #ff5722; font-size: 14px; font-weight: bold;');
 console.log('%cيمكنك رؤية البصمة الفريدة لجهازك في localStorage', 'color: #ffcc00;');
-
-// إضافة CSS للـ animation
-if (!document.querySelector('#record-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'record-animation-style';
-    style.textContent = `
-        @keyframes recordPulse {
-            from {
-                transform: translate(-50%, -50%) scale(1);
-                box-shadow: 0 0 30px rgba(255, 202, 40, 0.6);
-            }
-            to {
-                transform: translate(-50%, -50%) scale(1.05);
-                box-shadow: 0 0 60px rgba(255, 202, 40, 0.9);
-            }
-        }
-        
-        .highest-score {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.05); }
-            100% { transform: translateX(-50%) scale(1); }
-        }
-    `;
-    document.head.appendChild(style);
-}
