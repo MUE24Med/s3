@@ -1004,6 +1004,7 @@ async function initializeGroup(groupLetter) {
     window.loadImages();
 }
 
+
 /* [003] PDF Preview System - Enhanced */
 
 let currentPreviewItem = null;
@@ -1025,6 +1026,10 @@ async function showPDFPreview(item) {
     currentPreviewItem = item;
     const fileName = item.path.split('/').pop();
     const url = `${RAW_CONTENT_BASE}${item.path}`;
+
+    // ✅ تنظيف أي صور قديمة
+    const oldImages = popup.querySelectorAll('img');
+    oldImages.forEach(img => img.remove());
 
     popup.classList.add('active');
     filenameEl.textContent = fileName.length > 30 ? fileName.substring(0, 27) + '...' : fileName;
@@ -1071,6 +1076,7 @@ async function showPDFPreview(item) {
 
         await page.render(renderContext).promise;
 
+        // ✅ تحويل Canvas لصورة PNG
         const imgData = canvas.toDataURL('image/png');
 
         const previewImg = document.createElement('img');
@@ -1079,16 +1085,15 @@ async function showPDFPreview(item) {
         previewImg.style.height = 'auto';
         previewImg.style.display = 'block';
         previewImg.style.objectFit = 'contain';
+        previewImg.style.maxHeight = '80vh';
+        previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
 
+        // ✅ إخفاء Canvas وإضافة الصورة
         canvas.style.display = 'none';
         canvas.parentNode.appendChild(previewImg);
 
         loading.classList.add('hidden');
         console.log('✅ تم تحويل المعاينة إلى صورة PNG');
-
-        previewImg.style.maxHeight = '80vh';
-        canvas.style.display = 'none';
-        previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
 
     } catch (error) {
         console.error('❌ خطأ في المعاينة:', error);
@@ -1102,11 +1107,16 @@ function closePDFPreview() {
 
     if (popup) {
         popup.classList.remove('active');
+        
+        // ✅ تنظيف الصور
+        const images = popup.querySelectorAll('img');
+        images.forEach(img => img.remove());
     }
 
     if (canvas) {
         const context = canvas.getContext('2d');
         context.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = 'block'; // إعادة إظهار Canvas للمرة القادمة
     }
 
     currentPreviewItem = null;
@@ -1132,6 +1142,7 @@ function showOpenOptions(item) {
     const url = `${RAW_CONTENT_BASE}${item.path}`;
 
     popup.classList.add('active');
+    popup.classList.remove('hidden'); // ✅ إضافة
     filenameEl.textContent = fileName.length > 40 ? fileName.substring(0, 37) + '...' : fileName;
     loading.classList.remove('hidden');
     canvas.style.display = 'none';
@@ -1172,6 +1183,7 @@ function closeOpenOptions() {
     const popup = document.getElementById('open-method-popup');
     if (popup) {
         popup.classList.remove('active');
+        popup.classList.add('hidden'); // ✅ إضافة
     }
     currentPreviewItem = null;
 }
