@@ -1,7 +1,8 @@
 /* ========================================
-   script.js - Part 1 of 6
+   script.js - Part 1 of 6 - ENHANCED PRELOAD
    [000-001] Preload System + Core Variables
-   ⚠️ NO setTimeout - All removed
+   ⚠️ Files load BEFORE group selection
+   ⚠️ Images load AFTER group selection with bulbs
    ======================================== */
 
 (function initPreloadSystem() {
@@ -23,9 +24,14 @@
             if (el) el.style.display = 'none';
         });
 
+        // ✅ الملفات التي تحمل قبل اختيار الجروب
         const filesToLoad = [
-            'style.css',
+            'index.html',
+            'package.json', 
+            'script-additions.js',
             'script.js',
+            'sw.js',
+            'style.css',
             'tracker.js'
         ];
 
@@ -474,14 +480,11 @@ const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/c
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
+// ✅ الصور المحمية - فقط الصور الأساسية
 const PROTECTED_FILES = [
-    'image/0.webp',
     'image/wood.webp',
     'image/Upper_wood.webp',
-    'image/logo-A.webp',
-    'image/logo-B.webp',
-    'image/logo-C.webp',
-    'image/logo-D.webp'
+    'image/0.webp'
 ];
 
 function isProtectedFile(filename) {
