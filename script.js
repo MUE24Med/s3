@@ -1003,12 +1003,29 @@ async function showPDFPreview(item) {
             viewport: viewport
         };
 
-        await page.render(renderContext).promise;
+await page.render(renderContext).promise;
 
-        loading.classList.add('hidden');
-        canvas.style.display = 'block';
+// ─── تحويل الـ canvas لصورة PNG حقيقية ───────────────
+const imgData = canvas.toDataURL('image/png');
 
-        console.log('✅ تم رسم الصفحة الأولى');
+const previewImg = document.createElement('img');
+previewImg.src = imgData;
+previewImg.style.width = '100%';
+previewImg.style.height = 'auto';
+previewImg.style.display = 'block';
+previewImg.style.objectFit = 'contain';
+
+// إخفاء الـ canvas وإظهار الصورة بداله
+canvas.style.display = 'none';
+canvas.parentNode.appendChild(previewImg);
+
+// تحديث حالة التحميل
+loading.classList.add('hidden');
+console.log('✅ تم تحويل المعاينة إلى صورة PNG');
+
+previewImg.style.maxHeight = '80vh';  // عشان ما تطلعش بره الشاشة
+canvas.style.display = 'none';
+previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
 
     } catch (error) {
         console.error('❌ خطأ في المعاينة:', error);
