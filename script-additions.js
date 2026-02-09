@@ -24,74 +24,39 @@ function handleBackNavigation(e) {
 
         popNavigationState();
         const pdfViewer = document.getElementById("pdfFrame");
-        
-        // ✅ تنظيف كامل
         pdfViewer.src = "";
-        
-        // ✅ إجبار تفريغ الذاكرة
-        try {
-            pdfViewer.contentWindow.location.reload();
-        } catch (err) {
-            console.log('⚠️ لا يمكن إعادة تحميل iframe (طبيعي)');
-        }
-        
         pdfOverlay.classList.add("hidden");
 
-        // إعادة تعيين الوضع
-        if (pdfOverlay.classList.contains('fullscreen-mode')) {
-            pdfOverlay.classList.remove('fullscreen-mode');
-            if (typeof isToolbarExpanded !== 'undefined') {
-                isToolbarExpanded = false;
-            }
+        if (currentState && currentState.data && currentState.data.scrollPosition !== undefined) {
+            setTimeout(() => {
+                if (scrollContainer) {
+                    scrollContainer.scrollLeft = currentState.data.scrollPosition;
+                }
+            }, 100);
         }
-
-        // استعادة الموضع
-        if (currentState?.data?.scrollPosition !== undefined) {
-            const scrollContainer = document.getElementById('scroll-container');
-            if (scrollContainer) {
-                scrollContainer.scrollLeft = currentState.data.scrollPosition;
-            }
-        }
-        
-        resetBrowserZoom();
         return;
     }
 
-    // ✅ الأولوية 2: إغلاق معاينة PDF
+    // ✅ الأولوية 2: إغلاق نافذة المعاينة
     const previewPopup = document.getElementById('pdf-preview-popup');
     if (previewPopup && previewPopup.classList.contains('active')) {
         e.preventDefault();
         console.log('🔍 إغلاق معاينة PDF');
-        
         if (typeof closePDFPreview === 'function') {
             closePDFPreview();
         }
-        
+        popNavigationState();
         return;
     }
 
-    // ✅ الأولوية 3: إغلاق نافذة خيارات الفتح
-    const methodPopup = document.getElementById('open-method-popup');
-    if (methodPopup && methodPopup.classList.contains('active')) {
-        e.preventDefault();
-        console.log('📋 إغلاق نافذة خيارات الفتح');
-        
-        if (typeof closeOpenOptions === 'function') {
-            closeOpenOptions();
-        }
-        
-        return;
-    }
-
-    // ✅ الأولوية 4: إغلاق المجلدات (Wood View)
+    // ✅ الأولوية 3: إغلاق المجلدات (Wood View)
     const dynamicGroup = document.getElementById('dynamic-links-group');
-    const hasOpenFolders = dynamicGroup?.querySelector('.scroll-container-group');
+    const hasOpenFolders = dynamicGroup && dynamicGroup.querySelector('.scroll-container-group');
 
-    if (hasOpenFolders && typeof currentFolder !== 'undefined' && currentFolder !== "") {
+    if (hasOpenFolders && currentFolder !== "") {
         e.preventDefault();
         console.log('📂 إغلاق المجلد والعودة للخشب');
         currentFolder = "";
-        
         if (typeof window.goToWood === 'function') {
             window.goToWood();
         }
@@ -101,7 +66,7 @@ function handleBackNavigation(e) {
         return;
     }
 
-    // ✅ الأولوية 5: التنقل الأفقي
+    // ✅ الأولوية 4: التنقل الأفقي
     const scrollContainer = document.getElementById('scroll-container');
     if (!scrollContainer) {
         console.log('📱 لا توجد حاوية تمرير');
@@ -121,7 +86,7 @@ function handleBackNavigation(e) {
         e.preventDefault();
         console.log('➡️ الانتقال من اليمين إلى اليسار');
         scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' });
-        resetBrowserZoom();
+        if (document.body.style.zoom) document.body.style.zoom = '100%';
         return;
     }
 
@@ -129,7 +94,7 @@ function handleBackNavigation(e) {
         e.preventDefault();
         console.log('⬅️ الانتقال من اليسار إلى اليمين');
         scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-        resetBrowserZoom();
+        if (document.body.style.zoom) document.body.style.zoom = '100%';
         return;
     }
 
@@ -141,10 +106,10 @@ function handleBackNavigation(e) {
 }
 
 // ============================================
-// 2️⃣ دالة resetBrowserZoom
+// 2️⃣ دالة resetZoom
 // ============================================
 
-function resetBrowserZoom() {
+function resetZoom() {
     if (document.body.style.zoom) {
         document.body.style.zoom = '100%';
     }
@@ -179,7 +144,7 @@ const monitorScroll = () => {
                 const isAtLeft = currentScroll >= (maxScrollRight - THRESHOLD);
 
                 if (isAtRight || isAtLeft) {
-                    resetBrowserZoom();
+                    resetZoom();
                 }
             }, 300);
         });
@@ -203,7 +168,7 @@ if (typeof window.goToWood !== 'undefined') {
         const scrollContainer = document.getElementById('scroll-container');
         if (scrollContainer) {
             scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-            setTimeout(resetBrowserZoom, 500);
+            setTimeout(resetZoom, 500);
         }
         if (originalGoToWood) {
             originalGoToWood();
@@ -218,7 +183,7 @@ if (typeof window.goToMapEnd !== 'undefined') {
         if (scrollContainer) {
             const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
             scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' });
-            setTimeout(resetBrowserZoom, 500);
+            setTimeout(resetZoom, 500);
         }
         if (originalGoToMapEnd) {
             originalGoToMapEnd();
