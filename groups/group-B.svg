@@ -232,10 +232,10 @@
 
     <!-- Tuesday 17 -->
     <g transform="translate(483,0)">
-        <rect y="355.4" height="518.2" class="m w l" data-href="#" />
-        <rect y="875.4" height="438.1" class="m w l" data-href="#" />
-        <rect y="1313" height="438.53" class="m w s" data-href="#" />
-        <rect y="1752.2" height="492.9" class="m w s" data-href="#" />
+        <rect x="0" y="355.4" height="518.2" class="m w l" data-href="#" />
+        <rect x="0" y="875.4" height="438.1" class="m w l" data-href="#" />
+        <rect x="0" y="1313" height="438.53" class="m w s" data-href="#" />
+        <rect x="0" y="1752.2" height="492.9" class="m w s" data-href="#" />
     </g>
 
     <!-- Wednesday 17 -->
