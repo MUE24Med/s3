@@ -317,7 +317,7 @@
   position: fixed;
   inset: 0;
   z-index: 4;
-  background: rgba(0, 0, 0, 0.75); /* خلفية شفافة */
+  background: rgba(0, 0, 0, 0.85);
   display: none;
   align-items: center;
   justify-content: center;
@@ -326,6 +326,10 @@
 
 #open-method-popup.active {
   display: flex !important;
+}
+
+#open-method-popup.hidden {
+  display: none !important;
 }
 
 .method-container {
@@ -372,7 +376,6 @@
   background: rgba(255, 0, 0, 0.4);
 }
 
-/* شريط الأزرار تحت المعاينة */
 .method-preview {
   background: #000;
   border-radius: 10px;
@@ -382,7 +385,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: 0; /* إزالة الهامش لإلصاق الأزرار */
+  margin-bottom: 0;
   position: relative;
 }
 
@@ -418,7 +421,6 @@
   white-space: nowrap;
 }
 
-/* شريط الأزرار المحدث - صف واحد صغير */
 .method-buttons {
   display: flex;
   flex-direction: row;
