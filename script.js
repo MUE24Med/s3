@@ -2,7 +2,8 @@
    script.js - Part 1 of 6 - ENHANCED PRELOAD
    [000-001] Preload System + Core Variables
    ⚠️ Files load BEFORE group selection
-   ⚠️ Images load AFTER group selection with bulbs
+   ⚠️ Images (including 0.webp) load AFTER with bulbs
+   ⚠️ NO logo-A/B/C/D.webp images (deleted)
    ======================================== */
 
 (function initPreloadSystem() {
@@ -480,11 +481,10 @@ const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/c
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
-// ✅ الصور المحمية - فقط الصور الأساسية
+// ✅ الصور المحمية - فقط wood و Upper_wood
 const PROTECTED_FILES = [
     'image/wood.webp',
-    'image/Upper_wood.webp',
-    'image/0.webp'
+    'image/Upper_wood.webp'
 ];
 
 function isProtectedFile(filename) {
@@ -573,10 +573,198 @@ if (jsToggle) {
 }
 
 /* End of Part 1 */
+```
+
+**الآن نحتاج تعديل دالة `showLoadingScreen` و `loadGroupSVG` في Part 2:**
+
+```javascript
+// في Part 2 - استبدل دالة showLoadingScreen
+
+function showLoadingScreen(groupLetter) {
+    if (!loadingOverlay) return;
+    
+    // ✅ بدلاً من تحميل صورة، نعرض رسالة نصية
+    const splashImage = document.getElementById('splash-image');
+    if (splashImage) {
+        splashImage.style.display = 'none'; // إخفاء الصورة
+    }
+    
+    // ✅ إضافة رسالة ترحيب نصية
+    const loadingContent = document.getElementById('loading-content');
+    if (loadingContent) {
+        const welcomeMsg = loadingContent.querySelector('.welcome-group-msg');
+        if (welcomeMsg) {
+            welcomeMsg.remove();
+        }
+        
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'welcome-group-msg';
+        msgDiv.style.cssText = `
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffca28;
+            text-shadow: 0 0 20px rgba(255, 202, 40, 0.5);
+            margin: 20px 0;
+            animation: pulse 2s ease-in-out infinite;
+        `;
+        msgDiv.textContent = `مجموعة ${groupLetter}`;
+        
+        loadingContent.insertBefore(msgDiv, loadingContent.firstChild);
+    }
+    
+    loadingProgress = {
+        totalSteps: 0,
+        completedSteps: 0,
+        currentPercentage: 0
+    };
+    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
+    loadingOverlay.classList.add('active');
+    console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);
+    updateWelcomeMessages();
+}
+
+// في Part 2 - استبدل دالة loadGroupSVG
+
+async function loadGroupSVG(groupLetter) {
+    const groupContainer = document.getElementById('group-specific-content');
+    if (!groupContainer) {
+        console.error('❌ group-specific-content غير موجود');
+        return;
+    }
+    groupContainer.innerHTML = '';
+    try {
+        console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);
+        const cache = await caches.open('semester-3-cache-v1');
+        const cachedResponse = await cache.match(`groups/group-${groupLetter}.svg`);
+        let response;
+        if (cachedResponse) {
+            console.log(`✅ تم الحصول على SVG من الكاش`);
+            response = cachedResponse;
+        } else {
+            console.log(`🌐 تحميل SVG من الشبكة`);
+            response = await fetch(`groups/group-${groupLetter}.svg`);
+            if (response.ok) {
+                cache.put(`groups/group-${groupLetter}.svg`, response.clone());
+            }
+        }
+        if (!response.ok) {
+            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
+            loadingProgress.completedSteps++;
+            updateLoadProgress();
+            return;
+        }
+        const svgText = await response.text();
+        const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
+        if (match && match[1]) {
+            groupContainer.innerHTML = match[1];
+            console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
+            const injectedImages = groupContainer.querySelectorAll('image[data-src]');
+            console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
+            
+            // ✅ إضافة الصور الأساسية + 0.webp
+            imageUrlsToLoad = [
+                'image/wood.webp', 
+                'image/Upper_wood.webp',
+                'image/0.webp'  // ✅ إضافة صورة الخلفية
+            ];
+            
+            injectedImages.forEach(img => {
+                const src = img.getAttribute('data-src');
+                if (src && !imageUrlsToLoad.includes(src)) {
+                    // ✅ تحميل فقط صور المجموعة المختارة
+                    const isGroupImage = src.includes(`image/${groupLetter}/`);
+                    if (isGroupImage) {
+                        imageUrlsToLoad.push(src);
+                    }
+                }
+            });
+            
+            loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
+            loadingProgress.completedSteps = 1;
+            updateLoadProgress();
+            console.log(`📋 قائمة الصور للتحميل (${imageUrlsToLoad.length}):`, imageUrlsToLoad);
+        } else {
+            console.error('❌ فشل استخراج محتوى SVG');
+            loadingProgress.totalSteps = 1;
+            loadingProgress.completedSteps = 1;
+            updateLoadProgress();
+        }
+    } catch (err) {
+        console.error(`❌ خطأ في loadGroupSVG:`, err);
+        loadingProgress.totalSteps = 1;
+        loadingProgress.completedSteps = 1;
+        updateLoadProgress();
+    }
+}
+```
+
+**وأخيراً، نحذف دالة `updateWoodLogo` لأنها كانت تستخدم الصور المحذوفة:**
+
+```javascript
+// ✅ احذف دالة updateWoodLogo بالكامل من Part 2
+// أو استبدلها برسالة نصية بسيطة:
+
+function updateWoodLogo(groupLetter) {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+    if (!dynamicGroup) return;
+    
+    // حذف البانر القديم
+    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');
+    if (oldBanner) oldBanner.remove();
+    
+    if (currentFolder !== "") return;
+    
+    // ✅ إنشاء نص بدلاً من صورة
+    const bannerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    bannerGroup.setAttribute("class", "wood-banner-animation");
+    
+    // خلفية النص
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("x", "197");
+    bg.setAttribute("y", "2074");
+    bg.setAttribute("width", "630");
+    bg.setAttribute("height", "276");
+    bg.setAttribute("rx", "20");
+    bg.style.fill = "rgba(0,0,0,0.7)";
+    bg.style.stroke = "#ffca28";
+    bg.style.strokeWidth = "4";
+    
+    // النص
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", "512"); // منتصف العرض
+    text.setAttribute("y", "2212"); // منتصف الارتفاع
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("dominant-baseline", "middle");
+    text.style.fontSize = "72px";
+    text.style.fontWeight = "bold";
+    text.style.fill = "#ffca28";
+    text.style.textShadow = "0 0 20px rgba(255,202,40,0.8)";
+    text.textContent = `مجموعة ${groupLetter}`;
+    
+    bannerGroup.appendChild(bg);
+    bannerGroup.appendChild(text);
+    
+    bannerGroup.style.cursor = "pointer";
+    bannerGroup.onclick = (e) => {
+        e.stopPropagation();
+        if (groupSelectionScreen) {
+            groupSelectionScreen.classList.remove('hidden');
+            groupSelectionScreen.style.display = 'flex';
+        }
+        window.goToWood();
+        pushNavigationState(NAV_STATE.GROUP_SELECTION);
+    };
+    
+    dynamicGroup.appendChild(bannerGroup);
+}
+
+
 /* ========================================
    script.js - Part 2 of 6
    [002-003] Navigation System + Helper Functions + PDF Preview
    ⚠️ NO setTimeout - All removed
+   ⚠️ NO logo-A/B/C/D.webp images (deleted)
+   ⚠️ Text-based group welcome instead
    ======================================== */
 
 /* [002] Back Navigation System */
@@ -776,10 +964,36 @@ function loadSelectedGroup() {
 
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
+    
+    // ✅ إخفاء الصورة (المحذوفة)
     const splashImage = document.getElementById('splash-image');
     if (splashImage) {
-        splashImage.src = `image/logo-${groupLetter}.webp`;
+        splashImage.style.display = 'none';
     }
+    
+    // ✅ إضافة رسالة ترحيب نصية بدلاً من الصورة
+    const loadingContent = document.getElementById('loading-content');
+    if (loadingContent) {
+        const welcomeMsg = loadingContent.querySelector('.welcome-group-msg');
+        if (welcomeMsg) {
+            welcomeMsg.remove();
+        }
+        
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'welcome-group-msg';
+        msgDiv.style.cssText = `
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffca28;
+            text-shadow: 0 0 20px rgba(255, 202, 40, 0.5);
+            margin: 20px 0;
+            animation: pulse 2s ease-in-out infinite;
+        `;
+        msgDiv.textContent = `مجموعة ${groupLetter}`;
+        
+        loadingContent.insertBefore(msgDiv, loadingContent.firstChild);
+    }
+    
     loadingProgress = {
         totalSteps: 0,
         completedSteps: 0,
@@ -847,16 +1061,25 @@ async function loadGroupSVG(groupLetter) {
             console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
             console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
-            imageUrlsToLoad = ['image/wood.webp', 'image/Upper_wood.webp'];
+            
+            // ✅ إضافة الصور الأساسية + 0.webp
+            imageUrlsToLoad = [
+                'image/wood.webp', 
+                'image/Upper_wood.webp',
+                'image/0.webp'  // ✅ إضافة صورة الخلفية
+            ];
+            
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
                 if (src && !imageUrlsToLoad.includes(src)) {
-                    const isGroupImage = src.includes(`image/${groupLetter}/`) ||
-                                       src.includes(`logo-${groupLetter}`) ||
-                                       src.includes(`logo-wood-${groupLetter}`);
-                    if (isGroupImage) imageUrlsToLoad.push(src);
+                    // ✅ تحميل فقط صور المجموعة المختارة (بدون logo-X.webp)
+                    const isGroupImage = src.includes(`image/${groupLetter}/`);
+                    if (isGroupImage) {
+                        imageUrlsToLoad.push(src);
+                    }
                 }
             });
+            
             loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
@@ -878,20 +1101,45 @@ async function loadGroupSVG(groupLetter) {
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup) return;
+    
+    // حذف البانر القديم
     const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');
     if (oldBanner) oldBanner.remove();
+    
     if (currentFolder !== "") return;
-    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);
-    banner.setAttribute("x", "197.20201666994924");
-    banner.setAttribute("y", "2074.3139768463334");
-    banner.setAttribute("width", "629.8946370139159");
-    banner.setAttribute("height", "275.78922917259797");
-    banner.setAttribute("class", "wood-banner-animation");
-    banner.style.mixBlendMode = "multiply";
-    banner.style.opacity = "0.9";
-    banner.style.pointerEvents = "auto";
-    banner.onclick = (e) => {
+    
+    // ✅ إنشاء نص بدلاً من صورة logo المحذوفة
+    const bannerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    bannerGroup.setAttribute("class", "wood-banner-animation");
+    
+    // خلفية النص
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("x", "197");
+    bg.setAttribute("y", "2074");
+    bg.setAttribute("width", "630");
+    bg.setAttribute("height", "276");
+    bg.setAttribute("rx", "20");
+    bg.style.fill = "rgba(0,0,0,0.7)";
+    bg.style.stroke = "#ffca28";
+    bg.style.strokeWidth = "4";
+    
+    // النص
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", "512"); // منتصف العرض
+    text.setAttribute("y", "2212"); // منتصف الارتفاع
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("dominant-baseline", "middle");
+    text.style.fontSize = "72px";
+    text.style.fontWeight = "bold";
+    text.style.fill = "#ffca28";
+    text.style.fontFamily = "Arial, sans-serif";
+    text.textContent = `مجموعة ${groupLetter}`;
+    
+    bannerGroup.appendChild(bg);
+    bannerGroup.appendChild(text);
+    
+    bannerGroup.style.cursor = "pointer";
+    bannerGroup.onclick = (e) => {
         e.stopPropagation();
         if (groupSelectionScreen) {
             groupSelectionScreen.classList.remove('hidden');
@@ -900,7 +1148,8 @@ function updateWoodLogo(groupLetter) {
         window.goToWood();
         pushNavigationState(NAV_STATE.GROUP_SELECTION);
     };
-    dynamicGroup.appendChild(banner);
+    
+    dynamicGroup.appendChild(bannerGroup);
 }
 
 async function initializeGroup(groupLetter) {
