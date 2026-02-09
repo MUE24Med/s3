@@ -1,6 +1,6 @@
 /* ========================================
-   script.js - Part 1 of 6 - ENHANCED PRELOAD
-   [000-001] Preload System + Core Variables
+   script.js - الجزء 1 من 6
+   [000-001] Preload System + المتغيرات الأساسية
    ======================================== */
 
 (function initPreloadSystem() {
@@ -22,14 +22,9 @@
             if (el) el.style.display = 'none';
         });
 
-        // الملفات التي تحمل قبل اختيار الجروب
         const filesToLoad = [
-            'index.html',
-            'package.json', 
-            'script-additions.js',
-            'script.js',
-            'sw.js',
             'style.css',
+            'script.js',
             'tracker.js'
         ];
 
@@ -108,10 +103,6 @@
             window.location.reload();
         });
 
-        // ========================================
-        // GAME VARIABLES - لعبة القلوب المعدلة
-        // ========================================
-
         const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
 
         const gameContainer = document.getElementById('gameContainer');
@@ -120,14 +111,13 @@
         const scoreDisplay = document.getElementById('scoreDisplay');
         const gameOverlay = document.getElementById('gameOverlay');
         const finalScore = document.getElementById('finalScore');
-        const highestScoreDisplay = document.getElementById('highestScoreDisplay');
         const restartBtn = document.getElementById('restartBtn');
         const leftBtn = document.getElementById('leftBtn');
         const rightBtn = document.getElementById('rightBtn');
         const leaderboardList = document.getElementById('leaderboardList');
 
         let runnerPosition = 0;
-        let hearts = 3; // بداية بثلاثة قلوب
+        let hearts = 0;
         let score = 0;
         let gameActive = true;
         let fallSpeed = 1.5;
@@ -137,13 +127,6 @@
         let spawnInterval = 1800;
 
         const lanes = [20, 50, 80];
-
-        // تحديث عرض القلوب
-        heartsDisplay.textContent = hearts;
-
-        // ========================================
-        // GAME FUNCTIONS - دوال اللعبة
-        // ========================================
 
         function moveRunner(direction) {
             if (!gameActive) return;
@@ -167,7 +150,9 @@
             const itemsInWave = 2;
 
             for (let i = 0; i < itemsInWave; i++) {
-                spawnItem();
+                setTimeout(() => {
+                    spawnItem();
+                }, i * 100);
             }
         }
 
@@ -230,19 +215,17 @@
                     if (itemData.lane === playerLane) {
                         if (itemData.type === 'pill') {
                             hearts++;
-                            heartsDisplay.textContent = hearts;
                         } else if (itemData.type === 'bacteria') {
                             hearts--;
-                            heartsDisplay.textContent = hearts;
                         } else if (itemData.type === 'virus') {
                             hearts -= 1;
-                            heartsDisplay.textContent = hearts;
                         }
 
+                        heartsDisplay.textContent = hearts;
                         itemData.element.remove();
                         activeItems.splice(index, 1);
 
-                        if (hearts <= 0) {
+                        if (hearts < 0) {
                             endGame();
                         }
                     }
@@ -406,48 +389,16 @@
             await sendScoreToServer(playerName, score, deviceId);
             await displayLeaderboard();
 
-            // ========================================
-            // ✅ تحديث ونشر أعلى نتيجة - إضافة رئيسية
-            // ========================================
-            
-            // تتبع نتيجة اللعبة وحفظ أعلى نتيجة
             if (typeof trackGameScore === 'function') {
                 trackGameScore(score);
-            }
-            
-            // عرض أعلى نتيجة للاعب
-            if (typeof UserTracker !== 'undefined') {
-                // تحميل أعلى نتيجة
-                const highestScore = UserTracker.getHighestScore();
-                
-                if (highestScoreDisplay) {
-                    if (highestScore > 0) {
-                        highestScoreDisplay.style.display = 'block';
-                        highestScoreDisplay.textContent = `🏆 أعلى نتيجة لك: ${highestScore} نقطة`;
-                        
-                        // إضافة رسالة خاصة إذا حقق رقم قياسي جديد
-                        if (score > highestScore) {
-                            highestScoreDisplay.innerHTML = `🏆🏆 <span style="color: #ff5722;">رقم قياسي جديد! ${score} نقطة</span> 🏆🏆`;
-                        }
-                    } else {
-                        highestScoreDisplay.style.display = 'none';
-                    }
-                }
-                
-                // عرض أعلى نتيجة باستخدام دالة UserTracker
-                if (typeof UserTracker.displayHighestScore === 'function') {
-                    UserTracker.displayHighestScore();
-                }
             }
         }
 
         function restartGame() {
-            // تنظيف العناصر الساقطة
             activeItems.forEach(item => item.element.remove());
             activeItems = [];
 
-            // إعادة تعيين المتغيرات
-            hearts = 3;
+            hearts = 0;
             score = 0;
             runnerPosition = 0;
             fallSpeed = 1.5;
@@ -455,38 +406,25 @@
             spawnInterval = 1800;
             gameActive = true;
 
-            // تحديث العرض
             heartsDisplay.textContent = hearts;
             scoreDisplay.textContent = score;
             runner.style.left = lanes[1] + '%';
             gameOverlay.style.display = 'none';
-            
-            // إخفاء عرض أعلى نتيجة في لعبة جديدة
-            if (highestScoreDisplay) {
-                highestScoreDisplay.style.display = 'none';
-            }
 
-            // إعادة تشغيل اللعبة
             updateGame();
             startSpawning();
         }
 
         restartBtn.addEventListener('click', restartGame);
 
-        // عرض القائمة العالمية أول مرة
         displayLeaderboard();
 
-        function updateLeaderboardPeriodically() {
+        setInterval(() => {
             if (!gameActive) {
                 displayLeaderboard();
             }
-            requestAnimationFrame(() => {
-                updateLeaderboardPeriodically();
-            });
-        }
-        updateLeaderboardPeriodically();
+        }, 30000);
 
-        // بدء اللعبة
         updateGame();
 
         let spawnerIntervalId;
@@ -524,8 +462,9 @@
         }
     }
 })();
+
 /* ========================================
-   [001] Core Variables and Settings
+   [001] المتغيرات والإعدادات الأساسية
    ======================================== */
 
 const REPO_NAME = "s3";
@@ -535,10 +474,14 @@ const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/c
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
-// ✅ الصور المحمية - فقط wood و Upper_wood
 const PROTECTED_FILES = [
+    'image/0.webp',
     'image/wood.webp',
-    'image/Upper_wood.webp'
+    'image/Upper_wood.webp',
+    'image/logo-A.webp',
+    'image/logo-B.webp',
+    'image/logo-C.webp',
+    'image/logo-D.webp'
 ];
 
 function isProtectedFile(filename) {
@@ -626,9 +569,13 @@ if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
+/* نهاية الجزء 1 من 6 */
 /* ========================================
-   [002] Back Navigation System
+   script.js - الجزء 2 من 6
+   [002-003] نظام التنقل + دوال مساعدة + معاينة PDF
    ======================================== */
+
+/* [002] نظام التنقل الخلفي */
 
 function pushNavigationState(state, data = {}) {
     navigationHistory.push({ state, data, timestamp: Date.now() });
@@ -680,9 +627,11 @@ function handleBackNavigation(e) {
         }
 
         if (currentState.data.scrollPosition !== undefined) {
-            if (scrollContainer) {
-                scrollContainer.scrollLeft = currentState.data.scrollPosition;
-            }
+            setTimeout(() => {
+                if (scrollContainer) {
+                    scrollContainer.scrollLeft = currentState.data.scrollPosition;
+                }
+            }, 100);
         }
         return;
     }
@@ -791,8 +740,7 @@ function debounce(func, delay) {
     let timeoutId;
     return function() {
         clearTimeout(timeoutId);
-        timeoutId = delay;
-        func.apply(this, arguments);
+        timeoutId = setTimeout(() => func.apply(this, arguments), delay);
     };
 }
 
@@ -825,34 +773,10 @@ function loadSelectedGroup() {
 
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
-
     const splashImage = document.getElementById('splash-image');
     if (splashImage) {
-        splashImage.style.display = 'none';
+        splashImage.src = `image/logo-${groupLetter}.webp`;
     }
-
-    const loadingContent = document.getElementById('loading-content');
-    if (loadingContent) {
-        const welcomeMsg = loadingContent.querySelector('.welcome-group-msg');
-        if (welcomeMsg) {
-            welcomeMsg.remove();
-        }
-
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'welcome-group-msg';
-        msgDiv.style.cssText = `
-            font-size: 48px;
-            font-weight: bold;
-            color: #ffca28;
-            text-shadow: 0 0 20px rgba(255, 202, 40, 0.5);
-            margin: 20px 0;
-            animation: pulse 2s ease-in-out infinite;
-        `;
-        msgDiv.textContent = `مجموعة ${groupLetter}`;
-
-        loadingContent.insertBefore(msgDiv, loadingContent.firstChild);
-    }
-
     loadingProgress = {
         totalSteps: 0,
         completedSteps: 0,
@@ -920,23 +844,16 @@ async function loadGroupSVG(groupLetter) {
             console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
             console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
-
-            imageUrlsToLoad = [
-                'image/wood.webp', 
-                'image/Upper_wood.webp',
-                'image/0.webp'
-            ];
-
+            imageUrlsToLoad = ['image/wood.webp', 'image/Upper_wood.webp'];
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
                 if (src && !imageUrlsToLoad.includes(src)) {
-                    const isGroupImage = src.includes(`image/${groupLetter}/`);
-                    if (isGroupImage) {
-                        imageUrlsToLoad.push(src);
-                    }
+                    const isGroupImage = src.includes(`image/${groupLetter}/`) ||
+                                       src.includes(`logo-${groupLetter}`) ||
+                                       src.includes(`logo-wood-${groupLetter}`);
+                    if (isGroupImage) imageUrlsToLoad.push(src);
                 }
             });
-
             loadingProgress.totalSteps = 1 + imageUrlsToLoad.length;
             loadingProgress.completedSteps = 1;
             updateLoadProgress();
@@ -958,41 +875,20 @@ async function loadGroupSVG(groupLetter) {
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup) return;
-
     const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');
     if (oldBanner) oldBanner.remove();
-
     if (currentFolder !== "") return;
-
-    const bannerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    bannerGroup.setAttribute("class", "wood-banner-animation");
-
-    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    bg.setAttribute("x", "197");
-    bg.setAttribute("y", "2074");
-    bg.setAttribute("width", "630");
-    bg.setAttribute("height", "276");
-    bg.setAttribute("rx", "20");
-    bg.style.fill = "rgba(0,0,0,0.7)";
-    bg.style.stroke = "#ffca28";
-    bg.style.strokeWidth = "4";
-
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", "512");
-    text.setAttribute("y", "2212");
-    text.setAttribute("text-anchor", "middle");
-    text.setAttribute("dominant-baseline", "middle");
-    text.style.fontSize = "72px";
-    text.style.fontWeight = "bold";
-    text.style.fill = "#ffca28";
-    text.style.fontFamily = "Arial, sans-serif";
-    text.textContent = `مجموعة ${groupLetter}`;
-
-    bannerGroup.appendChild(bg);
-    bannerGroup.appendChild(text);
-
-    bannerGroup.style.cursor = "pointer";
-    bannerGroup.onclick = (e) => {
+    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`);
+    banner.setAttribute("x", "197.20201666994924");
+    banner.setAttribute("y", "2074.3139768463334");
+    banner.setAttribute("width", "629.8946370139159");
+    banner.setAttribute("height", "275.78922917259797");
+    banner.setAttribute("class", "wood-banner-animation");
+    banner.style.mixBlendMode = "multiply";
+    banner.style.opacity = "0.9";
+    banner.style.pointerEvents = "auto";
+    banner.onclick = (e) => {
         e.stopPropagation();
         if (groupSelectionScreen) {
             groupSelectionScreen.classList.remove('hidden');
@@ -1001,8 +897,7 @@ function updateWoodLogo(groupLetter) {
         window.goToWood();
         pushNavigationState(NAV_STATE.GROUP_SELECTION);
     };
-
-    dynamicGroup.appendChild(bannerGroup);
+    dynamicGroup.appendChild(banner);
 }
 
 async function initializeGroup(groupLetter) {
@@ -1043,9 +938,7 @@ async function initializeGroup(groupLetter) {
     window.loadImages();
 }
 
-/* ========================================
-   [003] PDF Preview System - Enhanced
-   ======================================== */
+/* [003] نظام معاينة PDF المحسّن مع خيارات الفتح */
 
 let currentPreviewItem = null;
 let isToolbarExpanded = false;
@@ -1066,9 +959,6 @@ async function showPDFPreview(item) {
     currentPreviewItem = item;
     const fileName = item.path.split('/').pop();
     const url = `${RAW_CONTENT_BASE}${item.path}`;
-
-    const oldImages = popup.querySelectorAll('img');
-    oldImages.forEach(img => img.remove());
 
     popup.classList.add('active');
     filenameEl.textContent = fileName.length > 30 ? fileName.substring(0, 27) + '...' : fileName;
@@ -1115,22 +1005,10 @@ async function showPDFPreview(item) {
 
         await page.render(renderContext).promise;
 
-        const imgData = canvas.toDataURL('image/png');
-
-        const previewImg = document.createElement('img');
-        previewImg.src = imgData;
-        previewImg.style.width = '100%';
-        previewImg.style.height = 'auto';
-        previewImg.style.display = 'block';
-        previewImg.style.objectFit = 'contain';
-        previewImg.style.maxHeight = '80vh';
-        previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
-
-        canvas.style.display = 'none';
-        canvas.parentNode.appendChild(previewImg);
-
         loading.classList.add('hidden');
-        console.log('✅ تم تحويل المعاينة إلى صورة PNG');
+        canvas.style.display = 'block';
+
+        console.log('✅ تم رسم الصفحة الأولى');
 
     } catch (error) {
         console.error('❌ خطأ في المعاينة:', error);
@@ -1144,15 +1022,11 @@ function closePDFPreview() {
 
     if (popup) {
         popup.classList.remove('active');
-
-        const images = popup.querySelectorAll('img');
-        images.forEach(img => img.remove());
     }
 
     if (canvas) {
         const context = canvas.getContext('2d');
         context.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.style.display = 'block';
     }
 
     currentPreviewItem = null;
@@ -1178,13 +1052,13 @@ function showOpenOptions(item) {
     const url = `${RAW_CONTENT_BASE}${item.path}`;
 
     popup.classList.add('active');
-    popup.classList.remove('hidden');
     filenameEl.textContent = fileName.length > 40 ? fileName.substring(0, 37) + '...' : fileName;
     loading.classList.remove('hidden');
     canvas.style.display = 'none';
 
     console.log('📋 عرض خيارات الفتح:', url);
 
+    // تحميل المعاينة
     (async () => {
         try {
             if (typeof pdfjsLib === 'undefined') {
@@ -1219,7 +1093,6 @@ function closeOpenOptions() {
     const popup = document.getElementById('open-method-popup');
     if (popup) {
         popup.classList.remove('active');
-        popup.classList.add('hidden');
     }
     currentPreviewItem = null;
 }
@@ -1290,8 +1163,10 @@ function toggleMozillaToolbar() {
     }
 }
 
+/* نهاية الجزء 2 من 6 */
 /* ========================================
-   [004] Event Handlers and Buttons + Reset Button
+   script.js - الجزء 3 من 6
+   [004] معالجات الأحداث والأزرار + Reset Button
    ======================================== */
 
 document.querySelectorAll('.group-btn').forEach(btn => {
@@ -1413,8 +1288,10 @@ if (resetBtn) {
 
             if (modifiedFiles.length === 0) {
                 updateStatus('✅ لا توجد تحديثات جديدة!');
-                document.body.removeChild(loadingMsg);
-                alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
+                setTimeout(() => {
+                    document.body.removeChild(loadingMsg);
+                    alert('✅ الموقع محدّث بالفعل!\nلا توجد ملفات معدلة.');
+                }, 1500);
                 return;
             }
 
@@ -1509,18 +1386,21 @@ if (resetBtn) {
             updateStatus('✅ اكتمل التحديث!');
             updateDetails(`<br><strong>✅ تم تحديث ${updatedCount} ملف</strong>`);
 
-            document.body.removeChild(loadingMsg);
+            setTimeout(() => {
+                document.body.removeChild(loadingMsg);
 
-            alert(
-                `✅ تم التحديث بنجاح!\n\n` +
-                `📊 الإحصائيات:\n` +
-                `• الملفات المعدلة: ${modifiedFiles.length}\n` +
-                `• تم التحديث: ${updatedCount}\n` +
-                (protectedCount > 0 ? `🔒 محمي: ${protectedCount}\n` : '') +
-                `\n🔄 إعادة التحميل...`
-            );
+                alert(
+                    `✅ تم التحديث بنجاح!\n\n` +
+                    `📊 الإحصائيات:\n` +
+                    `• الملفات المعدلة: ${modifiedFiles.length}\n` +
+                    `• تم التحديث: ${updatedCount}\n` +
+                    (protectedCount > 0 ? `🔒 محمي: ${protectedCount}\n` : '') +
+                    `\n🔄 إعادة التحميل...`
+                );
 
-            window.location.reload(true);
+                window.location.reload(true);
+
+            }, 2000);
 
         } catch (error) {
             console.error('❌ خطأ في التحديث:', error);
@@ -1707,13 +1587,22 @@ if (eyeToggle && searchContainer) {
             initialX = rect.left;
             initialY = rect.top;
 
-            isDragging = true;
-            eyeToggleStandalone.classList.add('dragging');
-            console.log('🖱️ بدأ السحب');
+            dragTimeout = setTimeout(() => {
+                isDragging = true;
+                eyeToggleStandalone.classList.add('dragging');
+                console.log('🖱️ بدأ السحب');
+            }, 200);
         };
 
         const doDrag = (clientX, clientY) => {
-            if (!isDragging) return;
+            if (!isDragging) {
+                const deltaX = Math.abs(clientX - startX);
+                const deltaY = Math.abs(clientY - startY);
+                if (deltaX > 5 || deltaY > 5) {
+                    clearTimeout(dragTimeout);
+                }
+                return;
+            }
 
             hasMoved = true;
             const deltaX = clientX - startX;
@@ -1735,6 +1624,8 @@ if (eyeToggle && searchContainer) {
         };
 
         const endDrag = () => {
+            clearTimeout(dragTimeout);
+
             if (isDragging) {
                 isDragging = false;
                 eyeToggleStandalone.classList.remove('dragging');
@@ -1844,6 +1735,7 @@ document.addEventListener('DOMContentLoaded', () => {
         methodCloseBtn.addEventListener('click', closeOpenOptions);
     }
 
+    // ربط الأزرار الثلاثة
     const mozillaBtn = document.getElementById('open-mozilla-btn');
     const browserBtn = document.getElementById('open-browser-btn');
     const driveBtn = document.getElementById('open-drive-btn');
@@ -1999,8 +1891,10 @@ function renderNameInput() {
     dynamicGroup.appendChild(inputGroup);
 }
 
+/* نهاية الجزء 3 من 6 */
 /* ========================================
-   [005] loadImages + updateWoodInterface (Part 1)
+   script.js - الجزء 4 من 6
+   [005] loadImages + updateWoodInterface (الجزء الأول)
    ======================================== */
 
 function loadImages() {
@@ -2390,6 +2284,7 @@ async function updateWoodInterface() {
                 g.appendChild(r);
                 g.appendChild(t);
 
+                // نظام الضغط المطول للمعاينة
                 let longPressTimer = null;
                 let longPressTriggered = false;
                 let touchStartTime = 0;
@@ -2398,17 +2293,20 @@ async function updateWoodInterface() {
                     touchStartTime = Date.now();
                     longPressTriggered = false;
 
-                    longPressTriggered = true;
+                    longPressTimer = setTimeout(() => {
+                        longPressTriggered = true;
 
-                    if (item.type === 'file') {
-                        if (navigator.vibrate) {
-                            navigator.vibrate(50);
+                        if (item.type === 'file') {
+                            if (navigator.vibrate) {
+                                navigator.vibrate(50);
+                            }
+                            showPDFPreview(item);
                         }
-                        showPDFPreview(item);
-                    }
+                    }, 500);
                 }, { passive: true });
 
                 g.addEventListener('touchend', (e) => {
+                    clearTimeout(longPressTimer);
                     const touchDuration = Date.now() - touchStartTime;
 
                     if (!longPressTriggered && touchDuration < 500) {
@@ -2425,6 +2323,7 @@ async function updateWoodInterface() {
                 });
 
                 g.addEventListener('touchmove', (e) => {
+                    clearTimeout(longPressTimer);
                 }, { passive: true });
 
                 g.addEventListener('click', (e) => {
@@ -2488,17 +2387,20 @@ async function updateWoodInterface() {
 
     console.log(`📊 المحتوى: ${totalContentHeight}px، التمرير المتاح: ${maxScroll}px`);
 
-    if (maxScroll > 0) {
-        addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight);
-    }
+    // سيتم إضافة نظام التمرير في الجزء 5
 
     dynamicGroup.appendChild(scrollContainerGroup);
 }
 
+/* نهاية الجزء 4 من 6 */
 /* ========================================
-   [006] Vertical Scroll System + Eye Toggle Fix
+   script.js - الجزء 5 من 6
+   [006] نظام التمرير الرأسي + zoom reset
    ======================================== */
 
+// هذا الجزء يُضاف داخل دالة updateWoodInterface بعد حساب maxScroll
+
+// نظام التمرير الرأسي (يُضاف في نهاية updateWoodInterface)
 function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight) {
     let scrollOffset = 0;
 
@@ -2536,6 +2438,7 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
 
         let isDraggingContent = false;
         let isLongPressing = false;
+        let longPressTimer = null;
         let dragStartY = 0;
         let dragStartOffset = 0;
         let dragVelocity = 0;
@@ -2617,12 +2520,16 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
             if (target.classList && target.classList.contains('scroll-handle')) return;
             if (target.closest('.wood-folder-group, .wood-file-group')) return;
 
-            isLongPressing = true;
-            startContentDrag(e.clientY);
+            longPressTimer = setTimeout(() => {
+                isLongPressing = true;
+                startContentDrag(e.clientY);
+            }, 500);
+
             e.preventDefault();
         });
 
         woodViewRect.addEventListener('mouseup', () => {
+            clearTimeout(longPressTimer);
         });
 
         woodViewRect.addEventListener('touchstart', (e) => {
@@ -2630,14 +2537,17 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
             if (target.classList && target.classList.contains('scroll-handle')) return;
             if (target.closest('.wood-folder-group, .wood-file-group')) return;
 
-            isLongPressing = true;
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
-            }
-            startContentDrag(e.touches[0].clientY);
+            longPressTimer = setTimeout(() => {
+                isLongPressing = true;
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                startContentDrag(e.touches[0].clientY);
+            }, 500);
         }, { passive: true });
 
         woodViewRect.addEventListener('touchend', () => {
+            clearTimeout(longPressTimer);
         });
 
         scrollContainerGroup.insertBefore(woodViewRect, scrollContent);
@@ -2645,10 +2555,13 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
         window.addEventListener('mousemove', (e) => {
             if (isDraggingContent && isLongPressing) {
                 doContentDrag(e.clientY);
+            } else if (longPressTimer) {
+                clearTimeout(longPressTimer);
             }
         });
 
         window.addEventListener('mouseup', () => {
+            clearTimeout(longPressTimer);
             if (isLongPressing) {
                 endContentDrag();
             }
@@ -2662,6 +2575,7 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
+            clearTimeout(longPressTimer);
             if (isLongPressing) {
                 endContentDrag();
             }
@@ -2728,7 +2642,7 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
 }
 
 /* ========================================
-   [007] Eye Toggle Fix - Prevent Interaction with Hidden Containers
+   [007] إصلاح زر العين - منع التفاعل مع الحاويات المخفية
    ======================================== */
 
 function preventInteractionWhenHidden() {
@@ -2737,7 +2651,7 @@ function preventInteractionWhenHidden() {
 
     if (!toggleContainer || !searchContainer) {
         console.warn('⚠️ لم يتم العثور على الحاويات، إعادة المحاولة...');
-        requestAnimationFrame(preventInteractionWhenHidden);
+        setTimeout(preventInteractionWhenHidden, 500);
         return;
     }
 
@@ -2832,8 +2746,10 @@ if (document.readyState === 'loading') {
     preventInteractionWhenHidden();
 }
 
+/* نهاية الجزء 5 من 6 */
 /* ========================================
-   [008] SVG Processing + scan + Final Fixes + Auto-load Group
+   script.js - الجزء 6 من 6 (الأخير)
+   [008] دوال معالجة SVG + scan + الإصلاحات النهائية
    ======================================== */
 
 function getCumulativeTranslate(element) {
@@ -3181,7 +3097,7 @@ function scan() {
 window.scan = scan;
 
 /* ========================================
-   [009] PDF Viewer Handlers
+   [009] معالجات PDF Viewer
    ======================================== */
 
 document.getElementById("closePdfBtn").onclick = () => {
@@ -3196,6 +3112,7 @@ document.getElementById("closePdfBtn").onclick = () => {
     }
 
     popNavigationState();
+    resetBrowserZoom();
 };
 
 document.getElementById("downloadBtn").onclick = () => {
@@ -3228,7 +3145,7 @@ document.getElementById("shareBtn").onclick = () => {
 };
 
 /* ========================================
-   [010] Auto-load Last Group
+   [010] تحميل آخر جروب تلقائياً
    ======================================== */
 
 (function autoLoadLastGroup() {
@@ -3268,3 +3185,75 @@ console.log('   ✅ z-index بأرقام بسيطة (1-5)');
 console.log('   ✅ خلفية المعاينة شفافة');
 console.log('   ✅ نظام Zoom Reset مدمج');
 console.log('   ✅ أزرار الفتح تحت المعاينة مباشرة');
+
+/* ========================================
+   🎉 نهاية script.js - جميع الأجزاء الستة 🎉
+   ======================================== */
+
+// ============================================
+// Reset Zoom عند أي تغيير Z-Index أو ظهور شاشة
+// ============================================
+
+(function observeZIndexChanges() {
+    let zoomTimeout;
+
+    const shouldTriggerReset = (el) => {
+        if (!el || !el.style) return false;
+
+        const zIndex = window.getComputedStyle(el).zIndex;
+        const display = window.getComputedStyle(el).display;
+        const visibility = window.getComputedStyle(el).visibility;
+        const opacity = window.getComputedStyle(el).opacity;
+
+        return (
+            zIndex !== 'auto' &&
+            parseInt(zIndex) >= 10 &&        // أي عنصر طالع فوق
+            display !== 'none' &&
+            visibility !== 'hidden' &&
+            opacity !== '0'
+        );
+    };
+
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            const target = mutation.target;
+
+            if (mutation.type === 'attributes') {
+                if (
+                    mutation.attributeName === 'style' ||
+                    mutation.attributeName === 'class'
+                ) {
+                    if (shouldTriggerReset(target)) {
+                        clearTimeout(zoomTimeout);
+                        zoomTimeout = setTimeout(() => {
+                            console.log('🧠 تغيير z-index / ظهور شاشة → Reset Zoom');
+                            resetBrowserZoom();
+                        }, 80);
+                        break;
+                    }
+                }
+            }
+
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && shouldTriggerReset(node)) {
+                        clearTimeout(zoomTimeout);
+                        zoomTimeout = setTimeout(() => {
+                            console.log('🧠 إضافة شاشة جديدة → Reset Zoom');
+                            resetBrowserZoom();
+                        }, 80);
+                    }
+                });
+            }
+        }
+    });
+
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+        childList: true,
+        subtree: true
+    });
+
+    console.log('✅ مراقبة z-index وظهور/اختفاء الشاشات مفعّلة');
+})();
