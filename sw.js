@@ -2,11 +2,7 @@
 const PROTECTED_FILES = [
     'image/0.webp',
     'image/wood.webp', 
-    'image/Upper_wood.webp',
-    'image/logo-A.webp',
-    'image/logo-B.webp',
-    'image/logo-C.webp',
-    'image/logo-D.webp'
+    'image/Upper_wood.webp'
 ];
 
 // دالة للتحقق من الملفات المحمية
