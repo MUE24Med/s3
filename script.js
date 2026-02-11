@@ -98,294 +98,666 @@
             window.location.reload();
         });
 
-        /* ========================================
-           🎮 GAME CODE - نظام اللعبة الكامل
-           ======================================== */
+// ======================================
+// 🎮 GAME CODE - خارج initPreloadSystem()
+// ======================================
 
-        const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
+const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
 
-        const gameContainer = document.getElementById('gameContainer');
-        const runner = document.getElementById('runner');
-        const heartsDisplay = document.getElementById('heartsDisplay');
-        const scoreDisplay = document.getElementById('scoreDisplay');
-        const gameOverlay = document.getElementById('gameOverlay');
-        const finalScore = document.getElementById('finalScore');
-        const restartBtn = document.getElementById('restartBtn');
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
-        const leaderboardList = document.getElementById('leaderboardList');
+const gameContainer = document.getElementById('gameContainer');
+const runner = document.getElementById('runner');
+const heartsDisplay = document.getElementById('heartsDisplay');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const gameOverlay = document.getElementById('gameOverlay');
+const finalScore = document.getElementById('finalScore');
+const restartBtn = document.getElementById('restartBtn');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const leaderboardList = document.getElementById('leaderboardList');
 
-        let runnerPosition = 0;
-        let hearts = 0;
-        let score = 0;
-        let gameActive = true;
-        let fallSpeed = 1.5;
-        let activeItems = [];
-        let waveCounter = 0;
-        let usedLanesInWave = [];
-        let spawnInterval = 1800;
-        let spawnerIntervalId = null;
+let runnerPosition = 0;
+let hearts = 0;
+let score = 0;
+let gameActive = true;
+let fallSpeed = 1.5;
+let activeItems = [];
+let waveCounter = 0;
+let usedLanesInWave = [];
+let spawnInterval = 1800;
+let spawnerIntervalId = null;
 
-        const lanes = [20, 50, 80];
+const lanes = [20, 50, 80];
 
-        function moveRunner(direction) {
-            if (!gameActive) return;
-            runnerPosition += direction;
-            runnerPosition = Math.max(-1, Math.min(1, runnerPosition));
-            runner.style.left = lanes[runnerPosition + 1] + '%';
-        }
+function moveRunner(direction) {
+    if (!gameActive) return;
+    runnerPosition += direction;
+    runnerPosition = Math.max(-1, Math.min(1, runnerPosition));
+    if (runner) runner.style.left = lanes[runnerPosition + 1] + '%';
+}
 
-        if (leftBtn) {
-            leftBtn.addEventListener('click', () => moveRunner(-1));
-        }
+if (leftBtn) {
+    leftBtn.addEventListener('click', () => moveRunner(-1));
+}
 
-        if (rightBtn) {
-            rightBtn.addEventListener('click', () => moveRunner(1));
-        }
+if (rightBtn) {
+    rightBtn.addEventListener('click', () => moveRunner(1));
+}
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                moveRunner(-1);
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        moveRunner(-1);
+    }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        moveRunner(1);
+    }
+});
+
+function spawnWave() {
+    if (!gameActive) return;
+    waveCounter++;
+    usedLanesInWave = [];
+    const itemsInWave = 2;
+
+    for (let i = 0; i < itemsInWave; i++) {
+        setTimeout(() => {
+            spawnItem();
+        }, i * 100);
+    }
+}
+
+function spawnItem() {
+    const rand = Math.random();
+    let emoji, type;
+
+    if (rand < 0.15) {
+        emoji = '💊';
+        type = 'pill';
+    } else if (rand < 0.60) {
+        emoji = '🦠';
+        type = 'bacteria';
+    } else {
+        emoji = '👾';
+        type = 'virus';
+    }
+
+    let availableLanes = [0, 1, 2].filter(lane => !usedLanesInWave.includes(lane));
+
+    if (availableLanes.length === 0) {
+        availableLanes = [0, 1, 2];
+        usedLanesInWave = [];
+    }
+
+    const laneIndex = availableLanes[Math.floor(Math.random() * availableLanes.length)];
+    usedLanesInWave.push(laneIndex);
+
+    const item = document.createElement('div');
+    item.className = 'falling-item';
+    item.textContent = emoji;
+    item.dataset.type = type;
+    item.dataset.lane = laneIndex;
+    item.style.left = lanes[laneIndex] + '%';
+
+    if (gameContainer) gameContainer.appendChild(item);
+
+    const itemData = {
+        element: item,
+        y: -40,
+        lane: laneIndex,
+        type: type
+    };
+
+    activeItems.push(itemData);
+}
+
+function updateGame() {
+    if (!gameActive) return;
+
+    activeItems.forEach((itemData, index) => {
+        itemData.y += fallSpeed;
+        itemData.element.style.top = itemData.y + 'px';
+
+        const containerHeight = gameContainer ? gameContainer.offsetHeight : 600;
+
+        if (itemData.y > containerHeight - 100 && itemData.y < containerHeight - 40) {
+            const playerLane = runnerPosition + 1;
+
+            if (itemData.lane === playerLane) {
+                if (itemData.type === 'pill') {
+                    hearts++;
+                } else if (itemData.type === 'bacteria') {
+                    hearts--;
+                } else if (itemData.type === 'virus') {
+                    hearts -= 1;
+                }
+
+                if (heartsDisplay) heartsDisplay.textContent = hearts;
+                itemData.element.remove();
+                activeItems.splice(index, 1);
+
+                if (hearts < 0) {
+                    endGame();
+                }
             }
-            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                moveRunner(1);
+        }
+
+        if (itemData.y > containerHeight) {
+            score++;
+            if (scoreDisplay) scoreDisplay.textContent = score;
+            itemData.element.remove();
+            activeItems.splice(index, 1);
+        }
+    });
+
+    if (gameActive) {
+        requestAnimationFrame(updateGame);
+    }
+}
+
+async function fetchGlobalLeaderboard() {
+    try {
+        console.log('🔄 جلب القائمة العالمية...');
+
+        if (typeof window.storage !== 'undefined') {
+            const result = await window.storage.list('game_score:', true);
+
+            if (result && result.keys) {
+                const scores = [];
+
+                for (const key of result.keys) {
+                    try {
+                        const data = await window.storage.get(key, true);
+                        if (data && data.value) {
+                            const parsed = JSON.parse(data.value);
+                            scores.push(parsed);
+                        }
+                    } catch (err) {
+                        console.warn('⚠️ خطأ في قراءة:', key);
+                    }
+                }
+
+                scores.sort((a, b) => b.score - a.score);
+                const top5 = scores.slice(0, 5);
+
+                console.log('✅ تم جلب القائمة:', top5);
+                return top5;
             }
+        }
+
+        return [];
+    } catch (error) {
+        console.error('❌ خطأ في جلب القائمة:', error);
+        return [];
+    }
+}
+
+async function sendScoreToServer(playerName, playerScore, deviceId) {
+    try {
+        console.log('📤 إرسال النتيجة للسيرفر...');
+
+        const timestamp = Date.now();
+        const scoreKey = `game_score:${deviceId}_${timestamp}`;
+
+        const scoreData = {
+            name: playerName,
+            score: playerScore,
+            device_id: deviceId,
+            date: new Date().toLocaleDateString('ar-EG'),
+            timestamp: timestamp
+        };
+
+        if (typeof window.storage !== 'undefined') {
+            await window.storage.set(scoreKey, JSON.stringify(scoreData), true);
+            console.log('✅ تم حفظ النتيجة في Storage');
+        }
+
+        const formData = new FormData();
+        formData.append("Type", "Game_Score");
+        formData.append("Player_Name", playerName);
+        formData.append("Score", playerScore);
+        formData.append("Device_ID", deviceId);
+        formData.append("Timestamp", new Date().toLocaleString('ar-EG'));
+
+        navigator.sendBeacon(FORMSPREE_URL, formData);
+        console.log('✅ تم إرسال النتيجة');
+
+        return true;
+    } catch (error) {
+        console.error('❌ خطأ في الإرسال:', error);
+        return false;
+    }
+}
+
+async function displayLeaderboard() {
+    if (!leaderboardList) return;
+
+    const leaderboard = await fetchGlobalLeaderboard();
+    const deviceId = getDeviceId();
+
+    if (leaderboard.length === 0) {
+        leaderboardList.innerHTML = `
+            <li class="leaderboard-item">
+                <span class="leaderboard-rank">-</span>
+                <span class="leaderboard-name">لا توجد نتائج بعد</span>
+                <span class="leaderboard-score">-</span>
+            </li>
+        `;
+        return;
+    }
+
+    leaderboardList.innerHTML = leaderboard.map((entry, index) => {
+        const topClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+
+        const isCurrentPlayer = entry.device_id === deviceId;
+        const currentClass = isCurrentPlayer ? 'current-player' : '';
+
+        return `
+            <li class="leaderboard-item ${topClass} ${currentClass}">
+                <span class="leaderboard-rank">${medal} #${index + 1}</span>
+                <span class="leaderboard-name">${entry.name}</span>
+                <span class="leaderboard-score">${entry.score} ⭐</span>
+            </li>
+        `;
+    }).join('');
+}
+
+function getPlayerName() {
+    if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
+        return UserTracker.getDisplayName();
+    }
+
+    const realName = localStorage.getItem('user_real_name');
+    if (realName && realName.trim()) {
+        return realName.trim();
+    }
+
+    return localStorage.getItem('visitor_id') || 'زائر';
+}
+
+function getDeviceId() {
+    if (typeof UserTracker !== 'undefined' && UserTracker.deviceFingerprint) {
+        return UserTracker.deviceFingerprint;
+    }
+
+    const stored = localStorage.getItem('device_fingerprint');
+    if (stored) return stored;
+
+    return localStorage.getItem('visitor_id') || 'unknown';
+}
+
+// دالة الاحتفال برقم قياسي جديد
+async function celebrateNewRecord(newScore, oldScore) {
+    return new Promise((resolve) => {
+        const celebration = document.createElement('div');
+        celebration.id = 'record-celebration';
+        celebration.innerHTML = `
+            <div class="celebration-content">
+                <div class="celebration-icon">🏆</div>
+                <h1 class="celebration-title">رقم قياسي جديد!</h1>
+                <div class="celebration-scores">
+                    <div class="old-score">القديم: <span>${oldScore}</span></div>
+                    <div class="new-score">الجديد: <span>${newScore}</span></div>
+                    <div class="improvement">التحسن: <span>+${newScore - oldScore}</span></div>
+                </div>
+                <div class="confetti-container"></div>
+            </div>
+        `;
+
+        celebration.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.5s ease-in-out;
+        `;
+
+        document.body.appendChild(celebration);
+
+        createConfetti(celebration.querySelector('.confetti-container'));
+
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200, 100, 200]);
+        }
+
+        playSuccessSound();
+
+        setTimeout(() => {
+            celebration.style.animation = 'fadeOut 0.5s ease-in-out';
+            setTimeout(() => {
+                celebration.remove();
+                resolve();
+            }, 500);
+        }, 4000);
+    });
+}
+
+// دالة الاحتفال بدخول Top 5
+async function celebrateTop5Entry(rank, score) {
+    return new Promise((resolve) => {
+        const medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
+        const rankText = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'];
+
+        const celebration = document.createElement('div');
+        celebration.id = 'top5-celebration';
+        celebration.innerHTML = `
+            <div class="top5-content">
+                <div class="top5-medal">${medals[rank - 1]}</div>
+                <h2 class="top5-title">دخلت Top 5!</h2>
+                <div class="top5-rank">المركز ${rankText[rank - 1]}</div>
+                <div class="top5-score">${score} نقطة</div>
+            </div>
+        `;
+
+        celebration.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            z-index: 9999;
+            text-align: center;
+            animation: bounceIn 0.6s ease-out;
+        `;
+
+        document.body.appendChild(celebration);
+
+        if (navigator.vibrate) {
+            navigator.vibrate(100);
+        }
+
+        setTimeout(() => {
+            celebration.style.animation = 'fadeOut 0.4s ease-in';
+            setTimeout(() => {
+                celebration.remove();
+                resolve();
+            }, 400);
+        }, 3000);
+    });
+}
+
+// دالة توليد الكونفيتي
+function createConfetti(container) {
+    const colors = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f', '#ffa500'];
+
+    for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti-piece';
+        confetti.style.cssText = `
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: ${colors[Math.floor(Math.random() * colors.length)]};
+            top: -10px;
+            left: ${Math.random() * 100}%;
+            opacity: ${Math.random() * 0.7 + 0.3};
+            transform: rotate(${Math.random() * 360}deg);
+            animation: confettiFall ${Math.random() * 3 + 2}s linear infinite;
+            animation-delay: ${Math.random() * 2}s;
+        `;
+        container.appendChild(confetti);
+    }
+}
+
+// تشغيل صوت النجاح
+function playSuccessSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 523.25; // C5
+        gainNode.gain.value = 0.3;
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+
+        setTimeout(() => {
+            const osc2 = audioContext.createOscillator();
+            osc2.connect(gainNode);
+            osc2.frequency.value = 659.25; // E5
+            osc2.start(audioContext.currentTime);
+            osc2.stop(audioContext.currentTime + 0.2);
+        }, 200);
+
+        setTimeout(() => {
+            const osc3 = audioContext.createOscillator();
+            osc3.connect(gainNode);
+            osc3.frequency.value = 783.99; // G5
+            osc3.start(audioContext.currentTime);
+            osc3.stop(audioContext.currentTime + 0.3);
+        }, 400);
+
+    } catch (e) {
+        console.log('لا يمكن تشغيل الصوت');
+    }
+}
+
+// دالة إنهاء اللعبة المحدثة
+async function endGame() {
+    gameActive = false;
+
+    if (finalScore) {
+        finalScore.textContent = `النقاط النهائية: ${score}`;
+    }
+
+    if (gameOverlay) {
+        gameOverlay.style.display = 'flex';
+    }
+
+    const playerName = getPlayerName();
+    const deviceId = getDeviceId();
+
+    console.log('🎮 انتهت اللعبة:', { playerName, score, deviceId });
+
+    const oldHighScore = parseInt(localStorage.getItem('highest_game_score') || '0');
+    const isNewRecord = score > oldHighScore;
+
+    if (isNewRecord) {
+        localStorage.setItem('highest_game_score', score.toString());
+        console.log(`🏆 رقم قياسي جديد: ${score} (القديم: ${oldHighScore})`);
+
+        await celebrateNewRecord(score, oldHighScore);
+    }
+
+    await sendScoreToServer(playerName, score, deviceId);
+
+    const leaderboard = await fetchGlobalLeaderboard();
+    await displayLeaderboard();
+
+    const playerRank = leaderboard.findIndex(entry => entry.device_id === deviceId) + 1;
+
+    if (playerRank > 0 && playerRank <= 5) {
+        await celebrateTop5Entry(playerRank, score);
+    }
+
+    if (typeof trackGameScore === 'function') {
+        trackGameScore(score);
+    }
+}
+
+function restartGame() {
+    activeItems.forEach(item => item.element.remove());
+    activeItems = [];
+
+    hearts = 0;
+    score = 0;
+    runnerPosition = 0;
+    fallSpeed = 1.5;
+    waveCounter = 0;
+    spawnInterval = 1800;
+    gameActive = true;
+
+    if (heartsDisplay) heartsDisplay.textContent = hearts;
+    if (scoreDisplay) scoreDisplay.textContent = score;
+    if (runner) runner.style.left = lanes[1] + '%';
+    if (gameOverlay) gameOverlay.style.display = 'none';
+
+    updateGame();
+    startSpawning();
+}
+
+if (restartBtn) {
+    restartBtn.addEventListener('click', restartGame);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('leaderboardList')) {
+        displayLeaderboard().catch(err => console.error("Leaderboard Error:", err));
+    }
+});
+
+setInterval(() => {
+    if (!gameActive && document.getElementById('leaderboardList')) {
+        displayLeaderboard();
+    }
+}, 30000);
+
+function startSpawning() {
+    if (spawnerIntervalId) {
+        clearInterval(spawnerIntervalId);
+    }
+
+    spawnerIntervalId = setInterval(() => {
+        if (gameActive) {
+            spawnWave();
+            waveCounter++;
+
+            if (waveCounter % 3 === 0) {
+                fallSpeed += 0.15;
+
+                if (spawnInterval > 800) {
+                    spawnInterval -= 100;
+                    clearInterval(spawnerIntervalId);
+                    startSpawning();
+                }
+            }
+        }
+    }, spawnInterval);
+}
+
+// بدء اللعبة
+updateGame();
+startSpawning();
+
+// ======================================
+// 🔚 END OF GAME CODE
+// ======================================
+
+
+// ======================================
+// 🔄 Preload System (محتفظ بنفس الكود القديم)
+// ======================================
+(function initPreloadSystem() {
+    const preloadDone = localStorage.getItem('preload_done');
+    const preloadScreen = document.getElementById('preload-screen');
+
+    if (!preloadDone && preloadScreen) {
+        console.log('🔄 أول زيارة - تفعيل شاشة Preload');
+
+        preloadScreen.classList.remove('hidden');
+
+        const mainContent = [
+            document.getElementById('group-selection-screen'),
+            document.getElementById('js-toggle-container'),
+            document.getElementById('scroll-container'),
+            document.getElementById('loading-overlay')
+        ];
+        mainContent.forEach(el => {
+            if (el) el.style.display = 'none';
         });
 
-        function spawnWave() {
-            if (!gameActive) return;
-            waveCounter++;
-            usedLanesInWave = [];
-            const itemsInWave = 2;
+        const filesToLoad = [
+            'style.css',
+            'script.js',
+            'tracker.js'
+        ];
 
-            for (let i = 0; i < itemsInWave; i++) {
-                setTimeout(() => {
-                    spawnItem();
-                }, i * 100);
-            }
+        const progressBar = document.getElementById('progressBar');
+        const fileStatus = document.getElementById('fileStatus');
+        const continueBtn = document.getElementById('continueBtn');
+
+        let loadedFiles = 0;
+        const totalFiles = filesToLoad.length;
+
+        function updateProgress() {
+            const percentage = Math.round((loadedFiles / totalFiles) * 100);
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
         }
 
-        function spawnItem() {
-            const rand = Math.random();
-            let emoji, type;
+        async function loadFile(url) {
+            return new Promise(async (resolve) => {
+                try {
+                    const cache = await caches.open('semester-3-cache-v1');
+                    let cachedResponse = await cache.match(url);
 
-            if (rand < 0.15) {
-                emoji = '💊';
-                type = 'pill';
-            } else if (rand < 0.60) {
-                emoji = '🦠';
-                type = 'bacteria';
-            } else {
-                emoji = '👾';
-                type = 'virus';
-            }
-
-            let availableLanes = [0, 1, 2].filter(lane => !usedLanesInWave.includes(lane));
-
-            if (availableLanes.length === 0) {
-                availableLanes = [0, 1, 2];
-                usedLanesInWave = [];
-            }
-
-            const laneIndex = availableLanes[Math.floor(Math.random() * availableLanes.length)];
-            usedLanesInWave.push(laneIndex);
-
-            const item = document.createElement('div');
-            item.className = 'falling-item';
-            item.textContent = emoji;
-            item.dataset.type = type;
-            item.dataset.lane = laneIndex;
-            item.style.left = lanes[laneIndex] + '%';
-
-            gameContainer.appendChild(item);
-
-            const itemData = {
-                element: item,
-                y: -40,
-                lane: laneIndex,
-                type: type
-            };
-
-            activeItems.push(itemData);
-        }
-
-        function updateGame() {
-            if (!gameActive) return;
-
-            activeItems.forEach((itemData, index) => {
-                itemData.y += fallSpeed;
-                itemData.element.style.top = itemData.y + 'px';
-
-                const containerHeight = gameContainer.offsetHeight;
-
-                if (itemData.y > containerHeight - 100 && itemData.y < containerHeight - 40) {
-                    const playerLane = runnerPosition + 1;
-
-                    if (itemData.lane === playerLane) {
-                        if (itemData.type === 'pill') {
-                            hearts++;
-                        } else if (itemData.type === 'bacteria') {
-                            hearts--;
-                        } else if (itemData.type === 'virus') {
-                            hearts -= 1;
-                        }
-
-                        heartsDisplay.textContent = hearts;
-                        itemData.element.remove();
-                        activeItems.splice(index, 1);
-
-                        if (hearts < 0) {
-                            endGame();
-                        }
+                    if (cachedResponse) {
+                        console.log(`✅ كاش: ${url}`);
+                        loadedFiles++;
+                        updateProgress();
+                        fileStatus.textContent = `✔ ${url.split('/').pop()}`;
+                        resolve();
+                        return;
                     }
-                }
 
-                if (itemData.y > containerHeight) {
-                    score++;
-                    scoreDisplay.textContent = score;
-                    itemData.element.remove();
-                    activeItems.splice(index, 1);
+                    console.log(`🌐 تحميل: ${url}`);
+                    const response = await fetch(url);
+
+                    if (response.ok) {
+                        await cache.put(url, response.clone());
+                        console.log(`💾 حفظ: ${url}`);
+                    }
+
+                    loadedFiles++;
+                    updateProgress();
+                    fileStatus.textContent = `✔ ${url.split('/').pop()}`;
+                    resolve();
+
+                } catch (error) {
+                    console.error('❌ خطأ:', url, error);
+                    loadedFiles++;
+                    updateProgress();
+                    resolve();
                 }
             });
-
-            if (gameActive) {
-                requestAnimationFrame(updateGame);
-            }
         }
 
-        async function fetchGlobalLeaderboard() {
-            try {
-                console.log('🔄 جلب القائمة العالمية...');
-
-                if (typeof window.storage !== 'undefined') {
-                    const result = await window.storage.list('game_score:', true);
-
-                    if (result && result.keys) {
-                        const scores = [];
-
-                        for (const key of result.keys) {
-                            try {
-                                const data = await window.storage.get(key, true);
-                                if (data && data.value) {
-                                    const parsed = JSON.parse(data.value);
-                                    scores.push(parsed);
-                                }
-                            } catch (err) {
-                                console.warn('⚠️ خطأ في قراءة:', key);
-                            }
-                        }
-
-                        scores.sort((a, b) => b.score - a.score);
-                        const top5 = scores.slice(0, 5);
-
-                        console.log('✅ تم جلب القائمة:', top5);
-                        return top5;
-                    }
-                }
-
-                return [];
-            } catch (error) {
-                console.error('❌ خطأ في جلب القائمة:', error);
-                return [];
+        async function startLoading() {
+            for (const file of filesToLoad) {
+                await loadFile(file);
             }
+
+            fileStatus.textContent = '🎉 اكتمل التحميل!';
+            continueBtn.style.display = 'block';
         }
 
-        async function sendScoreToServer(playerName, playerScore, deviceId) {
-            try {
-                console.log('📤 إرسال النتيجة للسيرفر...');
+        startLoading();
 
-                const timestamp = Date.now();
-                const scoreKey = `game_score:${deviceId}_${timestamp}`;
+        continueBtn.addEventListener('click', () => {
+            console.log('✅ حفظ حالة preload_done');
+            localStorage.setItem('preload_done', 'true');
+            localStorage.setItem('last_visit_timestamp', Date.now());
 
-                const scoreData = {
-                    name: playerName,
-                    score: playerScore,
-                    device_id: deviceId,
-                    date: new Date().toLocaleDateString('ar-EG'),
-                    timestamp: timestamp
-                };
+            preloadScreen.classList.add('hidden');
 
-                if (typeof window.storage !== 'undefined') {
-                    await window.storage.set(scoreKey, JSON.stringify(scoreData), true);
-                    console.log('✅ تم حفظ النتيجة في Storage');
-                }
+            mainContent.forEach(el => {
+                if (el) el.style.display = '';
+            });
 
-                const formData = new FormData();
-                formData.append("Type", "Game_Score");
-                formData.append("Player_Name", playerName);
-                formData.append("Score", playerScore);
-                formData.append("Device_ID", deviceId);
-                formData.append("Timestamp", new Date().toLocaleString('ar-EG'));
-
-                navigator.sendBeacon(FORMSPREE_URL, formData);
-                console.log('✅ تم إرسال النتيجة');
-
-                return true;
-            } catch (error) {
-                console.error('❌ خطأ في الإرسال:', error);
-                return false;
-            }
-        }
-
-        async function displayLeaderboard() {
-            if (!leaderboardList) return;
-
-            const leaderboard = await fetchGlobalLeaderboard();
-            const deviceId = getDeviceId();
-
-            if (leaderboard.length === 0) {
-                leaderboardList.innerHTML = `
-                    <li class="leaderboard-item">
-                        <span class="leaderboard-rank">-</span>
-                        <span class="leaderboard-name">لا توجد نتائج بعد</span>
-                        <span class="leaderboard-score">-</span>
-                    </li>
-                `;
-                return;
-            }
-
-            leaderboardList.innerHTML = leaderboard.map((entry, index) => {
-                const topClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
-                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-
-                const isCurrentPlayer = entry.device_id === deviceId;
-                const currentClass = isCurrentPlayer ? 'current-player' : '';
-
-                return `
-                    <li class="leaderboard-item ${topClass} ${currentClass}">
-                        <span class="leaderboard-rank">${medal} #${index + 1}</span>
-                        <span class="leaderboard-name">${entry.name}</span>
-                        <span class="leaderboard-score">${entry.score} ⭐</span>
-                    </li>
-                `;
-            }).join('');
-        }
-
-        function getPlayerName() {
-            if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
-                return UserTracker.getDisplayName();
-            }
-
-            const realName = localStorage.getItem('user_real_name');
-            if (realName && realName.trim()) {
-                return realName.trim();
-            }
-
-            return localStorage.getItem('visitor_id') || 'زائر';
-        }
-
-        function getDeviceId() {
-            if (typeof UserTracker !== 'undefined' && UserTracker.deviceFingerprint) {
-                return UserTracker.deviceFingerprint;
-            }
-
-            const stored = localStorage.getItem('device_fingerprint');
-            if (stored) return stored;
-
-            return localStorage.getItem('visitor_id') || 'unknown';
-        }
-
-        // تكملة في الجزء التالي...
+            window.location.reload();
+        });
 
     } else {
         console.log('✅ زيارة سابقة - تخطي Preload');
@@ -395,7 +767,6 @@
         }
     }
 })();
-
 /* ========================================
    [001] المتغيرات الأساسية
    ======================================== */
