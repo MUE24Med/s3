@@ -2995,7 +2995,6 @@ async function updateWoodInterface() {
     }
 
     console.log(`✅ تم عرض ${itemsAdded} عنصر`);
-}
 
 /* ========================================
    [013] SVG Processing + Interaction
