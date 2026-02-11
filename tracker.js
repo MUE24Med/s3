@@ -13,22 +13,19 @@ function generateUniqueID() {
 
     let newID;
     let attempts = 0;
-    const maxAttempts = 10000; // لتجنب حلقة لا نهائية
+    const maxAttempts = 10000;
 
     do {
-        // توليد رقم عشوائي من 4 أرقام (1000-9999)
         const randomNumber = Math.floor(1000 + Math.random() * 9000);
         newID = 'ID-' + randomNumber;
         attempts++;
 
         if (attempts >= maxAttempts) {
-            // في حالة نادرة جداً، استخدم timestamp
             newID = 'ID-' + Date.now().toString().slice(-4);
             break;
         }
     } while (usedIDs.includes(newID));
 
-    // حفظ الـ ID الجديد
     usedIDs.push(newID);
     localStorage.setItem('all_used_ids', JSON.stringify(usedIDs));
     localStorage.setItem('visitor_id', newID);
@@ -44,6 +41,7 @@ function generateUniqueID() {
 const UserTracker = {
     activities: [],
     deviceFingerprint: null,
+    highestGameScore: parseInt(localStorage.getItem('highest_game_score') || '0'),
 
     async generateFingerprint() {
         const storedFingerprint = localStorage.getItem('device_fingerprint');
@@ -224,6 +222,11 @@ const UserTracker = {
         return plugins.join(',');
     },
 
+    getConnectionInfo() {
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
+    },
+
     async hashString(str) {
         const encoder = new TextEncoder();
         const data = encoder.encode(str);
@@ -239,7 +242,6 @@ const UserTracker = {
             localStorage.removeItem('user_real_name');
         }
 
-        // التأكد من وجود ID فريد
         if (!localStorage.getItem('visitor_id')) {
             generateUniqueID();
         }
@@ -267,11 +269,6 @@ const UserTracker = {
         if (ua.includes("Mac")) return "macOS";
         if (ua.includes("Linux")) return "Linux";
         return "Unknown OS";
-    },
-
-    getConnectionInfo() {
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
     },
 
     logActivity(type, details = {}) {
@@ -310,6 +307,11 @@ const UserTracker = {
         data.append("15-Device_Type", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
         data.append("16-Touch", navigator.maxTouchPoints > 0 ? "Yes" : "No");
         data.append("17-Timestamp", new Date().toLocaleString('ar-EG'));
+        
+        // ========================================
+        // 🎮 إضافة أعلى نتيجة في اللعبة
+        // ========================================
+        data.append("18-Highest_Game_Score", this.highestGameScore);
 
         navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", data);
 
@@ -321,7 +323,6 @@ const UserTracker = {
 // تهيئة النظام
 // ========================================
 
-// توليد ID فريد عند أول تحميل
 generateUniqueID();
 
 window.addEventListener('load', async () => {
@@ -335,12 +336,56 @@ window.addEventListener('groupChanged', (e) => {
     UserTracker.logActivity("تغيير جروب", { newGroup: e.detail });
 });
 
+// ========================================
 // دوال التتبع
-function trackSearch(query) { UserTracker.logActivity("بحث", { query: query }); }
-function trackSvgOpen(name) { UserTracker.logActivity("فتح ملف SVG", { file: name }); }
-function trackApiOpen(endpoint) { UserTracker.logActivity("فتح API", { api: endpoint }); }
-function trackNameChange(newName) { UserTracker.logActivity("تغيير اسم", { name: newName }); }
-function trackGameScore(score) { UserTracker.logActivity("نتيجة اللعبة", { score: score }); }
+// ========================================
+
+function trackSearch(query) { 
+    UserTracker.logActivity("بحث", { query: query }); 
+}
+
+function trackSvgOpen(name) { 
+    UserTracker.logActivity("فتح ملف SVG", { file: name }); 
+}
+
+function trackApiOpen(endpoint) { 
+    UserTracker.logActivity("فتح API", { api: endpoint }); 
+}
+
+function trackNameChange(newName) { 
+    UserTracker.logActivity("تغيير اسم", { name: newName }); 
+}
+
+// ========================================
+// 🎮 تتبع نتيجة اللعبة المحسّن
+// ========================================
+
+function trackGameScore(score) {
+    UserTracker.logActivity("نتيجة اللعبة", { score: score });
+    
+    // التحقق من تحطيم الرقم القياسي
+    const oldHighScore = UserTracker.highestGameScore;
+    
+    if (score > oldHighScore) {
+        UserTracker.highestGameScore = score;
+        localStorage.setItem('highest_game_score', score.toString());
+        
+        UserTracker.logActivity("🏆 رقم قياسي جديد!", { 
+            oldScore: oldHighScore, 
+            newScore: score,
+            improvement: score - oldHighScore
+        });
+        
+        console.log(`🏆 تهانينا! رقم قياسي جديد: ${score} (القديم: ${oldHighScore})`);
+        
+        // إرسال فوري عند تحطيم الرقم القياسي
+        UserTracker.send("🏆 رقم قياسي جديد", true);
+        
+        return true; // تم تحطيم الرقم القياسي
+    }
+    
+    return false; // لم يتم تحطيم الرقم القياسي
+}
 
 // إرسال دوري كل 60 ثانية
 setInterval(() => {
@@ -367,4 +412,9 @@ window.addEventListener('beforeunload', () => {
 
 console.log('%c🔒 Device Fingerprint System Active', 'color: #00ff00; font-size: 16px; font-weight: bold;');
 console.log('%c🆔 Unique Visitor ID System Active', 'color: #ffcc00; font-size: 14px; font-weight: bold;');
+console.log('%c🎮 Game Score Tracking Active', 'color: #ff5722; font-size: 14px; font-weight: bold;');
 console.log('%cيمكنك رؤية البصمة الفريدة لجهازك في localStorage', 'color: #ffcc00;');
+
+/* ========================================
+   ✅ END OF TRACKER.JS
+   ======================================== */
