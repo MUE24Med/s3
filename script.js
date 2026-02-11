@@ -1,9 +1,5 @@
 /* ========================================
-   script.js - COMPLETE FIXED VERSION
-   ✅ إصلاح مشكلة 404 Not Found
-   ✅ تغيير صورة Loading إلى نص
-   ✅ حماية الملفات المحمية
-   ✅ جميع المميزات محدثة
+   script.js
    ======================================== */
 
 (function initPreloadSystem() {
