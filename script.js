@@ -771,13 +771,21 @@ if (restartBtn) {
     restartBtn.addEventListener('click', restartGame);
 }
 
-displayLeaderboard();
+// استبدل الاستدعاء المباشر بهذا التأكيد:
+document.addEventListener('DOMContentLoaded', () => {
+    // التأكد من وجود القائمة قبل محاولة تحديثها
+    if (document.getElementById('leaderboardList')) {
+        displayLeaderboard().catch(err => console.error("Leaderboard Error:", err));
+    }
+});
 
+// وتأكد من تحديث التوقيت الدوري (Interval) ليكون هكذا:
 setInterval(() => {
-    if (!gameActive) {
+    if (!gameActive && document.getElementById('leaderboardList')) {
         displayLeaderboard();
     }
 }, 30000);
+
 
 updateGame();
 
