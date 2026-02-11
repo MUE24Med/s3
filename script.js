@@ -98,9 +98,9 @@
             window.location.reload();
         });
 
-// ======================================
-// 🎮 GAME CODE - خارج initPreloadSystem()
-// ======================================
+// ========================================
+// 🎮 GAME CODE - خارج كل حاجة
+// ========================================
 
 const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
 
@@ -385,7 +385,6 @@ function getDeviceId() {
     return localStorage.getItem('visitor_id') || 'unknown';
 }
 
-// دالة الاحتفال برقم قياسي جديد
 async function celebrateNewRecord(newScore, oldScore) {
     return new Promise((resolve) => {
         const celebration = document.createElement('div');
@@ -437,7 +436,6 @@ async function celebrateNewRecord(newScore, oldScore) {
     });
 }
 
-// دالة الاحتفال بدخول Top 5
 async function celebrateTop5Entry(rank, score) {
     return new Promise((resolve) => {
         const medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
@@ -484,7 +482,6 @@ async function celebrateTop5Entry(rank, score) {
     });
 }
 
-// دالة توليد الكونفيتي
 function createConfetti(container) {
     const colors = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f', '#ffa500'];
 
@@ -507,7 +504,6 @@ function createConfetti(container) {
     }
 }
 
-// تشغيل صوت النجاح
 function playSuccessSound() {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -517,7 +513,7 @@ function playSuccessSound() {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
-        oscillator.frequency.value = 523.25; // C5
+        oscillator.frequency.value = 523.25;
         gainNode.gain.value = 0.3;
 
         oscillator.start(audioContext.currentTime);
@@ -526,7 +522,7 @@ function playSuccessSound() {
         setTimeout(() => {
             const osc2 = audioContext.createOscillator();
             osc2.connect(gainNode);
-            osc2.frequency.value = 659.25; // E5
+            osc2.frequency.value = 659.25;
             osc2.start(audioContext.currentTime);
             osc2.stop(audioContext.currentTime + 0.2);
         }, 200);
@@ -534,7 +530,7 @@ function playSuccessSound() {
         setTimeout(() => {
             const osc3 = audioContext.createOscillator();
             osc3.connect(gainNode);
-            osc3.frequency.value = 783.99; // G5
+            osc3.frequency.value = 783.99;
             osc3.start(audioContext.currentTime);
             osc3.stop(audioContext.currentTime + 0.3);
         }, 400);
@@ -544,7 +540,6 @@ function playSuccessSound() {
     }
 }
 
-// دالة إنهاء اللعبة المحدثة
 async function endGame() {
     gameActive = false;
 
@@ -567,7 +562,6 @@ async function endGame() {
     if (isNewRecord) {
         localStorage.setItem('highest_game_score', score.toString());
         console.log(`🏆 رقم قياسي جديد: ${score} (القديم: ${oldHighScore})`);
-
         await celebrateNewRecord(score, oldHighScore);
     }
 
@@ -647,18 +641,12 @@ function startSpawning() {
     }, spawnInterval);
 }
 
-// بدء اللعبة
 updateGame();
 startSpawning();
 
-// ======================================
-// 🔚 END OF GAME CODE
-// ======================================
-
-
-// ======================================
-// 🔄 Preload System (محتفظ بنفس الكود القديم)
-// ======================================
+// ========================================
+// 🔄 Preload System
+// ========================================
 (function initPreloadSystem() {
     const preloadDone = localStorage.getItem('preload_done');
     const preloadScreen = document.getElementById('preload-screen');
