@@ -1,11 +1,3 @@
-/* ========================================
-   script.js - COMPLETE UPDATED VERSION
-   ✅ زر التحديث بدلاً من Reset
-   ✅ حركة دائرية لزر العين
-   ✅ نظام الاحتفال بالأرقام القياسية
-   ✅ Top 5 Leaderboard
-   ======================================== */
-
 (function initPreloadSystem() {
     const preloadDone = localStorage.getItem('preload_done');
     const preloadScreen = document.getElementById('preload-screen');
