@@ -1,7 +1,25 @@
-const PROTECTED_FILES = [
-    'image/0.webp',
-    'image/wood.webp', 
-    'image/Upper_wood.webp'
+const CACHE_NAME = 'semester-3-cache-v1.1'; // ✅ زيادة الإصدار
+const urlsToCache = [
+    './',
+    './index.html',
+    './style.css',
+    './tracker.js',
+    
+    // JavaScript المقسم
+    './javascript/script.js',
+    './javascript/core/config.js',
+    './javascript/core/utils.js',
+    './javascript/core/navigation.js',
+    './javascript/core/group-loader.js',
+    './javascript/ui/pdf-viewer.js',
+    './javascript/ui/wood-interface.js',
+    './javascript/features/preload-game.js',
+    './javascript/features/svg-processor.js',
+    
+    // الصور الأساسية
+    './image/0.webp',
+    './image/wood.webp',
+    './image/Upper_wood.webp'
 ];
 
 // دالة للتحقق من الملفات المحمية
