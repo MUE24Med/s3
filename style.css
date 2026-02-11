@@ -1,6 +1,5 @@
 /* ========================================
-   COMPLETE STYLE.CSS - UPDATED VERSION
-   مع Animations للعين + تحديثات
+   COMPLETE STYLE.CSS - FIXED VERSION
    ======================================== */
 
 /* [000] شاشة Preload */
@@ -120,7 +119,6 @@
   transform: translateY(0);
 }
 
-/* [000-A] اللعبة */
 .game-container {
   background: linear-gradient(180deg, #1a1a2e, #0f0f1e);
   height: 500px;
@@ -314,12 +312,12 @@
   .falling-item { font-size: 25px; }
 }
 
-/* [000-B] شاشة اختيار طريقة الفتح */
+/* [000-B] شاشة اختيار طريقة الفتح - محدثة */
 #open-method-popup {
   position: fixed;
   inset: 0;
   z-index: 4;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.75); /* خلفية شفافة */
   display: none;
   align-items: center;
   justify-content: center;
@@ -374,6 +372,7 @@
   background: rgba(255, 0, 0, 0.4);
 }
 
+/* شريط الأزرار تحت المعاينة */
 .method-preview {
   background: #000;
   border-radius: 10px;
@@ -383,7 +382,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: 0;
+  margin-bottom: 0; /* إزالة الهامش لإلصاق الأزرار */
   position: relative;
 }
 
@@ -419,6 +418,7 @@
   white-space: nowrap;
 }
 
+/* شريط الأزرار المحدث - صف واحد صغير */
 .method-buttons {
   display: flex;
   flex-direction: row;
@@ -543,6 +543,7 @@ html, body {
   opacity: 1;
   visibility: visible;
 }
+
 /* [002] المستطيلات التفاعلية */
 .m {
   fill: transparent;
@@ -748,7 +749,7 @@ html, body {
   position: fixed;
   inset: 0;
   z-index: 3;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.75); /* خلفية شفافة */
   display: none;
   align-items: center;
   justify-content: center;
@@ -1114,7 +1115,6 @@ html, body {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(18px); }
 
-/* [007-B] 👁️ زر العين المستقل + Animations */
 #eye-toggle-standalone {
   position: fixed;
   top: 20px;
@@ -1144,48 +1144,11 @@ input:checked + .slider:before { transform: translateX(18px); }
   z-index: 3;
 }
 
-#eye-toggle-standalone:hover:not(.dragging):not(.circle-orbit) {
+#eye-toggle-standalone:hover:not(.dragging) {
   transform: scale(1.15);
   background-color: rgba(0, 0, 0, 1);
 }
 
-/* ========================================
-   👁️ Animations للعين - NEW
-   ======================================== */
-
-/* حركة دائرية صغيرة (نصف قطر 10px) */
-@keyframes circleOrbit {
-    0% {
-        transform: translate(0, 0);
-    }
-    25% {
-        transform: translate(10px, 0);
-    }
-    50% {
-        transform: translate(10px, 10px);
-    }
-    75% {
-        transform: translate(0, 10px);
-    }
-    100% {
-        transform: translate(0, 0);
-    }
-}
-
-.circle-orbit {
-    animation: circleOrbit 2s ease-in-out infinite;
-}
-
-/* رجّة للإشارة للسحب */
-@keyframes shakeHint {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
-    20%, 40%, 60%, 80% { transform: translateX(3px); }
-}
-
-.shake-hint {
-    animation: shakeHint 0.5s ease-in-out;
-}
 /* [008] الأزرار الثابتة */
 #fixed-controls-layer {
   z-index: 3;
@@ -1311,130 +1274,6 @@ img, image, svg, rect {
   z-index: -1 !important;
 }
 
-/* ========================================
-   🎉 Celebration Animations - NEW
-   ======================================== */
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-
-@keyframes bounceIn {
-    0% { transform: translate(-50%, -50%) scale(0); }
-    50% { transform: translate(-50%, -50%) scale(1.1); }
-    100% { transform: translate(-50%, -50%) scale(1); }
-}
-
-@keyframes confettiFall {
-    to {
-        transform: translateY(100vh) rotate(720deg);
-        opacity: 0;
-    }
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.05);
-        opacity: 0.9;
-    }
-}
-
-/* تنسيقات شاشة الرقم القياسي */
-.celebration-content {
-    color: white;
-    text-align: center;
-}
-
-.celebration-icon {
-    font-size: 120px;
-    animation: pulse 1s infinite;
-}
-
-.celebration-title {
-    font-size: 48px;
-    margin: 20px 0;
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
-}
-
-.celebration-scores {
-    font-size: 24px;
-    margin: 30px 0;
-}
-
-.celebration-scores > div {
-    margin: 10px 0;
-}
-
-.new-score {
-    color: #ffd700;
-    font-size: 32px;
-    font-weight: bold;
-}
-
-.old-score {
-    color: #999;
-    font-size: 20px;
-}
-
-.improvement {
-    color: #00ff00;
-    font-size: 28px;
-}
-
-/* تنسيقات Top 5 */
-.top5-content {
-    color: white;
-}
-
-.top5-medal {
-    font-size: 80px;
-    margin-bottom: 10px;
-}
-
-.top5-title {
-    font-size: 32px;
-    margin: 10px 0;
-}
-
-.top5-rank {
-    font-size: 24px;
-    margin: 10px 0;
-    color: #ffd700;
-}
-
-.top5-score {
-    font-size: 28px;
-    font-weight: bold;
-}
-
-/* Confetti */
-.confetti-container {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-.confetti-piece {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-}
-
-/* ========================================
-   📱 Media Queries
-   ======================================== */
-
 @media (max-width: 768px) {
   #reset-btn text, #change-group-btn text, 
   #preload-btn text, #group-btn-text { font-size: 22px; }
@@ -1459,22 +1298,6 @@ img, image, svg, rect {
 
   .method-btn-icon {
     font-size: 18px;
-  }
-
-  .celebration-icon {
-    font-size: 80px;
-  }
-
-  .celebration-title {
-    font-size: 32px;
-  }
-
-  .celebration-scores {
-    font-size: 18px;
-  }
-
-  .new-score {
-    font-size: 24px;
   }
 }
 
@@ -1508,30 +1331,6 @@ img, image, svg, rect {
   .method-filename {
     font-size: 12px;
   }
-
-  .celebration-icon {
-    font-size: 60px;
-  }
-
-  .celebration-title {
-    font-size: 24px;
-  }
-
-  .celebration-scores {
-    font-size: 16px;
-  }
-
-  .new-score {
-    font-size: 20px;
-  }
-
-  .top5-medal {
-    font-size: 60px;
-  }
-
-  .top5-title {
-    font-size: 24px;
-  }
 }
 
 @media print {
@@ -1540,100 +1339,3 @@ img, image, svg, rect {
     display: none !important;
   }
 }
-
-/* ========================================
-   🎨 Additional Custom Animations
-   ======================================== */
-
-@keyframes glow {
-    0%, 100% {
-        text-shadow: 
-            0 0 30px rgba(255,202,40,0.8),
-            0 0 60px rgba(255,202,40,0.5),
-            0 0 90px rgba(255,202,40,0.3);
-    }
-    50% {
-        text-shadow: 
-            0 0 40px rgba(255,202,40,1),
-            0 0 80px rgba(255,202,40,0.7),
-            0 0 120px rgba(255,202,40,0.5);
-    }
-}
-
-/* تطبيق على نص Group X في شاشة التحميل */
-#group-text-display {
-    animation: pulse 2s ease-in-out infinite, glow 3s ease-in-out infinite;
-    transition: all 0.3s ease;
-}
-
-/* ========================================
-   🔧 Browser Compatibility Fixes
-   ======================================== */
-
-/* Safari iOS fixes */
-@supports (-webkit-touch-callout: none) {
-  #scroll-container {
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  #eye-toggle-standalone {
-    -webkit-user-select: none;
-  }
-}
-
-/* Firefox fixes */
-@-moz-document url-prefix() {
-  .scrollable-content {
-    scrollbar-width: thin;
-    scrollbar-color: #444 transparent;
-  }
-}
-
-/* Edge fixes */
-@supports (-ms-ime-align: auto) {
-  #scroll-container {
-    -ms-overflow-style: -ms-autohiding-scrollbar;
-  }
-}
-
-/* ========================================
-   🎯 Performance Optimizations
-   ======================================== */
-
-/* GPU acceleration للعناصر المتحركة */
-#eye-toggle-standalone,
-.circle-orbit,
-.shake-hint,
-.celebration-icon,
-.confetti-piece {
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-/* Smooth scrolling optimization */
-#scroll-container {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-/* Disable animations on low-end devices */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  
-  .circle-orbit,
-  .shake-hint {
-    animation: none !important;
-  }
-}
-
-/* ========================================
-   ✨ END OF STYLE.CSS
-   ======================================== */
