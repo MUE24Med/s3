@@ -1,10 +1,10 @@
-/* ========================================
-   javascript/core/utils.js
-   ✅ نسخة مستقرة
-   ======================================== */
+// ============================================
+// utils.js - دوال مساعدة عامة
+// ============================================
 
-import { translationMap, SUBJECT_FOLDERS } from './config.js';
-
+// ------------------------------
+// تحويل النصوص والترجمة
+// ------------------------------
 export function normalizeArabic(text) {
     if (!text) return '';
     text = String(text);
@@ -25,65 +25,155 @@ export function autoTranslate(filename) {
         const regex = new RegExp(en, 'gi');
         arabic = arabic.replace(regex, ar);
     }
-    return arabic
+    arabic = arabic
         .replace(/\.pdf$/i, '')
         .replace(/\.webp$/i, '')
         .replace(/-/g, ' ')
         .replace(/_/g, ' ')
         .trim();
+    return arabic;
 }
 
+// استيراد translationMap من config
+import { translationMap } from './config.js';
+
+// ------------------------------
+// Debounce
+// ------------------------------
 export function debounce(func, delay) {
     let timeoutId;
-    return function() {
+    return function(...args) {
         clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func.apply(this, arguments), delay);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
     };
 }
 
+// ------------------------------
+// التعامل مع SVG (الإحداثيات)
+// ------------------------------
+export function getCumulativeTranslate(element) {
+    let x = 0, y = 0, current = element;
+    while (current && current.tagName !== 'svg') {
+        const trans = current.getAttribute('transform');
+        if (trans) {
+            const m = trans.match(/translate\s*\(([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+            if (m) { 
+                x += parseFloat(m[1]); 
+                y += parseFloat(m[2]); 
+            }
+        }
+        current = current.parentNode;
+    }
+    return { x, y };
+}
+
+export function getGroupImage(element) {
+    let current = element;
+    while (current && current.tagName !== 'svg') {
+        if (current.tagName === 'g') {
+            const imgs = [...current.children].filter(c => c.tagName === 'image');
+            if (imgs.length) return {
+                src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'),
+                width: parseFloat(imgs[0].getAttribute('width')),
+                height: parseFloat(imgs[0].getAttribute('height')),
+                x: parseFloat(imgs[0].getAttribute('x')) || 0,
+                y: parseFloat(imgs[0].getAttribute('y')) || 0,
+                group: current
+            };
+        }
+        current = current.parentNode;
+    }
+    return null;
+}
+
+// ------------------------------
+// أسماء المستخدمين والأجهزة
+// ------------------------------
+export function getDisplayName() {
+    const realName = localStorage.getItem('user_real_name');
+    if (realName && realName.trim()) {
+        return realName.trim();
+    }
+    const visitorId = localStorage.getItem('visitor_id');
+    return visitorId || 'زائر';
+}
+
+export function getPlayerName() {
+    if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
+        return UserTracker.getDisplayName();
+    }
+    const realName = localStorage.getItem('user_real_name');
+    if (realName && realName.trim()) {
+        return realName.trim();
+    }
+    return localStorage.getItem('visitor_id') || 'زائر';
+}
+
+export function getDeviceId() {
+    if (typeof UserTracker !== 'undefined' && UserTracker.deviceFingerprint) {
+        return UserTracker.deviceFingerprint;
+    }
+    const stored = localStorage.getItem('device_fingerprint');
+    if (stored) return stored;
+    return localStorage.getItem('visitor_id') || 'unknown';
+}
+
+// ------------------------------
+// التحقق من مجلد المادة
+// ------------------------------
+import { SUBJECT_FOLDERS } from './config.js';
 export function isSubjectFolder(folderName) {
     const lowerName = folderName.toLowerCase();
     return SUBJECT_FOLDERS.some(subject => lowerName.includes(subject));
 }
 
-export function saveSelectedGroup(group) {
-    localStorage.setItem('selectedGroup', group);
-    window.dispatchEvent(new CustomEvent('groupChanged', { detail: group }));
+// ------------------------------
+// لف النص داخل SVG
+// ------------------------------
+export function wrapText(el, maxW) {
+    const txt = el.getAttribute('data-original-text');
+    if (!txt) return;
+    const words = txt.split(/\s+/);
+    el.textContent = '';
+    let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+    ts.setAttribute('x', el.getAttribute('x'));
+    ts.setAttribute('dy', '0');
+    el.appendChild(ts);
+    let line = '';
+    const lh = parseFloat(el.style.fontSize) * 1.1;
+    words.forEach(word => {
+        let test = line + (line ? ' ' : '') + word;
+        ts.textContent = test;
+        if (ts.getComputedTextLength() > maxW - 5 && line) {
+            ts.textContent = line;
+            ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+            ts.setAttribute('x', el.getAttribute('x'));
+            ts.setAttribute('dy', lh + 'px');
+            ts.textContent = word;
+            el.appendChild(ts);
+            line = word;
+        } else {
+            line = test;
+        }
+    });
 }
 
-export function loadSelectedGroup() {
-    return localStorage.getItem('selectedGroup') || null;
-}
+// ------------------------------
+// إدارة أخطاء الملفات (shownErrors)
+// ------------------------------
+const _shownErrors = new Set();
+export const addShownError = (url) => _shownErrors.add(url);
+export const hasShownError = (url) => _shownErrors.has(url);
 
-export function getDisplayName() {
-    const realName = localStorage.getItem('user_real_name');
-    if (realName && realName.trim()) return realName.trim();
-    return localStorage.getItem('visitor_id') || 'زائر';
-}
-
-export function updateWelcomeMessages() {
-    const displayName = getDisplayName();
-    const groupScreenH1 = document.querySelector('#group-selection-screen h1');
-    if (groupScreenH1) {
-        groupScreenH1.innerHTML = `مرحباً بك يا <span style="color:#ffca28">${displayName}</span> إختر جروبك`;
+// ------------------------------
+// إعادة تعيين مستوى التكبير (Zoom)
+// ------------------------------
+export function resetBrowserZoom() {
+    const viewport = document.querySelector('meta[name=viewport]');
+    if (viewport) {
+        viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+        setTimeout(() => {
+            viewport.content = 'width=device-width, initial-scale=1.0';
+        }, 200);
     }
-    const loadingH1 = document.querySelector('#loading-content h1');
-    const currentGroup = localStorage.getItem('selectedGroup');
-    if (loadingH1 && currentGroup) {
-        loadingH1.innerHTML = `أهلاً بك يا <span style="color:#ffca28">${displayName}</span><br>في ${currentGroup}`;
-    }
 }
-
-export async function fetchGlobalTree() {
-    try {
-        const TREE_API_URL = `https://api.github.com/repos/MUE24Med/s3/git/trees/main?recursive=1`;
-        const response = await fetch(TREE_API_URL);
-        const data = await response.json();
-        return data.tree || [];
-    } catch (err) {
-        console.error("❌ خطأ في الاتصال بـ GitHub:", err);
-        return [];
-    }
-}
-
-console.log('✅ utils.js محمّل');
