@@ -1,15 +1,14 @@
-/* ========================================
-   javascript/ui/pdf-viewer.js
-   نظام معاينة وفتح PDF
-   ======================================== */
+// ============================================
+// pdf-viewer.js - معاينة PDF وفتحه بطرق متعددة
+// ============================================
 
 import { RAW_CONTENT_BASE, NAV_STATE } from '../core/config.js';
 import { pushNavigationState, popNavigationState } from '../core/navigation.js';
 
-let currentPreviewItem = null;
-let isToolbarExpanded = false;
+export let currentPreviewItem = null;
+export let isToolbarExpanded = false;
 
-// معاينة PDF
+// ---------- معاينة PDF ----------
 export async function showPDFPreview(item) {
     if (!item || !item.path) return;
 
@@ -55,7 +54,6 @@ export async function showPDFPreview(item) {
 
         const loadingTask = pdfjsLib.getDocument(url);
         const pdf = await loadingTask.promise;
-
         console.log('📄 PDF محمل:', pdf.numPages, 'صفحة');
 
         const page = await pdf.getPage(1);
@@ -65,18 +63,17 @@ export async function showPDFPreview(item) {
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
-        const renderContext = {
-            canvasContext: context,
-            viewport: viewport
-        };
+        await page.render({ canvasContext: context, viewport }).promise;
 
-        await page.render(renderContext).promise;
-
-        // تحويل لصورة PNG
+        // تحويل الـ canvas لصورة PNG
         const imgData = canvas.toDataURL('image/png');
         const previewImg = document.createElement('img');
         previewImg.src = imgData;
-        previewImg.style.cssText = 'width:100%;height:auto;display:block;object-fit:contain;max-height:80vh';
+        previewImg.style.width = '100%';
+        previewImg.style.height = 'auto';
+        previewImg.style.display = 'block';
+        previewImg.style.objectFit = 'contain';
+        previewImg.style.maxHeight = '80vh';
         previewImg.alt = `معاينة الصفحة الأولى من ${fileName}`;
 
         canvas.style.display = 'none';
@@ -91,7 +88,6 @@ export async function showPDFPreview(item) {
     }
 }
 
-// إغلاق المعاينة
 export function closePDFPreview() {
     const popup = document.getElementById('pdf-preview-popup');
     const canvas = document.getElementById('preview-canvas');
@@ -103,19 +99,18 @@ export function closePDFPreview() {
     if (canvas) {
         const context = canvas.getContext('2d');
         context.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // حذف الصورة المُنشأة
-        const img = canvas.parentNode.querySelector('img');
-        if (img) img.remove();
+        // إزالة صورة الـ img المضافة إن وجدت
+        const parent = canvas.parentNode;
+        const previewImg = parent.querySelector('img[alt^="معاينة"]');
+        if (previewImg) previewImg.remove();
     }
 
     currentPreviewItem = null;
     popNavigationState();
-
     console.log('🔒 تم إغلاق المعاينة');
 }
 
-// عرض خيارات الفتح
+// ---------- عرض خيارات الفتح ----------
 export function showOpenOptions(item) {
     const popup = document.getElementById('open-method-popup');
     const canvas = document.getElementById('method-preview-canvas');
@@ -139,7 +134,6 @@ export function showOpenOptions(item) {
 
     console.log('📋 عرض خيارات الفتح:', url);
 
-    // تحميل المعاينة
     (async () => {
         try {
             if (typeof pdfjsLib === 'undefined') {
@@ -155,14 +149,10 @@ export function showOpenOptions(item) {
             canvas.height = viewport.height;
             canvas.width = viewport.width;
 
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
+            await page.render({ canvasContext: context, viewport }).promise;
 
             loading.classList.add('hidden');
             canvas.style.display = 'block';
-
         } catch (error) {
             console.error('❌ خطأ في المعاينة:', error);
             loading.textContent = '❌ فشل التحميل';
@@ -170,7 +160,6 @@ export function showOpenOptions(item) {
     })();
 }
 
-// إغلاق خيارات الفتح
 export function closeOpenOptions() {
     const popup = document.getElementById('open-method-popup');
     if (popup) {
@@ -179,7 +168,7 @@ export function closeOpenOptions() {
     currentPreviewItem = null;
 }
 
-// فتح بـ Mozilla PDF.js
+// ---------- طرق الفتح ----------
 export function openWithMozilla(item) {
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     const scrollContainer = document.getElementById('scroll-container');
@@ -204,7 +193,18 @@ export function openWithMozilla(item) {
     closeOpenOptions();
 }
 
-// فتح في المتصفح مباشرة
+export function openWithDrive(item) {
+    const url = `${RAW_CONTENT_BASE}${item.path}`;
+    const driveUrl = `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(url)}`;
+    window.open(driveUrl, '_blank');
+
+    if (typeof trackSvgOpen === 'function') {
+        trackSvgOpen(item.path);
+    }
+
+    closeOpenOptions();
+}
+
 export function openWithBrowser(item) {
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     window.open(url, '_blank');
@@ -216,21 +216,6 @@ export function openWithBrowser(item) {
     closeOpenOptions();
 }
 
-// فتح بـ Google Drive Viewer
-export function openWithDrive(item) {
-    const url = `${RAW_CONTENT_BASE}${item.path}`;
-    const driveUrl = `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(url)}`;
-
-    window.open(driveUrl, '_blank');
-
-    if (typeof trackSvgOpen === 'function') {
-        trackSvgOpen(item.path);
-    }
-
-    closeOpenOptions();
-}
-
-// توسيع/تصغير شريط أدوات Mozilla
 export function toggleMozillaToolbar() {
     const pdfOverlay = document.getElementById('pdf-overlay');
     const expandBtn = document.getElementById('expand-toolbar-btn');
@@ -250,30 +235,21 @@ export function toggleMozillaToolbar() {
     }
 }
 
-// فتح ذكي (يعرض الخيارات)
 export function smartOpen(item) {
     if (!item || !item.path) return;
     showOpenOptions(item);
 }
 
-// تصدير للـ window
-window.showPDFPreview = showPDFPreview;
-window.closePDFPreview = closePDFPreview;
-window.showOpenOptions = showOpenOptions;
-window.closeOpenOptions = closeOpenOptions;
-window.openWithMozilla = openWithMozilla;
-window.openWithBrowser = openWithBrowser;
-window.openWithDrive = openWithDrive;
-window.toggleMozillaToolbar = toggleMozillaToolbar;
-window.smartOpen = smartOpen;
-
-// معالجات الأحداث
-document.addEventListener('DOMContentLoaded', () => {
+// ---------- تهيئة مستمعات الأحداث ----------
+export function initPDFViewer() {
     const closeBtn = document.getElementById('preview-close-btn');
     const openBtn = document.getElementById('preview-open-btn');
     const popup = document.getElementById('pdf-preview-popup');
     const expandToolbarBtn = document.getElementById('expand-toolbar-btn');
     const methodCloseBtn = document.getElementById('method-close-btn');
+    const mozillaBtn = document.getElementById('open-mozilla-btn');
+    const browserBtn = document.getElementById('open-browser-btn');
+    const driveBtn = document.getElementById('open-drive-btn');
 
     if (closeBtn) {
         closeBtn.addEventListener('click', closePDFPreview);
@@ -304,11 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
         methodCloseBtn.addEventListener('click', closeOpenOptions);
     }
 
-    // ربط أزرار خيارات الفتح
-    const mozillaBtn = document.getElementById('open-mozilla-btn');
-    const browserBtn = document.getElementById('open-browser-btn');
-    const driveBtn = document.getElementById('open-drive-btn');
-
     if (mozillaBtn) {
         mozillaBtn.addEventListener('click', () => {
             if (currentPreviewItem) {
@@ -333,62 +304,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // إغلاق PDF Viewer الرئيسي
-    const closePdfBtn = document.getElementById("closePdfBtn");
-    if (closePdfBtn) {
-        closePdfBtn.addEventListener('click', () => {
-            const overlay = document.getElementById("pdf-overlay");
-            const pdfViewer = document.getElementById("pdfFrame");
-            pdfViewer.src = "";
-            overlay.classList.add("hidden");
-
-            if (overlay.classList.contains('fullscreen-mode')) {
-                overlay.classList.remove('fullscreen-mode');
-                isToolbarExpanded = false;
-            }
-
-            popNavigationState();
-        });
-    }
-
-    // زر التحميل
-    const downloadBtn = document.getElementById("downloadBtn");
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', () => {
-            const iframe = document.getElementById("pdfFrame");
-            let src = iframe.src;
-            if (!src) return;
-            const match = src.match(/file=(.+)$/);
-            if (match && match[1]) {
-                const fileUrl = decodeURIComponent(match[1]);
-                const a = document.createElement("a");
-                a.href = fileUrl;
-                a.download = fileUrl.split("/").pop();
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            }
-        });
-    }
-
-    // زر المشاركة
-    const shareBtn = document.getElementById("shareBtn");
-    if (shareBtn) {
-        shareBtn.addEventListener('click', () => {
-            const iframe = document.getElementById("pdfFrame");
-            let src = iframe.src;
-            if (!src) return;
-            const match = src.match(/file=(.+)$/);
-            if (match && match[1]) {
-                const fileUrl = decodeURIComponent(match[1]);
-                navigator.clipboard.writeText(fileUrl)
-                    .then(() => alert("✅ تم نسخ الرابط"))
-                    .catch(() => alert("❌ فشل النسخ"));
-            }
-        });
-    }
-
-    console.log('✅ معالجات PDF Viewer جاهزة');
-});
-
-console.log('✅ pdf-viewer.js محمّل');
+    console.log('✅ معالجات المعاينة والفتح جاهزة');
+}
