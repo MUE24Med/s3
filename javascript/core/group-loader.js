@@ -1,6 +1,6 @@
 /* ========================================
    javascript/core/group-loader.js
-   ✅ النسخة النهائية – مع تحميل الصور وإظهار SVG
+   ✅ النسخة النهائية – تحميل الصور، تحديث viewBox، إظهار SVG
    ======================================== */
 
 import {
@@ -27,21 +27,28 @@ async function loadImagesInSvg(mainSvg) {
             const src = img.getAttribute('data-src');
             if (!src) return resolve();
 
+            // تعيين المصدر (href و xlink:href)
             img.setAttribute('href', src);
             img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', src);
 
+            // انتظار التحميل
             img.onload = () => {
                 console.log(`✅ صورة: ${src.split('/').pop()}`);
                 resolve();
             };
             img.onerror = () => {
                 console.warn(`⚠️ فشل تحميل: ${src}`);
-                resolve();
+                resolve(); // لا نوقف العمل
             };
-            if (img.complete) resolve();
+
+            // إذا كانت الصورة قد اكتملت بالفعل
+            if (img.complete) {
+                resolve();
+            }
         });
     });
 
+    // انتظار جميع الصور مع مهلة أمان 5 ثوانٍ
     await Promise.race([
         Promise.all(promises),
         new Promise(resolve => setTimeout(resolve, 5000))
@@ -90,13 +97,16 @@ export function hideLoadingScreen() {
     console.log('✅ تم إخفاء شاشة التحميل');
 }
 
+// ------------------------------------------------------------
+// حقن SVG الخاص بالمجموعة
+// ------------------------------------------------------------
 export async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
     if (!groupContainer) return;
     groupContainer.innerHTML = '';
     try {
         const response = await fetch(`groups/group-${groupLetter}.svg`);
-        if (!response.ok) throw new Error('SVG not found');
+        if (!response.ok) throw new Error(`SVG غير موجود (${response.status})`);
         const svgText = await response.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(svgText, "image/svg+xml");
@@ -106,6 +116,8 @@ export async function loadGroupSVG(groupLetter) {
                 groupContainer.appendChild(svgContent.firstChild);
             }
             console.log(`✅ تم حقن SVG المجموعة ${groupLetter}`);
+        } else {
+            console.error('❌ لم يتم العثور على عنصر <svg> في الملف');
         }
     } catch (err) {
         console.error(`❌ فشل تحميل SVG:`, err);
@@ -122,6 +134,7 @@ export async function initializeGroup(groupLetter) {
         setCurrentGroup(groupLetter);
         setCurrentFolder("");
 
+        // إظهار الأدوات وإخفاء شاشة المجموعات
         const toggleContainer = document.getElementById('js-toggle-container');
         const scrollContainer = document.getElementById('scroll-container');
         const groupSelectionScreen = document.getElementById('group-selection-screen');
@@ -140,6 +153,7 @@ export async function initializeGroup(groupLetter) {
         showLoadingScreen(groupLetter);
         console.log('⏳ شاشة التحميل ظهرت');
 
+        // تحميل بيانات الشجرة ومعالج SVG بالتوازي
         const [treeData, svgModule] = await Promise.all([
             fetchGlobalTree(),
             import('../features/svg-processor.js')
@@ -151,9 +165,11 @@ export async function initializeGroup(groupLetter) {
             window.setGlobalFileTree(treeData);
         }
 
+        // حقن SVG الخاص بالمجموعة
         await loadGroupSVG(groupLetter);
         console.log('✅ SVG محقون');
 
+        // تحديث المقاسات والمسح الضوئي للمستطيلات
         updateDynamicSizes();
         scan();
         console.log('🔍 تم مسح المستطيلات');
@@ -164,11 +180,23 @@ export async function initializeGroup(groupLetter) {
         const mainSvg = document.getElementById('main-svg');
         if (mainSvg) {
             await loadImagesInSvg(mainSvg);
+            
+            // تحديث viewBox بعد تحميل الصور
             updateDynamicSizes();
+            
+            // تأخير صغير لضمان تطبيق الأبعاد
+            setTimeout(() => {
+                updateDynamicSizes();
+                mainSvg.classList.add('loaded');
+                console.log('✅ SVG أصبح مرئياً (بعد التأخير)');
+            }, 150);
+            
+            // إضافة الكلاس فوراً أيضاً
             mainSvg.classList.add('loaded');
-            console.log('✅ SVG أصبح مرئياً');
+            console.log('✅ SVG أصبح مرئياً (فوري)');
         }
 
+        // استدعاء دوال إضافية إذا كانت موجودة
         if (typeof window.loadImages === 'function') window.loadImages();
         if (typeof window.updateWoodInterface === 'function') window.updateWoodInterface();
 
@@ -184,6 +212,9 @@ export async function initializeGroup(groupLetter) {
     }
 }
 
+// ------------------------------------------------------------
+// تصدير للـ window
+// ------------------------------------------------------------
 window.initializeGroup = initializeGroup;
 window.hideLoadingScreen = hideLoadingScreen;
 window.showLoadingScreen = showLoadingScreen;
