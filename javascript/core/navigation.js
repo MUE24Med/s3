@@ -1,6 +1,6 @@
 /* ========================================
    javascript/core/navigation.js
-   نظام التنقل والـ Back Button
+   ✅ أضفنا clearNavigationHistory للـ window
    ======================================== */
 
 import { NAV_STATE } from './config.js';
@@ -22,8 +22,8 @@ export function popNavigationState() {
 }
 
 export function getCurrentNavigationState() {
-    return navigationHistory.length > 0 
-        ? navigationHistory[navigationHistory.length - 1] 
+    return navigationHistory.length > 0
+        ? navigationHistory[navigationHistory.length - 1]
         : null;
 }
 
@@ -33,140 +33,81 @@ export function clearNavigationHistory() {
 
 export function handleBackNavigation(e) {
     const currentState = getCurrentNavigationState();
-    console.log('🔙 زر الرجوع - الحالة الحالية:', currentState);
-
-    if (!currentState) {
-        console.log('📱 لا توجد حالة - السماح بالخروج');
-        return;
-    }
-
+    if (!currentState) return;
     e.preventDefault();
 
-    // معالجة PDF
     if (currentState.state === NAV_STATE.PDF_VIEW) {
-        console.log('📄 إغلاق PDF');
         popNavigationState();
-
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
-
         if (currentState.data.isPreview) {
-            if (typeof window.closePDFPreview === 'function') {
-                window.closePDFPreview();
-            }
+            if (typeof window.closePDFPreview === 'function') window.closePDFPreview();
         } else {
             pdfViewer.src = "";
             overlay.classList.add("hidden");
-
-            if (overlay.classList.contains('fullscreen-mode')) {
-                overlay.classList.remove('fullscreen-mode');
-            }
+            if (overlay.classList.contains('fullscreen-mode')) overlay.classList.remove('fullscreen-mode');
         }
-
         if (currentState.data.scrollPosition !== undefined) {
             setTimeout(() => {
-                const scrollContainer = document.getElementById('scroll-container');
-                if (scrollContainer) {
-                    scrollContainer.scrollLeft = currentState.data.scrollPosition;
-                }
+                const sc = document.getElementById('scroll-container');
+                if (sc) sc.scrollLeft = currentState.data.scrollPosition;
             }, 100);
         }
         return;
     }
 
-    // معالجة الخريطة
     if (currentState.state === NAV_STATE.MAP_VIEW) {
-        console.log('🗺️ العودة من الخريطة إلى الملفات');
         popNavigationState();
-        
-        if (typeof window.setCurrentFolder === 'function') {
-            window.setCurrentFolder("");
-        }
-        if (typeof window.goToWood === 'function') {
-            window.goToWood();
-        }
-        if (typeof window.updateWoodInterface === 'function') {
-            window.updateWoodInterface();
-        }
+        if (typeof window.setCurrentFolder === 'function') window.setCurrentFolder("");
+        if (typeof window.goToWood === 'function') window.goToWood();
+        if (typeof window.updateWoodInterface === 'function') window.updateWoodInterface();
         return;
     }
 
-    // معالجة عرض الخشب
     if (currentState.state === NAV_STATE.WOOD_VIEW) {
         const currentFolder = window.currentFolder || "";
-        
-        if (currentFolder && currentFolder !== "") {
-            console.log('📂 العودة من مجلد إلى المجلد الأب');
+        if (currentFolder !== "") {
             const parts = currentFolder.split('/');
             parts.pop();
-            const newFolder = parts.join('/');
-            
-            if (typeof window.setCurrentFolder === 'function') {
-                window.setCurrentFolder(newFolder);
-            }
-            if (typeof window.updateWoodInterface === 'function') {
-                window.updateWoodInterface();
-            }
+            if (typeof window.setCurrentFolder === 'function') window.setCurrentFolder(parts.join('/'));
+            if (typeof window.updateWoodInterface === 'function') window.updateWoodInterface();
             return;
         }
-
-        console.log('🌲 العودة لاختيار المجموعة');
         popNavigationState();
-        
-        const groupSelectionScreen = document.getElementById('group-selection-screen');
-        const toggleContainer = document.getElementById('js-toggle-container');
-        const scrollContainer = document.getElementById('scroll-container');
-        
-        if (groupSelectionScreen) {
-            groupSelectionScreen.classList.remove('hidden');
-            groupSelectionScreen.style.display = 'flex';
-        }
-        if (toggleContainer) {
-            toggleContainer.classList.add('fully-hidden');
-        }
-        if (scrollContainer) {
-            scrollContainer.style.display = 'none';
-        }
-        
+        const gss = document.getElementById('group-selection-screen');
+        const tc = document.getElementById('js-toggle-container');
+        const sc = document.getElementById('scroll-container');
+        if (gss) { gss.classList.remove('hidden'); gss.style.display = 'flex'; }
+        if (tc) tc.classList.add('fully-hidden');
+        if (sc) sc.style.display = 'none';
         clearNavigationHistory();
         return;
     }
 
-    // معالجة اختيار المجموعة
     if (currentState.state === NAV_STATE.GROUP_SELECTION) {
-        console.log('🏠 محاولة الخروج من اختيار المجموعة');
         popNavigationState();
-        return;
     }
 }
 
 export function setupBackButton() {
     console.log('🔧 إعداد نظام التنقل الخلفي');
-
     if (!window.history.state || window.history.state.page !== 'main') {
         window.history.replaceState({ page: 'main' }, '', '');
     }
-
     window.addEventListener('popstate', (e) => {
         handleBackNavigation(e);
-
-        const currentNav = getCurrentNavigationState();
-        if (currentNav) {
+        if (getCurrentNavigationState()) {
             window.history.pushState({ page: 'main' }, '', '');
         }
     });
-
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const pdfOverlay = document.getElementById('pdf-overlay');
             if (pdfOverlay && pdfOverlay.classList.contains('fullscreen-mode')) {
-                if (typeof window.toggleMozillaToolbar === 'function') {
-                    window.toggleMozillaToolbar();
-                }
+                if (typeof window.toggleMozillaToolbar === 'function') window.toggleMozillaToolbar();
             }
         }
     });
-
     console.log('✅ نظام التنقل الخلفي جاهز');
 }
 
@@ -174,5 +115,6 @@ export function setupBackButton() {
 window.pushNavigationState = pushNavigationState;
 window.popNavigationState = popNavigationState;
 window.getCurrentNavigationState = getCurrentNavigationState;
+window.clearNavigationHistory = clearNavigationHistory;
 
 console.log('✅ navigation.js محمّل');
