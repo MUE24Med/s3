@@ -1,119 +1,215 @@
 /* ========================================
-   javascript/core/navigation.js
-   ✅ نسخة مستقرة
+   javascript/core/group-loader.js
+   ✅ النسخة النهائية – مع تحميل الصور وإظهار SVG
    ======================================== */
 
+import {
+    setCurrentGroup,
+    setCurrentFolder
+} from './config.js';
+import { saveSelectedGroup, fetchGlobalTree } from './utils.js';
+import { pushNavigationState } from './navigation.js';
 import { NAV_STATE } from './config.js';
 
-let navigationHistory = [];
-
-export function pushNavigationState(state, data = {}) {
-    navigationHistory.push({ state, data, timestamp: Date.now() });
-    console.log(`📍 تم إضافة حالة: ${state}`, data);
-}
-
-export function popNavigationState() {
-    if (navigationHistory.length > 0) {
-        const popped = navigationHistory.pop();
-        console.log(`🔙 تم إزالة حالة: ${popped.state}`);
-        return popped;
-    }
-    return null;
-}
-
-export function getCurrentNavigationState() {
-    return navigationHistory.length > 0
-        ? navigationHistory[navigationHistory.length - 1]
-        : null;
-}
-
-export function clearNavigationHistory() {
-    navigationHistory = [];
-}
-
-export function handleBackNavigation(e) {
-    const currentState = getCurrentNavigationState();
-    if (!currentState) return;
-    e.preventDefault();
-
-    if (currentState.state === NAV_STATE.PDF_VIEW) {
-        popNavigationState();
-        const overlay = document.getElementById("pdf-overlay");
-        const pdfViewer = document.getElementById("pdfFrame");
-        if (currentState.data.isPreview) {
-            if (typeof window.closePDFPreview === 'function') window.closePDFPreview();
-        } else {
-            pdfViewer.src = "";
-            overlay.classList.add("hidden");
-            if (overlay.classList.contains('fullscreen-mode')) overlay.classList.remove('fullscreen-mode');
-        }
-        if (currentState.data.scrollPosition !== undefined) {
-            setTimeout(() => {
-                const sc = document.getElementById('scroll-container');
-                if (sc) sc.scrollLeft = currentState.data.scrollPosition;
-            }, 100);
-        }
+// ------------------------------------------------------------
+// دالة مساعدة: تحميل جميع الصور داخل SVG وتعيين href من data-src
+// ------------------------------------------------------------
+async function loadImagesInSvg(mainSvg) {
+    const images = mainSvg.querySelectorAll('image[data-src]');
+    if (images.length === 0) {
+        console.log('🖼️ لا توجد صور لتحميلها');
         return;
     }
 
-    if (currentState.state === NAV_STATE.MAP_VIEW) {
-        popNavigationState();
-        if (typeof window.setCurrentFolder === 'function') window.setCurrentFolder("");
-        if (typeof window.goToWood === 'function') window.goToWood();
-        if (typeof window.updateWoodInterface === 'function') window.updateWoodInterface();
-        return;
-    }
+    console.log(`🖼️ تحميل ${images.length} صورة...`);
+    const promises = Array.from(images).map(img => {
+        return new Promise((resolve) => {
+            const src = img.getAttribute('data-src');
+            if (!src) return resolve();
 
-    if (currentState.state === NAV_STATE.WOOD_VIEW) {
-        const currentFolder = window.currentFolder || "";
-        if (currentFolder !== "") {
-            const parts = currentFolder.split('/');
-            parts.pop();
-            if (typeof window.setCurrentFolder === 'function') window.setCurrentFolder(parts.join('/'));
-            if (typeof window.updateWoodInterface === 'function') window.updateWoodInterface();
-            return;
-        }
-        popNavigationState();
-        const gss = document.getElementById('group-selection-screen');
-        const tc = document.getElementById('js-toggle-container');
-        const sc = document.getElementById('scroll-container');
-        if (gss) { gss.classList.remove('hidden'); gss.style.display = 'flex'; }
-        if (tc) tc.classList.add('fully-hidden');
-        if (sc) sc.style.display = 'none';
-        clearNavigationHistory();
-        return;
-    }
+            // تعيين المصدر (href أو xlink:href)
+            img.setAttribute('href', src);
+            img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', src);
 
-    if (currentState.state === NAV_STATE.GROUP_SELECTION) {
-        popNavigationState();
-    }
-}
+            // انتظار تحميل الصورة
+            img.onload = () => {
+                console.log(`✅ صورة: ${src.split('/').pop()}`);
+                resolve();
+            };
+            img.onerror = () => {
+                console.warn(`⚠️ فشل تحميل: ${src}`);
+                resolve(); // لا نوقف العمل بسبب فشل صورة
+            };
 
-export function setupBackButton() {
-    console.log('🔧 إعداد نظام التنقل الخلفي');
-    if (!window.history.state || window.history.state.page !== 'main') {
-        window.history.replaceState({ page: 'main' }, '', '');
-    }
-    window.addEventListener('popstate', (e) => {
-        handleBackNavigation(e);
-        if (getCurrentNavigationState()) {
-            window.history.pushState({ page: 'main' }, '', '');
-        }
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const pdfOverlay = document.getElementById('pdf-overlay');
-            if (pdfOverlay && pdfOverlay.classList.contains('fullscreen-mode')) {
-                if (typeof window.toggleMozillaToolbar === 'function') window.toggleMozillaToolbar();
+            // إذا كانت الصورة في الكاش، قد لا يتم إطلاق onload
+            if (img.complete) {
+                resolve();
             }
-        }
+        });
     });
-    console.log('✅ نظام التنقل الخلفي جاهز');
+
+    // انتظار كل الصور مع مهلة أمان 5 ثوانٍ
+    await Promise.race([
+        Promise.all(promises),
+        new Promise(resolve => setTimeout(resolve, 5000))
+    ]);
+    console.log('✅ تم تحميل جميع الصور (أو انتهاء المهلة)');
 }
 
-window.pushNavigationState = pushNavigationState;
-window.popNavigationState = popNavigationState;
-window.getCurrentNavigationState = getCurrentNavigationState;
-window.clearNavigationHistory = clearNavigationHistory;
+// ------------------------------------------------------------
+// دوال شاشة التحميل
+// ------------------------------------------------------------
+export function showLoadingScreen(groupLetter) {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (!loadingOverlay) return;
+    loadingOverlay.classList.add('active');
 
-console.log('✅ navigation.js محمّل');
+    const splashImage = document.getElementById('splash-image');
+    if (splashImage) splashImage.style.display = 'none';
+
+    let textElement = document.getElementById('group-text-display');
+    if (!textElement) {
+        textElement = document.createElement('div');
+        textElement.id = 'group-text-display';
+        textElement.style.cssText = `
+            font-size: 80px;
+            color: #ffca28;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        `;
+        if (splashImage) splashImage.parentNode.insertBefore(textElement, splashImage);
+    }
+    textElement.textContent = `Group ${groupLetter}`;
+    textElement.style.display = 'block';
+}
+
+export function hideLoadingScreen() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) loadingOverlay.classList.remove('active');
+
+    const splashImage = document.getElementById('splash-image');
+    if (splashImage) splashImage.style.display = '';
+
+    const textElement = document.getElementById('group-text-display');
+    if (textElement) textElement.style.display = 'none';
+
+    console.log('✅ تم إخفاء شاشة التحميل');
+}
+
+// ------------------------------------------------------------
+// حقن SVG الخاص بالمجموعة
+// ------------------------------------------------------------
+export async function loadGroupSVG(groupLetter) {
+    const groupContainer = document.getElementById('group-specific-content');
+    if (!groupContainer) return;
+    groupContainer.innerHTML = '';
+    try {
+        const response = await fetch(`groups/group-${groupLetter}.svg`);
+        if (!response.ok) throw new Error('SVG not found');
+        const svgText = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, "image/svg+xml");
+        const svgContent = doc.querySelector('svg');
+        if (svgContent) {
+            while (svgContent.firstChild) {
+                groupContainer.appendChild(svgContent.firstChild);
+            }
+            console.log(`✅ تم حقن SVG المجموعة ${groupLetter}`);
+        }
+    } catch (err) {
+        console.error(`❌ فشل تحميل SVG:`, err);
+    }
+}
+
+// ------------------------------------------------------------
+// الدالة الرئيسية – تهيئة المجموعة
+// ------------------------------------------------------------
+export async function initializeGroup(groupLetter) {
+    console.log(`🚀 بدء العملية للمجموعة: ${groupLetter}`);
+    try {
+        saveSelectedGroup(groupLetter);
+        setCurrentGroup(groupLetter);
+        setCurrentFolder("");
+
+        // إظهار الأدوات وإخفاء شاشة المجموعات
+        const toggleContainer = document.getElementById('js-toggle-container');
+        const scrollContainer = document.getElementById('scroll-container');
+        const groupSelectionScreen = document.getElementById('group-selection-screen');
+
+        if (toggleContainer) {
+            toggleContainer.classList.remove('fully-hidden');
+            toggleContainer.style.display = 'flex';
+        }
+        if (scrollContainer) scrollContainer.style.display = 'block';
+        if (groupSelectionScreen) {
+            groupSelectionScreen.classList.add('hidden');
+            groupSelectionScreen.style.display = 'none';
+        }
+
+        pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
+        showLoadingScreen(groupLetter);
+        console.log('⏳ شاشة التحميل ظهرت');
+
+        // تحميل بيانات الشجرة ومعالج SVG بالتوازي
+        const [treeData, svgModule] = await Promise.all([
+            fetchGlobalTree(),
+            import('../features/svg-processor.js')
+        ]);
+
+        const { scan, updateDynamicSizes } = svgModule;
+
+        if (typeof window.setGlobalFileTree === 'function') {
+            window.setGlobalFileTree(treeData);
+        }
+
+        // حقن SVG الخاص بالمجموعة
+        await loadGroupSVG(groupLetter);
+        console.log('✅ SVG محقون');
+
+        // تحديث المقاسات والمسح الضوئي للمستطيلات (قبل تحميل الصور)
+        updateDynamicSizes();
+        scan();
+        console.log('🔍 تم مسح المستطيلات');
+
+        // --------------------------------------------------------
+        // ✅ تحميل صور SVG (wood.webp, صور الأسابيع، إلخ)
+        // --------------------------------------------------------
+        const mainSvg = document.getElementById('main-svg');
+        if (mainSvg) {
+            await loadImagesInSvg(mainSvg);
+            // إعادة تحديث viewBox بعد تحميل الصور (لأن أبعادها قد تغيرت)
+            updateDynamicSizes();
+            // إضافة الكلاس 'loaded' لإظهار SVG
+            mainSvg.classList.add('loaded');
+            console.log('✅ SVG أصبح مرئياً');
+        }
+
+        // استدعاء دوال إضافية إذا كانت موجودة
+        if (typeof window.loadImages === 'function') {
+            window.loadImages(); // احتياطاً
+        }
+        if (typeof window.updateWoodInterface === 'function') {
+            window.updateWoodInterface();
+        }
+
+    } catch (error) {
+        console.error("❌ حدث خطأ أثناء التحميل:", error);
+        alert("❌ فشل تحميل المجموعة: " + error.message);
+    } finally {
+        setTimeout(() => {
+            hideLoadingScreen();
+            if (typeof window.updateDynamicSizes === 'function') window.updateDynamicSizes();
+            if (typeof window.goToWood === 'function') window.goToWood();
+        }, 600);
+    }
+}
+
+// ------------------------------------------------------------
+// تصدير للـ window
+// ------------------------------------------------------------
+window.initializeGroup = initializeGroup;
+window.hideLoadingScreen = hideLoadingScreen;
+window.showLoadingScreen = showLoadingScreen;
+
+console.log('✅ group-loader.js محمّل');
