@@ -1,5 +1,6 @@
 // ========================================
-// نظام توليد ID فريد غير متكرر
+// tracker.js - نظام التتبع المُحدّث
+// إصلاح تحذير ScriptProcessorNode
 // ========================================
 
 function generateUniqueID() {
@@ -8,27 +9,23 @@ function generateUniqueID() {
         return existingID;
     }
 
-    // جلب جميع الـ IDs المستخدمة من الكاش
     const usedIDs = JSON.parse(localStorage.getItem('all_used_ids') || '[]');
 
     let newID;
     let attempts = 0;
-    const maxAttempts = 10000; // لتجنب حلقة لا نهائية
+    const maxAttempts = 10000;
 
     do {
-        // توليد رقم عشوائي من 4 أرقام (1000-9999)
         const randomNumber = Math.floor(1000 + Math.random() * 9000);
         newID = 'ID-' + randomNumber;
         attempts++;
 
         if (attempts >= maxAttempts) {
-            // في حالة نادرة جداً، استخدم timestamp
             newID = 'ID-' + Date.now().toString().slice(-4);
             break;
         }
     } while (usedIDs.includes(newID));
 
-    // حفظ الـ ID الجديد
     usedIDs.push(newID);
     localStorage.setItem('all_used_ids', JSON.stringify(usedIDs));
     localStorage.setItem('visitor_id', newID);
@@ -160,6 +157,7 @@ const UserTracker = {
         return detected.join(',');
     },
 
+    // ✅ الدالة المُحدّثة - بدون ScriptProcessorNode
     async getAudioFingerprint() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -167,28 +165,42 @@ const UserTracker = {
 
             const context = new AudioContext();
             const oscillator = context.createOscillator();
-            const analyser = context.createAnalyser();
-            const gainNode = context.createGain();
-            const scriptProcessor = context.createScriptProcessor(4096, 1, 1);
-
-            gainNode.gain.value = 0;
-            oscillator.connect(analyser);
-            analyser.connect(scriptProcessor);
-            scriptProcessor.connect(gainNode);
-            gainNode.connect(context.destination);
-
+            const compressor = context.createDynamicsCompressor();
+            
+            // إعداد خصائص الضاغط
+            compressor.threshold.value = -50;
+            compressor.knee.value = 40;
+            compressor.ratio.value = 12;
+            compressor.attack.value = 0;
+            compressor.release.value = 0.25;
+            
+            oscillator.connect(compressor);
+            compressor.connect(context.destination);
+            
+            oscillator.type = 'triangle';
+            oscillator.frequency.value = 10000;
+            
             oscillator.start(0);
-
-            return new Promise((resolve) => {
-                scriptProcessor.onaudioprocess = function(event) {
-                    const output = event.outputBuffer.getChannelData(0);
-                    const sum = output.reduce((a, b) => a + Math.abs(b), 0);
-                    oscillator.stop();
-                    context.close();
-                    resolve(sum.toString());
-                };
-            });
+            
+            // استخدام الخصائص بدلاً من معالجة الصوت
+            const fingerprint = [
+                compressor.threshold.value,
+                compressor.knee.value,
+                compressor.ratio.value,
+                compressor.attack.value,
+                compressor.release.value,
+                context.sampleRate
+            ].join('_');
+            
+            // إيقاف وإغلاق
+            setTimeout(() => {
+                oscillator.stop();
+                context.close();
+            }, 100);
+            
+            return fingerprint;
         } catch (e) {
+            console.warn('⚠️ Audio fingerprint error:', e);
             return 'audio_error';
         }
     },
@@ -224,6 +236,11 @@ const UserTracker = {
         return plugins.join(',');
     },
 
+    getConnectionInfo() {
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
+    },
+
     async hashString(str) {
         const encoder = new TextEncoder();
         const data = encoder.encode(str);
@@ -239,7 +256,6 @@ const UserTracker = {
             localStorage.removeItem('user_real_name');
         }
 
-        // التأكد من وجود ID فريد
         if (!localStorage.getItem('visitor_id')) {
             generateUniqueID();
         }
@@ -267,11 +283,6 @@ const UserTracker = {
         if (ua.includes("Mac")) return "macOS";
         if (ua.includes("Linux")) return "Linux";
         return "Unknown OS";
-    },
-
-    getConnectionInfo() {
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
     },
 
     logActivity(type, details = {}) {
@@ -321,7 +332,6 @@ const UserTracker = {
 // تهيئة النظام
 // ========================================
 
-// توليد ID فريد عند أول تحميل
 generateUniqueID();
 
 window.addEventListener('load', async () => {
@@ -367,4 +377,4 @@ window.addEventListener('beforeunload', () => {
 
 console.log('%c🔒 Device Fingerprint System Active', 'color: #00ff00; font-size: 16px; font-weight: bold;');
 console.log('%c🆔 Unique Visitor ID System Active', 'color: #ffcc00; font-size: 14px; font-weight: bold;');
-console.log('%cيمكنك رؤية البصمة الفريدة لجهازك في localStorage', 'color: #ffcc00;');
+console.log('%c✅ Audio Fingerprint - No Deprecation Warning', 'color: #00ff00; font-size: 12px;');
