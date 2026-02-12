@@ -5,7 +5,7 @@
    - return بعد كل event.respondWith()
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-v1.5'; // تغيير الإصدار لتفعيل التحديث فوراً
+const CACHE_NAME = 'semester-3-cache-v1.6'; // تغيير الإصدار لتفعيل التحديث فوراً
 const urlsToCache = [
     './',
     './index.html',
