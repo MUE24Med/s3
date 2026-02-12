@@ -105,6 +105,7 @@ export async function loadGroupSVG(groupLetter) {
     if (!groupContainer) return;
     groupContainer.innerHTML = '';
     try {
+        // ✅ استخدام المسار المبسط G/B.svg
         const response = await fetch(`G/${groupLetter}.svg`);
         if (!response.ok) throw new Error(`SVG غير موجود (${response.status})`);
         const svgText = await response.text();
@@ -122,13 +123,6 @@ export async function loadGroupSVG(groupLetter) {
     } catch (err) {
         console.error(`❌ فشل تحميل SVG:`, err);
     }
-}
-const response = await fetch(`groups/group-${groupLetter}.svg`);
-console.log('🔍 محاولة جلب:', response.url);
-if (!response.ok) {
-    console.error('❌ فشل الجلب:', response.status, response.statusText);
-    const text = await response.text();
-    console.error('📄 محتوى الاستجابة:', text.substring(0, 200));
 }
 
 // ------------------------------------------------------------
@@ -187,17 +181,17 @@ export async function initializeGroup(groupLetter) {
         const mainSvg = document.getElementById('main-svg');
         if (mainSvg) {
             await loadImagesInSvg(mainSvg);
-            
+
             // تحديث viewBox بعد تحميل الصور
             updateDynamicSizes();
-            
+
             // تأخير صغير لضمان تطبيق الأبعاد
             setTimeout(() => {
                 updateDynamicSizes();
                 mainSvg.classList.add('loaded');
                 console.log('✅ SVG أصبح مرئياً (بعد التأخير)');
             }, 150);
-            
+
             // إضافة الكلاس فوراً أيضاً
             mainSvg.classList.add('loaded');
             console.log('✅ SVG أصبح مرئياً (فوري)');
