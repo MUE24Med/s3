@@ -1,6 +1,6 @@
 /* ========================================
    javascript/core/utils.js
-   ✅ بدون تغييرات جوهرية - الملف سليم
+   ✅ نسخة مستقرة
    ======================================== */
 
 import { translationMap, SUBJECT_FOLDERS } from './config.js';
