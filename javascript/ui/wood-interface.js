@@ -1,10 +1,10 @@
 // ============================================
-// wood-interface.js - واجهة عرض الملفات والمجلدات (الشجرة)
+// wood-interface.js - واجهة عرض الملفات والمجلدات
 // ============================================
 
-import { RAW_CONTENT_BASE } from '../core/config.js';
+import { RAW_CONTENT_BASE, NAV_STATE, SUBJECT_FOLDERS } from '../core/config.js';
 import { normalizeArabic, autoTranslate, getDisplayName, debounce, resetBrowserZoom } from '../core/utils.js';
-import { pushNavigationState, NAV_STATE, goToWood } from '../core/navigation.js';
+import { pushNavigationState, goToWood, goToMapEnd, getCurrentNavigationState, navigationHistory } from '../core/navigation.js';
 import { smartOpen } from './pdf-viewer.js';
 import { globalFileTree, currentGroup, currentFolder, setCurrentFolder } from '../core/state.js';
 import { updateDynamicSizes, loadImages, fetchGlobalTree, updateWoodLogo } from '../core/group-loader.js';
