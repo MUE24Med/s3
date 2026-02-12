@@ -1,6 +1,6 @@
 /* ========================================
    javascript/core/group-loader.js
-   ✅ نسخة مستقرة مع تحسين مراقبة التنفيذ
+   ✅ النسخة النهائية – مع تحميل الصور وإظهار SVG
    ======================================== */
 
 import {
@@ -11,6 +11,47 @@ import { saveSelectedGroup, fetchGlobalTree } from './utils.js';
 import { pushNavigationState } from './navigation.js';
 import { NAV_STATE } from './config.js';
 
+// ------------------------------------------------------------
+// دالة مساعدة: تحميل جميع الصور داخل SVG وتعيين href من data-src
+// ------------------------------------------------------------
+async function loadImagesInSvg(mainSvg) {
+    const images = mainSvg.querySelectorAll('image[data-src]');
+    if (images.length === 0) {
+        console.log('🖼️ لا توجد صور لتحميلها');
+        return;
+    }
+
+    console.log(`🖼️ تحميل ${images.length} صورة...`);
+    const promises = Array.from(images).map(img => {
+        return new Promise((resolve) => {
+            const src = img.getAttribute('data-src');
+            if (!src) return resolve();
+
+            img.setAttribute('href', src);
+            img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', src);
+
+            img.onload = () => {
+                console.log(`✅ صورة: ${src.split('/').pop()}`);
+                resolve();
+            };
+            img.onerror = () => {
+                console.warn(`⚠️ فشل تحميل: ${src}`);
+                resolve();
+            };
+            if (img.complete) resolve();
+        });
+    });
+
+    await Promise.race([
+        Promise.all(promises),
+        new Promise(resolve => setTimeout(resolve, 5000))
+    ]);
+    console.log('✅ تم تحميل جميع الصور (أو انتهاء المهلة)');
+}
+
+// ------------------------------------------------------------
+// دوال شاشة التحميل
+// ------------------------------------------------------------
 export function showLoadingScreen(groupLetter) {
     const loadingOverlay = document.getElementById('loading-overlay');
     if (!loadingOverlay) return;
@@ -71,6 +112,9 @@ export async function loadGroupSVG(groupLetter) {
     }
 }
 
+// ------------------------------------------------------------
+// الدالة الرئيسية – تهيئة المجموعة
+// ------------------------------------------------------------
 export async function initializeGroup(groupLetter) {
     console.log(`🚀 بدء العملية للمجموعة: ${groupLetter}`);
     try {
@@ -114,13 +158,19 @@ export async function initializeGroup(groupLetter) {
         scan();
         console.log('🔍 تم مسح المستطيلات');
 
-        if (typeof window.loadImages === 'function') {
-            window.loadImages();
+        // --------------------------------------------------------
+        // ✅ تحميل صور SVG (wood.webp, صور الأسابيع، إلخ)
+        // --------------------------------------------------------
+        const mainSvg = document.getElementById('main-svg');
+        if (mainSvg) {
+            await loadImagesInSvg(mainSvg);
+            updateDynamicSizes();
+            mainSvg.classList.add('loaded');
+            console.log('✅ SVG أصبح مرئياً');
         }
 
-        if (typeof window.updateWoodInterface === 'function') {
-            window.updateWoodInterface();
-        }
+        if (typeof window.loadImages === 'function') window.loadImages();
+        if (typeof window.updateWoodInterface === 'function') window.updateWoodInterface();
 
     } catch (error) {
         console.error("❌ حدث خطأ أثناء التحميل:", error);
