@@ -1,25 +1,24 @@
-// ========================================
-// tracker.js - نظام التتبع المُحدّث
-// إصلاح تحذير ScriptProcessorNode
-// ========================================
+/* ========================================
+   tracker.js - نظام التتبع المُحدّث
+   إصلاح أخطاء الإرسال والاتصال المنقطع
+   ======================================== */
 
+/**
+ * توليد معرف فريد للزائر وحفظه
+ */
 function generateUniqueID() {
     const existingID = localStorage.getItem('visitor_id');
-    if (existingID) {
-        return existingID;
-    }
+    if (existingID) return existingID;
 
     const usedIDs = JSON.parse(localStorage.getItem('all_used_ids') || '[]');
-
     let newID;
     let attempts = 0;
-    const maxAttempts = 10000;
+    const maxAttempts = 1000;
 
     do {
         const randomNumber = Math.floor(1000 + Math.random() * 9000);
         newID = 'ID-' + randomNumber;
         attempts++;
-
         if (attempts >= maxAttempts) {
             newID = 'ID-' + Date.now().toString().slice(-4);
             break;
@@ -30,14 +29,13 @@ function generateUniqueID() {
     localStorage.setItem('all_used_ids', JSON.stringify(usedIDs));
     localStorage.setItem('visitor_id', newID);
 
-    console.log(`✅ تم توليد ID فريد: ${newID}`);
+    console.log(`✅ Unique ID Generated: ${newID}`);
     return newID;
 }
 
-// ========================================
-// نظام التتبع الرئيسي
-// ========================================
-
+/**
+ * كائن التتبع الرئيسي
+ */
 const UserTracker = {
     activities: [],
     deviceFingerprint: null,
@@ -49,196 +47,51 @@ const UserTracker = {
             return storedFingerprint;
         }
 
-        const components = {
-            screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
-            availScreen: `${screen.availWidth}x${screen.availHeight}`,
-            pixelRatio: window.devicePixelRatio || 1,
-            userAgent: navigator.userAgent,
-            language: navigator.language,
-            languages: navigator.languages ? navigator.languages.join(',') : '',
-            platform: navigator.platform,
-            hardwareConcurrency: navigator.hardwareConcurrency || 0,
-            deviceMemory: navigator.deviceMemory || 0,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            timezoneOffset: new Date().getTimezoneOffset(),
-            canvas: await this.getCanvasFingerprint(),
-            webgl: this.getWebGLFingerprint(),
-            fonts: await this.getFontsFingerprint(),
-            audio: await this.getAudioFingerprint(),
-            connection: this.getConnectionInfo(),
-            battery: await this.getBatteryInfo(),
-            touchSupport: this.getTouchSupport(),
-            plugins: this.getPluginsInfo()
-        };
+        try {
+            const components = {
+                screen: `${screen.width}x${screen.height}`,
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                platform: navigator.platform,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                canvas: await this.getCanvasFingerprint(),
+                audio: await this.getAudioFingerprint(),
+                touch: navigator.maxTouchPoints > 0
+            };
 
-        const fingerprintString = JSON.stringify(components);
-        const fingerprint = await this.hashString(fingerprintString);
-
-        localStorage.setItem('device_fingerprint', fingerprint);
-        this.deviceFingerprint = fingerprint;
-
-        return fingerprint;
+            const fingerprintString = JSON.stringify(components);
+            const hash = await this.hashString(fingerprintString);
+            
+            localStorage.setItem('device_fingerprint', hash);
+            this.deviceFingerprint = hash;
+            return hash;
+        } catch (e) {
+            this.deviceFingerprint = "fp_error_" + Math.floor(Math.random() * 1000);
+            return this.deviceFingerprint;
+        }
     },
 
     async getCanvasFingerprint() {
         try {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 200;
-            canvas.height = 50;
-
+            canvas.width = 200; canvas.height = 40;
             ctx.textBaseline = 'top';
             ctx.font = '14px Arial';
-            ctx.fillStyle = '#f60';
-            ctx.fillRect(0, 0, 200, 50);
-            ctx.fillStyle = '#069';
-            ctx.fillText('Device Fingerprint 🔒', 2, 15);
-
-            const gradient = ctx.createLinearGradient(0, 0, 200, 0);
-            gradient.addColorStop(0, 'magenta');
-            gradient.addColorStop(0.5, 'blue');
-            gradient.addColorStop(1.0, 'red');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 200, 50);
-
+            ctx.fillText('MUE-Tracker-🔒', 2, 2);
             return canvas.toDataURL();
-        } catch (e) {
-            return 'canvas_error';
-        }
+        } catch (e) { return 'canvas_blocked'; }
     },
 
-    getWebGLFingerprint() {
-        try {
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-
-            if (!gl) return 'no_webgl';
-
-            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-            return {
-                vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
-                renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL),
-                version: gl.getParameter(gl.VERSION),
-                shadingLanguageVersion: gl.getParameter(gl.SHADING_LANGUAGE_VERSION)
-            };
-        } catch (e) {
-            return 'webgl_error';
-        }
-    },
-
-    async getFontsFingerprint() {
-        const baseFonts = ['monospace', 'sans-serif', 'serif'];
-        const testFonts = [
-            'Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Verdana',
-            'Tahoma', 'Trebuchet MS', 'Impact', 'Comic Sans MS', 'Arial Black'
-        ];
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const detected = [];
-
-        for (const font of testFonts) {
-            let detected_font = false;
-            for (const baseFont of baseFonts) {
-                ctx.font = `72px ${baseFont}`;
-                const baseWidth = ctx.measureText('mmmmmmmmmmlli').width;
-
-                ctx.font = `72px ${font}, ${baseFont}`;
-                const testWidth = ctx.measureText('mmmmmmmmmmlli').width;
-
-                if (baseWidth !== testWidth) {
-                    detected_font = true;
-                    break;
-                }
-            }
-            if (detected_font) detected.push(font);
-        }
-
-        return detected.join(',');
-    },
-
-    // ✅ الدالة المُحدّثة - بدون ScriptProcessorNode
     async getAudioFingerprint() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return 'no_audio';
-
             const context = new AudioContext();
-            const oscillator = context.createOscillator();
-            const compressor = context.createDynamicsCompressor();
-            
-            // إعداد خصائص الضاغط
-            compressor.threshold.value = -50;
-            compressor.knee.value = 40;
-            compressor.ratio.value = 12;
-            compressor.attack.value = 0;
-            compressor.release.value = 0.25;
-            
-            oscillator.connect(compressor);
-            compressor.connect(context.destination);
-            
-            oscillator.type = 'triangle';
-            oscillator.frequency.value = 10000;
-            
-            oscillator.start(0);
-            
-            // استخدام الخصائص بدلاً من معالجة الصوت
-            const fingerprint = [
-                compressor.threshold.value,
-                compressor.knee.value,
-                compressor.ratio.value,
-                compressor.attack.value,
-                compressor.release.value,
-                context.sampleRate
-            ].join('_');
-            
-            // إيقاف وإغلاق
-            setTimeout(() => {
-                oscillator.stop();
-                context.close();
-            }, 100);
-            
+            const fingerprint = [context.sampleRate, context.destination.channelCount].join('_');
+            context.close();
             return fingerprint;
-        } catch (e) {
-            console.warn('⚠️ Audio fingerprint error:', e);
-            return 'audio_error';
-        }
-    },
-
-    async getBatteryInfo() {
-        try {
-            if ('getBattery' in navigator) {
-                const battery = await navigator.getBattery();
-                return {
-                    level: Math.round(battery.level * 100),
-                    charging: battery.charging
-                };
-            }
-            return 'no_battery_api';
-        } catch (e) {
-            return 'battery_error';
-        }
-    },
-
-    getTouchSupport() {
-        return {
-            maxTouchPoints: navigator.maxTouchPoints || 0,
-            touchEvent: 'ontouchstart' in window,
-            touchStart: 'TouchEvent' in window
-        };
-    },
-
-    getPluginsInfo() {
-        const plugins = [];
-        for (let i = 0; i < navigator.plugins.length; i++) {
-            plugins.push(navigator.plugins[i].name);
-        }
-        return plugins.join(',');
-    },
-
-    getConnectionInfo() {
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
+        } catch (e) { return 'audio_blocked'; }
     },
 
     async hashString(str) {
@@ -246,43 +99,12 @@ const UserTracker = {
         const data = encoder.encode(str);
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        return hashHex.substring(0, 16);
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
     },
 
     getDisplayName() {
-        const realName = localStorage.getItem('user_real_name');
-        if (realName === 'زائر مجهول' || realName === 'زائر') {
-            localStorage.removeItem('user_real_name');
-        }
-
-        if (!localStorage.getItem('visitor_id')) {
-            generateUniqueID();
-        }
-
-        const cleanRealName = localStorage.getItem('user_real_name');
-        return (cleanRealName && cleanRealName.trim()) ? cleanRealName.trim() : localStorage.getItem('visitor_id');
-    },
-
-    getBrowserName() {
-        const ua = navigator.userAgent;
-        if (ua.includes("Samsung")) return "Samsung Internet";
-        if (ua.includes("Edg")) return "Edge";
-        if (ua.includes("Chrome")) return "Chrome";
-        if (ua.includes("Safari") && !ua.includes("Chrome")) return "Safari";
-        if (ua.includes("Firefox")) return "Firefox";
-        if (ua.includes("Opera") || ua.includes("OPR")) return "Opera";
-        return "Unknown Browser";
-    },
-
-    getOS() {
-        const ua = navigator.userAgent;
-        if (ua.includes("Android")) return "Android";
-        if (ua.includes("iPhone") || ua.includes("iPad")) return "iOS";
-        if (ua.includes("Win")) return "Windows";
-        if (ua.includes("Mac")) return "macOS";
-        if (ua.includes("Linux")) return "Linux";
-        return "Unknown OS";
+        const name = localStorage.getItem('user_real_name');
+        return (name && name !== 'زائر') ? name : (localStorage.getItem('visitor_id') || 'Unknown');
     },
 
     logActivity(type, details = {}) {
@@ -293,88 +115,74 @@ const UserTracker = {
         });
     },
 
+    /**
+     * إرسال البيانات مع معالجة أخطاء AdBlocker والاتصال المنقطع
+     */
     async send(action, isFinal = false) {
-        if (!this.deviceFingerprint) {
-            await this.generateFingerprint();
+        try {
+            if (!this.deviceFingerprint) await this.generateFingerprint();
+
+            const data = new FormData();
+            data.append("01-Device_ID", this.deviceFingerprint);
+            data.append("02-User_Name", this.getDisplayName());
+            data.append("03-Visitor_ID", localStorage.getItem('visitor_id') || 'Unknown');
+            data.append("04-Group", localStorage.getItem('selectedGroup') || 'N/A');
+            data.append("05-Action", action);
+            
+            if (isFinal && this.activities.length > 0) {
+                data.append("06-Activities", JSON.stringify(this.activities));
+            }
+
+            data.append("17-Timestamp", new Date().toLocaleString('ar-EG'));
+
+            const endpoint = "https://formspree.io/f/xzdpqrnj";
+
+            // محاولة الإرسال عبر sendBeacon (الأفضل عند الخروج)
+            const success = navigator.sendBeacon(endpoint, data);
+
+            // إذا فشل sendBeacon (بسبب AdBlock مثلاً) نستخدم fetch بصمت
+            if (!success) {
+                fetch(endpoint, { 
+                    method: 'POST', 
+                    body: data, 
+                    mode: 'no-cors',
+                    keepalive: true 
+                }).catch(() => {/* فشل صامت لتجنب اللون الأحمر في الكونسول */});
+            }
+
+            console.log(`📤 Tracked: ${action}`);
+        } catch (e) {
+            console.warn("Tracker: Send failed silently.");
         }
-
-        const data = new FormData();
-
-        data.append("01-Device_ID", this.deviceFingerprint);
-        data.append("02-User_Name", this.getDisplayName());
-        data.append("03-Visitor_ID", localStorage.getItem('visitor_id') || 'Unknown');
-        data.append("04-Group", localStorage.getItem('selectedGroup') || 'لم يختر بعد');
-        data.append("05-Action", action);
-
-        if (isFinal && this.activities.length > 0) {
-            data.append("06-Activities", JSON.stringify(this.activities, null, 2));
-        }
-
-        data.append("07-Browser", this.getBrowserName());
-        data.append("08-OS", this.getOS());
-        data.append("09-Screen", `${screen.width}x${screen.height}`);
-        data.append("10-Viewport", `${window.innerWidth}x${window.innerHeight}`);
-        data.append("11-PixelRatio", window.devicePixelRatio || 1);
-        data.append("12-Timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
-        data.append("13-Language", navigator.language);
-        data.append("14-Connection", this.getConnectionInfo());
-        data.append("15-Device_Type", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
-        data.append("16-Touch", navigator.maxTouchPoints > 0 ? "Yes" : "No");
-        data.append("17-Timestamp", new Date().toLocaleString('ar-EG'));
-
-        navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", data);
-
-        console.log(`📤 تم إرسال البيانات - Device ID: ${this.deviceFingerprint.substring(0, 8)}...`);
     }
 };
 
-// ========================================
-// تهيئة النظام
-// ========================================
-
+// تهيئة النظام عند التحميل
 generateUniqueID();
 
 window.addEventListener('load', async () => {
     await UserTracker.generateFingerprint();
-    console.log(`🔒 Device Fingerprint: ${UserTracker.deviceFingerprint.substring(0, 8)}...`);
-    console.log(`🆔 Visitor ID: ${localStorage.getItem('visitor_id')}`);
     UserTracker.send("دخول الموقع");
 });
 
-window.addEventListener('groupChanged', (e) => {
-    UserTracker.logActivity("تغيير جروب", { newGroup: e.detail });
-});
-
-// دوال التتبع
-function trackSearch(query) { UserTracker.logActivity("بحث", { query: query }); }
-function trackSvgOpen(name) { UserTracker.logActivity("فتح ملف SVG", { file: name }); }
-function trackApiOpen(endpoint) { UserTracker.logActivity("فتح API", { api: endpoint }); }
-function trackNameChange(newName) { UserTracker.logActivity("تغيير اسم", { name: newName }); }
-function trackGameScore(score) { UserTracker.logActivity("نتيجة اللعبة", { score: score }); }
-
-// إرسال دوري كل 60 ثانية
+// التتبع الدوري (كل دقيقة)
 setInterval(() => {
     if (UserTracker.activities.length > 0) {
-        console.log('📤 إرسال تحديث دوري للأنشطة...');
         UserTracker.send("تحديث دوري", true);
         UserTracker.activities = [];
     }
 }, 60000);
 
-// عند الخروج
-window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
+// التتبع عند مغادرة الصفحة أو إخفائها
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && UserTracker.activities.length > 0) {
         UserTracker.send("تقرير النشاط قبل الخروج", true);
         UserTracker.activities = [];
     }
 });
 
-window.addEventListener('beforeunload', () => {
-    if (UserTracker.activities.length > 0) {
-        UserTracker.send("إغلاق النافذة", true);
-    }
-});
+// دوال مساعدة عالمية للتتبع
+window.trackSearch = (query) => UserTracker.logActivity("بحث", { query });
+window.trackSvgOpen = (name) => UserTracker.logActivity("فتح ملف", { file: name });
 
-console.log('%c🔒 Device Fingerprint System Active', 'color: #00ff00; font-size: 16px; font-weight: bold;');
-console.log('%c🆔 Unique Visitor ID System Active', 'color: #ffcc00; font-size: 14px; font-weight: bold;');
-console.log('%c✅ Audio Fingerprint - No Deprecation Warning', 'color: #00ff00; font-size: 12px;');
+console.log('%c🔒 Device Fingerprint System Active', 'color: #00ff00; font-weight: bold;');
