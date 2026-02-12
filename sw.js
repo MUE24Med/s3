@@ -1,29 +1,24 @@
 /* ========================================
-   sw.js - Service Worker
-   ✅ إصلاح: مسار script.js صُحِّح للجذر
+   sw.js - ✅ نسخة مصححة
+   - إضافة return بعد كل event.respondWith
+   - منع تسرب الطلبات بين الشروط
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-v1.2';
+const CACHE_NAME = 'semester-3-cache-v1.3'; // ✅ رفع الإصدار لتحديث الكاش
 const urlsToCache = [
     './',
     './index.html',
     './style.css',
     './tracker.js',
-
-    // ✅ إصلاح: script.js في الجذر وليس في javascript/
-    './script.js',
-
-    // JavaScript المقسم
-    './javascript/core/config.js',
-    './javascript/core/utils.js',
-    './javascript/core/navigation.js',
-    './javascript/core/group-loader.js',
-    './javascript/ui/pdf-viewer.js',
-    './javascript/ui/wood-interface.js',
-    './javascript/features/preload-game.js',
-    './javascript/features/svg-processor.js',
-
-    // الصور الأساسية
+    './script.js',          // ✅ script.js في الجذر
+    '/javascript/core/config.js',
+    '/javascript/core/utils.js',
+    '/javascript/core/navigation.js',
+    '/javascript/core/group-loader.js',
+    '/javascript/ui/pdf-viewer.js',
+    '/javascript/ui/wood-interface.js',
+    '/javascript/features/preload-game.js',
+    '/javascript/features/svg-processor.js',
     './image/0.webp',
     './image/wood.webp',
     './image/Upper_wood.webp'
@@ -73,14 +68,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
+    // تجاهل الطلبات الخارجية غير الضرورية
     if (!url.origin.includes(self.location.origin) &&
         !url.origin.includes('github') &&
         !url.origin.includes('raw.githubusercontent')) {
         return;
     }
 
+    // لا نتعامل مع طلبات الـ SW نفسه
     if (url.pathname.includes('sw.js')) return;
 
+    // ✅ 1. ملفات JavaScript الأساسية (من مجلد /javascript/)
     if (url.pathname.includes('/javascript/') && url.pathname.endsWith('.js')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -95,9 +93,10 @@ self.addEventListener('fetch', (event) => {
                 }).catch(() => new Response('Offline', { status: 503 }));
             })
         );
-        return;
+        return; // ✅ منع المرور إلى الشروط التالية
     }
 
+    // ✅ 2. طلبات GitHub (raw و API)
     if (url.origin.includes('github') || url.origin.includes('raw.githubusercontent')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -112,9 +111,10 @@ self.addEventListener('fetch', (event) => {
                 }).catch(() => new Response('GitHub unavailable', { status: 503 }));
             })
         );
-        return;
+        return; // ✅ منع المرور
     }
 
+    // ✅ 3. باقي الطلبات (استراتيجية Cache First)
     event.respondWith(
         caches.match(event.request).then(cached => {
             if (cached) return cached;
