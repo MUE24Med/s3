@@ -39,7 +39,6 @@ export function handleBackNavigation(e) {
 
     e.preventDefault();
 
-    // التعامل مع كل حالة
     if (currentState.state === NAV_STATE.PDF_VIEW) {
         console.log('📄 إغلاق PDF');
         popNavigationState();
@@ -48,7 +47,10 @@ export function handleBackNavigation(e) {
         const pdfViewer = document.getElementById("pdfFrame");
 
         if (currentState.data.isPreview) {
-            closePDFPreview();  // سيتم استيراد هذه الدالة لاحقاً من pdf-viewer.js
+            // استدعاء ديناميكي لتجنب الاستيراد الدائري
+            import('../ui/pdf-viewer.js').then(({ closePDFPreview }) => {
+                closePDFPreview();
+            });
         } else {
             pdfViewer.src = "";
             overlay.classList.add("hidden");
@@ -71,13 +73,10 @@ export function handleBackNavigation(e) {
     if (currentState.state === NAV_STATE.MAP_VIEW) {
         console.log('🗺️ العودة من الخريطة إلى الملفات');
         popNavigationState();
-        // setCurrentFolder(""); يتم استدعاؤها من wood-interface عبر import دائري، سنمررها كـ callback
-        // الحل: استخدام حدث مخصص أو استدعاء مباشر بعد الاستيراد
-        // سنقوم بتعيين currentFolder من state.js وتحديث الواجهة
         import('./state.js').then(({ setCurrentFolder }) => {
             setCurrentFolder("");
         }).then(() => {
-            import('./wood-interface.js').then(({ updateWoodInterface }) => {
+            import('../ui/wood-interface.js').then(({ updateWoodInterface }) => {
                 updateWoodInterface();
             });
         });
@@ -92,7 +91,7 @@ export function handleBackNavigation(e) {
             import('./state.js').then(({ setCurrentFolder }) => {
                 setCurrentFolder(parts.join('/'));
             }).then(() => {
-                import('./wood-interface.js').then(({ updateWoodInterface }) => {
+                import('../ui/wood-interface.js').then(({ updateWoodInterface }) => {
                     updateWoodInterface();
                 });
             });
@@ -121,12 +120,6 @@ export function handleBackNavigation(e) {
     }
 }
 
-// استيراد دوال PDFPreview لتجنب الاستيراد الدائري العلوي
-async function closePDFPreview() {
-    const { closePDFPreview } = await import('../ui/pdf-viewer.js');
-    closePDFPreview();
-}
-
 export function setupBackButton() {
     console.log('🔧 إعداد نظام التنقل الخلفي');
 
@@ -136,7 +129,6 @@ export function setupBackButton() {
 
     window.addEventListener('popstate', (e) => {
         handleBackNavigation(e);
-
         const currentNav = getCurrentNavigationState();
         if (currentNav) {
             window.history.pushState({ page: 'main' }, '', '');
