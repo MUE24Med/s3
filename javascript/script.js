@@ -1,6 +1,6 @@
 /* ========================================
    javascript/script.js
-   الملف الرئيسي - يستدعي جميع الوحدات
+   الملف الرئيسي - النسخة المحسنة (Lazy Loading)
    ======================================== */
 
 // استيراد الوحدات الأساسية
@@ -8,25 +8,21 @@ import { setupBackButton } from './core/navigation.js';
 import { initializeGroup } from './core/group-loader.js';
 import { setCurrentGroup, setCurrentFolder, setInteractionEnabled } from './core/config.js';
 
-// استيراد واجهات المستخدم
+// استيراد واجهات المستخدم والوظائف الأساسية فقط
 import './ui/pdf-viewer.js';
-// import './ui/wood-interface.js'; // سيتم إنشاؤه
+import './ui/wood-interface.js'; 
 
-// استيراد المميزات
-// import './features/preload-game.js'; // سيتم إنشاؤه
-// import './features/svg-processor.js'; // سيتم إنشاؤه
-
-console.log('🚀 بدء تحميل النظام...');
+console.log('🚀 بدء تحميل النظام الأساسي...');
 
 // ✅ إعداد نظام التنقل
 setupBackButton();
 
-// ✅ تصدير الدوال للـ window
+// ✅ تصدير الدوال للـ window لضمان عمل الـ Inline Events في HTML
 window.setCurrentGroup = setCurrentGroup;
 window.setCurrentFolder = setCurrentFolder;
 window.setInteractionEnabled = setInteractionEnabled;
 
-// ✅ دوال التنقل
+// ✅ دوال التنقل في الخريطة
 window.goToWood = () => {
     const scrollContainer = document.getElementById('scroll-container');
     if (scrollContainer) {
@@ -41,12 +37,25 @@ window.goToMapEnd = () => {
     scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' });
 };
 
-// ✅ معالجات اختيار المجموعة
+// ✅ معالجة اختيار المجموعة (تحميل SVG عند الطلب فقط)
 document.querySelectorAll('.group-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', async function() {
         const group = this.getAttribute('data-group');
         console.log('👆 تم اختيار المجموعة:', group);
-        initializeGroup(group);
+        
+        // إخفاء شاشة الاختيار
+        document.getElementById('group-selection-screen').style.display = 'none';
+        
+        // تحميل ملفات المميزات الإضافية فقط عند اختيار جروب (Dynamic Import)
+        try {
+            await import('./features/svg-processor.js');
+            await import('./features/preload-game.js');
+            
+            // استدعاء دالة التحميل التي ستجلب ملف الـ SVG برمجياً
+            initializeGroup(group); 
+        } catch (err) {
+            console.error("❌ فشل تحميل وحدات المميزات:", err);
+        }
     });
 });
 
@@ -57,26 +66,24 @@ if (changeGroupBtn) {
         e.stopPropagation();
         const groupSelectionScreen = document.getElementById('group-selection-screen');
         if (groupSelectionScreen) {
-            groupSelectionScreen.classList.remove('hidden');
             groupSelectionScreen.style.display = 'flex';
         }
         window.goToWood();
     });
 }
 
-// ✅ زر Preload
+// ✅ زر إعادة شاشة الـ Preload
 const preloadBtn = document.getElementById('preload-btn');
 if (preloadBtn) {
     preloadBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        console.log('🔄 العودة لشاشة التحميل المسبق');
         localStorage.removeItem('preload_done');
         localStorage.removeItem('last_visit_timestamp');
         window.location.reload();
     });
 }
 
-// ✅ Toggle التفاعل
+// ✅ التحكم في التفاعل (Toggle)
 const jsToggle = document.getElementById('js-toggle');
 if (jsToggle) {
     jsToggle.addEventListener('change', function() {
@@ -84,21 +91,7 @@ if (jsToggle) {
     });
 }
 
-// ✅ زر نقل الشريط
-const moveToggle = document.getElementById('move-toggle');
-const toggleContainer = document.getElementById('js-toggle-container');
-if (moveToggle && toggleContainer) {
-    moveToggle.onclick = (e) => {
-        e.preventDefault();
-        if (toggleContainer.classList.contains('top')) {
-            toggleContainer.classList.replace('top', 'bottom');
-        } else {
-            toggleContainer.classList.replace('bottom', 'top');
-        }
-    };
-}
-
-// ✅ أيقونة البحث
+// ✅ أيقونة البحث والرجوع
 const searchIcon = document.getElementById('search-icon');
 if (searchIcon) {
     searchIcon.onclick = (e) => {
@@ -107,15 +100,14 @@ if (searchIcon) {
     };
 }
 
-// ✅ زر الرجوع في SVG
+// ✅ زر الرجوع الذكي داخل الـ SVG
 const backButtonGroup = document.getElementById('back-button-group');
 if (backButtonGroup) {
     backButtonGroup.onclick = (e) => {
         e.stopPropagation();
         const currentFolder = window.currentFolder || "";
-        
+
         if (currentFolder !== "") {
-            console.log('📂 زر SVG: العودة للمجلد الأب');
             let parts = currentFolder.split('/');
             parts.pop();
             setCurrentFolder(parts.join('/'));
@@ -123,49 +115,33 @@ if (backButtonGroup) {
                 window.updateWoodInterface();
             }
         } else {
-            console.log('🗺️ زر SVG: الذهاب لنهاية الخريطة');
             window.goToMapEnd();
         }
     };
 }
 
-// ✅ منع القائمة السياقية على SVG
+// ✅ منع القائمة السياقية للحفاظ على تجربة المستخدم
 document.addEventListener('contextmenu', (e) => {
-    const target = e.target;
-    if (target.tagName === 'image' || 
-        target.tagName === 'IMG' || 
-        target.tagName === 'svg' ||
-        target.tagName === 'rect' ||
-        target.closest('svg')) {
+    if (e.target.closest('svg') || e.target.tagName === 'IMG') {
         e.preventDefault();
-        return false;
     }
 });
 
-// ✅ تحميل آخر جروب تلقائياً
-(function autoLoadLastGroup() {
+// ✅ دالة التحميل التلقائي لآخر جروب محفوظ
+(async function autoLoadLastGroup() {
     const preloadDone = localStorage.getItem('preload_done');
-
-    if (!preloadDone) {
-        console.log('⏭️ أول زيارة - تخطي التحميل التلقائي');
-        return;
-    }
-
     const savedGroup = localStorage.getItem('selectedGroup');
 
-    if (savedGroup && /^[A-D]$/.test(savedGroup)) {
-        console.log(`🚀 تحميل آخر جروب تلقائياً: ${savedGroup}`);
-
+    if (preloadDone && savedGroup && /^[A-D]$/.test(savedGroup)) {
+        console.log(`🚀 إعادة تحميل الجروب المحفوظ: ${savedGroup}`);
+        
         const groupSelectionScreen = document.getElementById('group-selection-screen');
-        if (groupSelectionScreen) {
-            groupSelectionScreen.style.display = 'none';
-        }
+        if (groupSelectionScreen) groupSelectionScreen.style.display = 'none';
 
+        // تحميل ملفات المميزات برمجياً قبل البدء
+        await import('./features/svg-processor.js');
         initializeGroup(savedGroup);
-    } else {
-        console.log('📋 لا يوجد جروب محفوظ - عرض شاشة الاختيار');
     }
 })();
 
-console.log('✅ script.js محمّل بالكامل');
-console.log('🎯 النظام جاهز للاستخدام');
+console.log('✅ script.js جاهز (نظام التحميل الذكي مفعل)');
