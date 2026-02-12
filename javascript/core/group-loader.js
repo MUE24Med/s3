@@ -123,6 +123,13 @@ export async function loadGroupSVG(groupLetter) {
         console.error(`❌ فشل تحميل SVG:`, err);
     }
 }
+const response = await fetch(`groups/group-${groupLetter}.svg`);
+console.log('🔍 محاولة جلب:', response.url);
+if (!response.ok) {
+    console.error('❌ فشل الجلب:', response.status, response.statusText);
+    const text = await response.text();
+    console.error('📄 محتوى الاستجابة:', text.substring(0, 200));
+}
 
 // ------------------------------------------------------------
 // الدالة الرئيسية – تهيئة المجموعة
