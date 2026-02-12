@@ -1,8 +1,6 @@
 /* ========================================
    javascript/features/preload-game.js
-   ✅ إصلاح: استبدال window.storage بـ localStorage
-      window.storage خاص بـ Claude Artifacts فقط
-      ولا يعمل على GitHub Pages
+   ✅ إصلاح: استخدام localStorage (بدون window.storage)
    ======================================== */
 
 (function initPreloadSystem() {
@@ -79,11 +77,8 @@
             window.location.reload();
         });
 
-        // ========================================
-        // لعبة تجنب البكتيريا
-        // ========================================
+        // ========== لعبة تجنب البكتيريا ==========
         const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
-
         const gameContainer = document.getElementById('gameContainer');
         const runner = document.getElementById('runner');
         const heartsDisplay = document.getElementById('heartsDisplay');
@@ -164,14 +159,10 @@
             if (gameActive) requestAnimationFrame(updateGame);
         }
 
-        // ✅ إصلاح: استخدام localStorage بدل window.storage
         async function fetchGlobalLeaderboard() {
             try {
                 const stored = localStorage.getItem('global_leaderboard');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    return parsed.slice(0, 5);
-                }
+                if (stored) return JSON.parse(stored).slice(0, 5);
                 return [];
             } catch (e) {
                 console.error('❌ خطأ في قراءة Leaderboard:', e);
@@ -179,15 +170,10 @@
             }
         }
 
-        // ✅ إصلاح: حفظ في localStorage + إرسال لـ Formspree
         async function sendScoreToServer(playerName, playerScore, deviceId) {
             try {
                 console.log('📤 حفظ النتيجة...');
-
-                // جلب القائمة الحالية
                 const stored = JSON.parse(localStorage.getItem('global_leaderboard') || '[]');
-
-                // تحديث أو إضافة نتيجة اللاعب
                 const existingIdx = stored.findIndex(s => s.device_id === deviceId);
                 const newEntry = {
                     name: playerName,
@@ -196,22 +182,15 @@
                     date: new Date().toLocaleDateString('ar-EG'),
                     timestamp: Date.now()
                 };
-
                 if (existingIdx >= 0) {
-                    // احتفظ بالنتيجة الأعلى فقط
-                    if (playerScore > stored[existingIdx].score) {
-                        stored[existingIdx] = newEntry;
-                    }
+                    if (playerScore > stored[existingIdx].score) stored[existingIdx] = newEntry;
                 } else {
                     stored.push(newEntry);
                 }
-
-                // ترتيب وحفظ أفضل 20
                 stored.sort((a, b) => b.score - a.score);
                 localStorage.setItem('global_leaderboard', JSON.stringify(stored.slice(0, 20)));
                 console.log('✅ تم حفظ النتيجة محلياً');
 
-                // إرسال لـ Formspree (للإحصاءات)
                 const formData = new FormData();
                 formData.append("Type", "Game_Score");
                 formData.append("Player_Name", playerName);
@@ -220,7 +199,6 @@
                 formData.append("Timestamp", new Date().toLocaleString('ar-EG'));
                 navigator.sendBeacon(FORMSPREE_URL, formData);
                 console.log('✅ تم إرسال النتيجة لـ Formspree');
-
                 return true;
             } catch (error) {
                 console.error('❌ خطأ في حفظ النتيجة:', error);
@@ -231,27 +209,15 @@
         async function displayLeaderboard() {
             const leaderboard = await fetchGlobalLeaderboard();
             const deviceId = getDeviceId();
-
             if (!leaderboard.length) {
-                leaderboardList.innerHTML = `
-                    <li class="leaderboard-item">
-                        <span class="leaderboard-rank">-</span>
-                        <span class="leaderboard-name">العب لتسجل أول نتيجة!</span>
-                        <span class="leaderboard-score">-</span>
-                    </li>`;
+                leaderboardList.innerHTML = `<li class="leaderboard-item"><span class="leaderboard-rank">-</span><span class="leaderboard-name">العب لتسجل أول نتيجة!</span><span class="leaderboard-score">-</span></li>`;
                 return;
             }
-
             leaderboardList.innerHTML = leaderboard.map((entry, index) => {
                 const topClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
                 const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
                 const mine = entry.device_id === deviceId ? 'current-player' : '';
-                return `
-                    <li class="leaderboard-item ${topClass} ${mine}">
-                        <span class="leaderboard-rank">${medal} #${index + 1}</span>
-                        <span class="leaderboard-name">${entry.name}</span>
-                        <span class="leaderboard-score">${entry.score} ⭐</span>
-                    </li>`;
+                return `<li class="leaderboard-item ${topClass} ${mine}"><span class="leaderboard-rank">${medal} #${index + 1}</span><span class="leaderboard-name">${entry.name}</span><span class="leaderboard-score">${entry.score} ⭐</span></li>`;
             }).join('');
         }
 
