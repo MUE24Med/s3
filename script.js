@@ -62,7 +62,6 @@
         };
 
         // ================ معالجات الأزرار ================
-
         // ----- أزرار اختيار المجموعة -----
         document.querySelectorAll('.group-btn').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -108,55 +107,26 @@
         if (resetBtn) {
             resetBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-
-                // استيراد الدوال اللازمة ديناميكياً
                 const { isProtectedFile, GITHUB_USER, REPO_NAME, RAW_CONTENT_BASE } =
                     await import('./javascript/core/config.js');
-
-                const confirmReset = confirm(
-                    '🔄 سيتم:\n' +
-                    '• فحص الملفات المعدلة على GitHub\n' +
-                    '• تحديث الملفات المعدلة فقط\n' +
-                    '🔒 الصور المحمية لن تُحدّث\n\n' +
-                    'هل تريد المتابعة؟'
-                );
+                const confirmReset = confirm('🔄 سيتم:\n• فحص الملفات المعدلة على GitHub\n• تحديث الملفات المعدلة فقط\n🔒 الصور المحمية لن تُحدّث\n\nهل تريد المتابعة؟');
                 if (!confirmReset) return;
 
-                // إنشاء رسالة التحميل
                 const loadingMsg = document.createElement('div');
-                loadingMsg.innerHTML = `
-                    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-                        background:rgba(0,0,0,0.9);color:white;padding:30px;border-radius:15px;
-                        z-index:9999;text-align:center;box-shadow:0 0 30px rgba(255,204,0,0.5)">
-                        <h2 style="margin:0 0 15px;color:#ffca28">🔍 جاري الفحص...</h2>
-                        <p id="rst-status">يتم الاتصال بـ GitHub...</p>
-                        <div id="rst-details" style="font-size:12px;color:#aaa;margin-top:10px"></div>
-                    </div>`;
+                loadingMsg.innerHTML = `<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%); background:rgba(0,0,0,0.9);color:white;padding:30px;border-radius:15px; z-index:9999;text-align:center;box-shadow:0 0 30px rgba(255,204,0,0.5)"><h2 style="margin:0 0 15px;color:#ffca28">🔍 جاري الفحص...</h2><p id="rst-status">يتم الاتصال بـ GitHub...</p><div id="rst-details" style="font-size:12px;color:#aaa;margin-top:10px"></div></div>`;
                 document.body.appendChild(loadingMsg);
 
-                const setStatus = t => {
-                    const el = document.getElementById('rst-status');
-                    if (el) el.textContent = t;
-                };
-                const addDetail = t => {
-                    const el = document.getElementById('rst-details');
-                    if (el) el.innerHTML += t + '<br>';
-                };
+                const setStatus = t => document.getElementById('rst-status') && (document.getElementById('rst-status').textContent = t);
+                const addDetail = t => document.getElementById('rst-details') && (document.getElementById('rst-details').innerHTML += t + '<br>');
 
                 try {
                     setStatus('🌐 الاتصال بـ GitHub API...');
-                    const commitRes = await fetch(
-                        `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`,
-                        { cache: 'no-store', headers: { 'Accept': 'application/vnd.github.v3+json' } }
-                    );
+                    const commitRes = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/main`, { cache: 'no-store', headers: { 'Accept': 'application/vnd.github.v3+json' } });
                     if (!commitRes.ok) throw new Error('فشل الاتصال بـ GitHub');
                     const commitData = await commitRes.json();
 
                     setStatus('📋 جلب الملفات المعدلة...');
-                    const filesRes = await fetch(
-                        `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${commitData.sha}`,
-                        { cache: 'no-store', headers: { 'Accept': 'application/vnd.github.v3+json' } }
-                    );
+                    const filesRes = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/commits/${commitData.sha}`, { cache: 'no-store', headers: { 'Accept': 'application/vnd.github.v3+json' } });
                     if (!filesRes.ok) throw new Error('فشل جلب تفاصيل الـ commit');
                     const filesData = await filesRes.json();
                     const modifiedFiles = filesData.files || [];
@@ -177,32 +147,16 @@
                     for (const file of modifiedFiles) {
                         const fn = file.filename;
                         if (fn.startsWith('.') || fn.includes('README')) continue;
-                        if (isProtectedFile(fn)) {
-                            protected_++;
-                            addDetail(`🔒 محمي: ${fn}`);
-                            continue;
-                        }
-                        if (fn === 'sw.js' && !confirm('⚙️ تحديث sw.js؟')) {
-                            addDetail('🚫 تم تخطي sw.js');
-                            continue;
-                        }
+                        if (isProtectedFile(fn)) { protected_++; addDetail(`🔒 محمي: ${fn}`); continue; }
+                        if (fn === 'sw.js' && !confirm('⚙️ تحديث sw.js؟')) { addDetail('🚫 تم تخطي sw.js'); continue; }
                         try {
                             await cache.delete('./' + fn);
                             await cache.delete('/' + fn);
                             await cache.delete(fn);
-                            const r = await fetch(`${RAW_CONTENT_BASE}${fn}`, {
-                                cache: 'reload', mode: 'cors'
-                            });
-                            if (r.ok) {
-                                await cache.put('./' + fn, r);
-                                updated++;
-                                addDetail(`✅ ${fn}`);
-                            } else {
-                                addDetail(`⚠️ فشل: ${fn}`);
-                            }
-                        } catch {
-                            addDetail(`⚠️ خطأ في: ${fn}`);
-                        }
+                            const r = await fetch(`${RAW_CONTENT_BASE}${fn}`, { cache: 'reload', mode: 'cors' });
+                            if (r.ok) { await cache.put('./' + fn, r); updated++; addDetail(`✅ ${fn}`); }
+                            else { addDetail(`⚠️ فشل: ${fn}`); }
+                        } catch { addDetail(`⚠️ خطأ في: ${fn}`); }
                     }
 
                     localStorage.setItem('last_commit_sha', commitData.sha.substring(0, 7));
@@ -211,15 +165,9 @@
 
                     setTimeout(() => {
                         document.body.removeChild(loadingMsg);
-                        alert(
-                            `✅ تم التحديث بنجاح!\n\n` +
-                            `• تم تحديث: ${updated} ملف\n` +
-                            (protected_ > 0 ? `🔒 محمي: ${protected_} ملف\n` : '') +
-                            `\n🔄 إعادة التحميل...`
-                        );
+                        alert(`✅ تم التحديث بنجاح!\n\n• تم تحديث: ${updated} ملف\n${protected_ > 0 ? `🔒 محمي: ${protected_} ملف\n` : ''}\n🔄 إعادة التحميل...`);
                         window.location.reload(true);
                     }, 1500);
-
                 } catch (err) {
                     document.body.removeChild(loadingMsg);
                     alert('⚠️ خطأ في التحديث:\n' + err.message);
@@ -232,9 +180,7 @@
         const jsToggle = document.getElementById('js-toggle');
         if (jsToggle) {
             setInteractionEnabled(jsToggle.checked);
-            jsToggle.addEventListener('change', function () {
-                setInteractionEnabled(this.checked);
-            });
+            jsToggle.addEventListener('change', function () { setInteractionEnabled(this.checked); });
         }
 
         // ----- زر تحريك شريط الأدوات -----
@@ -292,11 +238,6 @@
 
     } catch (err) {
         console.error('❌ خطأ في تحميل النظام:', err);
-        // عرض رسالة للمستخدم
-        document.body.innerHTML = `
-            <div style="color:red;padding:20px;font-size:20px;direction:rtl;">
-                ❌ حدث خطأ في تحميل النظام:<br>${err.message}<br>
-                تحقق من وحدة التحكم (F12) للمزيد من التفاصيل.
-            </div>`;
+        document.body.innerHTML = `<div style="color:red;padding:20px;font-size:20px;direction:rtl;">❌ حدث خطأ في تحميل النظام:<br>${err.message}<br>تحقق من وحدة التحكم (F12) للمزيد من التفاصيل.</div>`;
     }
 })();
