@@ -1,24 +1,25 @@
 /* ========================================
-   sw.js - ✅ نسخة مصححة
-   - إضافة return بعد كل event.respondWith
-   - منع تسرب الطلبات بين الشروط
+   sw.js - ✅ نسخة مستقرة نهائية
+   - استخدام مسارات نسبية (تبدأ بـ ./) للتخزين المؤقت
+   - try/catch حول response.clone() لمنع أخطاء الاستنساخ
+   - return بعد كل event.respondWith()
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-v1.3'; // ✅ رفع الإصدار لتحديث الكاش
+const CACHE_NAME = 'semester-3-cache-v1.4'; // تغيير الإصدار لتفعيل التحديث فوراً
 const urlsToCache = [
     './',
     './index.html',
     './style.css',
     './tracker.js',
-    './script.js',          // ✅ script.js في الجذر
-    '/javascript/core/config.js',
-    '/javascript/core/utils.js',
-    '/javascript/core/navigation.js',
-    '/javascript/core/group-loader.js',
-    '/javascript/ui/pdf-viewer.js',
-    '/javascript/ui/wood-interface.js',
-    '/javascript/features/preload-game.js',
-    '/javascript/features/svg-processor.js',
+    './script.js',                       // ✅ script.js في الجذر
+    './javascript/core/config.js',
+    './javascript/core/utils.js',
+    './javascript/core/navigation.js',
+    './javascript/core/group-loader.js',
+    './javascript/ui/pdf-viewer.js',
+    './javascript/ui/wood-interface.js',
+    './javascript/features/preload-game.js',
+    './javascript/features/svg-processor.js',
     './image/0.webp',
     './image/wood.webp',
     './image/Upper_wood.webp'
@@ -85,9 +86,13 @@ self.addEventListener('fetch', (event) => {
                 if (cached) return cached;
                 return fetch(event.request).then(response => {
                     if (response && response.status === 200) {
-                        caches.open(CACHE_NAME).then(cache =>
-                            cache.put(event.request, response.clone())
-                        );
+                        caches.open(CACHE_NAME).then(cache => {
+                            try {
+                                cache.put(event.request, response.clone());
+                            } catch (e) {
+                                console.warn('⚠️ فشل استنساخ الرد (JavaScript):', e);
+                            }
+                        });
                     }
                     return response;
                 }).catch(() => new Response('Offline', { status: 503 }));
@@ -103,9 +108,13 @@ self.addEventListener('fetch', (event) => {
                 if (cached) return cached;
                 return fetch(event.request).then(response => {
                     if (response && response.status === 200) {
-                        caches.open(CACHE_NAME).then(cache =>
-                            cache.put(event.request, response.clone())
-                        );
+                        caches.open(CACHE_NAME).then(cache => {
+                            try {
+                                cache.put(event.request, response.clone());
+                            } catch (e) {
+                                console.warn('⚠️ فشل استنساخ الرد (GitHub):', e);
+                            }
+                        });
                     }
                     return response;
                 }).catch(() => new Response('GitHub unavailable', { status: 503 }));
@@ -120,9 +129,13 @@ self.addEventListener('fetch', (event) => {
             if (cached) return cached;
             return fetch(event.request).then(response => {
                 if (shouldCache(event.request.url) && response && response.status === 200) {
-                    caches.open(CACHE_NAME).then(cache =>
-                        cache.put(event.request, response.clone())
-                    );
+                    caches.open(CACHE_NAME).then(cache => {
+                        try {
+                            cache.put(event.request, response.clone());
+                        } catch (e) {
+                            console.warn('⚠️ فشل استنساخ الرد (عام):', e);
+                        }
+                    });
                 }
                 return response;
             }).catch(() => {
