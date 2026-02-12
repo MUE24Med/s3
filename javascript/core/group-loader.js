@@ -1,6 +1,6 @@
 /* ========================================
    javascript/core/group-loader.js
-   ✅ نسخة مستقرة - تستخدم import ديناميكي لتجنب circular dependency
+   ✅ نسخة مستقرة مع تحسين مراقبة التنفيذ
    ======================================== */
 
 import {
@@ -10,8 +10,6 @@ import {
 import { saveSelectedGroup, fetchGlobalTree } from './utils.js';
 import { pushNavigationState } from './navigation.js';
 import { NAV_STATE } from './config.js';
-
-// ✅ لم نعد نستورد svg-processor هنا - يُحمَّل ديناميكياً
 
 export function showLoadingScreen(groupLetter) {
     const loadingOverlay = document.getElementById('loading-overlay');
@@ -75,30 +73,29 @@ export async function loadGroupSVG(groupLetter) {
 
 export async function initializeGroup(groupLetter) {
     console.log(`🚀 بدء العملية للمجموعة: ${groupLetter}`);
-
-    saveSelectedGroup(groupLetter);
-    setCurrentGroup(groupLetter);
-    setCurrentFolder("");
-
-    const toggleContainer = document.getElementById('js-toggle-container');
-    const scrollContainer = document.getElementById('scroll-container');
-    const groupSelectionScreen = document.getElementById('group-selection-screen');
-
-    if (toggleContainer) {
-        toggleContainer.classList.remove('fully-hidden');
-        toggleContainer.style.display = 'flex';
-    }
-    if (scrollContainer) scrollContainer.style.display = 'block';
-    if (groupSelectionScreen) {
-        groupSelectionScreen.classList.add('hidden');
-        groupSelectionScreen.style.display = 'none';
-    }
-
-    pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
-    showLoadingScreen(groupLetter);
-
     try {
-        // ✅ إصلاح: تحميل svg-processor ديناميكياً لتجنب circular import
+        saveSelectedGroup(groupLetter);
+        setCurrentGroup(groupLetter);
+        setCurrentFolder("");
+
+        const toggleContainer = document.getElementById('js-toggle-container');
+        const scrollContainer = document.getElementById('scroll-container');
+        const groupSelectionScreen = document.getElementById('group-selection-screen');
+
+        if (toggleContainer) {
+            toggleContainer.classList.remove('fully-hidden');
+            toggleContainer.style.display = 'flex';
+        }
+        if (scrollContainer) scrollContainer.style.display = 'block';
+        if (groupSelectionScreen) {
+            groupSelectionScreen.classList.add('hidden');
+            groupSelectionScreen.style.display = 'none';
+        }
+
+        pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
+        showLoadingScreen(groupLetter);
+        console.log('⏳ شاشة التحميل ظهرت');
+
         const [treeData, svgModule] = await Promise.all([
             fetchGlobalTree(),
             import('../features/svg-processor.js')
@@ -111,9 +108,11 @@ export async function initializeGroup(groupLetter) {
         }
 
         await loadGroupSVG(groupLetter);
+        console.log('✅ SVG محقون');
 
         updateDynamicSizes();
         scan();
+        console.log('🔍 تم مسح المستطيلات');
 
         if (typeof window.loadImages === 'function') {
             window.loadImages();
@@ -125,6 +124,7 @@ export async function initializeGroup(groupLetter) {
 
     } catch (error) {
         console.error("❌ حدث خطأ أثناء التحميل:", error);
+        alert("❌ فشل تحميل المجموعة: " + error.message);
     } finally {
         setTimeout(() => {
             hideLoadingScreen();
@@ -134,7 +134,6 @@ export async function initializeGroup(groupLetter) {
     }
 }
 
-// تصدير للـ window
 window.initializeGroup = initializeGroup;
 window.hideLoadingScreen = hideLoadingScreen;
 window.showLoadingScreen = showLoadingScreen;
