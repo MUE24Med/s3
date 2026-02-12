@@ -70,7 +70,6 @@
                 console.log('👆 تم اختيار المجموعة:', group);
                 const gss = document.getElementById('group-selection-screen');
                 if (gss) gss.style.display = 'none';
-                // ✅ تأكد من وجود الدالة
                 if (typeof window.initializeGroup === 'function') {
                     window.initializeGroup(group);
                 } else {
