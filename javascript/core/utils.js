@@ -2,6 +2,8 @@
 // utils.js - دوال مساعدة عامة
 // ============================================
 
+import { translationMap } from './config.js';
+
 // ------------------------------
 // تحويل النصوص والترجمة
 // ------------------------------
@@ -33,9 +35,6 @@ export function autoTranslate(filename) {
         .trim();
     return arabic;
 }
-
-// استيراد translationMap من config
-import { translationMap } from './config.js';
 
 // ------------------------------
 // Debounce
