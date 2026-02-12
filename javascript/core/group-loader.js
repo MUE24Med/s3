@@ -84,7 +84,11 @@ export function showLoadingScreen(groupLetter) {
     document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
     loadingOverlay.classList.add('active');
     console.log(`🔦 شاشة التحميل نشطة: Group ${groupLetter}`);
-    updateWelcomeMessages(); // سيتم استيرادها لاحقاً
+    
+    // استدعاء تحديث رسائل الترحيب
+    import('../ui/wood-interface.js').then(({ updateWelcomeMessages }) => {
+        updateWelcomeMessages();
+    });
 }
 
 export function hideLoadingScreen() {
@@ -117,12 +121,6 @@ export function updateLoadProgress() {
     if (percentage >= 40) document.getElementById('bulb-3')?.classList.add('on');
     if (percentage >= 60) document.getElementById('bulb-2')?.classList.add('on');
     if (percentage >= 80) document.getElementById('bulb-1')?.classList.add('on');
-}
-
-// استيراد updateWelcomeMessages ديناميكياً لتجنب الاستيراد الدائري
-async function updateWelcomeMessages() {
-    const { updateWelcomeMessages } = await import('../ui/wood-interface.js');
-    updateWelcomeMessages();
 }
 
 // ---------- تحميل SVG الخاص بالمجموعة ----------
@@ -272,7 +270,7 @@ export async function initializeGroup(groupLetter) {
     // استدعاء دوال من wood-interface
     const { updateDynamicSizes, loadImages } = await import('../ui/wood-interface.js');
     updateDynamicSizes();
-    loadImages();
+    await loadImages();
 }
 
 // ---------- تحميل الصور ----------
@@ -302,7 +300,7 @@ export async function loadImages() {
                     console.log(`✅ الصورة موجودة في الكاش: ${url.split('/').pop()}`);
                     const blob = await cachedImg.blob();
                     const imgUrl = URL.createObjectURL(blob);
-                    const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
+                    const allImages = [...mainSvg.querySelectorAll('image'), ...(document.getElementById('files-list-container')?.querySelectorAll('image') || [])];
                     allImages.forEach(si => {
                         const dataSrc = si.getAttribute('data-src');
                         if (dataSrc === url) {
@@ -324,7 +322,7 @@ export async function loadImages() {
 
             const img = new Image();
             img.onload = async function() {
-                const allImages = [...mainSvg.querySelectorAll('image'), ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])];
+                const allImages = [...mainSvg.querySelectorAll('image'), ...(document.getElementById('files-list-container')?.querySelectorAll('image') || [])];
                 allImages.forEach(si => {
                     const dataSrc = si.getAttribute('data-src');
                     if (dataSrc === url) {
@@ -430,5 +428,3 @@ export function updateDynamicSizes() {
     mainSvg.setAttribute('viewBox', `0 0 ${maxX} ${maxY}`);
     console.log(`✅ viewBox محدّث ديناميكيًا: 0 0 ${maxX} ${maxY}`);
 }
-
-// ملاحظة: يتم استدعاء updateDynamicSizes من الخارج أيضاً، ونحن نصدرها
