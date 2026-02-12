@@ -1,11 +1,10 @@
 /* ========================================
    javascript/core/utils.js
-   الدوال المساعدة
+   ✅ بدون تغييرات جوهرية - الملف سليم
    ======================================== */
 
-import { translationMap } from './config.js';
+import { translationMap, SUBJECT_FOLDERS } from './config.js';
 
-// تطبيع النص العربي للبحث
 export function normalizeArabic(text) {
     if (!text) return '';
     text = String(text);
@@ -19,7 +18,6 @@ export function normalizeArabic(text) {
         .trim();
 }
 
-// ترجمة تلقائية لأسماء الملفات
 export function autoTranslate(filename) {
     if (!filename) return '';
     let arabic = filename.toLowerCase();
@@ -27,16 +25,14 @@ export function autoTranslate(filename) {
         const regex = new RegExp(en, 'gi');
         arabic = arabic.replace(regex, ar);
     }
-    arabic = arabic
+    return arabic
         .replace(/\.pdf$/i, '')
         .replace(/\.webp$/i, '')
         .replace(/-/g, ' ')
         .replace(/_/g, ' ')
         .trim();
-    return arabic;
 }
 
-// Debounce للبحث
 export function debounce(func, delay) {
     let timeoutId;
     return function() {
@@ -45,53 +41,39 @@ export function debounce(func, delay) {
     };
 }
 
-// التحقق من مجلد المواد
 export function isSubjectFolder(folderName) {
-    const SUBJECT_FOLDERS = [
-        'anatomy', 'histo', 'physio', 'bio',
-        'micro', 'para', 'pharma', 'patho'
-    ];
     const lowerName = folderName.toLowerCase();
     return SUBJECT_FOLDERS.some(subject => lowerName.includes(subject));
 }
 
-// حفظ المجموعة المختارة
 export function saveSelectedGroup(group) {
     localStorage.setItem('selectedGroup', group);
     window.dispatchEvent(new CustomEvent('groupChanged', { detail: group }));
 }
 
-// تحميل المجموعة المحفوظة
 export function loadSelectedGroup() {
-    const saved = localStorage.getItem('selectedGroup');
-    return saved || null;
+    return localStorage.getItem('selectedGroup') || null;
 }
 
-// الحصول على اسم العرض
 export function getDisplayName() {
     const realName = localStorage.getItem('user_real_name');
-    if (realName && realName.trim()) {
-        return realName.trim();
-    }
-    const visitorId = localStorage.getItem('visitor_id');
-    return visitorId || 'زائر';
+    if (realName && realName.trim()) return realName.trim();
+    return localStorage.getItem('visitor_id') || 'زائر';
 }
 
-// تحديث رسائل الترحيب
 export function updateWelcomeMessages() {
     const displayName = getDisplayName();
     const groupScreenH1 = document.querySelector('#group-selection-screen h1');
     if (groupScreenH1) {
-        groupScreenH1.innerHTML = `مرحباً بك يا <span style="color: #ffca28;">${displayName}</span> إختر جروبك`;
+        groupScreenH1.innerHTML = `مرحباً بك يا <span style="color:#ffca28">${displayName}</span> إختر جروبك`;
     }
     const loadingH1 = document.querySelector('#loading-content h1');
     const currentGroup = localStorage.getItem('selectedGroup');
     if (loadingH1 && currentGroup) {
-        loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span><br>في ${currentGroup}`;
+        loadingH1.innerHTML = `أهلاً بك يا <span style="color:#ffca28">${displayName}</span><br>في ${currentGroup}`;
     }
 }
 
-// جلب شجرة الملفات من GitHub
 export async function fetchGlobalTree() {
     try {
         const TREE_API_URL = `https://api.github.com/repos/MUE24Med/s3/git/trees/main?recursive=1`;
