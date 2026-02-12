@@ -2,7 +2,7 @@
    sw.js - ✅ نسخة مستقرة نهائية
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-20250212-110325';
+const CACHE_NAME = 'semester-3-cache-20260212-1';
 const urlsToCache = [
     './',
     './index.html',
