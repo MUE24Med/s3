@@ -105,7 +105,7 @@ export async function loadGroupSVG(groupLetter) {
     if (!groupContainer) return;
     groupContainer.innerHTML = '';
     try {
-        const response = await fetch(`groups/group-${groupLetter}.svg`);
+        const response = await fetch(`G/${groupLetter}.svg`);
         if (!response.ok) throw new Error(`SVG غير موجود (${response.status})`);
         const svgText = await response.text();
         const parser = new DOMParser();
