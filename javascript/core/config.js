@@ -1,6 +1,6 @@
 /* ========================================
    javascript/core/config.js
-   ✅ نسخة مستقرة - لا تعديل مطلوب
+   ✅ نسخة مستقرة
    ======================================== */
 
 export const REPO_NAME = "s3";
@@ -12,14 +12,36 @@ export const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER
 export const PROTECTED_FILES = [
     'image/0.webp',
     'image/wood.webp',
-    'image/Upper_wood.webp'
+    'image/Upper_wood.webp',
+    'image/logo-A.webp',
+    'image/logo-B.webp',
+    'image/logo-C.webp',
+    'image/logo-D.webp'
 ];
 
-export const SUBJECT_FOLDERS = [ /* ... */ ];
-export const translationMap = { /* ... */ };
-export const NAV_STATE = { /* ... */ };
+export const SUBJECT_FOLDERS = [
+    'anatomy', 'histo', 'physio', 'bio',
+    'micro', 'para', 'pharma', 'patho'
+];
 
-// متغيرات قابلة للتغيير
+export const translationMap = {
+    'physio': 'فسيولوجي', 'anatomy': 'اناتومي', 'histo': 'هستولوجي',
+    'patho': 'باثولوجي', 'pharma': 'فارماكولوجي', 'micro': 'ميكروبيولوجي',
+    'para': 'باراسيتولوجي', 'section': 'سكشن', 'lecture': 'محاضرة',
+    'question': 'أسئلة', 'answer': 'إجابات', 'discussion': 'مناقشة',
+    'book': 'كتاب', 'rrs': 'جهاز تنفسي', 'uri': 'جهاز بولي',
+    'cvs': 'جهاز دوري', 'ipc': 'مهارات اتصال', 'bio': 'بيوكيميستري',
+    '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+    '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9'
+};
+
+export const NAV_STATE = {
+    GROUP_SELECTION: 'group_selection',
+    WOOD_VIEW: 'wood_view',
+    MAP_VIEW: 'map_view',
+    PDF_VIEW: 'pdf_view'
+};
+
 let _globalFileTree = [];
 let _currentGroup = null;
 let _currentFolder = "";
@@ -27,7 +49,6 @@ let _interactionEnabled = true;
 let _imageUrlsToLoad = [];
 let _loadingProgress = { totalSteps: 0, completedSteps: 0, currentPercentage: 0 };
 
-// Getters
 export function getGlobalFileTree()     { return _globalFileTree; }
 export function getCurrentGroup()       { return _currentGroup; }
 export function getCurrentFolder()      { return _currentFolder; }
@@ -35,7 +56,6 @@ export function getInteractionEnabled() { return _interactionEnabled; }
 export function getImageUrlsToLoad()    { return _imageUrlsToLoad; }
 export function getLoadingProgress()    { return _loadingProgress; }
 
-// Setters
 export function setGlobalFileTree(tree)   { _globalFileTree = tree; window.globalFileTree = tree; }
 export function setCurrentGroup(group)    { _currentGroup = group; window.currentGroup = group; }
 export function setCurrentFolder(folder)  { _currentFolder = folder; window.currentFolder = folder; }
@@ -43,7 +63,6 @@ export function setInteractionEnabled(en) { _interactionEnabled = en; window.int
 export function setImageUrlsToLoad(urls)  { _imageUrlsToLoad = urls; }
 export function setLoadingProgress(prog)  { _loadingProgress = prog; }
 
-// ✅ دالة الحماية - تستخدم 'filePath' بدلاً من 'protected'
 export function isProtectedFile(filename) {
     return PROTECTED_FILES.some(filePath =>
         filename.endsWith(filePath) || filename.includes('/' + filePath)
