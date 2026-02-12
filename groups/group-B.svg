@@ -39,7 +39,7 @@
 <!-- الاسبوع الثامن -->
 <g transform="translate(8192,0)">
     <image data-src="image/B/08.webp" width="1024" height="2454" />
-    
+
     <!-- Monday 8 -->
     <g transform="translate(368,0)">
         <rect x="0" y="703" height="380" class="m w l" data-href="RRS/Lecture/micro-01.pdf"/>
@@ -48,14 +48,14 @@
         <rect x="0" y="1465" height="378.5" class="m w l" data-href="RRS/Lecture/physio-02.pdf"/>
         <rect x="0" y="1845" height="380" class="m w s" data-href="RRS/Section/anatomy-01.pdf"/>
     </g>
-    
+
     <!-- Wednesday 8 -->
     <g transform="translate(598,0)">
         <rect x="0" y="366" height="315" class="m w l" data-href="RRS/Lecture/physio-01.pdf"/>
         <rect x="0" y="1846" height="253.4" class="m w l" data-href="RRS/Lecture/physio-02.pdf"/>
         <rect x="0" y="2100" height="127" class="m w q" data-href="RRS/Question/physio-01.pdf"/>
     </g>
-    
+
     <!-- Thursday 8 -->
     <g transform="translate(712.35,0)">
         <rect x="0" y="702" height="380" class="m w l" data-href="RRS/Lecture/histo-01.pdf"/>
@@ -66,7 +66,7 @@
 <!-- الاسبوع التاسع -->
 <g transform="translate(9216,0)">
     <image data-src="image/B/09.webp" width="1024" height="2454"/>
-    
+
     <!-- Saturday 9 -->
     <g transform="translate(140,0)">
         <rect x="0" y="309" height="340.63" class="m w l" data-href="RRS/Lecture/pharma-01.pdf"/>
@@ -75,27 +75,27 @@
         <rect x="57.5" y="1225" height="121" class="m hw a" data-href="IPC/Answer/09.pdf"/>
         <rect x="0" y="1810.38" height="470.24" class="m w l" data-href="#"/>
     </g>
-    
+
     <!-- Monday 9 -->
     <g transform="translate(370,0)">
         <rect x="0" y="422.3" height="456.42" class="m w l" data-href="RRS/Lecture/physio-03.pdf"/>
         <rect x="0" y="1369" height="450" class="m w l" data-href="RRS/Lecture/histo-02.pdf"/>
         <rect x="0" y="1812.1" height="471.44" class="m w l" data-href="#"/>
     </g>
-    
+
     <!-- Tuesday 9 -->
     <g transform="translate(485,0)">
         <rect x="0" y="1121.29" height="347.86" class="m w l" data-href="#"/>
         <rect x="0" y="1470.58" height="340.47" class="m w l" data-href="#"/>
         <rect x="0" y="1813.77" height="361.36" class="m w l" data-href="#"/>
     </g>
-    
+
     <!-- Wednesday 9 -->
     <g transform="translate(600,0)">
         <rect x="0" y="421.64" height="457.44" class="m w l" data-href="#"/>
         <rect x="0" y="1469.19" height="343.19" class="m w l" data-href="RRS/Lecture/physio-04.pdf"/>
     </g>
-    
+
     <!-- Thursday 9 -->
     <g transform="translate(715,0)">
         <rect x="0" y="422.25" height="340.47" class="m w l" data-href="#"/>
@@ -117,7 +117,7 @@
 <!-- الاسبوع الثاني عشر -->
 <g transform="translate(12288,0)">
     <image data-src="image/B/12.webp" width="1024" height="2454" />
-    
+
     <!-- Saturday 12 -->
     <g transform="translate(138.41,0)">
         <rect x="0" y="557.66" height="628.7" class="m w l" data-href="URI/Lecture/pharma-01.pdf"/>
@@ -127,14 +127,14 @@
 <!-- الاسبوع الثالث عشر-->
 <g transform="translate(13312,0)">
     <image data-src="image/B/13.webp" width="1024" height="2454" />
-    
+
     <!-- Saturday 13 -->
     <g transform="translate(139,0)">
         <rect x="0" y="937.7" height="468.3" class="m w l" data-href="#"/>
         <rect x="0" y="1409" height="472.3" class="m w l" data-href="URI/Lecture/pharma-02.pdf"/>
         <rect x="0" y="1883.5" height="395.5" class="m w s" data-href="URI/Section/micro-01.pdf"/>
     </g>
-    
+
     <!-- Monday 13 -->
     <g transform="translate(368,0)">
         <rect x="0" y="415.1" height="424.1" class="m w l" data-href="#"/>
@@ -142,20 +142,20 @@
         <rect x="0" y="1287.75" height="484.32" class="m w i" data-href="IPC/Lecture/Chest Inspection and Palpation.pdf" data-full-text="Chest Inspection and Palpation .pdf"/>
         <rect x="0" y="1773.4" height="505.15" class="m w l" data-href="URI/Lecture/physio-01.pdf"/>
     </g>
-    
+
     <!-- Tuesday 13 -->
     <g transform="translate(485,0)">
         <rect x="0" y="311.4" height="426.454" class="m w l" data-href="URI/Lecture/patho-01.pdf"/>
         <rect x="0" y="1285.3" height="486" class="m w l" data-href="#"/>
     </g>
-    
+
     <!-- Wednesday 13 -->
     <g transform="translate(598,0)">
         <rect x="0" y="415.1" height="323.85" class="m w l" data-href="URI/Lecture/micro-01.pdf"/>
         <rect x="0" y="841.4" height="444" class="m w l " data-href="URI/Lecture/histo-01.pdf"/>
         <rect x="0" y="1286.2" height="486.5" class="m w l" data-href="#"/>
     </g>
-    
+
     <!-- Thursday 13 -->
     <g transform="translate(714,0)">
         <rect x="0" y="418.7" height="420" class="m w l" data-href="#"/>
@@ -167,20 +167,20 @@
 <!-- الاسبوع الرابع عشر-->
 <g transform="translate(14336,0)">
     <image data-src="image/B/14.webp" width="1024" height="2454" />
-    
+
     <!-- Saturday 14 -->
     <g transform="translate(138,0)">
         <rect x="0" y="242" height="350.6" class="m w l" data-href="#" />
         <rect x="0" y="593" height="341.5" class="m w l" data-href="#" />
         <rect x="0" y="934.3" height="320" class="m w l" data-href="URI/Lecture/pharma-03.pdf" />
     </g>
-    
+
     <!-- Sunday 14 -->
     <g transform="translate(252.8,0)">
         <rect x="0" y="1264.5" height="494" class="m w l" data-href="URI/Lecture/anatomy-02.pdf" />
         <rect x="0" y="1749.5" height="496.75" class="m w q" data-href="URI/Question/D-pharma-01.pdf" />
     </g>
-    
+
     <!-- Monday 14 -->
     <g transform="translate(368.5,0)">
         <rect x="0" y="1204.3"  height="494.7" class="m w l" data-href="URI/Lecture/para-01.pdf" />
@@ -222,7 +222,7 @@
 <!-- الاسبوع السابع عشر -->
 <g transform="translate(17408,0)">
     <image data-src="image/B/17.webp" width="1024" height="2454" />
-    
+
     <!-- Monday 17 -->
     <g transform="translate(368,0)">
         <rect x="0" y="1093.5" height="327.32" class="m w is" data-href="ipc" />
@@ -257,7 +257,7 @@
 <!-- الاسبوع التاسع عشر -->
 <g transform="translate(19456,0)">
     <image data-src="image/B/19.webp" width="1024" height="2454" />
-    
+
     <!-- Saturday 19 -->
     <g transform="translate(140,0)">
         <rect x="0" y="330" height="539.5" class="m w" data-href="#" />
@@ -293,41 +293,66 @@
     <image data-src="image/B/20.webp" width="1024" height="2454" />
 </g>
 
-<!-- الاسبوع الواحد و العشرين -->
+<!-- الاسبوع الواحد و العشرين - محدث حسب الاحداثي الجديد -->
 <g transform="translate(21504,0)">
     <image data-src="image/B/21.webp" width="1024" height="2454" />
-    
+
     <!-- Saturday 21 -->
     <g transform="translate(139,0)">
-        <rect x="0" y="1128.5" height="376.5" class="m w" data-href="#" />
-        <rect x="0" y="150.8" height="378" class="m w" data-href="#"/>
-        <rect x="0" y="1886.2" height="287" class="m w" data-href="#"/>
+        <rect x="0" y="150.8" height="378" class="m w l" data-href="HEM/Lecture/pharma-01.pdf"/>
+        <rect x="0" y="528.8" height="379.3" class="m w s" data-href="HEM/Section/micro-02.pdf"/>
+        <rect x="0" y="908.1" height="377.5" class="m w q" data-href="HEM/Question/pharma-01.pdf"/>
+        <rect x="57.5" y="908.1" height="377.5" class="m w a" data-href="HEM/Answer/pharma-01.pdf"/>
+        <rect x="0" y="1285.6" height="375.8" class="m w l" data-href="HEM/Lecture/patho-02.pdf"/>
+        <rect x="0" y="1661.4" height="593" class="m w i" data-href="IPC/Lecture/Blood Pressure Measurement.pdf" data-full-text="Blood Pressure Measurement .pdf"/>
     </g>
-    
+
     <!-- Sunday 21 -->
     <g transform="translate(254,0)">
-        <rect x="0" y="1128.3" height="376.71" class="m w l" data-href="HEM/Lecture/para-01.pdf" />
-        <rect x="0" y="1505.7" height="378.8" class="m w s" data-href="#" />
-        <rect x="0" y="1885.5" height="289.5" class="m w l" data-href="HEM/Lecture/physio-02.pdf" />
+        <rect x="0" y="150.5" height="377.8" class="m w l" data-href="HEM/Lecture/physio-03.pdf"/>
+        <rect x="0" y="528.3" height="380.1" class="m w s" data-href="HEM/Section/para-02.pdf"/>
+        <rect x="0" y="908.4" height="376.5" class="m w l" data-href="HEM/Lecture/anatomy-03.pdf"/>
+        <rect x="0" y="1284.9" height="377.2" class="m w q" data-href="HEM/Question/physio-02.pdf"/>
+        <rect x="57.5" y="1284.9" height="377.2" class="m w a" data-href="HEM/Answer/physio-02.pdf"/>
+        <rect x="0" y="1662.1" height="592.4" class="m w i" data-href="IPC/Lecture/Heart Sounds and Murmurs.pdf" data-full-text="Heart Sounds and Murmurs .pdf"/>
     </g>
-    
+
     <!-- Monday 21 -->
     <g transform="translate(368.5,0)">
-        <rect x="0" y="289.3" height="448.1" class="m w" data-href="#" />
-        <rect x="0" y="853.5" height="547.6" class="m w" data-href="#" />
-        <rect x="0" y="1886.3" height="384.2" class="m w" data-href="#" />
+        <rect x="0" y="150.3" height="378.5" class="m w l" data-href="HEM/Lecture/micro-02.pdf"/>
+        <rect x="0" y="528.8" height="379.7" class="m w l" data-href="HEM/Lecture/para-02.pdf"/>
+        <rect x="0" y="908.5" height="376.5" class="m w s" data-href="HEM/Section/patho-01.pdf"/>
+        <rect x="0" y="1285" height="377.3" class="m w l" data-href="HEM/Lecture/pharma-02.pdf"/>
+        <rect x="0" y="1662.3" height="592.2" class="m w l" data-href="HEM/Lecture/physio-04.pdf"/>
     </g>
-    
+
+    <!-- Tuesday 21 -->
+    <g transform="translate(483,0)">
+        <rect x="0" y="150.6" height="378.2" class="m w l" data-href="HEM/Lecture/histo-02.pdf"/>
+        <rect x="0" y="528.8" height="379.4" class="m w l" data-href="HEM/Lecture/biochem-01.pdf"/>
+        <rect x="0" y="908.2" height="376.8" class="m w s" data-href="HEM/Section/physio-02.pdf"/>
+        <rect x="0" y="1285" height="377.5" class="m w q" data-href="HEM/Question/patho-01.pdf"/>
+        <rect x="57.5" y="1285" height="377.5" class="m w a" data-href="HEM/Answer/patho-01.pdf"/>
+        <rect x="0" y="1662.5" height="592" class="m w l" data-href="HEM/Lecture/immuno-01.pdf"/>
+    </g>
+
     <!-- Wednesday 21 -->
-    <g transform="translate(597.758,0)">
-        <rect x="0" y="1403" height="481" class="m w" data-href="#" />
+    <g transform="translate(598,0)">
+        <rect x="0" y="150.7" height="377.9" class="m w l" data-href="HEM/Lecture/patho-03.pdf"/>
+        <rect x="0" y="528.6" height="379.6" class="m w s" data-href="HEM/Section/histo-01.pdf"/>
+        <rect x="0" y="908.2" height="376.4" class="m w l" data-href="HEM/Lecture/pharma-03.pdf"/>
+        <rect x="0" y="1284.6" height="377.8" class="m w i" data-href="IPC/Lecture/Anemia Classification.pdf" data-full-text="Anemia Classification .pdf"/>
+        <rect x="0" y="1662.4" height="592.1" class="m w l" data-href="HEM/Lecture/physio-05.pdf"/>
     </g>
-    
+
     <!-- Thursday 21 -->
     <g transform="translate(713,0)">
-        <rect x="0" y="391.2" height="461" class="m w" data-href="#" />
-        <rect x="0" y="854" height="547" class="m w" data-href="#" />
-        <rect x="0" y="1403.1" height="482.6" class="m w" data-href="#" />
+        <rect x="0" y="150.4" height="378.3" class="m w l" data-href="HEM/Lecture/oncology-01.pdf"/>
+        <rect x="0" y="528.7" height="379.5" class="m w s" data-href="HEM/Section/biochem-01.pdf"/>
+        <rect x="0" y="908.2" height="376.6" class="m w q" data-href="HEM/Question/pharma-02.pdf"/>
+        <rect x="57.5" y="908.2" height="376.6" class="m w a" data-href="HEM/Answer/pharma-02.pdf"/>
+        <rect x="0" y="1284.8" height="377.4" class="m w l" data-href="HEM/Lecture/coagulation-01.pdf"/>
+        <rect x="0" y="1662.2" height="592.3" class="m w i" data-href="IPC/Lecture/Complete Blood Count Interpretation.pdf" data-full-text="Complete Blood Count Interpretation .pdf"/>
     </g>
 </g>
 
