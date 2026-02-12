@@ -1,6 +1,6 @@
 /* ========================================
    javascript/features/svg-processor.js
-   ✅ إصلاح شامل: معالجة NaN وإنشاء defs تلقائي
+   ✅ إصلاح شامل: viewBox لا يصبح 0، مع تحميل الصور
    ======================================== */
 
 import { RAW_CONTENT_BASE } from '../core/config.js';
@@ -421,7 +421,7 @@ function processRect(r) {
 export function scan() {
     const mainSvg = document.getElementById('main-svg');
     if (!mainSvg) return;
-    ensureDefs(mainSvg); // تأكد من وجود defs
+    ensureDefs(mainSvg);
     console.log('🔍 تشغيل scan()...');
     const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
     console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);
@@ -464,12 +464,19 @@ export function scan() {
 export function updateDynamicSizes() {
     const mainSvg = document.getElementById('main-svg');
     if (!mainSvg) return;
+    
     const allImages = mainSvg.querySelectorAll('image[width][height]');
+    console.log(`📸 عدد الصور في SVG: ${allImages.length}`);
+    
+    // إذا لم نجد صوراً، لا نغير viewBox (نترك القيمة الحالية)
     if (allImages.length === 0) {
-        console.warn('⚠️ لم يتم العثور على صور');
+        console.warn('⚠️ لم يتم العثور على صور، نحتفظ بالـ viewBox الحالي');
         return;
     }
-    let maxX = 0, maxY = 2454;
+    
+    let maxX = 0;
+    let maxY = 2454; // القيمة الافتراضية من wood.webp
+    
     allImages.forEach(img => {
         const g = img.closest('g[transform]');
         let translateX = 0;
@@ -477,11 +484,24 @@ export function updateDynamicSizes() {
             const match = g.getAttribute('transform').match(/translate\s*([\d.-]+)(?:[ ,]+([\d.-]+))?\s*\)/);
             if (match) translateX = safeParse(match[1]);
         }
-        const totalX = translateX + safeParse(img.getAttribute('x'), 0) + safeParse(img.getAttribute('width'), 0);
+        
+        const imgX = safeParse(img.getAttribute('x'), 0);
+        const imgWidth = safeParse(img.getAttribute('width'), 0);
+        const totalX = translateX + imgX + imgWidth;
         if (totalX > maxX) maxX = totalX;
-        const h = safeParse(img.getAttribute('height'), 0);
-        if (h > maxY) maxY = h;
+        
+        const imgHeight = safeParse(img.getAttribute('height'), 0);
+        console.log(`🖼️ صورة: ${img.getAttribute('data-src') || img.getAttribute('href')} | العرض: ${imgWidth} | الارتفاع: ${imgHeight} | translateX: ${translateX}`);
+        
+        if (imgHeight > maxY) maxY = imgHeight;
     });
+    
+    // تأمين: إذا كان maxY لا يزال 0، استخدم القيمة الافتراضية 2454
+    if (maxY < 2454) {
+        console.warn(`⚠️ maxY = ${maxY} صغير جداً، نضبطه إلى 2454`);
+        maxY = 2454;
+    }
+    
     mainSvg.setAttribute('viewBox', `0 0 ${maxX} ${maxY}`);
     console.log(`✅ viewBox محدّث: 0 0 ${maxX} ${maxY}`);
 }
