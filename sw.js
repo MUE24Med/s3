@@ -1,17 +1,10 @@
-/* ========================================
-   sw.js - ✅ نسخة مستقرة نهائية
-   - استخدام مسارات نسبية (تبدأ بـ ./) للتخزين المؤقت
-   - try/catch حول response.clone() لمنع أخطاء الاستنساخ
-   - return بعد كل event.respondWith()
-   ======================================== */
-
-const CACHE_NAME = 'semester-3-cache-v1.7'; // تغيير الإصدار لتفعيل التحديث فوراً
+const CACHE_NAME = 'semester-3-cache-v1.4';
 const urlsToCache = [
     './',
     './index.html',
     './style.css',
     './tracker.js',
-    './script.js',                       // ✅ script.js في الجذر
+    './script.js',
     './javascript/core/config.js',
     './javascript/core/utils.js',
     './javascript/core/navigation.js',
@@ -25,61 +18,32 @@ const urlsToCache = [
     './image/Upper_wood.webp'
 ];
 
-self.addEventListener('install', (event) => {
-    console.log('🔧 Service Worker: تثبيت...');
+self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                return Promise.all(
-                    urlsToCache.map(url =>
-                        cache.add(url).catch(err => {
-                            console.warn(`⚠️ فشل تحميل: ${url}`, err);
-                            return Promise.resolve();
-                        })
-                    )
-                );
-            })
-            .then(() => {
-                console.log('✅ تم تخزين الملفات المتاحة');
-                return self.skipWaiting();
-            })
-            .catch(error => console.error('❌ خطأ في التثبيت:', error))
+        caches.open(CACHE_NAME).then(cache =>
+            Promise.all(urlsToCache.map(url =>
+                cache.add(url).catch(() => Promise.resolve())
+            ))
+        ).then(() => self.skipWaiting())
     );
 });
 
-self.addEventListener('activate', (event) => {
-    console.log('🚀 Service Worker: تفعيل...');
+self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(cacheNames =>
-            Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('🗑️ حذف كاش قديم:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            )
-        ).then(() => {
-            console.log('✅ Service Worker جاهز');
-            return self.clients.claim();
-        })
+        caches.keys().then(keys =>
+            Promise.all(keys.map(k => k !== CACHE_NAME ? caches.delete(k) : null))
+        ).then(() => self.clients.claim())
     );
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
-
-    // تجاهل الطلبات الخارجية غير الضرورية
     if (!url.origin.includes(self.location.origin) &&
         !url.origin.includes('github') &&
-        !url.origin.includes('raw.githubusercontent')) {
-        return;
-    }
-
-    // لا نتعامل مع طلبات الـ SW نفسه
+        !url.origin.includes('raw.githubusercontent')) return;
     if (url.pathname.includes('sw.js')) return;
 
-    // ✅ 1. ملفات JavaScript الأساسية (من مجلد /javascript/)
+    // JavaScript files
     if (url.pathname.includes('/javascript/') && url.pathname.endsWith('.js')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -87,21 +51,17 @@ self.addEventListener('fetch', (event) => {
                 return fetch(event.request).then(response => {
                     if (response && response.status === 200) {
                         caches.open(CACHE_NAME).then(cache => {
-                            try {
-                                cache.put(event.request, response.clone());
-                            } catch (e) {
-                                console.warn('⚠️ فشل استنساخ الرد (JavaScript):', e);
-                            }
+                            try { cache.put(event.request, response.clone()); } catch (e) {}
                         });
                     }
                     return response;
                 }).catch(() => new Response('Offline', { status: 503 }));
             })
         );
-        return; // ✅ منع المرور إلى الشروط التالية
+        return;
     }
 
-    // ✅ 2. طلبات GitHub (raw و API)
+    // GitHub requests
     if (url.origin.includes('github') || url.origin.includes('raw.githubusercontent')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -109,42 +69,30 @@ self.addEventListener('fetch', (event) => {
                 return fetch(event.request).then(response => {
                     if (response && response.status === 200) {
                         caches.open(CACHE_NAME).then(cache => {
-                            try {
-                                cache.put(event.request, response.clone());
-                            } catch (e) {
-                                console.warn('⚠️ فشل استنساخ الرد (GitHub):', e);
-                            }
+                            try { cache.put(event.request, response.clone()); } catch (e) {}
                         });
                     }
                     return response;
                 }).catch(() => new Response('GitHub unavailable', { status: 503 }));
             })
         );
-        return; // ✅ منع المرور
+        return;
     }
 
-    // ✅ 3. باقي الطلبات (استراتيجية Cache First)
+    // Fallback
     event.respondWith(
         caches.match(event.request).then(cached => {
             if (cached) return cached;
             return fetch(event.request).then(response => {
                 if (shouldCache(event.request.url) && response && response.status === 200) {
                     caches.open(CACHE_NAME).then(cache => {
-                        try {
-                            cache.put(event.request, response.clone());
-                        } catch (e) {
-                            console.warn('⚠️ فشل استنساخ الرد (عام):', e);
-                        }
+                        try { cache.put(event.request, response.clone()); } catch (e) {}
                     });
                 }
                 return response;
             }).catch(() => {
-                if (event.request.destination === 'document') {
-                    return new Response(
-                        '<h1>🔌 وضع Offline</h1><p>لا يوجد اتصال بالإنترنت</p>',
-                        { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-                    );
-                }
+                if (event.request.destination === 'document')
+                    return new Response('<h1>Offline</h1>', { status: 503, headers: { 'Content-Type': 'text/html' } });
                 return new Response('Offline', { status: 503 });
             });
         })
@@ -153,29 +101,7 @@ self.addEventListener('fetch', (event) => {
 
 function shouldCache(url) {
     try {
-        const pathname = new URL(url).pathname;
-        if (pathname.includes('sw.js')) return false;
-        if (pathname.includes('/javascript/')) return true;
-        if (pathname.match(/\.(html|css|js|webp|png|jpg|jpeg|svg|pdf)$/)) return true;
-        return false;
-    } catch (e) {
-        return false;
-    }
+        const path = new URL(url).pathname;
+        return !path.includes('sw.js') && /\.(html|css|js|webp|png|jpg|jpeg|svg|pdf)$/.test(path);
+    } catch { return false; }
 }
-
-self.addEventListener('message', (event) => {
-    if (event.data?.action === 'skipWaiting') self.skipWaiting();
-    if (event.data?.action === 'clearCache') {
-        event.waitUntil(
-            caches.keys()
-                .then(names => Promise.all(names.map(n => caches.delete(n))))
-                .then(() => {
-                    self.clients.matchAll().then(clients =>
-                        clients.forEach(c => c.postMessage({ type: 'CACHE_CLEARED' }))
-                    );
-                })
-        );
-    }
-});
-
-console.log('✅ Service Worker محمّل - الإصدار:', CACHE_NAME);
