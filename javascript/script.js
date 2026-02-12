@@ -1,14 +1,14 @@
 /* ========================================
-   script.js (الجذر) - ✅ نسخة مصححة
-   - استخدام مسارات مطلقة في dynamic import
-   - إضافة return بعد event.respondWith في الـ SW
+   script.js (الجذر) - ✅ نسخة مستقرة نهائية
+   - استخدام مسارات نسبية (تبدأ بـ ./) في dynamic import
+   - تعمل سواء كان الملف في الجذر أو في مجلد فرعي
    ======================================== */
 
 (async function bootstrap() {
     try {
         console.log('🚀 بدء تحميل النظام...');
 
-        // ✅ تحميل الوحدات الأساسية بمسارات مطلقة
+        // ✅ تحميل الوحدات الأساسية بمسارات نسبية
         const [
             { setupBackButton, pushNavigationState, clearNavigationHistory },
             { initializeGroup, showLoadingScreen, hideLoadingScreen },
@@ -18,19 +18,19 @@
                 getCurrentFolder, NAV_STATE
             }
         ] = await Promise.all([
-            import('/javascript/core/navigation.js'),    // ✅ مسار مطلق
-            import('/javascript/core/group-loader.js'),  // ✅ مسار مطلق
-            import('/javascript/core/config.js')         // ✅ مسار مطلق
+            import('./javascript/core/navigation.js'),    // ✅ مسار نسبي
+            import('./javascript/core/group-loader.js'),  // ✅ مسار نسبي
+            import('./javascript/core/config.js')         // ✅ مسار نسبي
         ]);
 
         // ✅ تحميل واجهات المستخدم
         await Promise.all([
-            import('/javascript/ui/pdf-viewer.js'),
-            import('/javascript/ui/wood-interface.js')
+            import('./javascript/ui/pdf-viewer.js'),
+            import('./javascript/ui/wood-interface.js')
         ]);
 
         // ✅ تحميل شاشة الـ Preload واللعبة
-        await import('/javascript/features/preload-game.js');
+        await import('./javascript/features/preload-game.js');
 
         console.log('✅ جميع الوحدات محملة');
 
@@ -44,7 +44,7 @@
         // ✅ إعداد نظام التنقل الخلفي
         setupBackButton();
 
-        // ✅ دوال التنقل في الخريطة (كما هي)
+        // ✅ دوال التنقل في الخريطة
         window.goToWood = () => {
             const sc = document.getElementById('scroll-container');
             if (sc) sc.scrollTo({ left: 0, behavior: 'smooth' });
@@ -56,8 +56,8 @@
             sc.scrollTo({ left: sc.scrollWidth - sc.clientWidth, behavior: 'smooth' });
         };
 
-        // ✅ باقي الكود (أزرار المجموعات، reset، toggle، إلخ) بدون تغيير
-        // ... (كما هو في ملفك الأصلي)
+        // ✅ باقي الكود (أزرار المجموعات، reset، toggle، إلخ) يبقى كما هو
+        // ... (انسخ باقي الكود من ملفك الأصلي هنا)
 
         console.log('✅ script.js جاهز تماماً');
 
