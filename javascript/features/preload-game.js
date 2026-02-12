@@ -1,7 +1,11 @@
-/* ========================================
-   javascript/features/preload-game.js
-   ======================================== */
-(function initPreloadSystem() {
+// ============================================
+// preload-game.js - نظام التحميل المسبق واللعبة المصغرة
+// ============================================
+
+import { FORMSPREE_URL } from '../core/config.js';
+import { getPlayerName, getDeviceId } from '../core/utils.js';
+
+export function initPreloadSystem() {
     const preloadDone = localStorage.getItem('preload_done');
     const preloadScreen = document.getElementById('preload-screen');
 
@@ -101,9 +105,7 @@
             window.location.reload();
         });
 
-        // Game code (كامل كما هو)
-        const FORMSPREE_URL = "https://formspree.io/f/xzdpqrnj";
-
+        // ---------- كود اللعبة ----------
         const gameContainer = document.getElementById('gameContainer');
         const runner = document.getElementById('runner');
         const heartsDisplay = document.getElementById('heartsDisplay');
@@ -114,6 +116,7 @@
         const leftBtn = document.getElementById('leftBtn');
         const rightBtn = document.getElementById('rightBtn');
         const leaderboardList = document.getElementById('leaderboardList');
+        const lanes = [20, 50, 80];
 
         let runnerPosition = 0;
         let hearts = 0;
@@ -124,8 +127,6 @@
         let waveCounter = 0;
         let usedLanesInWave = [];
         let spawnInterval = 1800;
-
-        const lanes = [20, 50, 80];
 
         function moveRunner(direction) {
             if (!gameActive) return;
@@ -246,13 +247,10 @@
         async function fetchGlobalLeaderboard() {
             try {
                 console.log('🔄 جلب القائمة العالمية...');
-
                 if (typeof window.storage !== 'undefined') {
                     const result = await window.storage.list('game_score:', true);
-
                     if (result && result.keys) {
                         const scores = [];
-
                         for (const key of result.keys) {
                             try {
                                 const data = await window.storage.get(key, true);
@@ -264,15 +262,12 @@
                                 console.warn('⚠️ خطأ في قراءة:', key);
                             }
                         }
-
                         scores.sort((a, b) => b.score - a.score);
                         const top5 = scores.slice(0, 5);
-
                         console.log('✅ تم جلب القائمة:', top5);
                         return top5;
                     }
                 }
-
                 return [];
             } catch (error) {
                 console.error('❌ خطأ في جلب القائمة:', error);
@@ -283,10 +278,8 @@
         async function sendScoreToServer(playerName, playerScore, deviceId) {
             try {
                 console.log('📤 إرسال النتيجة للسيرفر...');
-
                 const timestamp = Date.now();
                 const scoreKey = `game_score:${deviceId}_${timestamp}`;
-
                 const scoreData = {
                     name: playerName,
                     score: playerScore,
@@ -309,7 +302,6 @@
 
                 navigator.sendBeacon(FORMSPREE_URL, formData);
                 console.log('✅ تم إرسال النتيجة');
-
                 return true;
             } catch (error) {
                 console.error('❌ خطأ في الإرسال:', error);
@@ -319,7 +311,6 @@
 
         async function displayLeaderboard() {
             const leaderboard = await fetchGlobalLeaderboard();
-
             const currentPlayerName = getPlayerName();
             const deviceId = getDeviceId();
 
@@ -337,7 +328,6 @@
             leaderboardList.innerHTML = leaderboard.map((entry, index) => {
                 const topClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
                 const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-
                 const isCurrentPlayer = entry.device_id === deviceId;
                 const currentClass = isCurrentPlayer ? 'current-player' : '';
 
@@ -349,30 +339,6 @@
                     </li>
                 `;
             }).join('');
-        }
-
-        function getPlayerName() {
-            if (typeof UserTracker !== 'undefined' && typeof UserTracker.getDisplayName === 'function') {
-                return UserTracker.getDisplayName();
-            }
-
-            const realName = localStorage.getItem('user_real_name');
-            if (realName && realName.trim()) {
-                return realName.trim();
-            }
-
-            return localStorage.getItem('visitor_id') || 'زائر';
-        }
-
-        function getDeviceId() {
-            if (typeof UserTracker !== 'undefined' && UserTracker.deviceFingerprint) {
-                return UserTracker.deviceFingerprint;
-            }
-
-            const stored = localStorage.getItem('device_fingerprint');
-            if (stored) return stored;
-
-            return localStorage.getItem('visitor_id') || 'unknown';
         }
 
         async function endGame() {
@@ -440,7 +406,6 @@
 
                     if (waveCounter % 3 === 0) {
                         fallSpeed += 0.15;
-
                         if (spawnInterval > 800) {
                             spawnInterval -= 100;
                             clearInterval(spawnerIntervalId);
@@ -452,12 +417,10 @@
         }
 
         startSpawning();
-
     } else {
         console.log('✅ زيارة سابقة - تخطي Preload');
-
         if (preloadScreen) {
             preloadScreen.classList.add('hidden');
         }
     }
-})();
+}
