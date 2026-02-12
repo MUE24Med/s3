@@ -1,9 +1,9 @@
 /* ========================================
-   sw.js - Service Worker
-   محدّث للتوافق مع الهيكل الجديد
+   sw.js - Service Worker المُحدّث
+   النسخة النهائية - تحل مشكلة الـ Cache
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-v1.1';
+const CACHE_NAME = 'semester-3-cache-v1.2';
 const urlsToCache = [
     './',
     './index.html',
@@ -27,7 +27,7 @@ const urlsToCache = [
     './image/Upper_wood.webp'
 ];
 
-// ✅ التثبيت
+// ✅ التثبيت مع معالجة الأخطاء
 self.addEventListener('install', (event) => {
     console.log('🔧 Service Worker: تثبيت...');
     
@@ -35,10 +35,18 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('📦 فتح الكاش');
-                return cache.addAll(urlsToCache);
+                // ✅ تحميل الملفات واحداً تلو الآخر لتجنب الأخطاء
+                return Promise.all(
+                    urlsToCache.map(url => {
+                        return cache.add(url).catch(err => {
+                            console.warn(`⚠️ فشل تحميل: ${url}`, err);
+                            return Promise.resolve(); // متابعة حتى لو فشل ملف
+                        });
+                    })
+                );
             })
             .then(() => {
-                console.log('✅ تم تخزين الملفات الأساسية');
+                console.log('✅ تم تخزين الملفات المتاحة');
                 return self.skipWaiting();
             })
             .catch((error) => {
@@ -106,7 +114,8 @@ self.addEventListener('fetch', (event) => {
                     console.warn('❌ فشل تحميل:', url.pathname);
                     return new Response('وضع Offline - الملف غير متوفر', {
                         status: 503,
-                        statusText: 'Service Unavailable'
+                        statusText: 'Service Unavailable',
+                        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
                     });
                 });
             })
@@ -130,13 +139,19 @@ self.addEventListener('fetch', (event) => {
                         });
                     }
                     return networkResponse;
+                }).catch(() => {
+                    console.warn('❌ فشل تحميل من GitHub:', url.pathname);
+                    return new Response('GitHub content unavailable', {
+                        status: 503,
+                        statusText: 'Service Unavailable'
+                    });
                 });
             })
         );
         return;
     }
     
-    // ✅ الاستراتيجية الافتراضية: Cache First
+    // ✅ الاستراتيجية الافتراضية: Cache First مع Fallback
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
@@ -156,6 +171,19 @@ self.addEventListener('fetch', (event) => {
                 }
                 
                 return networkResponse;
+            }).catch(() => {
+                // إرجاع صفحة Offline بسيطة
+                if (event.request.destination === 'document') {
+                    return new Response(
+                        '<h1>🔌 وضع Offline</h1><p>لا يوجد اتصال بالإنترنت</p>',
+                        {
+                            status: 503,
+                            statusText: 'Service Unavailable',
+                            headers: { 'Content-Type': 'text/html; charset=utf-8' }
+                        }
+                    );
+                }
+                return new Response('Offline', { status: 503 });
             });
         })
     );
@@ -163,20 +191,25 @@ self.addEventListener('fetch', (event) => {
 
 // ✅ دالة تحديد ما يُخزن في الكاش
 function shouldCache(url) {
-    const pathname = new URL(url).pathname;
-    
-    // تخطي sw.js
-    if (pathname.includes('sw.js')) return false;
-    
-    // ✅ كاش كل ملفات JavaScript في مجلد javascript/
-    if (pathname.includes('/javascript/')) return true;
-    
-    // كاش الملفات الأساسية
-    if (pathname.match(/\.(html|css|js|webp|png|jpg|jpeg|svg|pdf)$/)) {
-        return true;
+    try {
+        const pathname = new URL(url).pathname;
+        
+        // تخطي sw.js
+        if (pathname.includes('sw.js')) return false;
+        
+        // ✅ كاش كل ملفات JavaScript في مجلد javascript/
+        if (pathname.includes('/javascript/')) return true;
+        
+        // كاش الملفات الأساسية
+        if (pathname.match(/\.(html|css|js|webp|png|jpg|jpeg|svg|pdf)$/)) {
+            return true;
+        }
+        
+        return false;
+    } catch (e) {
+        console.warn('⚠️ خطأ في shouldCache:', e);
+        return false;
     }
-    
-    return false;
 }
 
 // ✅ استقبال رسائل من الصفحة
@@ -195,6 +228,12 @@ self.addEventListener('message', (event) => {
                 );
             }).then(() => {
                 console.log('✅ تم مسح الكاش');
+                // إعلام الصفحة
+                self.clients.matchAll().then(clients => {
+                    clients.forEach(client => {
+                        client.postMessage({ type: 'CACHE_CLEARED' });
+                    });
+                });
             })
         );
     }
