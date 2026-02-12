@@ -111,7 +111,7 @@ export function setupBackButton() {
     console.log('✅ نظام التنقل الخلفي جاهز');
 }
 
-// تصدير للـ window (للاستخدام العام)
+// تصدير للـ window
 window.pushNavigationState = pushNavigationState;
 window.popNavigationState = popNavigationState;
 window.getCurrentNavigationState = getCurrentNavigationState;
