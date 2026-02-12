@@ -1,15 +1,20 @@
 /* ========================================
    javascript/features/svg-processor.js
-   معالجة عناصر SVG والتفاعل Hover
+   ✅ إصلاح: نقل كل querySelector للـ DOM
+      داخل الدوال بدلاً من مستوى الوحدة
+      لتجنب قراءة DOM قبل جاهزيته
    ======================================== */
 
 import { RAW_CONTENT_BASE } from '../core/config.js';
 
-const mainSvg = document.getElementById('main-svg');
-const clipDefs = mainSvg?.querySelector('defs');
+// ✅ إصلاح: هذه الثوابت لا تحتاج DOM - يمكن تعريفها هنا
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
 const shownErrors = new Set();
+
+// ✅ إصلاح: لا تعريف mainSvg / clipDefs هنا - كانت تُقرأ قبل وجود DOM
+// const mainSvg = document.getElementById('main-svg');   // ❌ محذوف
+// const clipDefs = mainSvg?.querySelector('defs');        // ❌ محذوف
 
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -17,24 +22,19 @@ let activeState = {
     touchStartTime: 0, initialScrollLeft: 0
 };
 
-// الحصول على الإزاحة التراكمية
 function getCumulativeTranslate(element) {
     let x = 0, y = 0, current = element;
     while (current && current.tagName !== 'svg') {
         const trans = current.getAttribute('transform');
         if (trans) {
-            const m = trans.match(/translate\s*\(([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-            if (m) { 
-                x += parseFloat(m[1]); 
-                y += parseFloat(m[2]); 
-            }
+            const m = trans.match(/translate\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+            if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
         }
         current = current.parentNode;
     }
     return { x, y };
 }
 
-// الحصول على صورة المجموعة
 function getGroupImage(element) {
     let current = element;
     while (current && current.tagName !== 'svg') {
@@ -54,8 +54,8 @@ function getGroupImage(element) {
     return null;
 }
 
-// تنظيف Hover
 function cleanupHover() {
+    // ✅ إصلاح: نقرأ mainSvg هنا عند الاستدعاء
     if (!activeState.rect) return;
     if (activeState.animationId) clearInterval(activeState.animationId);
     activeState.rect.style.filter = 'none';
@@ -74,114 +74,90 @@ function cleanupHover() {
     });
 }
 
-// بدء Hover
 function startHover() {
+    // ✅ إصلاح: نقرأ mainSvg و clipDefs هنا عند الاستدعاء
+    const mainSvg = document.getElementById('main-svg');
+    const clipDefs = mainSvg?.querySelector('defs');
     const interactionEnabled = window.interactionEnabled !== undefined ? window.interactionEnabled : true;
-    
+
     if (!interactionEnabled || this.classList.contains('list-item')) return;
     if (!mainSvg || !clipDefs) return;
-    
+
     const rect = this;
     if (activeState.rect === rect) return;
-    
     cleanupHover();
     activeState.rect = rect;
-    
+
     const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;
     const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;
     const cum = getCumulativeTranslate(rect);
     const absX = parseFloat(rect.getAttribute('x')) + cum.x;
     const absY = parseFloat(rect.getAttribute('y')) + cum.y;
     const centerX = absX + rW / 2;
-    
     const scaleFactor = 1.1;
     const yOffset = (rH * (scaleFactor - 1)) / 2;
     const hoveredY = absY - yOffset;
-    
-    rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
+
+    rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW / 2}px ${parseFloat(rect.getAttribute('y')) + rH / 2}px`;
     rect.style.transform = `scale(${scaleFactor})`;
     rect.style.strokeWidth = '4px';
-    
+
     const imgData = getGroupImage(rect);
     if (imgData && imgData.src) {
         const clipId = `clip-${Date.now()}`;
         activeState.clipPathId = clipId;
-        
         const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
         clip.setAttribute('id', clipId);
-        
         const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        cRect.setAttribute('x', absX); 
-        cRect.setAttribute('y', absY);
-        cRect.setAttribute('width', rW); 
-        cRect.setAttribute('height', rH);
-        
+        cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);
+        cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);
         clipDefs.appendChild(clip).appendChild(cRect);
-        
+
         const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
         zPart.setAttribute('href', imgData.src);
         zPart.setAttribute('width', imgData.width);
         zPart.setAttribute('height', imgData.height);
         zPart.setAttribute('clip-path', `url(#${clipId})`);
-        
-        const mTrans = imgData.group.getAttribute('transform')?.match(/translate\s*\(([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-        const imgTransX = mTrans ? parseFloat(mTrans[1]) : 0;
-        const imgTransY = mTrans ? parseFloat(mTrans[2]) : 0;
-        
-        zPart.setAttribute('x', imgTransX + imgData.x);
-        zPart.setAttribute('y', imgTransY + imgData.y);
+        const mTrans = imgData.group.getAttribute('transform')?.match(/translate\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+        zPart.setAttribute('x', (mTrans ? parseFloat(mTrans[1]) : 0) + imgData.x);
+        zPart.setAttribute('y', (mTrans ? parseFloat(mTrans[2]) : 0) + imgData.y);
         zPart.style.pointerEvents = 'none';
-        zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;
+        zPart.style.transformOrigin = `${centerX}px ${absY + rH / 2}px`;
         zPart.style.transform = `scale(${scaleFactor})`;
-        
         mainSvg.appendChild(zPart);
         activeState.zoomPart = zPart;
     }
-    
+
     let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
     if (bText) {
         bText.style.opacity = '0';
         let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
         if (bBg) bBg.style.opacity = '0';
-        
-        activeState.baseText = bText; 
-        activeState.baseBg = bBg;
-        
+        activeState.baseText = bText; activeState.baseBg = bBg;
+
         const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
-        zText.setAttribute('x', centerX); 
-        zText.setAttribute('text-anchor', 'middle');
-        zText.style.dominantBaseline = 'central'; 
-        zText.style.fill = 'white';
-        zText.style.fontWeight = 'bold'; 
-        zText.style.pointerEvents = 'none';
+        zText.setAttribute('x', centerX); zText.setAttribute('text-anchor', 'middle');
+        zText.style.dominantBaseline = 'central'; zText.style.fill = 'white';
+        zText.style.fontWeight = 'bold'; zText.style.pointerEvents = 'none';
         zText.style.fontSize = (parseFloat(bText.style.fontSize || 10) * 2) + 'px';
-        
         mainSvg.appendChild(zText);
-        
+
         const bbox = zText.getBBox();
-        
         const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); 
+        zBg.setAttribute('x', centerX - (bbox.width + 20) / 2);
         zBg.setAttribute('y', hoveredY);
-        zBg.setAttribute('width', bbox.width + 20); 
+        zBg.setAttribute('width', bbox.width + 20);
         zBg.setAttribute('height', bbox.height + 10);
-        zBg.setAttribute('rx', '5'); 
-        zBg.style.fill = 'black'; 
-        zBg.style.pointerEvents = 'none';
-        
+        zBg.setAttribute('rx', '5'); zBg.style.fill = 'black'; zBg.style.pointerEvents = 'none';
         mainSvg.insertBefore(zBg, zText);
         zText.setAttribute('y', hoveredY + (bbox.height + 10) / 2);
-        
-        activeState.zoomText = zText; 
-        activeState.zoomBg = zBg;
+        activeState.zoomText = zText; activeState.zoomBg = zBg;
     }
-    
-    let h = 0;
-    let step = 0;
+
+    let h = 0, step = 0;
     activeState.animationId = setInterval(() => {
-        h = (h + 10) % 360;
-        step += 0.2;
+        h = (h + 10) % 360; step += 0.2;
         const glowPower = 10 + Math.sin(step) * 5;
         const color = `hsl(${h},100%,60%)`;
         rect.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;
@@ -190,26 +166,19 @@ function startHover() {
     }, 100);
 }
 
-// لف النص
 function wrapText(el, maxW) {
     const txt = el.getAttribute('data-original-text');
     if (!txt) return;
-    
     const words = txt.split(/\s+/);
     el.textContent = '';
-    
     let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-    ts.setAttribute('x', el.getAttribute('x'));
-    ts.setAttribute('dy', '0');
+    ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', '0');
     el.appendChild(ts);
-    
     let line = '';
     const lh = parseFloat(el.style.fontSize) * 1.1;
-    
     words.forEach(word => {
         let test = line + (line ? ' ' : '') + word;
         ts.textContent = test;
-        
         if (ts.getComputedTextLength() > maxW - 5 && line) {
             ts.textContent = line;
             ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
@@ -218,21 +187,17 @@ function wrapText(el, maxW) {
             ts.textContent = word;
             el.appendChild(ts);
             line = word;
-        } else {
-            line = test;
-        }
+        } else { line = test; }
     });
 }
 
-// معالجة Rect
 function processRect(r) {
+    // ✅ إصلاح: نقرأ mainSvg هنا عند الاستدعاء
     if (r.hasAttribute('data-processed')) return;
-    
     if (r.classList.contains('w')) r.setAttribute('width', '113.5');
     if (r.classList.contains('hw')) r.setAttribute('width', '56.75');
 
     let href = r.getAttribute('data-href') || '';
-
     if (href && href !== '#' && !href.startsWith('http')) {
         href = `${RAW_CONTENT_BASE}${href}`;
         r.setAttribute('data-href', href);
@@ -248,31 +213,19 @@ function processRect(r) {
     if (name && name.trim() !== '') {
         const fs = Math.max(8, Math.min(12, w * 0.11));
         const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        txt.setAttribute('x', x + w / 2);
-        txt.setAttribute('y', y + 2);
-        txt.setAttribute('text-anchor', 'middle');
-        txt.setAttribute('class', 'rect-label');
-        txt.setAttribute('data-original-text', name);
-        txt.setAttribute('data-original-for', href);
-        txt.style.fontSize = fs + 'px';
-        txt.style.fill = 'white';
-        txt.style.pointerEvents = 'none';
-        txt.style.dominantBaseline = 'hanging';
-        
+        txt.setAttribute('x', x + w / 2); txt.setAttribute('y', y + 2);
+        txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('class', 'rect-label');
+        txt.setAttribute('data-original-text', name); txt.setAttribute('data-original-for', href);
+        txt.style.fontSize = fs + 'px'; txt.style.fill = 'white';
+        txt.style.pointerEvents = 'none'; txt.style.dominantBaseline = 'hanging';
         r.parentNode.appendChild(txt);
         wrapText(txt, w);
-
         const bbox = txt.getBBox();
         const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bg.setAttribute('x', x);
-        bg.setAttribute('y', y);
-        bg.setAttribute('width', w);
-        bg.setAttribute('height', bbox.height + 8);
-        bg.setAttribute('class', 'label-bg');
-        bg.setAttribute('data-original-for', href);
-        bg.style.fill = 'black';
-        bg.style.pointerEvents = 'none';
-        
+        bg.setAttribute('x', x); bg.setAttribute('y', y);
+        bg.setAttribute('width', w); bg.setAttribute('height', bbox.height + 8);
+        bg.setAttribute('class', 'label-bg'); bg.setAttribute('data-original-for', href);
+        bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
         r.parentNode.insertBefore(bg, txt);
     }
 
@@ -283,93 +236,60 @@ function processRect(r) {
 
     r.onclick = async () => {
         if (href && href !== '#') {
-            const fileName = href.split('/').pop();
-
+            const fName = href.split('/').pop();
             try {
                 const response = await fetch(href, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });
-
                 if (!response.ok) {
-                    if (!shownErrors.has(href)) {
-                        alert(`❌ الملف "${fileName}" غير موجود`);
-                        shownErrors.add(href);
-                    }
+                    if (!shownErrors.has(href)) { alert(`❌ الملف "${fName}" غير موجود`); shownErrors.add(href); }
                     return;
                 }
-
-                if (typeof window.showOpenOptions === 'function') {
-                    window.showOpenOptions({ path: href.replace(RAW_CONTENT_BASE, '') });
-                }
-
-            } catch (error) {
-                if (typeof window.showOpenOptions === 'function') {
-                    window.showOpenOptions({ path: href.replace(RAW_CONTENT_BASE, '') });
-                }
+                if (typeof window.showOpenOptions === 'function') window.showOpenOptions({ path: href.replace(RAW_CONTENT_BASE, '') });
+            } catch {
+                if (typeof window.showOpenOptions === 'function') window.showOpenOptions({ path: href.replace(RAW_CONTENT_BASE, '') });
             }
         }
     };
 
     const scrollContainer = document.getElementById('scroll-container');
     if (scrollContainer) {
-        r.addEventListener('touchstart', function(e) {
-            const interactionEnabled = window.interactionEnabled !== undefined ? window.interactionEnabled : true;
-            if (!interactionEnabled) return;
-            
+        r.addEventListener('touchstart', function () {
+            if (window.interactionEnabled === false) return;
             activeState.touchStartTime = Date.now();
             activeState.initialScrollLeft = scrollContainer.scrollLeft;
             startHover.call(this);
         });
-        
-        r.addEventListener('touchend', async function(e) {
-            const interactionEnabled = window.interactionEnabled !== undefined ? window.interactionEnabled : true;
-            if (!interactionEnabled) return;
-            
+        r.addEventListener('touchend', async function () {
+            if (window.interactionEnabled === false) return;
             if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 &&
                 (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
                 if (href && href !== '#') {
-                    const fileName = href.split('/').pop();
-
                     try {
                         const response = await fetch(href, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });
-
                         if (!response.ok) {
-                            if (!shownErrors.has(href)) {
-                                alert(`❌ الملف "${fileName}" غير موجود`);
-                                shownErrors.add(href);
-                            }
-                            cleanupHover();
-                            return;
+                            if (!shownErrors.has(href)) { alert(`❌ الملف غير موجود`); shownErrors.add(href); }
+                            cleanupHover(); return;
                         }
-
-                        if (typeof window.showOpenOptions === 'function') {
-                            window.showOpenOptions({ path: href.replace(RAW_CONTENT_BASE, '') });
-                        }
-
-                    } catch (error) {
-                        if (typeof window.showOpenOptions === 'function') {
-                            window.showOpenOptions({ path: href.replace(RAW_CONTENT_BASE, '') });
-                        }
+                        if (typeof window.showOpenOptions === 'function') window.showOpenOptions({ path: href.replace(RAW_CONTENT_BASE, '') });
+                    } catch {
+                        if (typeof window.showOpenOptions === 'function') window.showOpenOptions({ path: href.replace(RAW_CONTENT_BASE, '') });
                     }
                 }
             }
             cleanupHover();
         });
     }
-
     r.setAttribute('data-processed', 'true');
 }
 
-// مسح SVG
 export function scan() {
+    // ✅ إصلاح: نقرأ mainSvg هنا عند الاستدعاء
+    const mainSvg = document.getElementById('main-svg');
     if (!mainSvg) return;
-
     console.log('🔍 تشغيل scan()...');
-
     const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
     console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);
-
     rects.forEach(r => {
         processRect(r);
-
         const href = r.getAttribute('data-href') || '';
         if (href === '#') {
             r.style.display = 'none';
@@ -382,80 +302,47 @@ export function scan() {
 
     if (!window.svgObserver) {
         const observer = new MutationObserver((mutations) => {
-            let hasNewElements = false;
-
+            let hasNew = false;
             mutations.forEach(mutation => {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === 1) {
-                        if (node.tagName === 'image' || node.querySelector('image')) {
-                            hasNewElements = true;
-                        }
-                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
-                            processRect(node);
-                        }
-                        if (node.querySelectorAll) {
-                            const newRects = node.querySelectorAll('rect.m, rect.image-mapper-shape');
-                            newRects.forEach(rect => processRect(rect));
-                        }
+                        if (node.tagName === 'image' || node.querySelector?.('image')) hasNew = true;
+                        if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) processRect(node);
+                        node.querySelectorAll?.('rect.m, rect.image-mapper-shape').forEach(r => processRect(r));
                     }
                 });
             });
-
-            if (hasNewElements) {
-                console.log('🔄 تم اكتشاف عناصر جديدة - تحديث viewBox');
-                if (typeof window.updateDynamicSizes === 'function') {
-                    window.updateDynamicSizes();
-                }
-            }
+            if (hasNew && typeof window.updateDynamicSizes === 'function') window.updateDynamicSizes();
         });
-
         observer.observe(mainSvg, { childList: true, subtree: true });
         window.svgObserver = observer;
         console.log('👁️ تم تفعيل مراقب العناصر الجديدة');
     }
 }
 
-// تحديث أبعاد SVG ديناميكياً
 export function updateDynamicSizes() {
+    // ✅ إصلاح: نقرأ mainSvg هنا عند الاستدعاء
+    const mainSvg = document.getElementById('main-svg');
     if (!mainSvg) return;
-    
     const allImages = mainSvg.querySelectorAll('image[width][height]');
-    console.log(`📏 عدد جميع الصور: ${allImages.length}`);
-    
-    if (allImages.length === 0) {
-        console.warn('⚠️ لم يتم العثور على صور');
-        return;
-    }
-    
-    let maxX = 0;
-    let maxY = 2454;
-    
+    if (allImages.length === 0) { console.warn('⚠️ لم يتم العثور على صور'); return; }
+    let maxX = 0, maxY = 2454;
     allImages.forEach(img => {
         const g = img.closest('g[transform]');
         let translateX = 0;
-        
         if (g) {
-            const transform = g.getAttribute('transform');
-            const match = transform.match(/translate\s*\(([\d.-]+)(?:[ ,]+([\d.-]+))?\s*\)/);
-            if (match) {
-                translateX = parseFloat(match[1]) || 0;
-            }
+            const match = g.getAttribute('transform').match(/translate\s*([\d.-]+)(?:[ ,]+([\d.-]+))?\s*\)/);
+            if (match) translateX = parseFloat(match[1]) || 0;
         }
-        
-        const imgWidth = parseFloat(img.getAttribute('width')) || 0;
-        const imgHeight = parseFloat(img.getAttribute('height')) || 0;
-        const imgX = parseFloat(img.getAttribute('x')) || 0;
-        const totalX = translateX + imgX + imgWidth;
-        
+        const totalX = translateX + (parseFloat(img.getAttribute('x')) || 0) + (parseFloat(img.getAttribute('width')) || 0);
         if (totalX > maxX) maxX = totalX;
-        if (imgHeight > maxY) maxY = imgHeight;
+        const h = parseFloat(img.getAttribute('height')) || 0;
+        if (h > maxY) maxY = h;
     });
-    
     mainSvg.setAttribute('viewBox', `0 0 ${maxX} ${maxY}`);
-    console.log(`✅ viewBox محدّث ديناميكيًا: 0 0 ${maxX} ${maxY}`);
+    console.log(`✅ viewBox محدّث: 0 0 ${maxX} ${maxY}`);
 }
 
-// تصدير للـ window
 window.scan = scan;
 window.updateDynamicSizes = updateDynamicSizes;
 
