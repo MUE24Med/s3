@@ -97,10 +97,11 @@ export function setLoadingProgress(progress) {
 }
 
 // التحقق من الملفات المحمية
+// تم إصلاح الخطأ هنا بتغيير اسم المتغير المحجوز 'protected' إلى 'path'
 export function isProtectedFile(filename) {
-    return PROTECTED_FILES.some(protected =>
-        filename.endsWith(protected) || filename.includes(`/${protected}`)
+    return PROTECTED_FILES.some(path =>
+        filename.endsWith(path) || filename.includes(`/${path}`)
     );
 }
 
-console.log('✅ config.js محمّل');
+console.log('✅ config.js محمّل بنجاح وبدون أخطاء Syntax');
