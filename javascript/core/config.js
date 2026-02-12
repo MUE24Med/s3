@@ -12,11 +12,7 @@ export const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER
 export const PROTECTED_FILES = [
     'image/0.webp',
     'image/wood.webp',
-    'image/Upper_wood.webp',
-    'image/logo-A.webp',
-    'image/logo-B.webp',
-    'image/logo-C.webp',
-    'image/logo-D.webp'
+    'image/Upper_wood.webp'
 ];
 
 export const SUBJECT_FOLDERS = [ /* ... */ ];
