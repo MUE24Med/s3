@@ -1,8 +1,6 @@
 /* ========================================
    javascript/core/group-loader.js
-   ✅ إصلاح: تحويل static import لـ svg-processor
-      إلى dynamic import داخل initializeGroup
-      لحل مشكلة الـ circular dependency
+   ✅ نسخة مستقرة - تستخدم import ديناميكي لتجنب circular dependency
    ======================================== */
 
 import {
