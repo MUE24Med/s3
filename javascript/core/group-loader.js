@@ -1,34 +1,39 @@
 /* ========================================
    javascript/core/group-loader.js
+   ✅ إصلاح: تحويل static import لـ svg-processor
+      إلى dynamic import داخل initializeGroup
+      لحل مشكلة الـ circular dependency
    ======================================== */
 
-import { 
-    setCurrentGroup, 
-    setImageUrlsToLoad, 
-    setLoadingProgress,
-    loadingProgress,
-    NAV_STATE 
+import {
+    setCurrentGroup,
+    setCurrentFolder
 } from './config.js';
 import { saveSelectedGroup, fetchGlobalTree } from './utils.js';
 import { pushNavigationState } from './navigation.js';
+import { NAV_STATE } from './config.js';
 
-// استيراد الدوال من المعالج (تأكد من صحة المسار)
-import { scan, updateDynamicSizes } from '../features/svg-processor.js';
+// ✅ لم نعد نستورد svg-processor هنا - يُحمَّل ديناميكياً
 
 export function showLoadingScreen(groupLetter) {
     const loadingOverlay = document.getElementById('loading-overlay');
     if (!loadingOverlay) return;
     loadingOverlay.classList.add('active');
-    
-    // إظهار نص المجموعة
+
     const splashImage = document.getElementById('splash-image');
     if (splashImage) splashImage.style.display = 'none';
-    
+
     let textElement = document.getElementById('group-text-display');
     if (!textElement) {
         textElement = document.createElement('div');
         textElement.id = 'group-text-display';
-        textElement.style.cssText = "font-size: 80px; color: #ffca28; text-align: center; margin-top: 20px; font-weight: bold;";
+        textElement.style.cssText = `
+            font-size: 80px;
+            color: #ffca28;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        `;
         if (splashImage) splashImage.parentNode.insertBefore(textElement, splashImage);
     }
     textElement.textContent = `Group ${groupLetter}`;
@@ -38,28 +43,28 @@ export function showLoadingScreen(groupLetter) {
 export function hideLoadingScreen() {
     const loadingOverlay = document.getElementById('loading-overlay');
     if (loadingOverlay) loadingOverlay.classList.remove('active');
+
+    const splashImage = document.getElementById('splash-image');
+    if (splashImage) splashImage.style.display = '';
+
+    const textElement = document.getElementById('group-text-display');
+    if (textElement) textElement.style.display = 'none';
+
     console.log('✅ تم إخفاء شاشة التحميل');
 }
 
 export async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
     if (!groupContainer) return;
-
     groupContainer.innerHTML = '';
-
     try {
         const response = await fetch(`groups/group-${groupLetter}.svg`);
         if (!response.ok) throw new Error('SVG not found');
-
         const svgText = await response.text();
-        
-        // استخدام DOMParser لضمان استخراج سليم
         const parser = new DOMParser();
         const doc = parser.parseFromString(svgText, "image/svg+xml");
         const svgContent = doc.querySelector('svg');
-
         if (svgContent) {
-            // نقل العناصر للحاوية
             while (svgContent.firstChild) {
                 groupContainer.appendChild(svgContent.firstChild);
             }
@@ -73,43 +78,67 @@ export async function loadGroupSVG(groupLetter) {
 export async function initializeGroup(groupLetter) {
     console.log(`🚀 بدء العملية للمجموعة: ${groupLetter}`);
 
-    // 1. إعدادات أولية
     saveSelectedGroup(groupLetter);
     setCurrentGroup(groupLetter);
+    setCurrentFolder("");
+
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const scrollContainer = document.getElementById('scroll-container');
+    const groupSelectionScreen = document.getElementById('group-selection-screen');
+
+    if (toggleContainer) {
+        toggleContainer.classList.remove('fully-hidden');
+        toggleContainer.style.display = 'flex';
+    }
+    if (scrollContainer) scrollContainer.style.display = 'block';
+    if (groupSelectionScreen) {
+        groupSelectionScreen.classList.add('hidden');
+        groupSelectionScreen.style.display = 'none';
+    }
+
+    pushNavigationState(NAV_STATE.WOOD_VIEW, { group: groupLetter });
     showLoadingScreen(groupLetter);
 
     try {
-        // 2. تحميل البيانات والـ SVG بالتوازي
-        await Promise.all([
-            fetchGlobalTree().then(tree => {
-                if (typeof window.setGlobalFileTree === 'function') window.setGlobalFileTree(tree);
-            }),
-            loadGroupSVG(groupLetter)
+        // ✅ إصلاح: تحميل svg-processor ديناميكياً لتجنب circular import
+        const [treeData, svgModule] = await Promise.all([
+            fetchGlobalTree(),
+            import('../features/svg-processor.js')
         ]);
 
-        // 3. معالجة العناصر (المصابيح) - الجزء المفقود
-        console.log("🛠️ جاري تشغيل المصابيح (Scan)...");
-        scan(); // هذه الدالة من svg-processor.js
-        
-        // 4. ضبط أبعاد الخريطة لمنع الشاشة السوداء
-        updateDynamicSizes(); 
+        const { scan, updateDynamicSizes } = svgModule;
 
-        // 5. تحميل الصور إذا كان النظام مفعلاً
+        if (typeof window.setGlobalFileTree === 'function') {
+            window.setGlobalFileTree(treeData);
+        }
+
+        await loadGroupSVG(groupLetter);
+
+        updateDynamicSizes();
+        scan();
+
         if (typeof window.loadImages === 'function') {
-            await window.loadImages();
+            window.loadImages();
+        }
+
+        if (typeof window.updateWoodInterface === 'function') {
+            window.updateWoodInterface();
         }
 
     } catch (error) {
         console.error("❌ حدث خطأ أثناء التحميل:", error);
     } finally {
-        // 6. إنهاء العملية وإظهار الموقع
         setTimeout(() => {
             hideLoadingScreen();
-            // تأكيد أخير على الأبعاد بعد ظهور الصور
-            updateDynamicSizes();
+            if (typeof window.updateDynamicSizes === 'function') window.updateDynamicSizes();
+            if (typeof window.goToWood === 'function') window.goToWood();
         }, 600);
     }
 }
 
 // تصدير للـ window
 window.initializeGroup = initializeGroup;
+window.hideLoadingScreen = hideLoadingScreen;
+window.showLoadingScreen = showLoadingScreen;
+
+console.log('✅ group-loader.js محمّل');
