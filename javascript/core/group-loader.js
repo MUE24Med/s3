@@ -2,9 +2,9 @@
 // group-loader.js - تحميل المجموعات والصور و SVG
 // ============================================
 
-import { RAW_CONTENT_BASE, REPO_NAME, GITHUB_USER, TREE_API_URL } from './config.js';
+import { RAW_CONTENT_BASE, REPO_NAME, GITHUB_USER, TREE_API_URL, NAV_STATE } from './config.js';
 import { getDisplayName, debounce } from './utils.js';
-import { pushNavigationState, NAV_STATE, goToWood } from './navigation.js';
+import { pushNavigationState, goToWood } from './navigation.js';
 import { setCurrentGroup, setCurrentFolder, setGlobalFileTree, globalFileTree, currentGroup, currentFolder } from './state.js';
 
 // ---------- متغيرات داخلية للتحميل ----------
