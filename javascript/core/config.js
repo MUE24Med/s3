@@ -1,16 +1,6 @@
 // ============================================
 // config.js - الثوابت والإعدادات العامة
 // ============================================
-// ============================================
-// wood-interface.js - واجهة عرض الملفات والمجلدات
-// ============================================
-
-import { RAW_CONTENT_BASE, NAV_STATE, SUBJECT_FOLDERS, REPO_NAME } from '../core/config.js';  // ← أضفنا REPO_NAME هنا
-import { normalizeArabic, autoTranslate, getDisplayName, debounce, resetBrowserZoom } from '../core/utils.js';
-import { pushNavigationState, goToWood, goToMapEnd, getCurrentNavigationState, navigationHistory } from '../core/navigation.js';
-import { smartOpen } from './pdf-viewer.js';
-import { globalFileTree, currentGroup, currentFolder, setCurrentFolder } from '../core/state.js';
-import { updateDynamicSizes, loadImages, fetchGlobalTree, updateWoodLogo } from '../core/group-loader.js';
 
 export const REPO_NAME = "s3";
 export const GITHUB_USER = "MUE24Med";
