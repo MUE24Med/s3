@@ -96,7 +96,7 @@ export async function updateWoodInterface() {
                     }
                 }
 
-                if (isDir && name !== 'image' && name !== 'groups' && name !== 'javascript') {
+                if (isDir && name !== 'image' && name !== 'groups') {
                     itemsMap.set(name, {
                         name: name,
                         type: 'dir',
