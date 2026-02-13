@@ -89,6 +89,8 @@ export function showLoadingScreen(groupLetter) {
     });
 }
 
+// ✅ hideLoadingScreen معرّفة هنا في group-loader.js فقط
+// لا يتم استيرادها من wood-interface.js لتجنب تعارض الأسماء
 export function hideLoadingScreen() {
     const loadingOverlay = document.getElementById('loading-overlay');
     if (!loadingOverlay) return;
@@ -168,8 +170,8 @@ export async function loadGroupSVG(groupLetter) {
                 const src = img.getAttribute('data-src');
                 if (src && !imageUrlsToLoad.includes(src)) {
                     const isGroupImage = src.includes(`image/${groupLetter}/`) ||
-                                       src.includes(`logo-${groupLetter}`) ||
-                                       src.includes(`logo-wood-${groupLetter}`);
+                        src.includes(`logo-${groupLetter}`) ||
+                        src.includes(`logo-wood-${groupLetter}`);
                     if (isGroupImage) imageUrlsToLoad.push(src);
                 }
             });
@@ -265,7 +267,7 @@ export async function initializeGroup(groupLetter) {
     showLoadingScreen(groupLetter);
     await Promise.all([fetchGlobalTree(), loadGroupSVG(groupLetter)]);
 
-    // استدعاء الدوال المحلية مباشرة
+    // ✅ استدعاء الدوال المحلية مباشرة (لا import ديناميكي هنا)
     updateDynamicSizes();
     await loadImages();
 }
@@ -286,7 +288,8 @@ export async function loadImages() {
     let currentIndex = 0;
 
     async function loadNextBatch() {
-        while (currentIndex < imageUrlsToLoad.length && currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {
+        while (currentIndex < imageUrlsToLoad.length &&
+            currentIndex < (loadingProgress.completedSteps - 1) + MAX_CONCURRENT) {
             const url = imageUrlsToLoad[currentIndex];
             currentIndex++;
 
@@ -297,7 +300,10 @@ export async function loadImages() {
                     console.log(`✅ الصورة موجودة في الكاش: ${url.split('/').pop()}`);
                     const blob = await cachedImg.blob();
                     const imgUrl = URL.createObjectURL(blob);
-                    const allImages = [...mainSvg.querySelectorAll('image'), ...(document.getElementById('files-list-container')?.querySelectorAll('image') || [])];
+                    const allImages = [
+                        ...mainSvg.querySelectorAll('image'),
+                        ...(document.getElementById('files-list-container')?.querySelectorAll('image') || [])
+                    ];
                     allImages.forEach(si => {
                         const dataSrc = si.getAttribute('data-src');
                         if (dataSrc === url) {
@@ -318,8 +324,11 @@ export async function loadImages() {
             }
 
             const img = new Image();
-            img.onload = async function() {
-                const allImages = [...mainSvg.querySelectorAll('image'), ...(document.getElementById('files-list-container')?.querySelectorAll('image') || [])];
+            img.onload = async function () {
+                const allImages = [
+                    ...mainSvg.querySelectorAll('image'),
+                    ...(document.getElementById('files-list-container')?.querySelectorAll('image') || [])
+                ];
                 allImages.forEach(si => {
                     const dataSrc = si.getAttribute('data-src');
                     if (dataSrc === url) {
@@ -348,7 +357,7 @@ export async function loadImages() {
                 }
             };
 
-            img.onerror = function() {
+            img.onerror = function () {
                 console.error(`❌ خطأ في تحميل ${url}`);
                 loadingProgress.completedSteps++;
                 updateLoadProgress();
@@ -367,19 +376,21 @@ export async function loadImages() {
 }
 
 // ---------- إنهاء التحميل ----------
+// ✅ إصلاح: hideLoadingScreen تُستدعى من group-loader نفسه (المعرّفة فوق)
+// ✅ إصلاح: updateDynamicSizes تُستدعى مباشرة كدالة محلية
 async function finishLoading() {
     loadingProgress.completedSteps = loadingProgress.totalSteps;
     loadingProgress.currentPercentage = 100;
     updateLoadProgress();
     console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
 
-    // استيراد الدوال المطلوبة من الوحدات الأخرى
+    // استيراد الدوال المطلوبة من الوحدات الأخرى فقط
     const { scan } = await import('../features/svg-processor.js');
-    const { updateWoodInterface, hideLoadingScreen } = await import('../ui/wood-interface.js');
+    const { updateWoodInterface } = await import('../ui/wood-interface.js');
 
-    updateDynamicSizes();   // محلية
-    scan();                 // من svg-processor
-    updateWoodInterface();  // من wood-interface
+    updateDynamicSizes();   // ✅ محلية من group-loader.js مباشرة
+    scan();                 // من svg-processor.js
+    updateWoodInterface();  // من wood-interface.js
     goToWood();             // مستوردة من navigation.js في الأعلى
 
     const mainSvg = document.getElementById('main-svg');
@@ -389,7 +400,8 @@ async function finishLoading() {
         mainSvg.classList.add('loaded');
     }
 
-    hideLoadingScreen();    // من wood-interface
+    // ✅ إصلاح: استدعاء hideLoadingScreen المحلية مباشرة (لا استيراد من wood-interface)
+    hideLoadingScreen();
     console.log('🎉 اكتمل التحميل والعرض');
 }
 
