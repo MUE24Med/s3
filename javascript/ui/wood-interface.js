@@ -845,50 +845,37 @@ export function initWoodUI() {
         });
     }
 
- // زر Reset - نسخة "الريستارت القوي"
-const resetBtn = document.getElementById('reset-btn');
+ const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
     resetBtn.addEventListener('click', async function (e) {
         e.stopPropagation();
         
-        const confirmReset = confirm('⚠️ سيتم عمل إعادة ضبط مصنع شاملة للموقع ومسح كل البيانات المخزنة والتحديثات القديمة. هل أنت متأكد؟');
+        const confirmReset = confirm('⚠️ سيتم حذف جميع الملفات المحمية (Cache) وإعادة ضبط الموقع بالكامل. هل تريد الاستمرار؟');
         if (!confirmReset) return;
 
-        console.log('🚀 بدء عملية الـ Hard Reset الشاملة...');
+        console.log('🧹 بدء التنظيف الشامل...');
 
-        try {
-            // 1. مسح الـ LocalStorage (الأسماء، المجموعات، الإعدادات)
-            localStorage.clear();
+        // 1. مسح البيانات النصية المخزنة
+        localStorage.clear();
+        sessionStorage.clear();
 
-            // 2. مسح الـ SessionStorage
-            sessionStorage.clear();
-
-            // 3. مسح الـ Service Workers (إذا كان موقعك يستخدم PWA أو Offline Cache)
-            if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                }
-            }
-
-            // 4. مسح الـ Caches API (مسح ملفات الـ PDF والصور المخزنة برمجياً)
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                await Promise.all(cacheNames.map(name => caches.delete(name)));
-            }
-
-            console.log('✅ تم تنظيف كل شيء بنجاح.');
-            alert('تم المسح بنجاح! سيتم الآن إعادة التشغيل من الصفر.');
-
-            // 5. إعادة التحميل القسري (Forced Reload)
-            // نستخدم طابع زمني (Timestamp) لإجبار السيرفر على إرسال ملفات جديدة
-            window.location.href = window.location.origin + window.location.pathname + '?reload=' + Date.now();
-
-        } catch (error) {
-            console.error('❌ خطأ أثناء عمل الريست:', error);
-            // حل احتياطي في حالة فشل التنظيف البرمجي
-            window.location.reload(true); 
+        // 2. إرسال أمر مسح الكاش للـ Service Worker (الملفات المحمية)
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
+            console.log('📡 تم إرسال أمر مسح الملفات للـ SW');
         }
+
+        // 3. مسح يدوي إضافي للـ Caches من جهة الـ Window للتأكيد
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+
+        // 4. الانتظار لحظة لضمان انتهاء المسح ثم إعادة التشغيل بقوة
+        alert('تم مسح الملفات بنجاح. سيتم إعادة تشغيل الموقع الآن.');
+        
+        // استخدام Timestamp لضمان عدم استعادة ملفات قديمة من المتصفح
+        window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
     });
 }
 
