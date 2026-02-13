@@ -170,7 +170,7 @@ export const addShownError = (url) => _shownErrors.add(url);
 export const hasShownError = (url) => _shownErrors.has(url);
 
 // ------------------------------
-// إعادة تعيين مستوى التكبير (Zoom)
+// إعادة تعيين مستوى التكبير (Zoom) لـ 100% حقيقي
 // تُستدعى فقط عند:
 // - فتح ملف PDF (openWithMozilla / openWithDrive / openWithBrowser)
 // - إغلاق ملف PDF (closePdfBtn)
@@ -181,11 +181,26 @@ export function resetBrowserZoom() {
     const viewport = document.querySelector('meta[name=viewport]');
     if (!viewport) return;
 
-    // خطوة 1: تثبيت الـ zoom عند 1x مؤقتاً لإعادة الضبط
+    // ✅ الطريقة الوحيدة الموثوقة لإعادة الـ zoom لـ 100% على موبايل:
+    // 1. نضيف user-scalable=no مع initial-scale=1 → المتصفح يرجع لـ 1x فوراً
+    // 2. نرجع user-scalable=yes بعد فترة قصيرة للسماح بالـ zoom
+
+    // حفظ الـ scroll position عشان ما يتغيرش
+    const scrollX = window.scrollX || window.pageXOffset;
+    const scrollY = window.scrollY || window.pageYOffset;
+
+    // Step 1: force reset إلى 1x
     viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
 
-    // خطوة 2: بعد 300ms نرجع للسماح بالـ zoom بحرية
-    setTimeout(() => {
-        viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
-    }, 300);
+    // Step 2: على بعض المتصفحات محتاج double-trigger
+    requestAnimationFrame(() => {
+        viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+
+        // Step 3: بعد 350ms نرجع للسماح بالـ zoom بحرية
+        setTimeout(() => {
+            viewport.content = 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes';
+            // نرجع الـ scroll position
+            window.scrollTo(scrollX, scrollY);
+        }, 350);
+    });
 }
