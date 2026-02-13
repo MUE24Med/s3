@@ -407,85 +407,229 @@ export async function updateWoodInterface() {
 function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, maxScroll, totalContentHeight) {
     let scrollOffset = 0;
 
-    if (maxScroll > 0) {
-        const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        scrollBarGroup.setAttribute("class", "scroll-bar-group");
+    if (maxScroll <= 0) return;
 
-        const scrollBarBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        scrollBarBg.setAttribute("x", "910");
-        scrollBarBg.setAttribute("y", "250");
-        scrollBarBg.setAttribute("width", "12");
-        scrollBarBg.setAttribute("height", "1700");
-        scrollBarBg.setAttribute("rx", "6");
-        scrollBarBg.style.fill = "rgba(255,255,255,0.1)";
+    // --- شريط التمرير (مرئي) ---
+    const scrollBarGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    scrollBarGroup.setAttribute("class", "scroll-bar-group");
 
-        const scrollBarHandle = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        scrollBarHandle.setAttribute("x", "910");
-        scrollBarHandle.setAttribute("y", "250");
-        scrollBarHandle.setAttribute("width", "12");
-        const handleHeight = Math.max(80, (1700 / totalContentHeight) * 1700);
-        scrollBarHandle.setAttribute("height", handleHeight);
-        scrollBarHandle.setAttribute("rx", "6");
-        scrollBarHandle.style.fill = "#ffca28";
-        scrollBarHandle.style.cursor = "pointer";
-        scrollBarHandle.setAttribute("class", "scroll-handle");
+    const scrollBarBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    scrollBarBg.setAttribute("x", "910");
+    scrollBarBg.setAttribute("y", "250");
+    scrollBarBg.setAttribute("width", "12");
+    scrollBarBg.setAttribute("height", "1700");
+    scrollBarBg.setAttribute("rx", "6");
+    scrollBarBg.style.fill = "rgba(255,255,255,0.1)";
 
-        function updateScroll(newOffset) {
-            scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
-            scrollContent.setAttribute("transform", `translate(0, ${-scrollOffset})`);
-            separatorGroup.setAttribute("transform", `translate(0, ${-scrollOffset})`);
-            const scrollRatio = scrollOffset / maxScroll;
-            const handleY = 250 + (scrollRatio * (1700 - handleHeight));
-            scrollBarHandle.setAttribute("y", handleY);
+    const handleHeight = Math.max(80, (1700 / totalContentHeight) * 1700);
+
+    const scrollBarHandle = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    scrollBarHandle.setAttribute("x", "908");
+    scrollBarHandle.setAttribute("y", "250");
+    scrollBarHandle.setAttribute("width", "16");
+    scrollBarHandle.setAttribute("height", handleHeight);
+    scrollBarHandle.setAttribute("rx", "8");
+    scrollBarHandle.style.fill = "#ffca28";
+    scrollBarHandle.style.cursor = "grab";
+    scrollBarHandle.setAttribute("class", "scroll-handle");
+
+    // --- دالة تحديث الـ scroll ---
+    function updateScroll(newOffset) {
+        scrollOffset = Math.max(0, Math.min(maxScroll, newOffset));
+        scrollContent.setAttribute("transform", `translate(0, ${-scrollOffset})`);
+        separatorGroup.setAttribute("transform", `translate(0, ${-scrollOffset})`);
+        const scrollRatio = scrollOffset / maxScroll;
+        const handleY = 250 + scrollRatio * (1700 - handleHeight);
+        scrollBarHandle.setAttribute("y", handleY);
+    }
+
+    // ============================================================
+    // السحب من أي مكان داخل الحاوية
+    // المنطق: نميّز بين tap (< 8px حركة) وdrag (>= 8px حركة)
+    // عند السحب → نحرك الـ scroll ونمنع الـ click
+    // عند الـ tap → نسمح للحدث يوصل للعنصر تحته
+    // ============================================================
+
+    // --- Overlay شفاف يغطي منطقة الـ scroll كاملة ---
+    const dragOverlay = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    dragOverlay.setAttribute("x", "120");
+    dragOverlay.setAttribute("y", "250");
+    dragOverlay.setAttribute("width", "800");
+    dragOverlay.setAttribute("height", "1700");
+    dragOverlay.setAttribute("fill", "transparent");
+    dragOverlay.style.cursor = "grab";
+    dragOverlay.setAttribute("class", "drag-overlay");
+
+    // --- حالة السحب المشتركة ---
+    let dragState = {
+        active: false,
+        startY: 0,
+        startOffset: 0,
+        moved: false,
+        threshold: 8  // بكسل — أقل من كده tap، أكتر من كده drag
+    };
+
+    // --- SVG → client Y conversion ---
+    // الـ SVG بيتعمل scale على الشاشة، محتاجين نحسب النسبة
+    function getSvgScaleY() {
+        const mainSvg = document.getElementById('main-svg');
+        if (!mainSvg) return 1;
+        const bbox = mainSvg.getBoundingClientRect();
+        const viewBox = mainSvg.viewBox.baseVal;
+        if (!viewBox || viewBox.height === 0) return 1;
+        return bbox.height / viewBox.height;
+    }
+
+    // ==================== MOUSE ====================
+
+    // السحب من الـ overlay (أي مكان في المنطقة)
+    dragOverlay.addEventListener('mousedown', (e) => {
+        dragState.active = true;
+        dragState.startY = e.clientY;
+        dragState.startOffset = scrollOffset;
+        dragState.moved = false;
+        dragOverlay.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+
+    // السحب من الـ handle نفسه
+    scrollBarHandle.addEventListener('mousedown', (e) => {
+        dragState.active = true;
+        dragState.startY = e.clientY;
+        dragState.startOffset = scrollOffset;
+        dragState.moved = false;
+        dragState.isHandleDrag = true;
+        scrollBarHandle.style.cursor = 'grabbing';
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!dragState.active) return;
+        const deltaY = e.clientY - dragState.startY;
+
+        if (Math.abs(deltaY) >= dragState.threshold) {
+            dragState.moved = true;
         }
 
-        // سحب شريط التمرير
-        let isDragging = false;
-        let dragStartY = 0;
-        let dragStartOffset = 0;
+        if (dragState.moved) {
+            if (dragState.isHandleDrag) {
+                // سحب الـ handle → نحرك الـ handle مباشرة
+                const ratio = deltaY / (1700 - handleHeight);
+                updateScroll(dragState.startOffset + ratio * maxScroll);
+            } else {
+                // سحب المحتوى → عكس الاتجاه
+                const scaleY = getSvgScaleY();
+                const svgDeltaY = deltaY / scaleY;
+                updateScroll(dragState.startOffset - svgDeltaY);
+            }
+        }
+    });
 
-        scrollBarHandle.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            dragStartY = e.clientY;
-            dragStartOffset = scrollOffset;
+    document.addEventListener('mouseup', (e) => {
+        if (!dragState.active) return;
+
+        if (!dragState.moved) {
+            // tap بدون سحب → نعيد إرسال الحدث للعنصر تحته
+            dragOverlay.style.pointerEvents = 'none';
+            const target = document.elementFromPoint(e.clientX, e.clientY);
+            if (target && target !== dragOverlay) {
+                target.dispatchEvent(new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: e.clientX,
+                    clientY: e.clientY
+                }));
+            }
+            // نرجع الـ pointer events بعد لحظة
+            setTimeout(() => { dragOverlay.style.pointerEvents = ''; }, 50);
+        }
+
+        dragState.active = false;
+        dragState.moved = false;
+        dragState.isHandleDrag = false;
+        dragOverlay.style.cursor = 'grab';
+        scrollBarHandle.style.cursor = 'grab';
+    });
+
+    // ==================== TOUCH ====================
+
+    dragOverlay.addEventListener('touchstart', (e) => {
+        dragState.active = true;
+        dragState.startY = e.touches[0].clientY;
+        dragState.startOffset = scrollOffset;
+        dragState.moved = false;
+        dragState.isHandleDrag = false;
+    }, { passive: true });
+
+    scrollBarHandle.addEventListener('touchstart', (e) => {
+        dragState.active = true;
+        dragState.startY = e.touches[0].clientY;
+        dragState.startOffset = scrollOffset;
+        dragState.moved = false;
+        dragState.isHandleDrag = true;
+        e.stopPropagation();
+    }, { passive: true });
+
+    // touchmove على الـ document عشان يشتغل حتى لو الإصبع خرج من العنصر
+    document.addEventListener('touchmove', (e) => {
+        if (!dragState.active) return;
+        const deltaY = e.touches[0].clientY - dragState.startY;
+
+        if (Math.abs(deltaY) >= dragState.threshold) {
+            dragState.moved = true;
+        }
+
+        if (dragState.moved) {
+            if (dragState.isHandleDrag) {
+                const ratio = deltaY / (1700 - handleHeight);
+                updateScroll(dragState.startOffset + ratio * maxScroll);
+            } else {
+                const scaleY = getSvgScaleY();
+                const svgDeltaY = deltaY / scaleY;
+                updateScroll(dragState.startOffset - svgDeltaY);
+            }
+            // نمنع الـ scroll الطبيعي للصفحة فقط لما يحصل سحب فعلي
             e.preventDefault();
-        });
+        }
+    }, { passive: false });
 
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const deltaY = e.clientY - dragStartY;
-            const scrollRatio = deltaY / (1700 - handleHeight);
-            updateScroll(dragStartOffset + scrollRatio * maxScroll);
-        });
+    document.addEventListener('touchend', (e) => {
+        if (!dragState.active) return;
 
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
+        if (!dragState.moved) {
+            // tap بدون سحب → نسمح للحدث يوصل للعنصر تحته
+            dragOverlay.style.pointerEvents = 'none';
+            const touch = e.changedTouches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && target !== dragOverlay) {
+                target.dispatchEvent(new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                }));
+            }
+            setTimeout(() => { dragOverlay.style.pointerEvents = ''; }, 100);
+        }
 
-        // التمرير بعجلة الماوس
-        scrollContainerGroup.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            updateScroll(scrollOffset + e.deltaY);
-        }, { passive: false });
+        dragState.active = false;
+        dragState.moved = false;
+        dragState.isHandleDrag = false;
+    }, { passive: true });
 
-        // التمرير باللمس
-        let touchStartY = 0;
-        let touchStartOffset = 0;
+    // ==================== عجلة الماوس ====================
+    scrollContainerGroup.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        updateScroll(scrollOffset + e.deltaY);
+    }, { passive: false });
 
-        scrollContent.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-            touchStartOffset = scrollOffset;
-        }, { passive: true });
+    // --- ترتيب الإضافة: overlay فوق الـ content عشان يستقبل الأحداث ---
+    scrollBarGroup.appendChild(scrollBarBg);
+    scrollBarGroup.appendChild(scrollBarHandle);
 
-        scrollContent.addEventListener('touchmove', (e) => {
-            const deltaY = touchStartY - e.touches[0].clientY;
-            updateScroll(touchStartOffset + deltaY);
-        }, { passive: true });
-
-        scrollBarGroup.appendChild(scrollBarBg);
-        scrollBarGroup.appendChild(scrollBarHandle);
-        scrollContainerGroup.appendChild(scrollBarGroup);
-    }
+    scrollContainerGroup.appendChild(dragOverlay);   // فوق الـ content
+    scrollContainerGroup.appendChild(scrollBarGroup); // فوق الـ overlay
 }
 
 // ---------- إدخال اسم المستخدم ----------
