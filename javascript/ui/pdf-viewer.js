@@ -5,7 +5,6 @@
 import { RAW_CONTENT_BASE, NAV_STATE } from '../core/config.js';
 import { pushNavigationState, popNavigationState } from '../core/navigation.js';
 import { resetBrowserZoom } from '../core/utils.js';
-import { initScrollEdgeButtons } from '../core/utils.js';
 
 export let currentPreviewItem = null;
 export let isToolbarExpanded = false;
@@ -304,9 +303,6 @@ export function smartOpen(item) {
 
 // ---------- تهيئة مستمعات الأحداث ----------
 export function initPDFViewer() {
-
-    // ✅ تهيئة أزرار التمرير لأقصى اليمين/اليسار
-    initScrollEdgeButtons();
 
     // ---- أزرار معاينة PDF ----
     const closePreviewBtn = document.getElementById('preview-close-btn');
