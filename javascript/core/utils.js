@@ -41,7 +41,7 @@ export function autoTranslate(filename) {
 // ------------------------------
 export function debounce(func, delay) {
     let timeoutId;
-    return function(...args) {
+    return function (...args) {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => func.apply(this, args), delay);
     };
@@ -56,9 +56,9 @@ export function getCumulativeTranslate(element) {
         const trans = current.getAttribute('transform');
         if (trans) {
             const m = trans.match(/translate\s*\(([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-            if (m) { 
-                x += parseFloat(m[1]); 
-                y += parseFloat(m[2]); 
+            if (m) {
+                x += parseFloat(m[1]);
+                y += parseFloat(m[2]);
             }
         }
         current = current.parentNode;
@@ -134,19 +134,24 @@ export function wrapText(el, maxW) {
     if (!txt) return;
     const words = txt.split(/\s+/);
     el.textContent = '';
+
     let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-    ts.setAttribute('x', el.getAttribute('x'));
+    // ✅ إصلاح NaN: إضافة || '0' لضمان قيمة صالحة للـ attribute
+    ts.setAttribute('x', el.getAttribute('x') || '0');
     ts.setAttribute('dy', '0');
     el.appendChild(ts);
+
     let line = '';
     const lh = parseFloat(el.style.fontSize) * 1.1;
+
     words.forEach(word => {
         let test = line + (line ? ' ' : '') + word;
         ts.textContent = test;
         if (ts.getComputedTextLength() > maxW - 5 && line) {
             ts.textContent = line;
             ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-            ts.setAttribute('x', el.getAttribute('x'));
+            // ✅ إصلاح NaN: إضافة || '0' هنا أيضاً
+            ts.setAttribute('x', el.getAttribute('x') || '0');
             ts.setAttribute('dy', lh + 'px');
             ts.textContent = word;
             el.appendChild(ts);
