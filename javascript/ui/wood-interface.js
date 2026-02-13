@@ -7,6 +7,9 @@ import { normalizeArabic, autoTranslate, getDisplayName, debounce, resetBrowserZ
 import { pushNavigationState, goToWood, goToMapEnd, getCurrentNavigationState, navigationHistory } from '../core/navigation.js';
 import { smartOpen } from './pdf-viewer.js';
 import { globalFileTree, currentGroup, currentFolder, setCurrentFolder } from '../core/state.js';
+
+// ✅ استيراد updateDynamicSizes من group-loader فقط (المكان الصحيح)
+// لا يوجد hideLoadingScreen هنا - هي معرّفة في group-loader.js
 import { updateDynamicSizes, loadImages, fetchGlobalTree, updateWoodLogo } from '../core/group-loader.js';
 
 // ---------- متغير التفاعل (زر JS Toggle) ----------
@@ -434,13 +437,49 @@ function addScrollSystem(scrollContainerGroup, scrollContent, separatorGroup, ma
             scrollBarHandle.setAttribute("y", handleY);
         }
 
-        // ... (باقي كود السحب والتمرير كما هو) ...
-        // اختصاراً: الكود طويل جداً، ولكنه موجود في النسخة السابقة.
-        // يمكنك نسخه من المرفق السابق.
-        // سأضعه مختصراً هنا للإيجاز، ولكن في الملف الفعلي يجب وضعه كاملاً.
-        
-        // [هنا يتم وضع كامل أحداث السحب والتمرير]
-        
+        // سحب شريط التمرير
+        let isDragging = false;
+        let dragStartY = 0;
+        let dragStartOffset = 0;
+
+        scrollBarHandle.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStartY = e.clientY;
+            dragStartOffset = scrollOffset;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaY = e.clientY - dragStartY;
+            const scrollRatio = deltaY / (1700 - handleHeight);
+            updateScroll(dragStartOffset + scrollRatio * maxScroll);
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // التمرير بعجلة الماوس
+        scrollContainerGroup.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            updateScroll(scrollOffset + e.deltaY);
+        }, { passive: false });
+
+        // التمرير باللمس
+        let touchStartY = 0;
+        let touchStartOffset = 0;
+
+        scrollContent.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+            touchStartOffset = scrollOffset;
+        }, { passive: true });
+
+        scrollContent.addEventListener('touchmove', (e) => {
+            const deltaY = touchStartY - e.touches[0].clientY;
+            updateScroll(touchStartOffset + deltaY);
+        }, { passive: true });
+
         scrollBarGroup.appendChild(scrollBarBg);
         scrollBarGroup.appendChild(scrollBarHandle);
         scrollContainerGroup.appendChild(scrollBarGroup);
@@ -490,7 +529,9 @@ export function renderNameInput() {
 
     inputGroup.onclick = () => {
         const currentName = localStorage.getItem('user_real_name');
-        const promptMessage = currentName ? `الاسم الحالي: ${currentName}\nأدخل اسم جديد أو اترك فارغاً للإلغاء:` : "ما اسمك؟";
+        const promptMessage = currentName ?
+            `الاسم الحالي: ${currentName}\nأدخل اسم جديد أو اترك فارغاً للإلغاء:` :
+            "ما اسمك؟";
         const name = prompt(promptMessage, currentName || "");
         if (name !== null && name.trim()) {
             localStorage.setItem('user_real_name', name.trim());
@@ -537,7 +578,7 @@ export function preventInteractionWhenHidden() {
     };
 
     const eventsToBlock = [
-        'click', 'touchstart', 'touchend', 'mousedown', 'mouseup', 
+        'click', 'touchstart', 'touchend', 'mousedown', 'mouseup',
         'pointerdown', 'pointerup', 'mouseover', 'mouseout',
         'touchmove', 'contextmenu'
     ];
@@ -545,9 +586,9 @@ export function preventInteractionWhenHidden() {
     const toggleObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
-                const isHidden = toggleContainer.classList.contains('hidden') || 
-                                toggleContainer.classList.contains('fully-hidden') ||
-                                toggleContainer.style.display === 'none';
+                const isHidden = toggleContainer.classList.contains('hidden') ||
+                    toggleContainer.classList.contains('fully-hidden') ||
+                    toggleContainer.style.display === 'none';
 
                 if (isHidden) {
                     toggleContainer.style.pointerEvents = 'none';
@@ -570,7 +611,7 @@ export function preventInteractionWhenHidden() {
         mutations.forEach((mutation) => {
             if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
                 const isHidden = searchContainer.classList.contains('hidden') ||
-                                searchContainer.style.display === 'none';
+                    searchContainer.style.display === 'none';
 
                 if (isHidden) {
                     searchContainer.style.pointerEvents = 'none';
@@ -589,18 +630,18 @@ export function preventInteractionWhenHidden() {
         });
     });
 
-    toggleObserver.observe(toggleContainer, { 
-        attributes: true, 
-        attributeFilter: ['class', 'style'] 
+    toggleObserver.observe(toggleContainer, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
     });
 
-    searchObserver.observe(searchContainer, { 
-        attributes: true, 
-        attributeFilter: ['class', 'style'] 
+    searchObserver.observe(searchContainer, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
     });
 
     // الحالة الابتدائية
-    if (toggleContainer.classList.contains('hidden') || 
+    if (toggleContainer.classList.contains('hidden') ||
         toggleContainer.classList.contains('fully-hidden') ||
         toggleContainer.style.display === 'none') {
         toggleContainer.style.pointerEvents = 'none';
@@ -621,7 +662,7 @@ export function initWoodUI() {
     // زر تغيير الجروب
     const changeGroupBtn = document.getElementById('change-group-btn');
     if (changeGroupBtn) {
-        changeGroupBtn.addEventListener('click', function(e) {
+        changeGroupBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             const groupSelectionScreen = document.getElementById('group-selection-screen');
             if (groupSelectionScreen) {
@@ -633,9 +674,9 @@ export function initWoodUI() {
         });
     }
 
-    // ✅ أزرار اختيار المجموعة (المضافة حديثاً)
+    // أزرار اختيار المجموعة
     document.querySelectorAll('.group-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const group = this.getAttribute('data-group');
             console.log('👆 تم اختيار المجموعة:', group);
             import('../core/group-loader.js').then(({ initializeGroup }) => {
@@ -647,7 +688,7 @@ export function initWoodUI() {
     // زر Preload
     const preloadBtn = document.getElementById('preload-btn');
     if (preloadBtn) {
-        preloadBtn.addEventListener('click', function(e) {
+        preloadBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             console.log('🔄 العودة لشاشة التحميل المسبق');
             localStorage.removeItem('preload_done');
@@ -659,12 +700,11 @@ export function initWoodUI() {
     // زر Reset
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) {
-        resetBtn.addEventListener('click', async function(e) {
+        resetBtn.addEventListener('click', async function (e) {
             e.stopPropagation();
             const confirmReset = confirm('🔄 سيتم إعادة تحميل الملفات المحدثة. هل تريد المتابعة؟');
             if (!confirmReset) return;
             console.log('🔄 بدء فحص التحديثات...');
-            // يمكن وضع كود reset الكامل هنا أو استدعاؤه من ملف آخر.
             alert('تم بدء التحديث، سيتم إعادة التحميل قريباً.');
             window.location.reload();
         });
@@ -714,7 +754,7 @@ export function initWoodUI() {
     // زر تفعيل التفاعل
     const jsToggle = document.getElementById('js-toggle');
     if (jsToggle) {
-        jsToggle.addEventListener('change', function() {
+        jsToggle.addEventListener('change', function () {
             interactionEnabled = this.checked;
         });
     }
@@ -730,7 +770,7 @@ export function initWoodUI() {
             }
         };
 
-        searchInput.addEventListener('input', debounce(function(e) {
+        searchInput.addEventListener('input', debounce(function (e) {
             const mainSvg = document.getElementById('main-svg');
             if (!mainSvg) return;
 
@@ -807,7 +847,7 @@ export function initWoodUI() {
             }
         }
 
-        eyeToggle.addEventListener('click', function(e) {
+        eyeToggle.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
 
@@ -835,7 +875,75 @@ export function initWoodUI() {
             console.log('👁️ تم إخفاء البحث وعرض الزر الدائري');
         });
 
-        // سحب الزر الدائري (كود طويل، اختصاراً: ضع الكود الكامل من النسخة السابقة)
-        // [هنا كود سحب الزر الدائري كاملاً]
+        // ✅ كود سحب الزر الدائري (eye-toggle-standalone)
+        if (eyeToggleStandalone) {
+            let isDraggingEye = false;
+            let eyeDragStartX = 0;
+            let eyeDragStartY = 0;
+            let eyeStartLeft = 0;
+            let eyeStartTop = 0;
+            let eyeHasMoved = false;
+
+            eyeToggleStandalone.addEventListener('touchstart', (e) => {
+                isDraggingEye = true;
+                eyeHasMoved = false;
+                eyeDragStartX = e.touches[0].clientX;
+                eyeDragStartY = e.touches[0].clientY;
+                const rect = eyeToggleStandalone.getBoundingClientRect();
+                eyeStartLeft = rect.left;
+                eyeStartTop = rect.top;
+            }, { passive: true });
+
+            eyeToggleStandalone.addEventListener('touchmove', (e) => {
+                if (!isDraggingEye) return;
+                const deltaX = e.touches[0].clientX - eyeDragStartX;
+                const deltaY = e.touches[0].clientY - eyeDragStartY;
+                if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) eyeHasMoved = true;
+                const newLeft = eyeStartLeft + deltaX;
+                const newTop = eyeStartTop + deltaY;
+                eyeToggleStandalone.style.left = newLeft + 'px';
+                eyeToggleStandalone.style.top = newTop + 'px';
+                eyeToggleStandalone.style.right = 'auto';
+                eyeToggleStandalone.style.bottom = 'auto';
+            }, { passive: true });
+
+            eyeToggleStandalone.addEventListener('touchend', (e) => {
+                isDraggingEye = false;
+                if (eyeHasMoved) {
+                    localStorage.setItem('eyeToggleTop', eyeToggleStandalone.style.top);
+                    localStorage.setItem('eyeToggleLeft', eyeToggleStandalone.style.left);
+                    localStorage.removeItem('eyeToggleRight');
+                } else {
+                    // نقر بدون سحب → إظهار البحث
+                    searchContainer.classList.remove('hidden');
+                    searchContainer.style.display = '';
+                    searchContainer.style.pointerEvents = '';
+
+                    toggleContainer.classList.remove('fully-hidden');
+                    toggleContainer.style.display = 'flex';
+                    toggleContainer.style.pointerEvents = '';
+
+                    eyeToggleStandalone.style.display = 'none';
+                    localStorage.setItem('searchVisible', 'true');
+                    console.log('👁️ تم إظهار البحث');
+                }
+            });
+
+            // نسخة ماوس للـ standalone button
+            eyeToggleStandalone.addEventListener('click', (e) => {
+                if (eyeHasMoved) return;
+                searchContainer.classList.remove('hidden');
+                searchContainer.style.display = '';
+                searchContainer.style.pointerEvents = '';
+
+                toggleContainer.classList.remove('fully-hidden');
+                toggleContainer.style.display = 'flex';
+                toggleContainer.style.pointerEvents = '';
+
+                eyeToggleStandalone.style.display = 'none';
+                localStorage.setItem('searchVisible', 'true');
+                console.log('👁️ تم إظهار البحث (click)');
+            });
+        }
     }
 }
