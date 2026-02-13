@@ -1,8 +1,7 @@
 // ============================================
-// script.js - نقطة الدخول الرئيسية
+// script.js - نقطة الدخول الرئيسية (ES Module)
 // ============================================
 
-// استيراد دوال التهيئة
 import { initPreloadSystem } from './javascript/features/preload-game.js';
 import { setupBackButton } from './javascript/core/navigation.js';
 import { preventInteractionWhenHidden, initWoodUI, updateWelcomeMessages } from './javascript/ui/wood-interface.js';
@@ -10,7 +9,6 @@ import { initPDFViewer } from './javascript/ui/pdf-viewer.js';
 import { initializeGroup, loadSelectedGroup } from './javascript/core/group-loader.js';
 import { scan } from './javascript/features/svg-processor.js';
 import { resetBrowserZoom } from './javascript/core/utils.js';
-import { setCurrentGroup } from './javascript/core/state.js';
 
 // ---------- تحميل آخر جروب تلقائياً ----------
 function autoLoadLastGroup() {
@@ -127,5 +125,4 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ script.js تم تحميله بالكامل - جميع الوحدات جاهزة');
 });
 
-// تصدير أي شيء قد تحتاجه الوحدات الأخرى (اختياري)
 export { scan };
