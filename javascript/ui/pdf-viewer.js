@@ -4,6 +4,8 @@
 
 import { RAW_CONTENT_BASE, NAV_STATE } from '../core/config.js';
 import { pushNavigationState, popNavigationState } from '../core/navigation.js';
+import { resetBrowserZoom } from '../core/utils.js';
+import { initScrollEdgeButtons } from '../core/utils.js';
 
 export let currentPreviewItem = null;
 export let isToolbarExpanded = false;
@@ -226,6 +228,9 @@ export function openWithMozilla(item) {
     overlay.classList.remove("hidden");
     overlay.style.display = 'flex';
 
+    // ✅ reset الـ zoom لـ 1x عند فتح PDF
+    resetBrowserZoom();
+
     pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
         encodeURIComponent(url) + "#zoom=page-fit";
 
@@ -299,6 +304,9 @@ export function smartOpen(item) {
 
 // ---------- تهيئة مستمعات الأحداث ----------
 export function initPDFViewer() {
+
+    // ✅ تهيئة أزرار التمرير لأقصى اليمين/اليسار
+    initScrollEdgeButtons();
 
     // ---- أزرار معاينة PDF ----
     const closePreviewBtn = document.getElementById('preview-close-btn');
@@ -409,6 +417,8 @@ export function initPDFViewer() {
                 pdfOverlay.style.display = 'none';
             }
             if (pdfFrame) pdfFrame.src = '';
+            // ✅ reset الـ zoom لـ 1x عند إغلاق PDF
+            resetBrowserZoom();
             popNavigationState();
         });
     }
