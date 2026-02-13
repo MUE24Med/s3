@@ -230,7 +230,6 @@ export function updateWoodLogo(groupLetter) {
 }
 
 // ---------- تهيئة المجموعة ----------
-// ---------- تهيئة المجموعة ----------
 export async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
 
@@ -376,11 +375,13 @@ async function finishLoading() {
     updateLoadProgress();
     console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
 
-    const { updateDynamicSizes, scan, updateWoodInterface, goToWood, hideLoadingScreen } = await import('../ui/wood-interface.js');
-    updateDynamicSizes();
-    scan();
-    updateWoodInterface();
-    goToWood();
+    // استيراد الدوال المطلوبة من wood-interface (عدا updateDynamicSises)
+    const { scan, updateWoodInterface, hideLoadingScreen } = await import('../ui/wood-interface.js');
+
+    updateDynamicSizes();   // من هذا الملف (محلية)
+    scan();                 // من wood-interface
+    updateWoodInterface();  // من wood-interface
+    goToWood();             // من navigation.js (مستوردة في الأعلى)
 
     const mainSvg = document.getElementById('main-svg');
     if (mainSvg) {
@@ -389,7 +390,7 @@ async function finishLoading() {
         mainSvg.classList.add('loaded');
     }
 
-    hideLoadingScreen();
+    hideLoadingScreen();    // من wood-interface
     console.log('🎉 اكتمل التحميل والعرض');
 }
 
