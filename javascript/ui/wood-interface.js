@@ -844,7 +844,7 @@ export function initWoodUI() {
             window.location.reload();
         });
     }
-// 🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑
+
  const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
     resetBtn.addEventListener('click', async function (e) {
@@ -878,7 +878,7 @@ if (resetBtn) {
         window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
     });
 }
-// 🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑
+
     // زر تحريك شريط الأدوات
     const moveToggle = document.getElementById('move-toggle');
     if (moveToggle) {
@@ -981,51 +981,13 @@ if (resetBtn) {
         }, 150));
     }
 
-     // ✅ نظام زر العين (👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁)
+    // نظام زر العين
     const eyeToggle = document.getElementById('eye-toggle');
     const eyeToggleStandalone = document.getElementById('eye-toggle-standalone');
     const searchContainer = document.getElementById('search-container');
     const toggleContainer = document.getElementById('js-toggle-container');
 
-    // دالة موحدة للإخفاء
-    const hideSearchInterface = (isInitial = false) => {
-        searchContainer.classList.add('hidden');
-        searchContainer.style.display = 'none';
-        
-        toggleContainer.classList.add('fully-hidden');
-        toggleContainer.style.display = 'none';
-        
-        if (eyeToggleStandalone) {
-            eyeToggleStandalone.style.display = 'flex';
-            if (!isInitial) {
-                // إعادة ضبط الموقع الافتراضي فقط عند الضغط المتعمد وليس عند التحميل
-                eyeToggleStandalone.style.top = '20px';
-                eyeToggleStandalone.style.right = '20px';
-                eyeToggleStandalone.style.left = 'auto';
-                localStorage.setItem('eyeToggleTop', '20px');
-                localStorage.setItem('eyeToggleRight', '20px');
-                localStorage.removeItem('eyeToggleLeft');
-            }
-        }
-        localStorage.setItem('searchVisible', 'false');
-    };
-
-    // دالة موحدة للإظهار
-    const showSearchInterface = () => {
-        searchContainer.classList.remove('hidden');
-        searchContainer.style.display = '';
-        searchContainer.style.pointerEvents = '';
-
-        toggleContainer.classList.remove('fully-hidden');
-        toggleContainer.style.display = 'flex';
-        toggleContainer.style.pointerEvents = '';
-
-        if (eyeToggleStandalone) eyeToggleStandalone.style.display = 'none';
-        localStorage.setItem('searchVisible', 'true');
-    };
-
     if (eyeToggle && searchContainer) {
-        // 1. استعادة الموقع المحفوظ للزر الدائري
         const savedTop = localStorage.getItem('eyeToggleTop');
         const savedRight = localStorage.getItem('eyeToggleRight');
         const savedLeft = localStorage.getItem('eyeToggleLeft');
@@ -1037,35 +999,52 @@ if (resetBtn) {
                 eyeToggleStandalone.style.right = 'auto';
             } else if (savedRight && savedRight !== 'auto') {
                 eyeToggleStandalone.style.right = savedRight;
-                eyeToggleStandalone.style.left = 'auto';
+            }
+            eyeToggleStandalone.style.bottom = 'auto';
+        }
+
+        const searchVisible = localStorage.getItem('searchVisible') !== 'false';
+        if (!searchVisible) {
+            searchContainer.classList.add('hidden');
+            searchContainer.style.display = 'none';
+            searchContainer.style.pointerEvents = 'none';
+
+            toggleContainer.classList.add('fully-hidden');
+            toggleContainer.style.display = 'none';
+            toggleContainer.style.pointerEvents = 'none';
+
+            if (eyeToggleStandalone) {
+                eyeToggleStandalone.style.display = 'flex';
             }
         }
 
-        // 2. التحقق من الحالة المحفوظة عند التشغيل
-        const isSearchVisible = localStorage.getItem('searchVisible') !== 'false';
-        if (!isSearchVisible) {
-            hideSearchInterface(true); // تمرير true لمنع إعادة ضبط الموقع
-        }
-
-        // 3. حدث الضغط على زر العين الصغير (الإخفاء)
         eyeToggle.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            hideSearchInterface();
-            console.log('👁️ تم إخفاء البحث');
-        });
 
-        // 4. ربط زر العين المستقل (الإظهار) - تأكد من وجوده في بقية الكود
-        if (eyeToggleStandalone) {
-            eyeToggleStandalone.addEventListener('click', () => {
-                // سنستخدم منطق eyeHasMoved لاحقاً في جزء السحب، لكن هنا للضغط العادي
-                if (typeof eyeHasMoved !== 'undefined' && eyeHasMoved) return;
-                showSearchInterface();
-                console.log('👁️ تم إظهار البحث');
-            });
-        }
-    }
-// 👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁
+            searchContainer.classList.add('hidden');
+            searchContainer.style.display = 'none';
+            searchContainer.style.pointerEvents = 'none';
+
+            toggleContainer.classList.add('fully-hidden');
+            toggleContainer.style.display = 'none';
+            toggleContainer.style.pointerEvents = 'none';
+
+            localStorage.setItem('searchVisible', 'false');
+
+            if (eyeToggleStandalone) {
+                eyeToggleStandalone.style.display = 'flex';
+                eyeToggleStandalone.style.top = '20px';
+                eyeToggleStandalone.style.right = '20px';
+                eyeToggleStandalone.style.bottom = 'auto';
+                eyeToggleStandalone.style.left = 'auto';
+
+                localStorage.setItem('eyeToggleTop', '20px');
+                localStorage.setItem('eyeToggleRight', '20px');
+                localStorage.removeItem('eyeToggleLeft');
+            }
+            console.log('👁️ تم إخفاء البحث وعرض الزر الدائري');
+        });
 
     // سحب الزر الدائري (المُعدل لمنع الخروج من الشاشة)
         if (eyeToggleStandalone) {
@@ -1161,3 +1140,4 @@ if (resetBtn) {
             });
         }
     }
+}
