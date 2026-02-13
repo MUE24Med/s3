@@ -3,7 +3,7 @@
    يحفظ الملفات في المستوى الأعلى (top-level)
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-20260214-enhanced';
+const CACHE_NAME = 'semester-3-cache-20260214.1-enhanced';
 
 // ✅ الملفات في المستوى الأعلى (top-level) التي سيتم تخزينها
 const TOP_LEVEL_FILES = [
