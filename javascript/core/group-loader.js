@@ -47,7 +47,6 @@ export function showLoadingScreen(groupLetter) {
     const loadingOverlay = document.getElementById('loading-overlay');
     if (!loadingOverlay) return;
 
-    // 🔧 FIX: تغيير الصورة إلى نص
     const splashImage = document.getElementById('splash-image');
     if (splashImage) {
         splashImage.style.display = 'none';
@@ -84,8 +83,7 @@ export function showLoadingScreen(groupLetter) {
     document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
     loadingOverlay.classList.add('active');
     console.log(`🔦 شاشة التحميل نشطة: Group ${groupLetter}`);
-    
-    // استدعاء تحديث رسائل الترحيب
+
     import('../ui/wood-interface.js').then(({ updateWelcomeMessages }) => {
         updateWelcomeMessages();
     });
@@ -267,9 +265,9 @@ export async function initializeGroup(groupLetter) {
     showLoadingScreen(groupLetter);
     await Promise.all([fetchGlobalTree(), loadGroupSVG(groupLetter)]);
 
-    // ✅ استدعاء الدوال المحلية مباشرة (بدون استيراد من wood-interface)
-    updateDynamicSizes();   // موجودة في هذا الملف ومصدرة
-    await loadImages();     // موجودة في هذا الملف ومصدرة
+    // استدعاء الدوال المحلية مباشرة
+    updateDynamicSizes();
+    await loadImages();
 }
 
 // ---------- تحميل الصور ----------
@@ -375,13 +373,14 @@ async function finishLoading() {
     updateLoadProgress();
     console.log('✅ التحميل اكتمل 100% - جاري عرض المحتوى...');
 
-    // استيراد الدوال المطلوبة من wood-interface (عدا updateDynamicSises)
-    const { scan, updateWoodInterface, hideLoadingScreen } = await import('../ui/wood-interface.js');
+    // استيراد الدوال المطلوبة من الوحدات الأخرى
+    const { scan } = await import('../features/svg-processor.js');
+    const { updateWoodInterface, hideLoadingScreen } = await import('../ui/wood-interface.js');
 
-    updateDynamicSizes();   // من هذا الملف (محلية)
-    scan();                 // من wood-interface
+    updateDynamicSizes();   // محلية
+    scan();                 // من svg-processor
     updateWoodInterface();  // من wood-interface
-    goToWood();             // من navigation.js (مستوردة في الأعلى)
+    goToWood();             // مستوردة من navigation.js في الأعلى
 
     const mainSvg = document.getElementById('main-svg');
     if (mainSvg) {
