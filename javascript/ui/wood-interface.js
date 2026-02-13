@@ -1025,7 +1025,7 @@ export function initWoodUI() {
             console.log('👁️ تم إخفاء البحث وعرض الزر الدائري');
         });
 
-        // ✅ كود سحب الزر الدائري (eye-toggle-standalone)
+    // سحب الزر الدائري (المُعدل لمنع الخروج من الشاشة)
         if (eyeToggleStandalone) {
             let isDraggingEye = false;
             let eyeDragStartX = 0;
@@ -1042,23 +1042,46 @@ export function initWoodUI() {
                 const rect = eyeToggleStandalone.getBoundingClientRect();
                 eyeStartLeft = rect.left;
                 eyeStartTop = rect.top;
+                
+                // إضافة تأثير السحب البصري الموجود في الـ CSS الخاص بك
+                eyeToggleStandalone.classList.add('dragging');
             }, { passive: true });
 
             eyeToggleStandalone.addEventListener('touchmove', (e) => {
                 if (!isDraggingEye) return;
+
                 const deltaX = e.touches[0].clientX - eyeDragStartX;
                 const deltaY = e.touches[0].clientY - eyeDragStartY;
+
                 if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) eyeHasMoved = true;
-                const newLeft = eyeStartLeft + deltaX;
-                const newTop = eyeStartTop + deltaY;
+
+                // 1. حساب الموقع الجديد المقترح
+                let newLeft = eyeStartLeft + deltaX;
+                let newTop = eyeStartTop + deltaY;
+
+                // 2. تحديد حدود الشاشة (مع هامش أمان 10 بكسل)
+                const padding = 10;
+                const btnWidth = eyeToggleStandalone.offsetWidth;
+                const btnHeight = eyeToggleStandalone.offsetHeight;
+                const maxWidth = window.innerWidth - btnWidth - padding;
+                const maxHeight = window.innerHeight - btnHeight - padding;
+
+                // 3. تطبيق الحدود (Constraint Logic)
+                newLeft = Math.max(padding, Math.min(newLeft, maxWidth));
+                newTop = Math.max(padding, Math.min(newTop, maxHeight));
+
+                // 4. التحديث الفعلي للعنصر
                 eyeToggleStandalone.style.left = newLeft + 'px';
                 eyeToggleStandalone.style.top = newTop + 'px';
                 eyeToggleStandalone.style.right = 'auto';
                 eyeToggleStandalone.style.bottom = 'auto';
-            }, { passive: true });
+                
+            }, { passive: false }); // تغيير لـ false لمنع اهتزاز الصفحة أثناء السحب
 
             eyeToggleStandalone.addEventListener('touchend', (e) => {
                 isDraggingEye = false;
+                eyeToggleStandalone.classList.remove('dragging');
+
                 if (eyeHasMoved) {
                     localStorage.setItem('eyeToggleTop', eyeToggleStandalone.style.top);
                     localStorage.setItem('eyeToggleLeft', eyeToggleStandalone.style.left);
