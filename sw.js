@@ -2,13 +2,21 @@
    sw.js - ✅ نسخة مستقرة نهائية
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-20260213-1';
+const CACHE_NAME = 'semester-3-cache-20260213-11';
 const urlsToCache = [
     './',
     './index.html',
     './style.css',
     './tracker.js',
     './script.js',
+    './javascript/core/config.js',
+    './javascript/core/utils.js',
+    './javascript/core/navigation.js',
+    './javascript/core/group-loader.js',
+    './javascript/ui/pdf-viewer.js',
+    './javascript/ui/wood-interface.js',
+    './javascript/features/preload-game.js',
+    './javascript/features/svg-processor.js',
     './image/0.webp',
     './image/wood.webp',
     './image/Upper_wood.webp'
