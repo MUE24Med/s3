@@ -49,14 +49,19 @@ export function startHover() {
     const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;
     const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;
     const cum = getCumulativeTranslate(rect);
-    const absX = parseFloat(rect.getAttribute('x')) + cum.x;
-    const absY = parseFloat(rect.getAttribute('y')) + cum.y;
+
+    // ✅ إصلاح NaN: إضافة || 0 لضمان قيمة رقمية دائماً
+    const absX = (parseFloat(rect.getAttribute('x')) || 0) + cum.x;
+    const absY = (parseFloat(rect.getAttribute('y')) || 0) + cum.y;
     const centerX = absX + rW / 2;
     const scaleFactor = 1.1;
     const yOffset = (rH * (scaleFactor - 1)) / 2;
     const hoveredY = absY - yOffset;
 
-    rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
+    const rectX = parseFloat(rect.getAttribute('x')) || 0;
+    const rectY = parseFloat(rect.getAttribute('y')) || 0;
+
+    rect.style.transformOrigin = `${rectX + rW / 2}px ${rectY + rH / 2}px`;
     rect.style.transform = `scale(${scaleFactor})`;
     rect.style.strokeWidth = '4px';
 
@@ -85,7 +90,7 @@ export function startHover() {
         zPart.setAttribute('x', imgTransX + imgData.x);
         zPart.setAttribute('y', imgTransY + imgData.y);
         zPart.style.pointerEvents = 'none';
-        zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;
+        zPart.style.transformOrigin = `${centerX}px ${absY + rH / 2}px`;
         zPart.style.transform = `scale(${scaleFactor})`;
 
         mainSvg.appendChild(zPart);
@@ -157,9 +162,12 @@ export function processRect(r) {
     const dataFull = r.getAttribute('data-full-text');
     const fileName = href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '';
     const name = dataFull || fileName || '';
+
     const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
-    const x = parseFloat(r.getAttribute('x'));
-    const y = parseFloat(r.getAttribute('y'));
+
+    // ✅ إصلاح NaN: إضافة || 0 لضمان قيمة رقمية دائماً
+    const x = parseFloat(r.getAttribute('x')) || 0;
+    const y = parseFloat(r.getAttribute('y')) || 0;
 
     if (name && name.trim() !== '') {
         const fs = Math.max(8, Math.min(12, w * 0.11));
@@ -216,13 +224,13 @@ export function processRect(r) {
 
     const scrollContainer = document.getElementById('scroll-container');
     if (scrollContainer) {
-        r.addEventListener('touchstart', function(e) {
+        r.addEventListener('touchstart', function (e) {
             if (!interactionEnabled) return;
             activeState.touchStartTime = Date.now();
             activeState.initialScrollLeft = scrollContainer.scrollLeft;
             startHover.call(this);
         });
-        r.addEventListener('touchend', async function(e) {
+        r.addEventListener('touchend', async function (e) {
             if (!interactionEnabled) return;
             if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 &&
                 (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
@@ -279,7 +287,7 @@ export function scan() {
             mutations.forEach(mutation => {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === 1) {
-                        if (node.tagName === 'image' || node.querySelector('image')) {
+                        if (node.tagName === 'image' || node.querySelector?.('image')) {
                             hasNewElements = true;
                         }
                         if (node.tagName === 'rect' && (node.classList.contains('m') || node.classList.contains('image-mapper-shape'))) {
@@ -294,7 +302,8 @@ export function scan() {
             });
             if (hasNewElements) {
                 console.log('🔄 تم اكتشاف عناصر جديدة - تحديث viewBox');
-                import('../ui/wood-interface.js').then(({ updateDynamicSizes }) => {
+                // ✅ إصلاح: الاستيراد من group-loader.js وليس wood-interface.js
+                import('../core/group-loader.js').then(({ updateDynamicSizes }) => {
                     updateDynamicSizes();
                 });
             }
