@@ -3,7 +3,7 @@
 // ============================================
 
 import { RAW_CONTENT_BASE, REPO_NAME, GITHUB_USER, TREE_API_URL, NAV_STATE } from './config.js';
-import { getDisplayName, debounce } from './utils.js';
+import { getDisplayName, debounce, resetBrowserZoom } from './utils.js';
 import { pushNavigationState, goToWood } from './navigation.js';
 import { setCurrentGroup, setCurrentFolder, setGlobalFileTree, globalFileTree, currentGroup, currentFolder } from './state.js';
 
@@ -217,6 +217,8 @@ export function updateWoodLogo(groupLetter) {
 
     banner.onclick = (e) => {
         e.stopPropagation();
+        // ✅ reset zoom عند الضغط على شعار الجروب (زر تنقل)
+        resetBrowserZoom();
         const groupSelectionScreen = document.getElementById('group-selection-screen');
         if (groupSelectionScreen) {
             groupSelectionScreen.classList.remove('hidden');
@@ -376,8 +378,8 @@ export async function loadImages() {
 }
 
 // ---------- إنهاء التحميل ----------
-// ✅ إصلاح: hideLoadingScreen تُستدعى من group-loader نفسه (المعرّفة فوق)
-// ✅ إصلاح: updateDynamicSizes تُستدعى مباشرة كدالة محلية
+// ✅ hideLoadingScreen تُستدعى من group-loader نفسه (المعرّفة فوق)
+// ✅ updateDynamicSizes تُستدعى مباشرة كدالة محلية
 async function finishLoading() {
     loadingProgress.completedSteps = loadingProgress.totalSteps;
     loadingProgress.currentPercentage = 100;
@@ -400,7 +402,7 @@ async function finishLoading() {
         mainSvg.classList.add('loaded');
     }
 
-    // ✅ إصلاح: استدعاء hideLoadingScreen المحلية مباشرة (لا استيراد من wood-interface)
+    // ✅ hideLoadingScreen المحلية مباشرة (لا استيراد من wood-interface)
     hideLoadingScreen();
     console.log('🎉 اكتمل التحميل والعرض');
 }
