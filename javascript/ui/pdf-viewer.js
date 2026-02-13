@@ -99,7 +99,6 @@ export function closePDFPreview() {
     if (canvas) {
         const context = canvas.getContext('2d');
         context.clearRect(0, 0, canvas.width, canvas.height);
-        // إزالة صورة الـ img المضافة إن وجدت
         const parent = canvas.parentNode;
         const previewImg = parent.querySelector('img[alt^="معاينة"]');
         if (previewImg) previewImg.remove();
