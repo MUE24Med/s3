@@ -230,6 +230,7 @@ export function updateWoodLogo(groupLetter) {
 }
 
 // ---------- تهيئة المجموعة ----------
+// ---------- تهيئة المجموعة ----------
 export async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
 
@@ -267,10 +268,9 @@ export async function initializeGroup(groupLetter) {
     showLoadingScreen(groupLetter);
     await Promise.all([fetchGlobalTree(), loadGroupSVG(groupLetter)]);
 
-    // استدعاء دوال من wood-interface
-    const { updateDynamicSizes, loadImages } = await import('../ui/wood-interface.js');
-    updateDynamicSizes();
-    await loadImages();
+    // ✅ استدعاء الدوال المحلية مباشرة (بدون استيراد من wood-interface)
+    updateDynamicSizes();   // موجودة في هذا الملف ومصدرة
+    await loadImages();     // موجودة في هذا الملف ومصدرة
 }
 
 // ---------- تحميل الصور ----------
