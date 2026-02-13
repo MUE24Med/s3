@@ -26,7 +26,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="2025.02.12.FINAL">
+  <meta name="version" content="2025.02.14.ENHANCED">
 
   <!-- Performance -->
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
@@ -43,6 +43,7 @@
 <body>
 
 <!-- ================ جميع عناصر الواجهة ================ -->
+
 <!-- شاشة اختيار طريقة الفتح -->
 <div id="open-method-popup" class="hidden">
   <div class="method-container">
@@ -72,7 +73,7 @@
   </div>
 </div>
 
-<!-- شاشة Preload -->
+<!-- 🎮 شاشة Preload المحسنة -->
 <div id="preload-screen" class="hidden">
   <div class="preload-container">
     <div class="notice">
@@ -81,37 +82,80 @@
     <div class="logo">🏥</div>
     <h1>جاري التحميل</h1>
     <div class="subtitle">تجنب العدوى 🦠 واجمع العلاج 💊</div>
+    
+    <!-- شريط التقدم -->
     <div class="progress-container">
       <div class="progress-bar" id="progressBar">0%</div>
     </div>
     <div class="file-status" id="fileStatus">جاري البدء...</div>
     <button class="continue-btn" id="continueBtn">متابعة إلى الموقع ➡️</button>
+    
+    <!-- 🎮 حاوية اللعبة المحسنة -->
     <div class="game-container" id="gameContainer">
+      <!-- إحصائيات اللعبة -->
       <div class="game-stats">
         <div class="game-stat">❤️ <span id="heartsDisplay">0</span></div>
         <div class="game-stat">⭐ <span id="scoreDisplay">0</span></div>
       </div>
+      
+      <!-- 🏆 عرض الرقم القياسي الشخصي -->
+      <div id="personalRecordDisplay" title="رقمك القياسي">
+        🏆 <span id="personalRecordValue">0</span>
+      </div>
+      
+      <!-- اللاعب -->
       <div class="runner" id="runner">👨‍⚕️</div>
+      
+      <!-- شاشة النهاية -->
       <div class="game-overlay" id="gameOverlay">
-        <h2>انتهت اللعبة!</h2>
+        <h2>🎮 انتهت اللعبة!</h2>
         <div class="final-score" id="finalScore">النقاط: 0</div>
-        <button class="restart-btn" id="restartBtn">🔄</button>
+        
+        <!-- 🎉 رسالة الرقم القياسي -->
+        <div id="recordMessage"></div>
+        
+        <button class="restart-btn" id="restartBtn" title="إعادة اللعب">🔄</button>
+        
+        <!-- 🏆 قائمة أفضل 5 لاعبين -->
+        <div class="leaderboard">
+          <h3>🏆 أفضل 5 لاعبين عالمياً</h3>
+          <ul class="leaderboard-list" id="leaderboardList">
+            <li class="leaderboard-item">
+              <span class="leaderboard-rank">-</span>
+              <span class="leaderboard-name">جاري التحميل...</span>
+              <span class="leaderboard-score">-</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
+    
+    <!-- أزرار التحكم -->
     <div class="controls">
       <button class="control-btn" id="leftBtn">➡️</button>
       <button class="control-btn" id="rightBtn">⬅️</button>
     </div>
-    <div class="leaderboard">
-      <h3>🏆 أفضل 5 لاعبين عالمياً</h3>
-      <ul class="leaderboard-list" id="leaderboardList">
-        <li class="leaderboard-item">
-          <span class="leaderboard-rank">-</span>
-          <span class="leaderboard-name">جاري التحميل...</span>
-          <span class="leaderboard-score">-</span>
-        </li>
-      </ul>
-    </div>
+  </div>
+</div>
+
+<!-- 📊 ملخص الجلسة (يظهر في أسفل اليسار) -->
+<div id="sessionSummary">
+  <h4>📊 ملخص الجلسة</h4>
+  <div class="stat">
+    <span class="stat-label">عدد الألعاب:</span>
+    <span class="stat-value" id="sessionGamesCount">0</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">إجمالي النقاط:</span>
+    <span class="stat-value" id="sessionTotalScore">0</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">أعلى نقاط:</span>
+    <span class="stat-value" id="sessionHighScore">0</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">المتوسط:</span>
+    <span class="stat-value" id="sessionAvgScore">0</span>
   </div>
 </div>
 
@@ -245,7 +289,7 @@
   }
 </script>
 
-<!-- ✅ السكريبت الرئيسي – نقطة الدخول الوحيدة (تم التعديل هنا) -->
+<!-- ✅ السكريبت الرئيسي – نقطة الدخول الوحيدة -->
 <script type="module" src="script.js"></script>
 
 <!-- ✅ Tracker (غير معياري) -->
@@ -323,6 +367,34 @@ async function checkForUpdates() {
 window.addEventListener('load', checkForUpdates);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) checkForUpdates();
+});
+</script>
+
+<!-- 📊 سكريبت تحديث ملخص الجلسة -->
+<script>
+// دالة لتحديث عرض ملخص الجلسة
+function updateSessionSummaryDisplay() {
+  if (typeof window.sessionTrackerInstance !== 'undefined') {
+    const summary = window.sessionTrackerInstance.getSessionSummary();
+    
+    const summaryDiv = document.getElementById('sessionSummary');
+    if (summaryDiv && summary.gamesPlayed > 0) {
+      document.getElementById('sessionGamesCount').textContent = summary.gamesPlayed;
+      document.getElementById('sessionTotalScore').textContent = summary.totalScore;
+      document.getElementById('sessionHighScore').textContent = summary.highestScore;
+      document.getElementById('sessionAvgScore').textContent = summary.averageScore;
+      
+      summaryDiv.classList.add('show');
+    }
+  }
+}
+
+// تحديث العرض كل 10 ثواني
+setInterval(updateSessionSummaryDisplay, 10000);
+
+// إخفاء الملخص عند النقر عليه
+document.getElementById('sessionSummary')?.addEventListener('click', function() {
+  this.classList.remove('show');
 });
 </script>
 
