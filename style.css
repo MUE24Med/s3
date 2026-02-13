@@ -1006,11 +1006,6 @@ html, body {
   align-items: center;
 }
 
-#search-container.hidden {
-  display: none !important;
-  pointer-events: none !important;
-}
-
 #search-input {
   padding: 8px 10px 8px 45px;
   border: 1px solid #444;
