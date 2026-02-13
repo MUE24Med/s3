@@ -171,7 +171,7 @@ setInterval(() => {
         UserTracker.send("تحديث دوري", true);
         UserTracker.activities = [];
     }
-}, 60000);
+}, 300000); // كل 5 دقائق 
 
 // التتبع عند مغادرة الصفحة أو إخفائها
 document.addEventListener('visibilitychange', () => {
