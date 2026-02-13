@@ -878,7 +878,7 @@ if (resetBtn) {
         window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
     });
 }
-
+// 🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑🗑
     // زر تحريك شريط الأدوات
     const moveToggle = document.getElementById('move-toggle');
     if (moveToggle) {
@@ -1065,6 +1065,7 @@ if (resetBtn) {
             });
         }
     }
+// 👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁👁
 
     // سحب الزر الدائري (المُعدل لمنع الخروج من الشاشة)
         if (eyeToggleStandalone) {
