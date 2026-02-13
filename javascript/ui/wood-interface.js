@@ -845,18 +845,52 @@ export function initWoodUI() {
         });
     }
 
-    // زر Reset
-    const resetBtn = document.getElementById('reset-btn');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', async function (e) {
-            e.stopPropagation();
-            const confirmReset = confirm('🔄 سيتم إعادة تحميل الملفات المحدثة. هل تريد المتابعة؟');
-            if (!confirmReset) return;
-            console.log('🔄 بدء فحص التحديثات...');
-            alert('تم بدء التحديث، سيتم إعادة التحميل قريباً.');
-            window.location.reload();
-        });
-    }
+ // زر Reset - نسخة "الريستارت القوي"
+const resetBtn = document.getElementById('reset-btn');
+if (resetBtn) {
+    resetBtn.addEventListener('click', async function (e) {
+        e.stopPropagation();
+        
+        const confirmReset = confirm('⚠️ سيتم عمل إعادة ضبط مصنع شاملة للموقع ومسح كل البيانات المخزنة والتحديثات القديمة. هل أنت متأكد؟');
+        if (!confirmReset) return;
+
+        console.log('🚀 بدء عملية الـ Hard Reset الشاملة...');
+
+        try {
+            // 1. مسح الـ LocalStorage (الأسماء، المجموعات، الإعدادات)
+            localStorage.clear();
+
+            // 2. مسح الـ SessionStorage
+            sessionStorage.clear();
+
+            // 3. مسح الـ Service Workers (إذا كان موقعك يستخدم PWA أو Offline Cache)
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+            }
+
+            // 4. مسح الـ Caches API (مسح ملفات الـ PDF والصور المخزنة برمجياً)
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+            }
+
+            console.log('✅ تم تنظيف كل شيء بنجاح.');
+            alert('تم المسح بنجاح! سيتم الآن إعادة التشغيل من الصفر.');
+
+            // 5. إعادة التحميل القسري (Forced Reload)
+            // نستخدم طابع زمني (Timestamp) لإجبار السيرفر على إرسال ملفات جديدة
+            window.location.href = window.location.origin + window.location.pathname + '?reload=' + Date.now();
+
+        } catch (error) {
+            console.error('❌ خطأ أثناء عمل الريست:', error);
+            // حل احتياطي في حالة فشل التنظيف البرمجي
+            window.location.reload(true); 
+        }
+    });
+}
 
     // زر تحريك شريط الأدوات
     const moveToggle = document.getElementById('move-toggle');
