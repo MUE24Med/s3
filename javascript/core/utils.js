@@ -171,7 +171,10 @@ export const hasShownError = (url) => _shownErrors.has(url);
 
 // ------------------------------
 // إعادة تعيين مستوى التكبير (Zoom)
-// يُستخدم فقط عند فتح PDF وإغلاقه
+// تُستدعى فقط عند:
+// - فتح ملف PDF (openWithMozilla / openWithDrive / openWithBrowser)
+// - إغلاق ملف PDF (closePdfBtn)
+// - أزرار التنقل الموجودة (back-button-group, change-group-btn, إلخ)
 // في باقي الأوقات يُسمح بالـ zoom بحرية
 // ------------------------------
 export function resetBrowserZoom() {
@@ -185,117 +188,4 @@ export function resetBrowserZoom() {
     setTimeout(() => {
         viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
     }, 300);
-}
-
-// ------------------------------
-// أزرار التمرير لأقصى اليمين واليسار
-// ------------------------------
-export function initScrollEdgeButtons() {
-    const scrollContainer = document.getElementById('scroll-container');
-    if (!scrollContainer) return;
-
-    // منع التكرار
-    if (document.getElementById('scroll-edge-buttons')) return;
-
-    const btnWrapper = document.createElement('div');
-    btnWrapper.id = 'scroll-edge-buttons';
-    btnWrapper.style.cssText = `
-        position: fixed;
-        bottom: 50%;
-        transform: translateY(50%);
-        left: 0;
-        right: 0;
-        display: flex;
-        justify-content: space-between;
-        pointer-events: none;
-        z-index: 999;
-        padding: 0 4px;
-    `;
-
-    const baseStyle = `
-        pointer-events: all;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(0,0,0,0.55);
-        color: #ffca28;
-        font-size: 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        transition: background 0.2s, transform 0.15s;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-    `;
-
-    // زر أقصى اليمين (بداية الـ scroll في RTL = scrollLeft 0)
-    const rightBtn = document.createElement('button');
-    rightBtn.id = 'scroll-right-edge-btn';
-    rightBtn.innerHTML = '⏭';
-    rightBtn.title = 'أقصى اليمين';
-    rightBtn.style.cssText = baseStyle;
-
-    // زر أقصى اليسار (نهاية الـ scroll في RTL = scrollLeft max)
-    const leftBtn = document.createElement('button');
-    leftBtn.id = 'scroll-left-edge-btn';
-    leftBtn.innerHTML = '⏮';
-    leftBtn.title = 'أقصى اليسار';
-    leftBtn.style.cssText = baseStyle;
-
-    // Hover / Active effects
-    [rightBtn, leftBtn].forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-            btn.style.background = 'rgba(255,202,40,0.85)';
-            btn.style.color = '#000';
-        });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.background = 'rgba(0,0,0,0.55)';
-            btn.style.color = '#ffca28';
-        });
-        btn.addEventListener('mousedown', () => {
-            btn.style.transform = 'scale(0.9)';
-        });
-        btn.addEventListener('mouseup', () => {
-            btn.style.transform = 'scale(1)';
-        });
-        btn.addEventListener('touchend', () => {
-            btn.style.transform = 'scale(1)';
-        });
-    });
-
-    // أقصى اليمين = scrollLeft = 0
-    rightBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-    });
-
-    // أقصى اليسار = scrollLeft = scrollWidth - clientWidth
-    leftBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        scrollContainer.scrollTo({
-            left: scrollContainer.scrollWidth - scrollContainer.clientWidth,
-            behavior: 'smooth'
-        });
-    });
-
-    // إخفاء الأزرار تلقائياً لما PDF مفتوح
-    const pdfOverlay = document.getElementById('pdf-overlay');
-    if (pdfOverlay) {
-        const observer = new MutationObserver(() => {
-            const isVisible = !pdfOverlay.classList.contains('hidden') &&
-                              pdfOverlay.style.display !== 'none';
-            btnWrapper.style.opacity = isVisible ? '0' : '1';
-            btnWrapper.style.pointerEvents = isVisible ? 'none' : '';
-        });
-        observer.observe(pdfOverlay, { attributes: true, attributeFilter: ['class', 'style'] });
-    }
-
-    btnWrapper.appendChild(rightBtn);
-    btnWrapper.appendChild(leftBtn);
-    document.body.appendChild(btnWrapper);
-
-    console.log('✅ أزرار التمرير لأقصى اليمين/اليسار جاهزة');
 }
