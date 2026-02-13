@@ -331,6 +331,7 @@ export async function updateWoodInterface() {
                     if (!longPressTriggered && touchDuration < 500) {
                         e.stopPropagation();
                         e.preventDefault();
+                        resetBrowserZoom();
                         if (item.type === 'dir') {
                             setCurrentFolder(item.path);
                             updateWoodInterface();
@@ -346,6 +347,7 @@ export async function updateWoodInterface() {
 
                 g.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    resetBrowserZoom();
                     if (item.type === 'dir') {
                         setCurrentFolder(item.path);
                         updateWoodInterface();
@@ -664,6 +666,7 @@ export function initWoodUI() {
     if (changeGroupBtn) {
         changeGroupBtn.addEventListener('click', function (e) {
             e.stopPropagation();
+            resetBrowserZoom();
             const groupSelectionScreen = document.getElementById('group-selection-screen');
             if (groupSelectionScreen) {
                 groupSelectionScreen.classList.remove('hidden');
@@ -678,6 +681,7 @@ export function initWoodUI() {
     document.querySelectorAll('.group-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             const group = this.getAttribute('data-group');
+            resetBrowserZoom();
             console.log('👆 تم اختيار المجموعة:', group);
             import('../core/group-loader.js').then(({ initializeGroup }) => {
                 initializeGroup(group);
@@ -729,6 +733,7 @@ export function initWoodUI() {
     if (searchIcon) {
         searchIcon.onclick = (e) => {
             e.preventDefault();
+            resetBrowserZoom();
             goToWood();
         };
     }
@@ -738,6 +743,7 @@ export function initWoodUI() {
     if (backButtonGroup) {
         backButtonGroup.onclick = (e) => {
             e.stopPropagation();
+            resetBrowserZoom();
             if (currentFolder !== "") {
                 console.log('📂 زر SVG: العودة للمجلد الأب');
                 const parts = currentFolder.split('/');
