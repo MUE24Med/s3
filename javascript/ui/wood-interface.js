@@ -2,7 +2,7 @@
 // wood-interface.js - واجهة عرض الملفات والمجلدات
 // ============================================
 
-import { RAW_CONTENT_BASE, NAV_STATE, SUBJECT_FOLDERS } from '../core/config.js';
+import { RAW_CONTENT_BASE, NAV_STATE, SUBJECT_FOLDERS, REPO_NAME } from '../core/config.js';
 import { normalizeArabic, autoTranslate, getDisplayName, debounce, resetBrowserZoom } from '../core/utils.js';
 import { pushNavigationState, goToWood, goToMapEnd, getCurrentNavigationState, navigationHistory } from '../core/navigation.js';
 import { smartOpen } from './pdf-viewer.js';
