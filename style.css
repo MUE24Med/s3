@@ -999,6 +999,13 @@ html, body {
 #js-toggle-container.top { top: 20px; }
 #js-toggle-container.bottom { bottom: 20px; }
 
+#search-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
 #search-input {
   padding: 8px 10px 8px 45px;
   border: 1px solid #444;
