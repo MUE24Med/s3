@@ -142,16 +142,13 @@
 
 .game-stat {
   background: rgba(0, 0, 0, 0.7);
-  padding: 5px 10px; /* تقليل الـ padding ليناسب 3 عناصر */
+  padding: 8px 15px;
   border-radius: 10px;
-  font-size: 14px; /* تصغير الخط قليلاً */
+  font-size: 18px;
   font-weight: bold;
   backdrop-filter: blur(5px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  min-width: 60px;
-  text-align: center;
 }
-
 
 .runner {
   position: absolute;
