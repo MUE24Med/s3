@@ -844,57 +844,52 @@ export function initWoodUI() {
             window.location.reload();
         });
     }
-
- const resetBtn = document.getElementById('reset-btn');
+const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
     resetBtn.addEventListener('click', async function (e) {
         e.stopPropagation();
 
-        const confirmReset = confirm('⚠️ سيتم حذف جميع الملفات المحمية (Cache) وإعادة ضبط الموقع. سيتم الاحتفاظ باسمك وأرقامك القياسية. هل تريد الاستمرار؟');
+        const confirmReset = confirm('⚠️ سيتم تنظيف المتصفح بالكامل (Cache). سيتم الاحتفاظ باسمك وأرقامك القياسية في اللعبة. هل تريد الاستمرار؟');
         if (!confirmReset) return;
 
-        console.log('🧹 بدء التنظيف الانتقائي...');
+        console.log('🧹 بدء عملية التنظيف مع استثناء البيانات الهامة...');
 
-        // 1. مسح البيانات النصية مع استثناء الاسم والسكور
-        const keysToKeep = ['user_real_name', 'game_score', 'preload_done']; // أضف preload_done إذا كنت لا تريد رؤية شاشة التحميل مجدداً
-        
-        const preservedData = {};
-        
-        // حفظ البيانات التي نريدها مؤقتاً
-        keysToKeep.forEach(key => {
-            // سنبحث عن أي مفتاح يبدأ بـ game_score لأنك تستخدم نظام (game_score:deviceId_timestamp)
-            for (let i = 0; i < localStorage.length; i++) {
-                const currentKey = localStorage.key(i);
-                if (currentKey === 'user_real_name' || currentKey.startsWith('game_score:')) {
-                    preservedData[currentKey] = localStorage.getItem(currentKey);
-                }
+        // 1. استخراج البيانات التي نريد الحفاظ عليها
+        const savedName = localStorage.getItem('user_real_name');
+        const preservedScores = {};
+
+        // البحث في localStorage عن أي مفاتيح تخص اللعبة
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('game_score:')) {
+                preservedScores[key] = localStorage.getItem(key);
             }
-        });
-
-        // مسح الـ LocalStorage بالكامل
-        localStorage.clear();
-
-        // إعادة البيانات المحفوظة
-        Object.keys(preservedData).forEach(key => {
-            localStorage.setItem(key, preservedData[key]);
-        });
-
-        sessionStorage.clear();
-
-        // 2. إرسال أمر مسح الكاش للـ Service Worker (ملفات الـ Assets)
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
         }
 
-        // 3. مسح يدوي للـ Caches (الملفات مثل PDF والصور)
+        // 2. مسح الذاكرة
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // 3. إعادة البيانات المحفوظة فوراً
+        if (savedName) localStorage.setItem('user_real_name', savedName);
+        Object.keys(preservedScores).forEach(key => {
+            localStorage.setItem(key, preservedScores[key]);
+        });
+
+        // 4. مسح الكاش (الملفات: صور، PDF، سكريبتات)
         if ('caches' in window) {
             const cacheNames = await caches.keys();
             await Promise.all(cacheNames.map(name => caches.delete(name)));
         }
 
-        alert('تم مسح الملفات بنجاح مع الحفاظ على بياناتك الشخصية.');
+        // 5. إبلاغ Service Worker بمسح الكاش الخاص به
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
+        }
 
-        // إعادة التشغيل
+        alert('✅ تم تنظيف الكاش بنجاح. بياناتك (الاسم والسكور) ما زالت موجودة.');
+        
+        // إعادة تحميل الصفحة بقوة
         window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
     });
 }
