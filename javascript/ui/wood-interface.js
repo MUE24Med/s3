@@ -591,7 +591,10 @@ export function initWoodUI() {
     setupResetButton();
     setupMoveToggleButton();
     setupSearchIcon();
-    setupBackButtonInSVG(currentFolder, setCurrentFolder, updateWoodInterface);
+    
+    // تمرير دالة getter بدلاً من القيمة المباشرة
+    setupBackButtonInSVG(() => currentFolder, setCurrentFolder, updateWoodInterface);
+    
     setupInteractionToggle();
     setupSearchInput(updateWoodInterface);
     setupEyeToggleSystem();
