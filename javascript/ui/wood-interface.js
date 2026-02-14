@@ -1,5 +1,5 @@
 // ============================================
-// wood-interface.js - واجهة عرض الملفات والمجلدات (مُحسّن)
+// wood-interface.js - واجهة عرض الملفات والمجلدات
 // ============================================
 
 import { RAW_CONTENT_BASE, NAV_STATE, SUBJECT_FOLDERS, REPO_NAME } from '../core/config.js';
