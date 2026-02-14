@@ -4,7 +4,7 @@
 
 import { NAV_STATE } from '../core/config.js';
 import { resetBrowserZoom } from '../core/utils.js';
-import { goToWood, pushNavigationState } from '../core/navigation.js';
+import { goToWood, pushNavigationState, goToMapEnd } from '../core/navigation.js';
 
 export function setupGroupChangeButton() {
     const changeGroupBtn = document.getElementById('change-group-btn');
@@ -105,23 +105,25 @@ export function setupSearchIcon() {
     }
 }
 
-export function setupBackButtonInSVG(currentFolder, setCurrentFolder, updateWoodInterface) {
+export function setupBackButtonInSVG(getCurrentFolder, setCurrentFolder, updateWoodInterface) {
     const backButtonGroup = document.getElementById('back-button-group');
     if (backButtonGroup) {
         backButtonGroup.onclick = (e) => {
             e.stopPropagation();
             resetBrowserZoom();
-            if (currentFolder !== "") {
+            
+            // الحصول على القيمة الحالية في كل نقرة
+            const folder = getCurrentFolder();
+            
+            if (folder !== "") {
                 console.log('📂 زر SVG: العودة للمجلد الأب');
-                const parts = currentFolder.split('/');
+                const parts = folder.split('/');
                 parts.pop();
                 setCurrentFolder(parts.join('/'));
                 updateWoodInterface();
             } else {
                 console.log('🗺️ زر SVG: الذهاب لنهاية الخريطة');
-                import('../core/navigation.js').then(({ goToMapEnd }) => {
-                    goToMapEnd();
-                });
+                goToMapEnd();
             }
         };
     }
