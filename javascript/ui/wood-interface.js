@@ -849,32 +849,52 @@ export function initWoodUI() {
 if (resetBtn) {
     resetBtn.addEventListener('click', async function (e) {
         e.stopPropagation();
-        
-        const confirmReset = confirm('⚠️ سيتم حذف جميع الملفات المحمية (Cache) وإعادة ضبط الموقع بالكامل. هل تريد الاستمرار؟');
+
+        const confirmReset = confirm('⚠️ سيتم حذف جميع الملفات المحمية (Cache) وإعادة ضبط الموقع. سيتم الاحتفاظ باسمك وأرقامك القياسية. هل تريد الاستمرار؟');
         if (!confirmReset) return;
 
-        console.log('🧹 بدء التنظيف الشامل...');
+        console.log('🧹 بدء التنظيف الانتقائي...');
 
-        // 1. مسح البيانات النصية المخزنة
+        // 1. مسح البيانات النصية مع استثناء الاسم والسكور
+        const keysToKeep = ['user_real_name', 'game_score', 'preload_done']; // أضف preload_done إذا كنت لا تريد رؤية شاشة التحميل مجدداً
+        
+        const preservedData = {};
+        
+        // حفظ البيانات التي نريدها مؤقتاً
+        keysToKeep.forEach(key => {
+            // سنبحث عن أي مفتاح يبدأ بـ game_score لأنك تستخدم نظام (game_score:deviceId_timestamp)
+            for (let i = 0; i < localStorage.length; i++) {
+                const currentKey = localStorage.key(i);
+                if (currentKey === 'user_real_name' || currentKey.startsWith('game_score:')) {
+                    preservedData[currentKey] = localStorage.getItem(currentKey);
+                }
+            }
+        });
+
+        // مسح الـ LocalStorage بالكامل
         localStorage.clear();
+
+        // إعادة البيانات المحفوظة
+        Object.keys(preservedData).forEach(key => {
+            localStorage.setItem(key, preservedData[key]);
+        });
+
         sessionStorage.clear();
 
-        // 2. إرسال أمر مسح الكاش للـ Service Worker (الملفات المحمية)
+        // 2. إرسال أمر مسح الكاش للـ Service Worker (ملفات الـ Assets)
         if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
-            console.log('📡 تم إرسال أمر مسح الملفات للـ SW');
         }
 
-        // 3. مسح يدوي إضافي للـ Caches من جهة الـ Window للتأكيد
+        // 3. مسح يدوي للـ Caches (الملفات مثل PDF والصور)
         if ('caches' in window) {
             const cacheNames = await caches.keys();
             await Promise.all(cacheNames.map(name => caches.delete(name)));
         }
 
-        // 4. الانتظار لحظة لضمان انتهاء المسح ثم إعادة التشغيل بقوة
-        alert('تم مسح الملفات بنجاح. سيتم إعادة تشغيل الموقع الآن.');
-        
-        // استخدام Timestamp لضمان عدم استعادة ملفات قديمة من المتصفح
+        alert('تم مسح الملفات بنجاح مع الحفاظ على بياناتك الشخصية.');
+
+        // إعادة التشغيل
         window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
     });
 }
