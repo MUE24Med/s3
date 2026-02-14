@@ -844,52 +844,37 @@ export function initWoodUI() {
             window.location.reload();
         });
     }
-const resetBtn = document.getElementById('reset-btn');
+
+ const resetBtn = document.getElementById('reset-btn');
 if (resetBtn) {
     resetBtn.addEventListener('click', async function (e) {
         e.stopPropagation();
-
-        const confirmReset = confirm('⚠️ سيتم تنظيف المتصفح بالكامل (Cache). سيتم الاحتفاظ باسمك وأرقامك القياسية في اللعبة. هل تريد الاستمرار؟');
+        
+        const confirmReset = confirm('⚠️ سيتم حذف جميع الملفات المحمية (Cache) وإعادة ضبط الموقع بالكامل. هل تريد الاستمرار؟');
         if (!confirmReset) return;
 
-        console.log('🧹 بدء عملية التنظيف مع استثناء البيانات الهامة...');
+        console.log('🧹 بدء التنظيف الشامل...');
 
-        // 1. استخراج البيانات التي نريد الحفاظ عليها
-        const savedName = localStorage.getItem('user_real_name');
-        const preservedScores = {};
-
-        // البحث في localStorage عن أي مفاتيح تخص اللعبة
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('game_score:')) {
-                preservedScores[key] = localStorage.getItem(key);
-            }
-        }
-
-        // 2. مسح الذاكرة
+        // 1. مسح البيانات النصية المخزنة
         localStorage.clear();
         sessionStorage.clear();
 
-        // 3. إعادة البيانات المحفوظة فوراً
-        if (savedName) localStorage.setItem('user_real_name', savedName);
-        Object.keys(preservedScores).forEach(key => {
-            localStorage.setItem(key, preservedScores[key]);
-        });
+        // 2. إرسال أمر مسح الكاش للـ Service Worker (الملفات المحمية)
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
+            console.log('📡 تم إرسال أمر مسح الملفات للـ SW');
+        }
 
-        // 4. مسح الكاش (الملفات: صور، PDF، سكريبتات)
+        // 3. مسح يدوي إضافي للـ Caches من جهة الـ Window للتأكيد
         if ('caches' in window) {
             const cacheNames = await caches.keys();
             await Promise.all(cacheNames.map(name => caches.delete(name)));
         }
 
-        // 5. إبلاغ Service Worker بمسح الكاش الخاص به
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
-        }
-
-        alert('✅ تم تنظيف الكاش بنجاح. بياناتك (الاسم والسكور) ما زالت موجودة.');
+        // 4. الانتظار لحظة لضمان انتهاء المسح ثم إعادة التشغيل بقوة
+        alert('تم مسح الملفات بنجاح. سيتم إعادة تشغيل الموقع الآن.');
         
-        // إعادة تحميل الصفحة بقوة
+        // استخدام Timestamp لضمان عدم استعادة ملفات قديمة من المتصفح
         window.location.href = window.location.origin + window.location.pathname + '?v=' + Date.now();
     });
 }
