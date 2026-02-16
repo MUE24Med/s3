@@ -4,28 +4,24 @@
 
 // قائمة الملفات المراد تحميلها مسبقاً
 const FILES_TO_LOAD = [
-   './style.css',
-   './tracker.js',
-   './script.js',
-   './javascript/core/config.js',
-   './javascript/core/utils.js',
-   './javascript/core/navigation.js',
-   './javascript/core/group-loader.js',
-   './javascript/core/state.js',
-   './javascript/ui/pdf-viewer.js',
-   './javascript/ui/wood-interface.js',
-   './javascript/ui/search-and-eye.js',
-   './javascript/ui/ui-controls.js',
-   './javascript/ui/scroll-system.js',
-   './javascript/features/leaderboard-core.js',
-   './javascript/features/mini-game.js',
-   './javascript/features/leaderboard-ui.js',
-   './javascript/features/preload-game.js',
-   './javascript/features/preload.js',
-   './javascript/features/svg-processor.js',
-   './image/0.png',
-   './image/wood.webp',
-   './image/Upper_wood.webp'
+    './style.css',
+    './tracker.js',
+    './script.js',
+    './javascript/core/config.js',
+    './javascript/core/utils.js',
+    './javascript/core/navigation.js',
+    './javascript/core/group-loader.js',
+    './javascript/core/state.js',
+    './javascript/ui/pdf-viewer.js',
+    './javascript/ui/wood-interface.js',
+    './javascript/ui/search-and-eye.js',
+    './javascript/ui/ui-controls.js',
+    './javascript/ui/scroll-system.js',
+    './javascript/features/preload-game.js',
+    './javascript/features/svg-processor.js',
+    './image/0.png',
+    './image/wood.webp',
+    './image/Upper_wood.webp'
 ];
 
 /**
