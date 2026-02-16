@@ -88,6 +88,32 @@ const filesToLoad = [
         let loadedFiles = 0;
         const totalFiles = filesToLoad.length;
 
+// جلب مفتاح جهاز معين في السحابة
+async function _findDeviceScoreKey(deviceId) {
+    try {
+        const result = await window.storage.list(SCORE_CLOUD_PREFIX, true);
+        if (!result?.keys) return null;
+        return result.keys.find(k => k.includes(deviceId)) ?? null;
+    } catch { return null; }
+}
+
+// جلب كل النتائج مرتبة تنازلياً (مع مفاتيحها)
+async function fetchAllCloudScores() {
+    if (typeof window.storage === 'undefined') return [];
+    try {
+        const result = await window.storage.list(SCORE_CLOUD_PREFIX, true);
+        if (!result?.keys?.length) return [];
+        const scores = [];
+        for (const key of result.keys) {
+            try {
+                const data = await window.storage.get(key, true);
+                if (data?.value) scores.push({ key, ...JSON.parse(data.value) });
+            } catch { /* مفتاح تالف - تجاهل */ }
+        }
+        return scores.sort((a, b) => b.score - a.score);
+    } catch(e) { console.error('❌ خطأ جلب النتائج:', e); return []; }
+}
+
         function updateProgress() {
             const percentage = Math.round((loadedFiles / totalFiles) * 100);
             progressBar.style.width = percentage + '%';
