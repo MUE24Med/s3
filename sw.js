@@ -3,7 +3,7 @@
    الإصدار 2.0 - محسّن ومستقر
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-20260216-v2';
+const CACHE_NAME = 'semester-3-cache-20260216-v3';
 const urlsToCache = [
     './',
     './index.html',
