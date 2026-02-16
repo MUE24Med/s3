@@ -397,7 +397,7 @@ const filesToLoad = [
             // ✅ فحص وحفظ الرقم القياسي
             const isNewRecord = updatePersonalRecord(score);
             const recordMessage = document.getElementById('recordMessage');
-            
+
             if (isNewRecord && recordMessage) {
                 recordMessage.innerHTML = '🎉 <strong style="color: #FFD700; font-size: 20px;">رقم قياسي جديد!</strong> 🎉';
                 recordMessage.style.marginTop = '15px';
