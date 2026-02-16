@@ -366,21 +366,5 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) checkForUpdates();
 });
 </script>
-
-<!-- ✅ كود ملخص الجلسة المصحح -->
-<script>
-// تحديث العرض كل 10 ثواني
-setInterval(() => {
-  if (typeof updateSessionSummaryDisplay === 'function') {
-    updateSessionSummaryDisplay();
-  }
-}, 10000);
-
-// إخفاء الملخص عند النقر عليه
-document.getElementById('sessionSummary')?.addEventListener('click', function() {
-  this.classList.remove('show');
-});
-</script>
-
 </body>
 </html>
