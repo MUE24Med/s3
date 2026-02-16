@@ -219,7 +219,7 @@
   </div>
 </div>
 
-<!-- عارض PDF - تم إصلاح مشكلة الأمان -->
+<!-- عارض PDF -->
 <div id="pdf-overlay" class="hidden">
   <div id="toolbar">
     <div id="pdf-controls">
@@ -228,8 +228,7 @@
       <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
     </div>
   </div>
-  <!-- ✅ تم إزالة allow-same-origin لحل مشكلة الأمان -->
-  <iframe id="pdfFrame" src="" sandbox="allow-scripts allow-popups allow-forms"></iframe>
+  <iframe id="pdfFrame" src="" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
 </div>
 
 <!-- نافذة معاينة PDF -->
@@ -368,8 +367,14 @@ document.addEventListener('visibilitychange', () => {
 });
 </script>
 
+<!-- ✅ كود ملخص الجلسة المصحح -->
+<script>
 // تحديث العرض كل 10 ثواني
-setInterval(updateSessionSummaryDisplay, 10000);
+setInterval(() => {
+  if (typeof updateSessionSummaryDisplay === 'function') {
+    updateSessionSummaryDisplay();
+  }
+}, 10000);
 
 // إخفاء الملخص عند النقر عليه
 document.getElementById('sessionSummary')?.addEventListener('click', function() {
