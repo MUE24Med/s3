@@ -1,330 +1,360 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>semester-3 | خريطة الكلية التفاعلية</title>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://mue24med.github.io/semester-3/">
-  <meta property="og:title" content="semester-3 | خريطة الكلية التفاعلية">
-  <meta property="og:description" content="خريطة تفاعلية لعرض محاضرات وسكاشن الفرقة الثانية - الفصل الدراسي الثالث">
-  <meta property="og:image" content="https://mue24med.github.io/semester-3/image/0.webp">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:locale" content="ar_AR">
+<!-- الاسبوع الأول -->
+<g transform="translate(1024,0)">
+    <image data-src="image/B/01.webp" width="1024" height="2454" />
+</g>
 
-  <!-- PWA / Mobile -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="theme-color" content="#000000">
-  <meta name="color-scheme" content="only light">
+<!-- الاسبوع الثاني -->
+<g transform="translate(2048,0)">
+    <image data-src="image/B/02.webp" width="1024" height="2454" />
+</g>
 
-  <!-- Cache Control -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <meta name="version" content="2025.02.12.FINAL">
+<!-- الاسبوع الثالث -->
+<g transform="translate(3072,0)">
+    <image data-src="image/B/03.webp" width="1024" height="2454" />
+</g>
 
-  <!-- Performance -->
-  <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
-  <link rel="preconnect" href="https://api.github.com" crossorigin>
-  <link rel="dns-prefetch" href="https://mozilla.github.io">
+<!-- الاسبوع الرابع -->
+<g transform="translate(4096,0)">
+    <image data-src="image/B/04.webp" width="1024" height="2454" />
+</g>
 
-  <!-- Icons -->
-  <link rel="icon" type="image/png" href="image/0.png">
-  <link rel="apple-touch-icon" href="image/0.png">
+<!-- الاسبوع الخامس -->
+<g transform="translate(5120,0)">
+    <image data-src="image/B/05.webp" width="1024" height="2454" />
+</g>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<!-- الاسبوع السادس -->
+<g transform="translate(6144,0)">
+    <image data-src="image/B/06.webp" width="1024" height="2454" />
+</g>
 
-<!-- ================ جميع عناصر الواجهة ================ -->
-<!-- شاشة اختيار طريقة الفتح -->
-<div id="open-method-popup" class="hidden">
-  <div class="method-container">
-    <div class="method-header">
-      <h2>اختر طريقة الفتح</h2>
-      <span class="method-close" id="method-close-btn">✖️</span>
-    </div>
-    <div class="method-filename" id="method-filename">اسم الملف</div>
-    <div class="method-preview">
-      <canvas id="method-preview-canvas"></canvas>
-      <div class="method-loading" id="method-loading">⏳ جاري التحميل...</div>
-    </div>
-    <div class="method-buttons">
-      <button class="method-btn mozilla-btn" id="open-mozilla-btn">
-        <span class="method-btn-icon">📄</span>
-        <span class="method-btn-text">Mozilla PDF</span>
-      </button>
-      <button class="method-btn browser-btn" id="open-browser-btn">
-        <span class="method-btn-icon">🌐</span>
-        <span class="method-btn-text">المتصفح</span>
-      </button>
-      <button class="method-btn drive-btn" id="open-drive-btn">
-        <span class="method-btn-icon">💾</span>
-        <span class="method-btn-text">Google Drive</span>
-      </button>
-    </div>
-  </div>
-</div>
+<!-- الاسبوع السابع -->
+<g transform="translate(7168,0)">
+    <image data-src="image/B/07.webp" width="1024" height="2454" />
+</g>
 
-<!-- شاشة Preload -->
-<div id="preload-screen" class="hidden">
-  <div class="preload-container">
-    <div class="notice">
-      💡 هذه الصفحة تظهر في أول زيارة فقط — الملفات ستُخزن في الكاش للتحميل السريع لاحقاً
-    </div>
-    <div class="logo">🏥</div>
-    <h1>جاري التحميل</h1>
-    <div class="subtitle">تجنب العدوى 🦠 واجمع العلاج 💊</div>
-    <div class="progress-container">
-      <div class="progress-bar" id="progressBar">0%</div>
-    </div>
-    <div class="file-status" id="fileStatus">جاري البدء...</div>
-    <button class="continue-btn" id="continueBtn">متابعة إلى الموقع ➡️</button>
-    <div class="game-container" id="gameContainer">
-      <div class="game-stats">
-        <div class="game-stat">❤️ <span id="heartsDisplay">0</span></div>
-        <div class="game-stat">⭐ <span id="scoreDisplay">0</span></div>
-      </div>
-      <div class="runner" id="runner">👨‍⚕️</div>
-      <div class="game-overlay" id="gameOverlay">
-        <h2>انتهت اللعبة!</h2>
-        <div class="final-score" id="finalScore">النقاط: 0</div>
-        <button class="restart-btn" id="restartBtn">🔄</button>
-      </div>
-    </div>
-    <div class="controls">
-      <button class="control-btn" id="leftBtn">➡️</button>
-      <button class="control-btn" id="rightBtn">⬅️</button>
-    </div>
-    <div class="leaderboard">
-      <h3>🏆 أفضل 5 لاعبين عالمياً</h3>
-      <ul class="leaderboard-list" id="leaderboardList">
-        <li class="leaderboard-item">
-          <span class="leaderboard-rank">-</span>
-          <span class="leaderboard-name">جاري التحميل...</span>
-          <span class="leaderboard-score">-</span>
-        </li>
-      </ul>
-    </div>
-  </div>
-</div>
+<!-- الاسبوع الثامن -->
+<g transform="translate(8192,0)">
+    <image data-src="image/B/08.webp" width="1024" height="2454" />
 
-<!-- شاشة اختيار المجموعة -->
-<div id="group-selection-screen">
-  <div id="group-selection-content">
-    <img id="main-logo" src="image/0.png" alt="شعار الكلية" />
-    <h1>اختر مجموعتك</h1>
-    <div id="group-buttons">
-      <button class="group-btn" data-group="A"><span class="group-letter">A</span><span class="group-label">Group A</span></button>
-      <button class="group-btn" data-group="B"><span class="group-letter">B</span><span class="group-label">Group B</span></button>
-      <button class="group-btn" data-group="C"><span class="group-letter">C</span><span class="group-label">Group C</span></button>
-      <button class="group-btn" data-group="D"><span class="group-letter">D</span><span class="group-label">Group D</span></button>
-    </div>
-    <p style="color: #888; font-size: 12px; margin-top: 20px;">
-      💡 يمكنك تغيير المجموعة لاحقاً من زر "🔄 Change Group"
-    </p>
-  </div>
-</div>
-
-<!-- شريط الأدوات -->
-<div id="js-toggle-container" class="top">
-  <div id="search-container">
-    <input type="text" id="search-input" placeholder="ابحث باسم الملف..." autocomplete="off">
-    <span id="search-icon" class="clickable-area">🔙</span>
-  </div>
-  <div class="controls-row">
-    <span id="move-toggle">↕️</span>
-    <span id="eye-toggle" title="إخفاء/إظهار البحث">👁️</span>
-    <div class="hover-toggle-container">
-      <span>Hover</span>
-      <label class="switch">
-        <input type="checkbox" id="js-toggle" checked>
-        <span class="slider round"></span>
-      </label>
-    </div>
-  </div>
-</div>
-
-<div id="eye-toggle-standalone" class="top">👁️</div>
-
-<!-- شاشة التحميل -->
-<div id="loading-overlay">
-  <div id="loading-content">
-    <img id="splash-image" src="image/0.png" alt="شعار التحميل" />
-    <h1 id="project-loading-title">جاري التحميل...</h1>
-    <div id="loader-lights">
-      <div class="light-bulb" id="bulb-1"></div>
-      <div class="light-bulb" id="bulb-2"></div>
-      <div class="light-bulb" id="bulb-3"></div>
-      <div class="light-bulb" id="bulb-4"></div>
-    </div>
-    <div id="legend">
-      <div class="legend-item red">أسئلة</div>
-      <div class="legend-item yellow">محاضرات</div>
-      <div class="legend-item white">مواد أخرى</div>
-      <div class="legend-item purple">إجابات</div>
-      <div class="legend-item green">سكاشن العملي</div>
-      <div class="legend-item blue">فيديو شرح</div>
-    </div>
-  </div>
-</div>
-
-<!-- عارض PDF -->
-<div id="pdf-overlay" class="hidden">
-  <div id="toolbar">
-    <div id="pdf-controls">
-      <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
-      <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
-      <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
-    </div>
-  </div>
-  <iframe id="pdfFrame" src="" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
-</div>
-
-<!-- نافذة معاينة PDF -->
-<div id="pdf-preview-popup" class="floating-preview">
-  <div class="preview-container">
-    <div class="preview-header">
-      <div class="preview-title" id="preview-filename">معاينة الملف</div>
-      <button class="preview-btn preview-open-btn" id="preview-open-btn">📄 فتح</button>
-    </div>
-    <div class="preview-canvas-container">
-      <div class="preview-loading" id="preview-loading">⏳ جاري التحميل...</div>
-      <canvas id="preview-canvas"></canvas>
-    </div>
-  </div>
-</div>
-
-<!-- الخريطة التفاعلية -->
-<div id="scroll-container">
-  <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
-    <defs></defs>
-    <g transform="translate(0,0)" id="files-list-container">
-      <image data-src="image/wood.webp" x="0" y="0" width="1024" height="2454" style="pointer-events: none;" />
+    <!-- Monday 8 -->
+    <g transform="translate(368,0)">
+        <rect x="0" y="703" height="380" class="m w l" data-href="RRS/Lecture/micro-01.pdf"/>
+        <rect x="0" y="1083" height="253.5" class="m w l" data-href="RRS/Lecture/patho-01.pdf"/>
+        <rect x="0" y="1339" height="125" class="m w q" data-href="RRS/Quesion/patho-01.pdf"/>
+        <rect x="0" y="1465" height="378.5" class="m w l" data-href="RRS/Lecture/physio-02.pdf"/>
+        <rect x="0" y="1845" height="380" class="m w s" data-href="RRS/Section/anatomy-01.pdf"/>
     </g>
-    <g id="dynamic-links-group"></g>
-    <g id="group-specific-content"></g>
-    <g id="upper-wood-layer" style="pointer-events: none; z-index: 3;">
-      <image data-src="image/Upper_wood.webp" x="0" y="0" width="1024" height="250" style="pointer-events: none;" />
+
+    <!-- Wednesday 8 -->
+    <g transform="translate(598,0)">
+        <rect x="0" y="366" height="315" class="m w l" data-href="RRS/Lecture/physio-01.pdf"/>
+        <rect x="0" y="1846" height="253.4" class="m w l" data-href="RRS/Lecture/physio-02.pdf"/>
+        <rect x="0" y="2100" height="127" class="m w q" data-href="RRS/Question/physio-01.pdf"/>
     </g>
-    <g id="fixed-controls-layer">
-      <g id="change-group-btn" style="cursor: pointer;">
-        <rect x="120" y="100" width="250" height="50" rx="10"/>
-        <text id="group-btn-text" x="245" y="130" text-anchor="middle" dominant-baseline="middle">Change Group 🔄</text>
-      </g>
-      <g id="preload-btn" style="cursor: pointer;">
-        <rect x="387" y="100" width="250" height="50" rx="10"/>
-        <text x="512" y="130" text-anchor="middle" dominant-baseline="middle">Loading screen</text>
-      </g>
-      <g id="reset-btn" style="cursor: pointer;">
-        <rect x="654" y="100" width="250" height="50" rx="10"/>
-        <text id="reset-btn-text" x="779" y="130" text-anchor="middle" dominant-baseline="middle">Clear cache 🗑</text>
-      </g>
-      <g id="back-button-group" style="cursor: pointer;">
-        <rect id="back-btn" x="112" y="160" width="800" height="70" rx="15" />
-        <text x="512" y="195" id="back-btn-text" text-anchor="middle" dominant-baseline="middle">➡️ إلى الخريطة ➡️</text>
-      </g>
+
+    <!-- Thursday 8 -->
+    <g transform="translate(712.35,0)">
+        <rect x="0" y="702" height="380" class="m w l" data-href="RRS/Lecture/histo-01.pdf"/>
+        <rect x="0" y="1465" height="380" class="m w l" data-href="RRS/Lecture/anatomy-02.pdf"/>
     </g>
-  </svg>
-</div>
+</g>
 
-<!-- ======================== نهاية عناصر الواجهة ======================== -->
+<!-- الاسبوع التاسع -->
+<g transform="translate(9216,0)">
+    <image data-src="image/B/09.webp" width="1024" height="2454"/>
 
-<!-- ================ المكتبات الخارجية ================ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-  if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
-</script>
+    <!-- Saturday 9 -->
+    <g transform="translate(140,0)">
+        <rect x="0" y="309" height="340.63" class="m w l" data-href="RRS/Lecture/pharma-01.pdf"/>
+        <rect x="0" y="876" height="349" class="m w i" data-href="IPC/book.pdf"/>
+        <rect x="0" y="1225" height="121" class="m hw q" data-href="IPC/Question/09.pdf"/>
+        <rect x="57.5" y="1225" height="121" class="m hw a" data-href="IPC/Answer/09.pdf"/>
+        <rect x="0" y="1810.38" height="470.24" class="m w l" data-href="#"/>
+    </g>
 
-<!-- ✅ السكريبت الرئيسي – نقطة الدخول الوحيدة (تم التعديل هنا) -->
-<script type="module" src="script.js"></script>
+    <!-- Monday 9 -->
+    <g transform="translate(370,0)">
+        <rect x="0" y="422.3" height="456.42" class="m w l" data-href="RRS/Lecture/physio-03.pdf"/>
+        <rect x="0" y="1369" height="450" class="m w l" data-href="RRS/Lecture/histo-02.pdf"/>
+        <rect x="0" y="1812.1" height="471.44" class="m w l" data-href="#"/>
+    </g>
 
-<!-- ✅ Tracker (غير معياري) -->
-<script src="tracker.js"></script>
+    <!-- Tuesday 9 -->
+    <g transform="translate(485,0)">
+        <rect x="0" y="1121.29" height="347.86" class="m w l" data-href="#"/>
+        <rect x="0" y="1470.58" height="340.47" class="m w l" data-href="#"/>
+        <rect x="0" y="1813.77" height="361.36" class="m w l" data-href="#"/>
+    </g>
 
-<!-- ✅ Service Worker -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(registration => {
-        console.log('✅ Service Worker مسجل');
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              if (confirm('🔄 يوجد تحديث جديد. هل تريد إعادة التحميل؟')) {
-                newWorker.postMessage({ action: 'skipWaiting' });
-                window.location.reload();
-              }
-            }
-          });
-        });
-      })
-      .catch(err => console.error('❌ فشل تسجيل SW:', err));
-  });
+    <!-- Wednesday 9 -->
+    <g transform="translate(600,0)">
+        <rect x="0" y="421.64" height="457.44" class="m w l" data-href="#"/>
+        <rect x="0" y="1469.19" height="343.19" class="m w l" data-href="RRS/Lecture/physio-04.pdf"/>
+    </g>
 
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
-    }
-  });
-}
-</script>
+    <!-- Thursday 9 -->
+    <g transform="translate(715,0)">
+        <rect x="0" y="422.25" height="340.47" class="m w l" data-href="#"/>
+        <rect x="0" y="877.49" height="485.43" class="m w l" data-href="#"/>
+        <rect x="0" y="1364.73" height="447.54" class="m w l" data-href="#"/>
+    </g>
+</g>
 
-<!-- ✅ فحص التحديثات من GitHub -->
-<script>
-async function checkForUpdates() {
-  try {
-    const lastCheck = localStorage.getItem('last_update_check');
-    const now = Date.now();
-    if (lastCheck && (now - parseInt(lastCheck)) < 300000) return;
+<!-- الاسبوع العاشر -->
+<g transform="translate(10240,0)">
+    <image data-src="image/B/10.webp" width="1024" height="2454" />
+</g>
 
-    const response = await fetch(
-      'https://api.github.com/repos/MUE24Med/s3/commits/main',
-      { cache: 'no-store', headers: { 'Accept': 'application/vnd.github.v3+json' } }
-    );
-    if (!response.ok) return;
-    const data = await response.json();
-    const latestSha = data.sha.substring(0, 7);
-    const lastSha = localStorage.getItem('last_commit_sha');
+<!-- الاسبوع الحادي عشر-->
+<g transform="translate(11264,0)">
+    <image data-src="image/B/11.webp" width="1024" height="2454" />
+</g>
 
-    if (!lastSha) {
-      localStorage.setItem('last_commit_sha', latestSha);
-      localStorage.setItem('last_update_check', now.toString());
-      return;
-    }
+<!-- الاسبوع الثاني عشر -->
+<g transform="translate(12288,0)">
+    <image data-src="image/B/12.webp" width="1024" height="2454" />
 
-    if (lastSha !== latestSha) {
-      console.log('🆕 تحديث جديد متاح:', latestSha);
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
-      localStorage.setItem('last_commit_sha', latestSha);
-      localStorage.removeItem('preload_done');
-      window.location.reload(true);
-    } else {
-      localStorage.setItem('last_update_check', now.toString());
-    }
-  } catch (error) {
-    console.warn('⚠️ خطأ في فحص التحديثات:', error);
-  }
-}
-window.addEventListener('load', checkForUpdates);
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) checkForUpdates();
-});
-</script>
+    <!-- Saturday 12 -->
+    <g transform="translate(138.41,0)">
+        <rect x="0" y="557.66" height="628.7" class="m w l" data-href="URI/Lecture/pharma-01.pdf"/>
+    </g>
+</g>
 
-</body>
-</html>
+<!-- الاسبوع الثالث عشر-->
+<g transform="translate(13312,0)">
+    <image data-src="image/B/13.webp" width="1024" height="2454" />
+
+    <!-- Saturday 13 -->
+    <g transform="translate(139,0)">
+        <rect x="0" y="937.7" height="468.3" class="m w l" data-href="#"/>
+        <rect x="0" y="1409" height="472.3" class="m w l" data-href="URI/Lecture/pharma-02.pdf"/>
+        <rect x="0" y="1883.5" height="395.5" class="m w s" data-href="URI/Section/micro-01.pdf"/>
+    </g>
+
+    <!-- Monday 13 -->
+    <g transform="translate(368,0)">
+        <rect x="0" y="415.1" height="424.1" class="m w l" data-href="#"/>
+        <rect x="0" y="839.15" height="445" class="m w l" data-href="#"/>
+        <rect x="0" y="1287.75" height="484.32" class="m w i" data-href="IPC/Lecture/Chest Inspection and Palpation.pdf" data-full-text="Chest Inspection and Palpation .pdf"/>
+        <rect x="0" y="1773.4" height="505.15" class="m w l" data-href="URI/Lecture/physio-01.pdf"/>
+    </g>
+
+    <!-- Tuesday 13 -->
+    <g transform="translate(485,0)">
+        <rect x="0" y="311.4" height="426.454" class="m w l" data-href="URI/Lecture/patho-01.pdf"/>
+        <rect x="0" y="1285.3" height="486" class="m w l" data-href="#"/>
+    </g>
+
+    <!-- Wednesday 13 -->
+    <g transform="translate(598,0)">
+        <rect x="0" y="415.1" height="323.85" class="m w l" data-href="URI/Lecture/micro-01.pdf"/>
+        <rect x="0" y="841.4" height="444" class="m w l " data-href="URI/Lecture/histo-01.pdf"/>
+        <rect x="0" y="1286.2" height="486.5" class="m w l" data-href="#"/>
+    </g>
+
+    <!-- Thursday 13 -->
+    <g transform="translate(714,0)">
+        <rect x="0" y="418.7" height="420" class="m w l" data-href="#"/>
+        <rect x="0" y="1286.5" height="485" class="m w l" data-href="#"/>
+        <rect x="0" y="1772.3" height="508.2" class="m w l" data-href="#"/>
+    </g>
+</g>
+
+<!-- الاسبوع الرابع عشر-->
+<g transform="translate(14336,0)">
+    <image data-src="image/B/14.webp" width="1024" height="2454" />
+
+    <!-- Saturday 14 -->
+    <g transform="translate(138,0)">
+        <rect x="0" y="242" height="350.6" class="m w l" data-href="#" />
+        <rect x="0" y="593" height="341.5" class="m w l" data-href="#" />
+        <rect x="0" y="934.3" height="320" class="m w l" data-href="URI/Lecture/pharma-03.pdf" />
+    </g>
+
+    <!-- Sunday 14 -->
+    <g transform="translate(252.8,0)">
+        <rect x="0" y="1264.5" height="494" class="m w l" data-href="URI/Lecture/anatomy-02.pdf" />
+        <rect x="0" y="1749.5" height="496.75" class="m w q" data-href="URI/Question/D-pharma-01.pdf" />
+    </g>
+
+    <!-- Monday 14 -->
+    <g transform="translate(368.5,0)">
+        <rect x="0" y="1204.3"  height="494.7" class="m w l" data-href="URI/Lecture/para-01.pdf" />
+        <rect x="0" y="650.4" height="350" class="m w l" data-href="#" />
+    </g>
+
+    <!-- Tuesday 14 -->
+    <g transform="translate(483,0)">
+        <rect x="0" y="1301.4"  height="495" class="m w l" data-href="#" />
+        <rect x="0" y="817.5" height="436" class="m w i" data-href="IPC/Question/Discussion-01.pdf" />
+        <rect x="0" y="1797.6" height="494.7" class="m w l" data-href="#" />
+    </g>
+
+    <!-- Wednesday 14 -->
+    <g transform="translate(598,0)">
+        <rect x="0" y="864.5"  height="436.6" class="m w l" data-href="#" />
+        <rect x="0" y="288.7"  height="350.55" class="m w l" data-href="#" />
+        <rect x="0" y="1300.7"  height="495.8" class="m w l" data-href="URI/Lecture/patho-02.pdf" />
+    </g>
+
+    <!-- Thursday 14 -->
+    <g transform="translate(712.5,0)">
+        <rect x="0" y="1300.8" height="371.58" class="m w l" data-href="#"/>
+        <rect x="0" y="863.9" height="436" class="m w l" data-href="#"/>
+        <rect x="0" y="1673" height="620" class="m w l" data-href="URI/Lecture/patho-03.pdf" />
+    </g>
+</g>
+
+<!-- الاسبوع الخامس عشر -->
+<g transform="translate(15360,0)">
+    <image data-src="image/B/15.webp" width="1024" height="2454" />
+</g>
+
+<!-- الاسبوع السادس عشر -->
+<g transform="translate(16384,0)">
+    <image data-src="image/B/16.webp" width="1024" height="2454" />
+</g>
+
+<!-- الاسبوع السابع عشر -->
+<g transform="translate(17408,0)">
+    <image data-src="image/B/17.webp" width="1024" height="2454" />
+
+    <!-- Monday 17 -->
+    <g transform="translate(368,0)">
+        <rect x="0" y="1093.5" height="327.32" class="m w is" data-href="ipc" />
+        <rect x="0" y="1423" height="327.75" class="m w l" data-href="HEM/patho-01.pdf" />
+        <rect x="0" y="1752" height="370.7" class="m w l" data-href="#" />
+    </g>
+
+    <!-- Tuesday 17 -->
+    <g transform="translate(483,0)">
+        <rect x="0" y="355.4" height="518.2" class="m w l" data-href="#" />
+        <rect x="0" y="875.4" height="438.1" class="m w l" data-href="#" />
+        <rect x="0" y="1313" height="438.53" class="m w s" data-href="#" />
+        <rect x="0" y="1752.2" height="492.9" class="m w s" data-href="#" />
+    </g>
+
+    <!-- Wednesday 17 -->
+    <g transform="translate(597,0)">
+        <rect y="355.18" height="517" class="m w l" data-href="#" />
+    </g>
+
+    <!-- Thursday 17 -->
+    <g transform="translate(713,0)">
+        <rect y="874" height="438.76" class="m w l" data-href="#" />
+    </g>
+</g>
+
+<!-- الاسبوع الثامن عشر -->
+<g transform="translate(18432,0)">
+    <image data-src="image/B/18.webp" width="1024" height="2454" />
+</g>
+
+<!-- الاسبوع التاسع عشر -->
+<g transform="translate(19456,0)">
+    <image data-src="image/B/19.webp" width="1024" height="2454" />
+
+    <!-- Saturday 19 -->
+    <g transform="translate(140,0)">
+        <rect x="0" y="330" height="539.5" class="m w" data-href="#" />
+        <rect x="0" y="868" height="490" class="m w" data-href="#" />
+        <rect x="0" y="1358" height="492.4" class="m w" data-href="#" />
+    </g>
+
+    <!-- Monday 19 -->
+    <g transform="translate(368,0)">
+        <rect y="329.7" height="536.9" class="m w s" data-href="HEM/Section/micro-01.pdf" />
+        <rect x="0" y="866.25" height="492.8" class="m w s" data-href="HEM/Section/para-01.pdf" />
+        <rect x="0" y="1358.3" height="492" class="m w l" data-href="HEM/Lecture/patho-01.pdf" />
+        <rect x="0" y="1850" height="409.6" class="m w" data-href="#" />
+    </g>
+
+    <!-- Tuesday 19 -->
+    <g transform="translate(483,0)">
+        <rect x="0" y="329.7" height="536.9" class="m w" data-href="#" />
+        <rect x="0" y="866.25" height="492.8" class="m w" data-href="#" />
+    </g>
+
+    <!-- Wednesday 19 -->
+    <g transform="translate(598,0)">
+        <rect x="0" y="332" height="534.6" class="m w" data-href="#" />
+        <rect x="0" y="868" height="491.7" class="m w" data-href="#" />
+        <rect x="0" y="1359.2" height="491" class="m w" data-href="#" />
+        <rect x="0" y="1851.4" height="409.5" class="m w" data-href="#" />
+    </g>
+</g>
+
+<!-- الاسبوع العشرين -->
+<g transform="translate(20480,0)">
+    <image data-src="image/B/20.webp" width="1024" height="2454" />
+</g>
+
+<!-- الاسبوع الواحد و العشرين - محدث حسب الاحداثي الجديد -->
+<g transform="translate(21504,0)">
+    <image data-src="image/B/21.webp" width="1024" height="2454" />
+
+    <!-- Saturday 21 -->
+    <g transform="translate(139,0)">
+        <rect x="0" y="150.8" height="378" class="m w l" data-href="HEM/Lecture/pharma-01.pdf"/>
+        <rect x="0" y="528.8" height="379.3" class="m w s" data-href="HEM/Section/micro-02.pdf"/>
+        <rect x="0" y="908.1" height="377.5" class="m w q" data-href="HEM/Question/pharma-01.pdf"/>
+        <rect x="57.5" y="908.1" height="377.5" class="m w a" data-href="HEM/Answer/pharma-01.pdf"/>
+        <rect x="0" y="1285.6" height="375.8" class="m w l" data-href="HEM/Lecture/patho-02.pdf"/>
+        <rect x="0" y="1661.4" height="593" class="m w i" data-href="IPC/Lecture/Blood Pressure Measurement.pdf" data-full-text="Blood Pressure Measurement .pdf"/>
+    </g>
+
+    <!-- Sunday 21 -->
+    <g transform="translate(254,0)">
+        <rect x="0" y="150.5" height="377.8" class="m w l" data-href="HEM/Lecture/physio-03.pdf"/>
+        <rect x="0" y="528.3" height="380.1" class="m w s" data-href="HEM/Section/para-02.pdf"/>
+        <rect x="0" y="908.4" height="376.5" class="m w l" data-href="HEM/Lecture/anatomy-03.pdf"/>
+        <rect x="0" y="1284.9" height="377.2" class="m w q" data-href="HEM/Question/physio-02.pdf"/>
+        <rect x="57.5" y="1284.9" height="377.2" class="m w a" data-href="HEM/Answer/physio-02.pdf"/>
+        <rect x="0" y="1662.1" height="592.4" class="m w i" data-href="IPC/Lecture/Heart Sounds and Murmurs.pdf" data-full-text="Heart Sounds and Murmurs .pdf"/>
+    </g>
+
+    <!-- Monday 21 -->
+    <g transform="translate(368.5,0)">
+        <rect x="0" y="150.3" height="378.5" class="m w l" data-href="HEM/Lecture/micro-02.pdf"/>
+        <rect x="0" y="528.8" height="379.7" class="m w l" data-href="HEM/Lecture/para-02.pdf"/>
+        <rect x="0" y="908.5" height="376.5" class="m w s" data-href="HEM/Section/patho-01.pdf"/>
+        <rect x="0" y="1285" height="377.3" class="m w l" data-href="HEM/Lecture/pharma-02.pdf"/>
+        <rect x="0" y="1662.3" height="592.2" class="m w l" data-href="HEM/Lecture/physio-04.pdf"/>
+    </g>
+
+    <!-- Tuesday 21 -->
+    <g transform="translate(483,0)">
+        <rect x="0" y="150.6" height="378.2" class="m w l" data-href="HEM/Lecture/histo-02.pdf"/>
+        <rect x="0" y="528.8" height="379.4" class="m w l" data-href="HEM/Lecture/biochem-01.pdf"/>
+        <rect x="0" y="908.2" height="376.8" class="m w s" data-href="HEM/Section/physio-02.pdf"/>
+        <rect x="0" y="1285" height="377.5" class="m w q" data-href="HEM/Question/patho-01.pdf"/>
+        <rect x="57.5" y="1285" height="377.5" class="m w a" data-href="HEM/Answer/patho-01.pdf"/>
+        <rect x="0" y="1662.5" height="592" class="m w l" data-href="HEM/Lecture/immuno-01.pdf"/>
+    </g>
+
+    <!-- Wednesday 21 -->
+    <g transform="translate(598,0)">
+        <rect x="0" y="150.7" height="377.9" class="m w l" data-href="HEM/Lecture/patho-03.pdf"/>
+        <rect x="0" y="528.6" height="379.6" class="m w s" data-href="HEM/Section/histo-01.pdf"/>
+        <rect x="0" y="908.2" height="376.4" class="m w l" data-href="HEM/Lecture/pharma-03.pdf"/>
+        <rect x="0" y="1284.6" height="377.8" class="m w i" data-href="IPC/Lecture/Anemia Classification.pdf" data-full-text="Anemia Classification .pdf"/>
+        <rect x="0" y="1662.4" height="592.1" class="m w l" data-href="HEM/Lecture/physio-05.pdf"/>
+    </g>
+
+    <!-- Thursday 21 -->
+    <g transform="translate(713,0)">
+        <rect x="0" y="150.4" height="378.3" class="m w l" data-href="HEM/Lecture/oncology-01.pdf"/>
+        <rect x="0" y="528.7" height="379.5" class="m w s" data-href="HEM/Section/biochem-01.pdf"/>
+        <rect x="0" y="908.2" height="376.6" class="m w q" data-href="HEM/Question/pharma-02.pdf"/>
+        <rect x="57.5" y="908.2" height="376.6" class="m w a" data-href="HEM/Answer/pharma-02.pdf"/>
+        <rect x="0" y="1284.8" height="377.4" class="m w l" data-href="HEM/Lecture/coagulation-01.pdf"/>
+        <rect x="0" y="1662.2" height="592.3" class="m w i" data-href="IPC/Lecture/Complete Blood Count Interpretation.pdf" data-full-text="Complete Blood Count Interpretation .pdf"/>
+    </g>
+</g>
+
+<g id="dynamic-links-group"></g>
+</svg>
