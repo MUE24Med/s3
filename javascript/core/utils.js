@@ -136,6 +136,7 @@ export function wrapText(el, maxW) {
     el.textContent = '';
 
     let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+    // ✅ إصلاح NaN: إضافة || '0' لضمان قيمة صالحة للـ attribute
     ts.setAttribute('x', el.getAttribute('x') || '0');
     ts.setAttribute('dy', '0');
     el.appendChild(ts);
@@ -149,6 +150,7 @@ export function wrapText(el, maxW) {
         if (ts.getComputedTextLength() > maxW - 5 && line) {
             ts.textContent = line;
             ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+            // ✅ إصلاح NaN: إضافة || '0' هنا أيضاً
             ts.setAttribute('x', el.getAttribute('x') || '0');
             ts.setAttribute('dy', lh + 'px');
             ts.textContent = word;
@@ -169,21 +171,35 @@ export const hasShownError = (url) => _shownErrors.has(url);
 
 // ------------------------------
 // إعادة تعيين مستوى التكبير (Zoom) لـ 100% حقيقي
+// تُستدعى فقط عند:
+// - فتح ملف PDF (openWithMozilla / openWithDrive / openWithBrowser)
+// - إغلاق ملف PDF (closePdfBtn)
+// - أزرار التنقل الموجودة (back-button-group, change-group-btn, إلخ)
+// في باقي الأوقات يُسمح بالـ zoom بحرية
 // ------------------------------
 export function resetBrowserZoom() {
     const viewport = document.querySelector('meta[name=viewport]');
     if (!viewport) return;
 
+    // ✅ الطريقة الوحيدة الموثوقة لإعادة الـ zoom لـ 100% على موبايل:
+    // 1. نضيف user-scalable=no مع initial-scale=1 → المتصفح يرجع لـ 1x فوراً
+    // 2. نرجع user-scalable=yes بعد فترة قصيرة للسماح بالـ zoom
+
+    // حفظ الـ scroll position عشان ما يتغيرش
     const scrollX = window.scrollX || window.pageXOffset;
     const scrollY = window.scrollY || window.pageYOffset;
 
+    // Step 1: force reset إلى 1x
     viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
 
+    // Step 2: على بعض المتصفحات محتاج double-trigger
     requestAnimationFrame(() => {
         viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
 
+        // Step 3: بعد 350ms نرجع للسماح بالـ zoom بحرية
         setTimeout(() => {
             viewport.content = 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes';
+            // نرجع الـ scroll position
             window.scrollTo(scrollX, scrollY);
         }, 350);
     });
