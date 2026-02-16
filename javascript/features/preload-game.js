@@ -1,6 +1,6 @@
-// ============================================
-// preload-game.js - نظام التحميل المسبق واللعبة المصغرة
-// ============================================
+//==================
+//preload-game.js 
+//==================
 
 import { FORMSPREE_URL } from '../core/config.js';
 import { getPlayerName, getDeviceId } from '../core/utils.js';
