@@ -134,28 +134,38 @@
     <div class="controls">
       <button class="control-btn" id="leftBtn">➡️</button>
       <button class="control-btn" id="rightBtn">⬅️</button>
-    </div>
-  </div>
-</div>
+      </div>
 
-<!-- 📊 ملخص الجلسة (يظهر في أسفل اليسار) -->
-<div id="sessionSummary">
-  <h4>📊 ملخص الجلسة</h4>
-  <div class="stat">
-    <span class="stat-label">عدد الألعاب:</span>
-    <span class="stat-value" id="sessionGamesCount">0</span>
-  </div>
-  <div class="stat">
-    <span class="stat-label">إجمالي النقاط:</span>
-    <span class="stat-value" id="sessionTotalScore">0</span>
-  </div>
-  <div class="stat">
-    <span class="stat-label">أعلى نقاط:</span>
-    <span class="stat-value" id="sessionHighScore">0</span>
-  </div>
-  <div class="stat">
-    <span class="stat-label">المتوسط:</span>
-    <span class="stat-value" id="sessionAvgScore">0</span>
+    <!-- ========================================
+         🏆 Top 5 الحية - تحت اللعبة دائماً
+         تُحمَّل من الكاش فوراً ثم تُحدَّث من السحابة
+    ========================================= -->
+    <div id="live-leaderboard-section">
+      <div class="live-lb-header">
+        <span class="live-lb-title">🏆 أفضل 5 لاعبين</span>
+        <span class="live-lb-status" id="liveLeaderboardStatus">⏳ جاري التحميل...</span>
+      </div>
+      <div class="live-lb-scroll">
+        <ul class="live-lb-list" id="liveLeaderboardList">
+          <li class="live-lb-item live-lb-loading">
+            <span class="live-lb-skeleton"></span>
+            <span class="live-lb-skeleton" style="width:60%"></span>
+            <span class="live-lb-skeleton" style="width:40px"></span>
+          </li>
+          <li class="live-lb-item live-lb-loading">
+            <span class="live-lb-skeleton"></span>
+            <span class="live-lb-skeleton" style="width:50%"></span>
+            <span class="live-lb-skeleton" style="width:40px"></span>
+          </li>
+          <li class="live-lb-item live-lb-loading">
+            <span class="live-lb-skeleton"></span>
+            <span class="live-lb-skeleton" style="width:70%"></span>
+            <span class="live-lb-skeleton" style="width:40px"></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -366,21 +376,5 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) checkForUpdates();
 });
 </script>
-
-<!-- ✅ كود ملخص الجلسة المصحح -->
-<script>
-// تحديث العرض كل 10 ثواني
-setInterval(() => {
-  if (typeof updateSessionSummaryDisplay === 'function') {
-    updateSessionSummaryDisplay();
-  }
-}, 10000);
-
-// إخفاء الملخص عند النقر عليه
-document.getElementById('sessionSummary')?.addEventListener('click', function() {
-  this.classList.remove('show');
-});
-</script>
-
 </body>
 </html>
