@@ -25,10 +25,26 @@ export function initPreloadSystem() {
             if (el) el.style.display = 'none';
         });
 
-        const filesToLoad = [
-            'style.css',
-            'script.js'
-        ];
+const filesToLoad = [
+    './style.css',
+    './tracker.js',
+    './script.js',
+    './javascript/core/config.js',
+    './javascript/core/utils.js',
+    './javascript/core/navigation.js',
+    './javascript/core/group-loader.js',
+    './javascript/core/state.js',
+    './javascript/ui/pdf-viewer.js',
+    './javascript/ui/wood-interface.js',
+    './javascript/ui/search-and-eye.js',
+    './javascript/ui/ui-controls.js',
+    './javascript/ui/scroll-system.js',
+    './javascript/features/preload-game.js',
+    './javascript/features/svg-processor.js',
+    './image/0.png',
+    './image/wood.webp',
+    './image/Upper_wood.webp'
+];
 
         const progressBar = document.getElementById('progressBar');
         const fileStatus = document.getElementById('fileStatus');
