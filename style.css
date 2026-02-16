@@ -1,9 +1,3 @@
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #121212;
-    color: white;
-  }
-}
 /* ========================================
    COMPLETE STYLE.CSS - FIXED VERSION
    ======================================== */
@@ -550,12 +544,12 @@ html, body {
 
 /* [002] المستطيلات التفاعلية */
 .m {
-  fill: transparent;
-  stroke: transparent;
+  fill: transparent !important;
   stroke-width: 2px;
   transform-origin: center center;
   transition: filter 0.2s ease, stroke-width 0.2s ease;
   cursor: pointer;
+  forced-color-adjust: none !important; 
 }
 
 .q { stroke: var(--color-q); }
