@@ -368,25 +368,6 @@ document.addEventListener('visibilitychange', () => {
 });
 </script>
 
-<!-- 📊 سكريبت تحديث ملخص الجلسة -->
-<script>
-// دالة لتحديث عرض ملخص الجلسة
-function updateSessionSummaryDisplay() {
-  if (typeof window.sessionTrackerInstance !== 'undefined') {
-    const summary = window.sessionTrackerInstance.getSessionSummary();
-
-    const summaryDiv = document.getElementById('sessionSummary');
-    if (summaryDiv && summary.gamesPlayed > 0) {
-      document.getElementById('sessionGamesCount').textContent = summary.gamesPlayed;
-      document.getElementById('sessionTotalScore').textContent = summary.totalScore;
-      document.getElementById('sessionHighScore').textContent = summary.highestScore;
-      document.getElementById('sessionAvgScore').textContent = summary.averageScore;
-
-      summaryDiv.classList.add('show');
-    }
-  }
-}
-
 // تحديث العرض كل 10 ثواني
 setInterval(updateSessionSummaryDisplay, 10000);
 
