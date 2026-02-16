@@ -26,7 +26,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="2025.02.14.ENHANCED">
+  <meta name="version" content="2025.02.16.FIXED">
 
   <!-- Performance -->
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
@@ -82,14 +82,14 @@
     <div class="logo">🏥</div>
     <h1>جاري التحميل</h1>
     <div class="subtitle">تجنب العدوى 🦠 واجمع العلاج 💊</div>
-    
+
     <!-- شريط التقدم -->
     <div class="progress-container">
       <div class="progress-bar" id="progressBar">0%</div>
     </div>
     <div class="file-status" id="fileStatus">جاري البدء...</div>
     <button class="continue-btn" id="continueBtn">متابعة إلى الموقع ➡️</button>
-    
+
     <!-- 🎮 حاوية اللعبة المحسنة -->
     <div class="game-container" id="gameContainer">
       <!-- إحصائيات اللعبة -->
@@ -97,25 +97,25 @@
         <div class="game-stat">❤️ <span id="heartsDisplay">0</span></div>
         <div class="game-stat">⭐ <span id="scoreDisplay">0</span></div>
       </div>
-      
+
       <!-- 🏆 عرض الرقم القياسي الشخصي -->
       <div id="personalRecordDisplay" title="رقمك القياسي">
         🏆 <span id="personalRecordValue">0</span>
       </div>
-      
+
       <!-- اللاعب -->
       <div class="runner" id="runner">👨‍⚕️</div>
-      
+
       <!-- شاشة النهاية -->
       <div class="game-overlay" id="gameOverlay">
         <h2>🎮 انتهت اللعبة!</h2>
         <div class="final-score" id="finalScore">النقاط: 0</div>
-        
+
         <!-- 🎉 رسالة الرقم القياسي -->
         <div id="recordMessage"></div>
-        
+
         <button class="restart-btn" id="restartBtn" title="إعادة اللعب">🔄</button>
-        
+
         <!-- 🏆 قائمة أفضل 5 لاعبين -->
         <div class="leaderboard">
           <h3>🏆 أفضل 5 لاعبين عالمياً</h3>
@@ -129,7 +129,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- أزرار التحكم -->
     <div class="controls">
       <button class="control-btn" id="leftBtn">➡️</button>
@@ -219,7 +219,7 @@
   </div>
 </div>
 
-<!-- عارض PDF -->
+<!-- عارض PDF - تم إصلاح مشكلة الأمان -->
 <div id="pdf-overlay" class="hidden">
   <div id="toolbar">
     <div id="pdf-controls">
@@ -228,7 +228,8 @@
       <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
     </div>
   </div>
-  <iframe id="pdfFrame" src="" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+  <!-- ✅ تم إزالة allow-same-origin لحل مشكلة الأمان -->
+  <iframe id="pdfFrame" src="" sandbox="allow-scripts allow-popups allow-forms"></iframe>
 </div>
 
 <!-- نافذة معاينة PDF -->
@@ -291,9 +292,6 @@
 
 <!-- ✅ السكريبت الرئيسي – نقطة الدخول الوحيدة -->
 <script type="module" src="script.js"></script>
-
-<!-- ✅ Tracker (غير معياري) -->
-<script src="tracker.js"></script>
 
 <!-- ✅ Service Worker -->
 <script>
@@ -376,14 +374,14 @@ document.addEventListener('visibilitychange', () => {
 function updateSessionSummaryDisplay() {
   if (typeof window.sessionTrackerInstance !== 'undefined') {
     const summary = window.sessionTrackerInstance.getSessionSummary();
-    
+
     const summaryDiv = document.getElementById('sessionSummary');
     if (summaryDiv && summary.gamesPlayed > 0) {
       document.getElementById('sessionGamesCount').textContent = summary.gamesPlayed;
       document.getElementById('sessionTotalScore').textContent = summary.totalScore;
       document.getElementById('sessionHighScore').textContent = summary.highestScore;
       document.getElementById('sessionAvgScore').textContent = summary.averageScore;
-      
+
       summaryDiv.classList.add('show');
     }
   }
