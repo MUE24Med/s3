@@ -130,6 +130,110 @@ const filesToLoad = [
         let loadedFiles = 0;
         const totalFiles = filesToLoad.length;
 
+async function endGame() {
+    gameActive = false;
+    if (finalScoreEl) finalScoreEl.textContent = `النقاط النهائية: ${score}`;
+    if (gameOverlay)  gameOverlay.style.display = 'flex';
+
+    // ① تحديث الرقم القياسي الشخصي محلياً
+    const isNewRecord = PersonalRecord.update(score);
+    refreshPersonalRecordUI();
+
+    const recordMessage = document.getElementById('recordMessage');
+    if (recordMessage) {
+        if (isNewRecord) {
+            recordMessage.innerHTML = '🎉 <strong style="color:#FFD700;font-size:20px">رقم قياسي جديد!</strong> 🎉';
+            recordMessage.style.cssText = 'margin-top:15px;animation:pulse 1s infinite';
+        } else {
+            recordMessage.innerHTML =
+                `<span style="color:#888">رقمك القياسي: <strong style="color:#fff">${PersonalRecord.get()} ⭐</strong></span>`;
+            recordMessage.style.marginTop = '10px';
+        }
+    }
+
+    // ② رفع الرقم القياسي المحلي → السحابة (النظام ١)
+    await PersonalRecord.syncToCloud(playerName, deviceId);
+
+    // ③ إرسال نتيجة الجلسة + تنظيف السادسة + تحديث كاش (الأنظمة ٢،٣)
+    await sendScoreToServer(playerName, score, deviceId);
+
+    // ④ عرض القائمة في overlay بأحدث بيانات
+    const { data: top5 } = await fetchTop5(true);
+    renderLeaderboard(leaderboardList, top5, deviceId);
+
+    // ⑤ تحديث القائمة الحية تحت اللعبة (النظام ٤)
+    renderLiveLeaderboard(top5, deviceId, false);
+
+    if (typeof window.trackGameScore === 'function') window.trackGameScore(score);
+}
+
+function renderLeaderboard(listEl, top5, currentDeviceId) {
+    if (!listEl) return;
+    if (!top5.length) {
+        listEl.innerHTML = `<li class="leaderboard-item">
+            <span class="leaderboard-rank">-</span>
+            <span class="leaderboard-name">لا توجد نتائج بعد</span>
+            <span class="leaderboard-score">-</span></li>`;
+        return;
+    }
+    listEl.innerHTML = top5.map((e, i) => {
+        const medal = ['🥇','🥈','🥉'][i] ?? '';
+        const topClass = i < 3 ? `top${i+1}` : '';
+        const cur = e.device_id === currentDeviceId ? 'current-player' : '';
+        return `<li class="leaderboard-item ${topClass} ${cur}">
+            <span class="leaderboard-rank">${medal} #${i+1}</span>
+            <span class="leaderboard-name">${e.name}</span>
+            <span class="leaderboard-score">${e.score} ⭐</span></li>`;
+    }).join('');
+}
+
+// ✅ النظام ٤: القائمة الحية (Live Leaderboard)
+function renderLiveLeaderboard(top5, currentDeviceId, fromCache) {
+    const listEl   = document.getElementById('liveLeaderboardList');
+    const statusEl = document.getElementById('liveLeaderboardStatus');
+    if (!listEl) return;
+    if (!top5.length) {
+        listEl.innerHTML = `<li class="live-lb-empty">لا توجد نتائج بعد 🎮</li>`;
+        if (statusEl) { statusEl.textContent = 'فارغ'; statusEl.className = 'live-lb-status'; }
+        return;
+    }
+    const EMOJIS = ['🥇','🥈','🥉','#4','#5'];
+    listEl.innerHTML = top5.map((e, i) => {
+        const rankClass = i < 3 ? `lb-rank-${i+1}` : '';
+        const cur = e.device_id === currentDeviceId ? 'lb-current' : '';
+        return `<li class="live-lb-item ${rankClass} ${cur}" style="animation-delay:${i*60}ms">
+            <span class="live-lb-rank">${EMOJIS[i]}</span>
+            <span class="live-lb-name">${e.name}</span>
+            <span class="live-lb-score">${e.score} ⭐</span></li>`;
+    }).join('');
+    if (statusEl) {
+        statusEl.textContent = fromCache ? '📦 من الكاش' : '☁️ مُحدَّثة';
+        statusEl.className   = 'live-lb-status loaded';
+    }
+}
+
+// تحميل القائمة الحية - مرحلتان (كاش فوري ثم سحابة)
+async function loadLiveLeaderboard(currentDeviceId) {
+    const statusEl = document.getElementById('liveLeaderboardStatus');
+    // ── المرحلة ❶: عرض من الكاش فوراً ──
+    const cached = LeaderboardCache.load();
+    if (cached) {
+        renderLiveLeaderboard(cached, currentDeviceId, true);
+    }
+    // ── المرحلة ❷: تحديث من السحابة في الخلفية ──
+    if (!cached && statusEl) {
+        statusEl.textContent = '⏳ جاري التحميل...';
+        statusEl.className   = 'live-lb-status';
+    }
+    try {
+        const { data, fromCache } = await fetchTop5(!!cached);
+        renderLiveLeaderboard(data, currentDeviceId, fromCache);
+    } catch {
+        if (statusEl) { statusEl.textContent = '❌ خطأ'; statusEl.className = 'live-lb-status error'; }
+    }
+}
+
+
 // جلب مفتاح جهاز معين في السحابة
 async function _findDeviceScoreKey(deviceId) {
     try {
