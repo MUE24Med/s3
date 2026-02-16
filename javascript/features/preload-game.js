@@ -1,6 +1,7 @@
-//==================
-//preload-game.js 
-//==================
+// ============================================
+// preload-game.js - نظام التحميل المسبق واللعبة المصغرة
+// الإصدار المُحسّن مع حفظ الرقم القياسي الشخصي
+// ============================================
 
 import { FORMSPREE_URL } from '../core/config.js';
 import { getPlayerName, getDeviceId } from '../core/utils.js';
@@ -26,8 +27,7 @@ export function initPreloadSystem() {
 
         const filesToLoad = [
             'style.css',
-            'script.js',
-            'tracker.js'
+            'script.js'
         ];
 
         const progressBar = document.getElementById('progressBar');
@@ -105,7 +105,7 @@ export function initPreloadSystem() {
             window.location.reload();
         });
 
-        // ---------- كود اللعبة ----------
+        // ==================== كود اللعبة المُحسّن ====================
         const gameContainer = document.getElementById('gameContainer');
         const runner = document.getElementById('runner');
         const heartsDisplay = document.getElementById('heartsDisplay');
@@ -127,6 +127,33 @@ export function initPreloadSystem() {
         let waveCounter = 0;
         let usedLanesInWave = [];
         let spawnInterval = 1800;
+
+        // ========== دوال الرقم القياسي الشخصي ==========
+        function getPersonalRecord() {
+            const record = localStorage.getItem('personal_best_score');
+            return record ? parseInt(record) : 0;
+        }
+
+        function updatePersonalRecord(newScore) {
+            const currentRecord = getPersonalRecord();
+            if (newScore > currentRecord) {
+                localStorage.setItem('personal_best_score', newScore);
+                console.log(`🏆 رقم قياسي جديد: ${newScore} (السابق: ${currentRecord})`);
+                return true;
+            }
+            return false;
+        }
+
+        function displayPersonalRecord() {
+            const record = getPersonalRecord();
+            const recordDisplay = document.getElementById('personalRecordValue');
+            if (recordDisplay) {
+                recordDisplay.textContent = record;
+            }
+        }
+
+        // عرض الرقم القياسي عند بداية اللعبة
+        displayPersonalRecord();
 
         function moveRunner(direction) {
             if (!gameActive) return;
@@ -351,11 +378,27 @@ export function initPreloadSystem() {
 
             console.log('🎮 انتهت اللعبة:', { playerName, score, deviceId });
 
+            // ✅ فحص وحفظ الرقم القياسي
+            const isNewRecord = updatePersonalRecord(score);
+            const recordMessage = document.getElementById('recordMessage');
+            
+            if (isNewRecord && recordMessage) {
+                recordMessage.innerHTML = '🎉 <strong style="color: #FFD700; font-size: 20px;">رقم قياسي جديد!</strong> 🎉';
+                recordMessage.style.marginTop = '15px';
+                recordMessage.style.animation = 'pulse 1s infinite';
+            } else if (recordMessage) {
+                const currentRecord = getPersonalRecord();
+                recordMessage.innerHTML = `<span style="color: #888;">رقمك القياسي: <strong style="color: #fff;">${currentRecord} ⭐</strong></span>`;
+                recordMessage.style.marginTop = '10px';
+            }
+
             await sendScoreToServer(playerName, score, deviceId);
             await displayLeaderboard();
+            displayPersonalRecord(); // تحديث العرض
 
-            if (typeof trackGameScore === 'function') {
-                trackGameScore(score);
+            // ✅ تتبع النتيجة في tracker.js
+            if (typeof window.trackGameScore === 'function') {
+                window.trackGameScore(score);
             }
         }
 
