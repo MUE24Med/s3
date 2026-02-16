@@ -1,3 +1,9 @@
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #121212;
+    color: white;
+  }
+}
 /* ========================================
    COMPLETE STYLE.CSS - FIXED VERSION
    ======================================== */
