@@ -1,3 +1,21 @@
+:root {
+  /* بنعرف المتصفح إن الموقع تصميمه داكن أصلاً */
+  color-scheme: dark !important;
+}
+
+/* أهم كود لمنع المتصفح من تغيير ألوان الـ SVG والمستطيلات */
+#main-svg, .m, rect, text {
+  /* بيمنع المتصفح (خصوصاً Chrome Mobile) من إعادة تلوين العناصر */
+  forced-color-adjust: none !important;
+}
+
+html, body {
+  background-color: black !important;
+  color: white !important;
+  /* حماية إضافية ضد الـ Auto Dark Mode */
+  color-scheme: only dark;
+}
+
 /* ========================================
    COMPLETE STYLE.CSS - FIXED VERSION
    ======================================== */
