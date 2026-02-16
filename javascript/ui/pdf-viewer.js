@@ -236,8 +236,9 @@ export function openWithMozilla(item) {
     // ✅ reset الـ zoom لـ 1x عند فتح PDF
     resetBrowserZoom();
 
-    pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
-        encodeURIComponent(url) + "#zoom=page-fit";
+pdfViewer.src = "/pdfjs/web/viewer.html?file=" + 
+    encodeURIComponent(url) + "#zoom=page-fit";
+
 
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
