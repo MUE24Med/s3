@@ -40,6 +40,48 @@ const LeaderboardCache = {
         console.log('🗑️ تم إبطال كاش Top5');
     }
 };
+const PersonalRecord = {
+    get() {
+        return parseInt(localStorage.getItem('personal_best_score') || '0', 10);
+    },
+    update(newScore) {
+        if (newScore > this.get()) {
+            localStorage.setItem('personal_best_score', String(newScore));
+            console.log(`🏆 رقم قياسي جديد: ${newScore}`);
+            return true;
+        }
+        return false;
+    },
+    // ✅ النظام ١: سحب الرقم القياسي من الكاش → السحابة
+    async syncToCloud(playerName, deviceId) {
+        const localBest = this.get();
+        if (localBest <= 0 || typeof window.storage === 'undefined') return;
+        try {
+            const existingKey = await _findDeviceScoreKey(deviceId);
+            if (existingKey) {
+                const existing = await window.storage.get(existingKey, true);
+                if (existing) {
+                    const parsed = JSON.parse(existing.value);
+                    if (localBest <= parsed.score) {
+                        console.log('☁️ الرقم السحابي مساوٍ أو أعلى - لا حاجة للتحديث');
+                        return;
+                    }
+                    await window.storage.delete(existingKey, true); // حذف القديم
+                }
+            }
+            const timestamp = Date.now();
+            await window.storage.set(
+                `${SCORE_CLOUD_PREFIX}${deviceId}_${timestamp}`,
+                JSON.stringify({ name: playerName, score: localBest,
+                                 device_id: deviceId,
+                                 date: new Date().toLocaleDateString('ar-EG'),
+                                 timestamp }),
+                true
+            );
+            console.log(`☁️ رُفع الرقم القياسي (${localBest}) إلى السحابة`);
+        } catch(e) { console.warn('⚠️ فشل رفع الرقم القياسي:', e); }
+    }
+};
 
 export function initPreloadSystem() {
     const preloadDone = localStorage.getItem('preload_done');
