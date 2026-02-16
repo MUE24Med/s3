@@ -19,6 +19,7 @@ const urlsToCache = [
     './javascript/ui/ui-controls.js',
     './javascript/ui/scroll-system.js',
     './javascript/features/preload-game.js',
+    './javascript/features/state.js',
     './javascript/features/svg-processor.js',
     './image/0.webp',
     './image/wood.webp',
