@@ -691,6 +691,32 @@ async function fetchAllCloudScores() {
     }
 }
 
+const deviceId   = getDeviceId();
+const playerName = getPlayerName();
+
+// عرض الرقم القياسي
+function refreshPersonalRecordUI() {
+    const el = document.getElementById('personalRecordValue');
+    if (el) el.textContent = PersonalRecord.get();
+}
+refreshPersonalRecordUI();
+
+// ✅ عند بدء الشاشة: رفع الرقم القياسي المحلي للسحابة
+PersonalRecord.syncToCloud(playerName, deviceId);
+
+// ✅ تحميل القائمة الحية (مرحلتان: كاش ثم سحابة)
+loadLiveLeaderboard(deviceId);
+
+// تحديث دوري كل 30 ثانية
+setInterval(() => {
+    if (!gameActive) loadLiveLeaderboard(deviceId);
+}, 30_000);
+
+// عرض الكاش في overlay إذا كان موجوداً
+const cachedForOverlay = LeaderboardCache.load();
+if (cachedForOverlay) renderLeaderboard(leaderboardList, cachedForOverlay, deviceId);
+
+
 // ✅ النظام ٢: حذف النتيجة السادسة (والأدنى) من السحابة
 async function pruneCloudScores() {
     if (typeof window.storage === 'undefined') return;
