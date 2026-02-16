@@ -133,13 +133,11 @@ export function showOpenOptions(item) {
         return;
     }
 
-    // ✅ تحديث currentPreviewItem فوراً هنا
     currentPreviewItem = item;
-    
     const fileName = item.path.split('/').pop();
     const url = `${RAW_CONTENT_BASE}${item.path}`;
 
-    // ✅ إظهار الـ popup بشكل صحيح
+    // ✅ إظهار الـ popup بشكل صحيح - إزالة hidden وإضافة display
     popup.classList.remove('hidden');
     popup.style.display = 'flex';
 
@@ -153,9 +151,6 @@ export function showOpenOptions(item) {
     }
 
     if (canvas) {
-        // ✅ امسح المحتوى القديم قبل رسم الجديد
-        const context = canvas.getContext('2d');
-        context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.style.display = 'none';
     }
 
@@ -200,8 +195,7 @@ export function closeOpenOptions() {
         popup.classList.add('hidden');
         popup.style.display = 'none';
     }
-    // ✅ لا نحذف currentPreviewItem هنا لأن الأزرار تحتاجها
-    // currentPreviewItem ستتحدث تلقائياً عند فتح ملف جديد
+    // لا نمسح currentPreviewItem هنا عشان أزرار الفتح تشتغل
 }
 
 // ---------- طرق الفتح ----------
@@ -236,8 +230,8 @@ export function openWithMozilla(item) {
     // ✅ reset الـ zoom لـ 1x عند فتح PDF
     resetBrowserZoom();
 
-pdfViewer.src = `/javascript/vendor/pdfjs/web/viewer.html?file=${encodeURIComponent(url)}#zoom=page-fit`;
-
+    pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
+        encodeURIComponent(url) + "#zoom=page-fit";
 
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
@@ -353,6 +347,7 @@ export function initPDFViewer() {
         methodCloseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             closeOpenOptions();
+            currentPreviewItem = null;
         });
     }
 
@@ -361,6 +356,7 @@ export function initPDFViewer() {
         methodPopup.addEventListener('click', (e) => {
             if (e.target === methodPopup) {
                 closeOpenOptions();
+                currentPreviewItem = null;
             }
         });
     }
