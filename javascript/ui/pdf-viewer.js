@@ -133,11 +133,13 @@ export function showOpenOptions(item) {
         return;
     }
 
+    // ✅ تحديث currentPreviewItem فوراً هنا
     currentPreviewItem = item;
+    
     const fileName = item.path.split('/').pop();
     const url = `${RAW_CONTENT_BASE}${item.path}`;
 
-    // ✅ إظهار الـ popup بشكل صحيح - إزالة hidden وإضافة display
+    // ✅ إظهار الـ popup بشكل صحيح
     popup.classList.remove('hidden');
     popup.style.display = 'flex';
 
@@ -151,6 +153,9 @@ export function showOpenOptions(item) {
     }
 
     if (canvas) {
+        // ✅ امسح المحتوى القديم قبل رسم الجديد
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.style.display = 'none';
     }
 
@@ -195,7 +200,8 @@ export function closeOpenOptions() {
         popup.classList.add('hidden');
         popup.style.display = 'none';
     }
-    // لا نمسح currentPreviewItem هنا عشان أزرار الفتح تشتغل
+    // ✅ لا نحذف currentPreviewItem هنا لأن الأزرار تحتاجها
+    // currentPreviewItem ستتحدث تلقائياً عند فتح ملف جديد
 }
 
 // ---------- طرق الفتح ----------
@@ -347,7 +353,6 @@ export function initPDFViewer() {
         methodCloseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             closeOpenOptions();
-            currentPreviewItem = null;
         });
     }
 
@@ -356,7 +361,6 @@ export function initPDFViewer() {
         methodPopup.addEventListener('click', (e) => {
             if (e.target === methodPopup) {
                 closeOpenOptions();
-                currentPreviewItem = null;
             }
         });
     }
