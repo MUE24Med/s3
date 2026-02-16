@@ -1,9 +1,8 @@
 /* ========================================
-   sw.js - Service Worker المُحسّن
-   الإصدار 2.0 - محسّن ومستقر
+   sw.js - Service Worker
    ======================================== */
 
-const CACHE_NAME = 'semester-3-cache-20260216-v06';
+const CACHE_NAME = 'semester-3-cache-20260216-v07';
 const urlsToCache = [
     './',
     './index.html',
