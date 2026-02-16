@@ -586,3 +586,31 @@ async function fetchAllCloudScores() {
         }
     }
 }
+
+// ✅ النظام ٢: حذف النتيجة السادسة (والأدنى) من السحابة
+async function pruneCloudScores() {
+    if (typeof window.storage === 'undefined') return;
+    try {
+        const all = await fetchAllCloudScores(); // مرتبة: الأعلى أولاً
+        if (all.length <= MAX_CLOUD_SCORES) return;
+        const toDelete = all.slice(MAX_CLOUD_SCORES); // السادسة فما فوق
+        for (const entry of toDelete) {
+            await window.storage.delete(entry.key, true);
+            console.log(`🗑️ حُذفت: ${entry.name} (${entry.score})`);
+        }
+        console.log(`✅ السحابة نظيفة - تبقى ${MAX_CLOUD_SCORES} نتائج`);
+    } catch(e) { console.warn('⚠️ فشل التنظيف:', e); }
+}
+
+// ✅ النظام ٣: جلب Top5 (كاش أولاً ثم سحابة) مع حفظها بالكاش
+async function fetchTop5(forceCloud = false) {
+    if (!forceCloud) {
+        const cached = LeaderboardCache.load();
+        if (cached) return { data: cached, fromCache: true };
+    }
+    console.log('🌐 جلب Top5 من السحابة...');
+    const all  = await fetchAllCloudScores();
+    const top5 = all.slice(0, MAX_CLOUD_SCORES);
+    if (top5.length) LeaderboardCache.save(top5); // ✅ حفظ بالكاش
+    return { data: top5, fromCache: false };
+}
