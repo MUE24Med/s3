@@ -6,6 +6,41 @@
 import { FORMSPREE_URL } from '../core/config.js';
 import { getPlayerName, getDeviceId } from '../core/utils.js';
 
+// ─── ثوابت ───────────────────────────────────
+const LEADERBOARD_CACHE_KEY = 'leaderboard_top5_cache';
+const LEADERBOARD_CACHE_TTL = 5 * 60 * 1000;   // 5 دقائق
+const SCORE_CLOUD_PREFIX    = 'game_score:';
+const MAX_CLOUD_SCORES      = 5;
+
+// ─── كاش القائمة في localStorage ─────────────
+const LeaderboardCache = {
+    save(top5) {
+        try {
+            localStorage.setItem(LEADERBOARD_CACHE_KEY, JSON.stringify({
+                data: top5, savedAt: Date.now()
+            }));
+            console.log('💾 Top5 محفوظة في الكاش');
+        } catch(e) { console.warn('⚠️ فشل حفظ الكاش:', e); }
+    },
+    load() {
+        try {
+            const raw = localStorage.getItem(LEADERBOARD_CACHE_KEY);
+            if (!raw) return null;
+            const { data, savedAt } = JSON.parse(raw);
+            if (Date.now() - savedAt > LEADERBOARD_CACHE_TTL) {
+                console.log('⏰ كاش منتهي الصلاحية');
+                return null;
+            }
+            console.log('✅ كاش Top5 صالح');
+            return data ?? null;
+        } catch { return null; }
+    },
+    invalidate() {
+        localStorage.removeItem(LEADERBOARD_CACHE_KEY);
+        console.log('🗑️ تم إبطال كاش Top5');
+    }
+};
+
 export function initPreloadSystem() {
     const preloadDone = localStorage.getItem('preload_done');
     const preloadScreen = document.getElementById('preload-screen');
