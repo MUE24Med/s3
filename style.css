@@ -1,4 +1,11 @@
 /* الأيام - إزاحة المحور الأفقي */
+.sat, .sun, .mon, .tue, .wed, .thu {
+  /* لضمان عمل التموضع داخل الـ SVG */
+  transform-box: fill-box; 
+  transform-origin: 0 0;
+}
+
+/* قيم الإزاحة */
 .sat { transform: translate(140px, 0); }
 .sun { transform: translate(253px, 0); }
 .mon { transform: translate(368px, 0); }
@@ -6,9 +13,9 @@
 .wed { transform: translate(598px, 0); }
 .thu { transform: translate(713px, 0); }
 
-/* تأكد من جعل العناصر التي تأخذ الكلاسات عبارة عن مجموعات SVG */
-g.sat, g.sun, g.mon, g.tue, g.wed, g.thu {
-  display: inline-block; /* لضمان استقرار التموضع في بعض المتصفحات */
+/* تأكد من أن الـ Hover يعمل على العناصر بداخلها */
+.m {
+  pointer-events: all !important; /* لضمان استجابة الماوس */
 }
 
 
