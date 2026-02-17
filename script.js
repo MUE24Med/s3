@@ -91,36 +91,39 @@ function observeZIndexChanges() {
 
 // ---------- التهيئة عند تحميل DOM ----------
 document.addEventListener('DOMContentLoaded', () => {
-    // نظام Preload
     const preloadDone = localStorage.getItem('preload_done');
+
     if (!preloadDone) {
+        // أول زيارة: نشغل نظام preload فقط (سيقوم بإخفاء باقي المحتوى)
         initPreloadSystem();
+        // لا داعي لتهيئة باقي المكونات الآن، لأن preload سيعيد التحميل لاحقاً
     } else {
+        // زيارة سابقة: نكمل التحميل الطبيعي
         autoLoadLastGroup();
+
+        // تهيئة المكونات
+        setupBackButton();
+        preventInteractionWhenHidden();
+        initWoodUI();
+        initPDFViewer();
+        observeZIndexChanges();
+
+        // تحديث رسائل الترحيب
+        updateWelcomeMessages();
+
+        // منع القائمة اليمنى على الصور
+        document.addEventListener('contextmenu', (e) => {
+            const target = e.target;
+            if (target.tagName === 'image' || 
+                target.tagName === 'IMG' || 
+                target.tagName === 'svg' ||
+                target.tagName === 'rect' ||
+                target.closest('svg')) {
+                e.preventDefault();
+                return false;
+            }
+        });
     }
-
-    // تهيئة المكونات
-    setupBackButton();
-    preventInteractionWhenHidden();
-    initWoodUI();
-    initPDFViewer();
-    observeZIndexChanges();
-
-    // تحديث رسائل الترحيب
-    updateWelcomeMessages();
-
-    // منع القائمة اليمنى على الصور
-    document.addEventListener('contextmenu', (e) => {
-        const target = e.target;
-        if (target.tagName === 'image' || 
-            target.tagName === 'IMG' || 
-            target.tagName === 'svg' ||
-            target.tagName === 'rect' ||
-            target.closest('svg')) {
-            e.preventDefault();
-            return false;
-        }
-    });
 
     console.log('✅ script.js تم تحميله بالكامل - جميع الوحدات جاهزة');
 });
