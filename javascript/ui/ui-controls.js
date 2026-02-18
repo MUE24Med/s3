@@ -3,7 +3,6 @@
 // ============================================
 
 import { NAV_STATE } from '../core/config.js';
-import { resetBrowserZoom } from '../core/utils.js';
 import { goToWood, pushNavigationState, goToMapEnd } from '../core/navigation.js';
 
 export function setupGroupChangeButton() {
@@ -11,7 +10,6 @@ export function setupGroupChangeButton() {
     if (changeGroupBtn) {
         changeGroupBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            resetBrowserZoom();
             const groupSelectionScreen = document.getElementById('group-selection-screen');
             if (groupSelectionScreen) {
                 groupSelectionScreen.classList.remove('hidden');
@@ -27,7 +25,6 @@ export function setupGroupSelectionButtons() {
     document.querySelectorAll('.group-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             const group = this.getAttribute('data-group');
-            resetBrowserZoom();
             console.log('👆 تم اختيار المجموعة:', group);
             import('../core/group-loader.js').then(({ initializeGroup }) => {
                 initializeGroup(group);
@@ -99,7 +96,6 @@ export function setupSearchIcon() {
     if (searchIcon) {
         searchIcon.onclick = (e) => {
             e.preventDefault();
-            resetBrowserZoom();
             goToWood();
         };
     }
@@ -110,11 +106,10 @@ export function setupBackButtonInSVG(getCurrentFolder, setCurrentFolder, updateW
     if (backButtonGroup) {
         backButtonGroup.onclick = (e) => {
             e.stopPropagation();
-            resetBrowserZoom();
-            
+
             // الحصول على القيمة الحالية في كل نقرة
             const folder = getCurrentFolder();
-            
+
             if (folder !== "") {
                 console.log('📂 زر SVG: العودة للمجلد الأب');
                 const parts = folder.split('/');
@@ -133,7 +128,6 @@ export function setupInteractionToggle() {
     const jsToggle = document.getElementById('js-toggle');
     if (jsToggle) {
         jsToggle.addEventListener('change', function () {
-            // يمكن تصدير interactionEnabled كمتغير مشترك إذا لزم الأمر
             window.interactionEnabled = this.checked;
         });
     }
