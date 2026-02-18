@@ -1,24 +1,3 @@
-/* الأيام - إزاحة المحور الأفقي */
-.sat, .sun, .mon, .tue, .wed, .thu {
-  /* لضمان عمل التموضع داخل الـ SVG */
-  transform-box: fill-box; 
-  transform-origin: 0 0;
-}
-
-/* قيم الإزاحة */
-.sat { transform: translate(140px, 0); }
-.sun { transform: translate(253px, 0); }
-.mon { transform: translate(368px, 0); }
-.tue { transform: translate(484px, 0); }
-.wed { transform: translate(598px, 0); }
-.thu { transform: translate(713px, 0); }
-
-/* تأكد من أن الـ Hover يعمل على العناصر بداخلها */
-.m {
-  pointer-events: all !important; /* لضمان استجابة الماوس */
-}
-
-
 :root {
   /* بنعرف المتصفح إن الموقع تصميمه داكن أصلاً */
   color-scheme: dark !important;
