@@ -41,7 +41,8 @@
 <g transform="translate(8192,0)">
     <image data-src="image/B/08.webp" width="1024" height="2454" />
     
-    <g class="mon">
+    <!-- Monday 8 -->
+    <g transform="translate(368,0)">
         <rect x="0" y="703" height="380" class="m w l" data-href="RRS/Lecture/micro-01.pdf"/>
         <rect x="0" y="1083" height="253.5" class="m w l" data-href="RRS/Lecture/patho-01.pdf"/>
         <rect x="0" y="1339" height="125" class="m w q" data-href="RRS/Quesion/patho-01.pdf"/>
@@ -49,13 +50,15 @@
         <rect x="0" y="1845" height="380" class="m w s" data-href="RRS/Section/anatomy-01.pdf"/>
     </g>
     
-    <g class="wed">
+    <!-- Wednesday 8 -->
+    <g transform="translate(598,0)">
         <rect x="0" y="366" height="315" class="m w l" data-href="RRS/Lecture/physio-01.pdf"/>
         <rect x="0" y="1846" height="253.4" class="m w l" data-href="RRS/Lecture/physio-02.pdf"/>
         <rect x="0" y="2100" height="127" class="m w q" data-href="RRS/Question/physio-01.pdf"/>
     </g>
     
-    <g class="thu">
+    <!-- Thursday 8 -->
+    <g transform="translate(712.35,0)">
         <rect x="0" y="702" height="380" class="m w l" data-href="RRS/Lecture/histo-01.pdf"/>
         <rect x="0" y="1465" height="380" class="m w l" data-href="RRS/Lecture/anatomy-02.pdf"/>
     </g>
@@ -179,89 +182,106 @@
         <rect x="0" y="1749.5" height="496.75" class="m w q" data-href="URI/Question/D-pharma-01.pdf" />
     </g>
     
-    <g class="mon">
+    <!-- Monday 14 -->
+    <g transform="translate(368.5,0)">
         <rect x="0" y="1204.3"  height="494.7" class="m w l" data-href="URI/Lecture/para-01.pdf" />
         <rect x="0" y="650.4" height="350" class="m w l" data-href="#" />
     </g>
 
-    <g class="tue">
+    <!-- Tuesday 14 -->
+    <g transform="translate(483,0)">
         <rect x="0" y="1301.4"  height="495" class="m w l" data-href="#" />
         <rect x="0" y="817.5" height="436" class="m w i" data-href="IPC/Question/Discussion-01.pdf" />
         <rect x="0" y="1797.6" height="494.7" class="m w l" data-href="#" />
     </g>
 
-    <g class="wed">
+    <!-- Wednesday 14 -->
+    <g transform="translate(598,0)">
         <rect x="0" y="864.5"  height="436.6" class="m w l" data-href="#" />
         <rect x="0" y="288.7"  height="350.55" class="m w l" data-href="#" />
         <rect x="0" y="1300.7"  height="495.8" class="m w l" data-href="URI/Lecture/patho-02.pdf" />
     </g>
 
-    <g class="thu">
+    <!-- Thursday 14 -->
+    <g transform="translate(712.5,0)">
         <rect x="0" y="1300.8" height="371.58" class="m w l" data-href="#"/>
         <rect x="0" y="863.9" height="436" class="m w l" data-href="#"/>
         <rect x="0" y="1673" height="620" class="m w l" data-href="URI/Lecture/patho-03.pdf" />
     </g>
 </g>
 
+<!-- الاسبوع الخامس عشر -->
 <g transform="translate(15360,0)">
     <image data-src="image/B/15.webp" width="1024" height="2454" />
 </g>
 
+<!-- الاسبوع السادس عشر -->
 <g transform="translate(16384,0)">
     <image data-src="image/B/16.webp" width="1024" height="2454" />
 </g>
 
+<!-- الاسبوع السابع عشر -->
 <g transform="translate(17408,0)">
     <image data-src="image/B/17.webp" width="1024" height="2454" />
     
-    <g class="mon">
+    <!-- Monday 17 -->
+    <g transform="translate(368,0)">
         <rect x="0" y="1093.5" height="327.32" class="m w is" data-href="ipc" />
         <rect x="0" y="1423" height="327.75" class="m w l" data-href="HEM/patho-01.pdf" />
         <rect x="0" y="1752" height="370.7" class="m w l" data-href="#" />
     </g>
 
-    <g class="tue">
+    <!-- Tuesday 17 -->
+    <g transform="translate(483,0)">
         <rect x="0" y="355.4" height="518.2" class="m w l" data-href="#" />
         <rect x="0" y="875.4" height="438.1" class="m w l" data-href="#" />
         <rect x="0" y="1313" height="438.53" class="m w s" data-href="#" />
         <rect x="0" y="1752.2" height="492.9" class="m w s" data-href="#" />
     </g>
 
-    <g class="wed">
+    <!-- Wednesday 17 -->
+    <g transform="translate(597,0)">
         <rect y="355.18" height="517" class="m w l" data-href="#" />
     </g>
 
-    <g class="thu">
+    <!-- Thursday 17 -->
+    <g transform="translate(713,0)">
         <rect y="874" height="438.76" class="m w l" data-href="#" />
     </g>
 </g>
 
+<!-- الاسبوع الثامن عشر -->
 <g transform="translate(18432,0)">
     <image data-src="image/B/18.webp" width="1024" height="2454" />
 </g>
 
+<!-- الاسبوع التاسع عشر -->
 <g transform="translate(19456,0)">
     <image data-src="image/B/19.webp" width="1024" height="2454" />
     
-    <g class="sat">
+    <!-- Saturday 19 -->
+    <g transform="translate(140,0)">
         <rect x="0" y="330" height="539.5" class="m w" data-href="#" />
         <rect x="0" y="868" height="490" class="m w" data-href="#" />
         <rect x="0" y="1358" height="492.4" class="m w" data-href="#" />
     </g>
 
-    <g class="mon">
+    <!-- Monday 19 -->
+    <g transform="translate(368,0)">
         <rect y="329.7" height="536.9" class="m w s" data-href="HEM/Section/micro-01.pdf" />
         <rect x="0" y="866.25" height="492.8" class="m w s" data-href="HEM/Section/para-01.pdf" />
         <rect x="0" y="1358.3" height="492" class="m w l" data-href="HEM/Lecture/patho-01.pdf" />
         <rect x="0" y="1850" height="409.6" class="m w" data-href="#" />
     </g>
 
-    <g class="tue">
+    <!-- Tuesday 19 -->
+    <g transform="translate(483,0)">
         <rect x="0" y="329.7" height="536.9" class="m w" data-href="#" />
         <rect x="0" y="866.25" height="492.8" class="m w" data-href="#" />
     </g>
 
-    <g class="wed">
+    <!-- Wednesday 19 -->
+    <g transform="translate(598,0)">
         <rect x="0" y="332" height="534.6" class="m w" data-href="#" />
         <rect x="0" y="868" height="491.7" class="m w" data-href="#" />
         <rect x="0" y="1359.2" height="491" class="m w" data-href="#" />
@@ -269,42 +289,50 @@
     </g>
 </g>
 
+<!-- الاسبوع العشرين -->
 <g transform="translate(20480,0)">
     <image data-src="image/B/20.webp" width="1024" height="2454" />
 </g>
 
+<!-- الاسبوع الواحد و العشرين -->
 <g transform="translate(21504,0)">
     <image data-src="image/B/21.webp" width="1024" height="2454" />
     
-    <g class="sat">
+    <!-- Saturday 21 -->
+    <g transform="translate(139,0)">
         <rect x="0" y="1128.5" height="376.5" class="m w" data-href="#" />
         <rect x="0" y="150.8" height="378" class="m w" data-href="#"/>
         <rect x="0" y="1886.2" height="287" class="m w" data-href="#"/>
     </g>
     
-    <g class="sun">
+    <!-- Sunday 21 -->
+    <g transform="translate(254,0)">
         <rect x="0" y="1128.3" height="376.71" class="m w l" data-href="HEM/Lecture/para-01.pdf" />
         <rect x="0" y="1505.7" height="378.8" class="m w s" data-href="#" />
         <rect x="0" y="1885.5" height="289.5" class="m w l" data-href="HEM/Lecture/physio-02.pdf" />
     </g>
     
-    <g class="mon">
+    <!-- Monday 21 -->
+    <g transform="translate(368.5,0)">
         <rect x="0" y="289.3" height="448.1" class="m w" data-href="#" />
         <rect x="0" y="853.5" height="547.6" class="m w" data-href="#" />
         <rect x="0" y="1886.3" height="384.2" class="m w" data-href="#" />
     </g>
     
-    <g class="wed">
+    <!-- Wednesday 21 -->
+    <g transform="translate(597.758,0)">
         <rect x="0" y="1403" height="481" class="m w" data-href="#" />
     </g>
     
-    <g class="thu">
+    <!-- Thursday 21 -->
+    <g transform="translate(713,0)">
         <rect x="0" y="391.2" height="461" class="m w" data-href="#" />
         <rect x="0" y="854" height="547" class="m w" data-href="#" />
         <rect x="0" y="1403.1" height="482.6" class="m w" data-href="#" />
     </g>
 </g>
 
+<!-- الاسبوع الثاني و العشرين -->
 <g transform="translate(22528,0)">
     <image data-src="image/B/22.webp" width="1024" height="2454" />
 </g>
