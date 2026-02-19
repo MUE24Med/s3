@@ -1,3 +1,17 @@
+/* الأيام - إزاحة المحور الأفقي */
+.sat { transform: translate(140px, 0); }
+.sun { transform: translate(253px, 0); }
+.mon { transform: translate(368px, 0); }
+.tue { transform: translate(484px, 0); }
+.wed { transform: translate(598px, 0); }
+.thu { transform: translate(713px, 0); }
+
+/* تأكد من جعل العناصر التي تأخذ الكلاسات عبارة عن مجموعات SVG */
+g.sat, g.sun, g.mon, g.tue, g.wed, g.thu {
+  display: inline-block; /* لضمان استقرار التموضع في بعض المتصفحات */
+}
+
+
 :root {
   /* بنعرف المتصفح إن الموقع تصميمه داكن أصلاً */
   color-scheme: dark !important;
