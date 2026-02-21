@@ -232,7 +232,7 @@
     </g>
 
     <!-- Tuesday 17 -->
-    <g transform="translate(483,0)">
+    <g transform="translate(484,0)">
         <rect x="0" y="355.4" height="518.2" class="m w l" data-href="#" />
         <rect x="0" y="875.4" height="438.1" class="m w l" data-href="#" />
         <rect x="0" y="1313" height="438.53" class="m w s" data-href="#" />
@@ -240,7 +240,7 @@
     </g>
 
     <!-- Wednesday 17 -->
-    <g transform="translate(597,0)">
+    <g transform="translate(598,0)">
         <rect y="355.18" height="517" class="m w l" data-href="#" />
     </g>
 
@@ -275,7 +275,7 @@
     </g>
 
     <!-- Tuesday 19 -->
-    <g transform="translate(483,0)">
+    <g transform="translate(484,0)">
         <rect x="0" y="329.7" height="536.9" class="m w" data-href="#" />
         <rect x="0" y="866.25" height="492.8" class="m w" data-href="#" />
     </g>
@@ -299,14 +299,14 @@
     <image data-src="image/B/21.webp" width="1024" height="2454" />
     
     <!-- Saturday 21 -->
-    <g transform="translate(139,0)">
+    <g transform="translate(140,0)">
         <rect x="0" y="1128.5" height="376.5" class="m w" data-href="#" />
         <rect x="0" y="150.8" height="378" class="m w" data-href="#"/>
         <rect x="0" y="1886.2" height="287" class="m w" data-href="#"/>
     </g>
     
     <!-- Sunday 21 -->
-    <g transform="translate(254,0)">
+    <g transform="translate(253,0)">
         <rect x="0" y="1128.3" height="376.71" class="m w l" data-href="HEM/Lecture/para-01.pdf" />
         <rect x="0" y="1505.7" height="378.8" class="m w s" data-href="#" />
         <rect x="0" y="1885.5" height="289.5" class="m w l" data-href="HEM/Lecture/physio-02.pdf" />
@@ -320,7 +320,7 @@
     </g>
     
     <!-- Wednesday 21 -->
-    <g transform="translate(597.758,0)">
+    <g transform="translate(598,0)">
         <rect x="0" y="1403" height="481" class="m w" data-href="#" />
     </g>
     
@@ -335,6 +335,24 @@
 <!-- الاسبوع الثاني و العشرين -->
 <g transform="translate(22528,0)">
     <image data-src="image/B/22.webp" width="1024" height="2454" />
+<!-- Saturday 22 -->
+<g transform="translate(140,0)" >
+</g>
+<!-- Sunday 22 -->
+<g transform="translate(253,0)" >
+</g>
+<!-- Monday 22 -->
+<g transform="translate(368,0)" >
+</g>
+<!-- Tuesday 22 -->
+<g transform="translate(484,0)" >
+</g>
+<!-- Wednesday 22 -->
+<g transform="translate(598,0)" >
+</g>
+<!-- Thursday 22 -->
+<g transform="translate(713,0)" >
+</g>
 </g>
 
 <g id="dynamic-links-group"></g>

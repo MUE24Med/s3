@@ -19,7 +19,6 @@ const FILES_TO_LOAD = [
     './javascript/ui/scroll-system.js',
     './javascript/features/preload-game.js',
     './javascript/features/svg-processor.js',
-    './image/0.png',
     './image/wood.webp',
     './image/Upper_wood.webp'
 ];

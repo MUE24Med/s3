@@ -15,10 +15,12 @@ export function initPreloadSystem() {
 
     if (!preloadDone && preloadScreen) {
         console.log('🔄 أول زيارة - تفعيل شاشة Preload مع اللعبة المصغرة');
-        // نمرر callback لبدء اللعبة بعد اكتمال التحميل
-        initPreload(() => {
-            initializeMiniGame();
-        });
+
+        // ✅ نبدأ اللعبة أولاً قبل التحميل
+        initializeMiniGame();
+
+        // ثم نبدأ التحميل بدون callback
+        initPreload();
     } else {
         console.log('✅ زيارة سابقة - تخطي Preload');
         if (preloadScreen) {
