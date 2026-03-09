@@ -27,7 +27,6 @@ export async function showPDFPreview(item) {
     const fileName = item.path.split('/').pop();
     const url = `${RAW_CONTENT_BASE}${item.path}`;
 
-    // ✅ إظهار الـ popup بشكل صحيح
     popup.classList.remove('hidden');
     popup.style.display = 'flex';
 
@@ -36,7 +35,6 @@ export async function showPDFPreview(item) {
     loading.style.display = 'block';
     canvas.style.display = 'none';
 
-    // إزالة أي صورة معاينة قديمة
     const oldImg = popup.querySelector('img[alt^="معاينة"]');
     if (oldImg) oldImg.remove();
 
@@ -74,7 +72,6 @@ export async function showPDFPreview(item) {
 
         await page.render({ canvasContext: context, viewport }).promise;
 
-        // تحويل الـ canvas لصورة PNG
         const imgData = canvas.toDataURL('image/png');
         const previewImg = document.createElement('img');
         previewImg.src = imgData;
@@ -137,7 +134,6 @@ export function showOpenOptions(item) {
     const fileName = item.path.split('/').pop();
     const url = `${RAW_CONTENT_BASE}${item.path}`;
 
-    // ✅ إظهار الـ popup بشكل صحيح - إزالة hidden وإضافة display
     popup.classList.remove('hidden');
     popup.style.display = 'flex';
 
@@ -156,7 +152,6 @@ export function showOpenOptions(item) {
 
     console.log('📋 عرض خيارات الفتح:', url);
 
-    // تحميل المعاينة في الخلفية
     if (canvas) {
         (async () => {
             try {
@@ -188,14 +183,12 @@ export function showOpenOptions(item) {
     }
 }
 
-// ✅ إغلاق صحيح - بيرجع hidden ويشيل display
 export function closeOpenOptions() {
     const popup = document.getElementById('open-method-popup');
     if (popup) {
         popup.classList.add('hidden');
         popup.style.display = 'none';
     }
-    // لا نمسح currentPreviewItem هنا عشان أزرار الفتح تشتغل
 }
 
 // ---------- طرق الفتح ----------
@@ -223,11 +216,9 @@ export function openWithMozilla(item) {
         return;
     }
 
-    // ✅ إظهار الـ overlay بشكل صحيح
     overlay.classList.remove("hidden");
     overlay.style.display = 'flex';
 
-    // ✅ reset الـ zoom لـ 1x عند فتح PDF
     resetBrowserZoom();
 
     pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
@@ -237,7 +228,6 @@ export function openWithMozilla(item) {
         trackSvgOpen(item.path);
     }
 
-    // ✅ إغلاق الـ popup بعد فتح الـ overlay
     closeOpenOptions();
     console.log('📄 فتح بـ Mozilla:', url);
 }
@@ -267,14 +257,16 @@ export function openWithBrowser(item) {
     }
 
     const url = `${RAW_CONTENT_BASE}${item.path}`;
-    window.open(url, '_blank');
+    // استخدام رابط عارض Mozilla PDF.js في نافذة جديدة لعرض PDF مباشرة
+    const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(url)}`;
+    window.open(viewerUrl, '_blank');
 
     if (typeof trackSvgOpen === 'function') {
         trackSvgOpen(item.path);
     }
 
     closeOpenOptions();
-    console.log('🌐 فتح بالمتصفح:', url);
+    console.log('🌐 فتح بالمتصفح (عارض موزيلا في نافذة جديدة):', viewerUrl);
 }
 
 export function toggleMozillaToolbar() {
@@ -304,7 +296,6 @@ export function smartOpen(item) {
 // ---------- تهيئة مستمعات الأحداث ----------
 export function initPDFViewer() {
 
-    // ---- أزرار معاينة PDF ----
     const closePreviewBtn = document.getElementById('preview-close-btn');
     const openFromPreviewBtn = document.getElementById('preview-open-btn');
     const previewPopup = document.getElementById('pdf-preview-popup');
@@ -322,7 +313,6 @@ export function initPDFViewer() {
             if (currentPreviewItem) {
                 const item = currentPreviewItem;
                 closePDFPreview();
-                // تأخير بسيط عشان الـ close يخلص قبل ما الـ open يشتغل
                 setTimeout(() => showOpenOptions(item), 50);
             }
         });
@@ -336,7 +326,6 @@ export function initPDFViewer() {
         });
     }
 
-    // ---- أزرار popup خيارات الفتح ----
     const methodPopup = document.getElementById('open-method-popup');
     const methodCloseBtn = document.getElementById('method-close-btn');
     const mozillaBtn = document.getElementById('open-mozilla-btn');
@@ -351,7 +340,6 @@ export function initPDFViewer() {
         });
     }
 
-    // ✅ إغلاق عند الضغط خارج الـ container
     if (methodPopup) {
         methodPopup.addEventListener('click', (e) => {
             if (e.target === methodPopup) {
@@ -397,7 +385,6 @@ export function initPDFViewer() {
         });
     }
 
-    // ---- أزرار عارض PDF الرئيسي ----
     const closePdfBtn = document.getElementById('closePdfBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const shareBtn = document.getElementById('shareBtn');
@@ -413,7 +400,6 @@ export function initPDFViewer() {
                 pdfOverlay.style.display = 'none';
             }
             if (pdfFrame) pdfFrame.src = '';
-            // ✅ reset الـ zoom لـ 1x عند إغلاق PDF
             resetBrowserZoom();
             popNavigationState();
         });
