@@ -270,7 +270,6 @@ export function openWithMozilla(item) {
 
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
-    const toolbar = document.getElementById('toolbar');
     const eyeBtn = document.getElementById('pdf-eye-draggable');
 
     if (!overlay || !pdfViewer) {
@@ -282,8 +281,8 @@ export function openWithMozilla(item) {
     overlay.style.display = 'flex';
 
     // إعادة تعيين حالة شريط الأدوات إلى الظاهر
-    if (toolbar && eyeBtn) {
-        toolbar.style.display = 'flex'; // أو القيمة الأصلية
+    if (overlay && eyeBtn) {
+        overlay.classList.remove('toolbar-hidden');
         eyeBtn.classList.remove('active');
         eyeBtn.title = 'إخفاء شريط الأدوات';
         isPdfToolbarHidden = false;
@@ -359,19 +358,19 @@ export function toggleMozillaToolbar() {
 
 // دالة لتبديل إخفاء/إظهار شريط أدوات PDF
 export function togglePdfToolbar() {
-    const toolbar = document.getElementById('toolbar');
+    const pdfOverlay = document.getElementById('pdf-overlay');
     const eyeBtn = document.getElementById('pdf-eye-draggable');
     
-    if (!toolbar || !eyeBtn) return;
+    if (!pdfOverlay || !eyeBtn) return;
     
     isPdfToolbarHidden = !isPdfToolbarHidden;
     
     if (isPdfToolbarHidden) {
-        toolbar.style.display = 'none';
+        pdfOverlay.classList.add('toolbar-hidden');
         eyeBtn.classList.add('active');
         eyeBtn.title = 'إظهار شريط الأدوات';
     } else {
-        toolbar.style.display = 'flex'; // استعادة القيمة الأصلية
+        pdfOverlay.classList.remove('toolbar-hidden');
         eyeBtn.classList.remove('active');
         eyeBtn.title = 'إخفاء شريط الأدوات';
     }
