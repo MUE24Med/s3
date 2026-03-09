@@ -86,15 +86,16 @@ export function getGroupImage(element) {
 }
 
 // ------------------------------
-// أسماء المستخدمين والأجهزة
+// أسماء المستخدمين والأجهزة (معدلة)
 // ------------------------------
 export function getDisplayName() {
     const realName = localStorage.getItem('user_real_name');
     if (realName && realName.trim()) {
         return realName.trim();
     }
+    // استخدام الكود المميز المكون من 4 أرقام بدلاً من "زائر"
     const visitorId = localStorage.getItem('visitor_id');
-    return visitorId || 'زائر';
+    return visitorId || '0000'; // إذا لم يوجد بعد، نعرض 0000 مؤقتاً
 }
 
 export function getPlayerName() {
@@ -105,7 +106,9 @@ export function getPlayerName() {
     if (realName && realName.trim()) {
         return realName.trim();
     }
-    return localStorage.getItem('visitor_id') || 'زائر';
+    // نفس التعديل هنا
+    const visitorId = localStorage.getItem('visitor_id');
+    return visitorId || '0000';
 }
 
 export function getDeviceId() {
