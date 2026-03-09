@@ -1,6 +1,7 @@
 // ============================================
 // pdf-viewer.js - معاينة PDF وفتحه بطرق متعددة
 // مع تحسين جودة المعاينة ومعالجة أخطاء أفضل
+// وإضافة زر العين لإخفاء/إظهار شريط الأدوات
 // ============================================
 
 import { RAW_CONTENT_BASE, NAV_STATE } from '../core/config.js';
@@ -9,6 +10,7 @@ import { resetBrowserZoom } from '../core/utils.js';
 
 export let currentPreviewItem = null;
 export let isToolbarExpanded = false;
+export let isPdfToolbarHidden = false; // حالة إخفاء شريط أدوات PDF
 
 // ---------- معاينة PDF (محدثة بجودة عالية) ----------
 export async function showPDFPreview(item) {
@@ -273,6 +275,15 @@ export function openWithMozilla(item) {
     overlay.classList.remove("hidden");
     overlay.style.display = 'flex';
 
+    // إعادة تعيين حالة شريط الأدوات إلى الظاهر
+    const eyeBtn = document.getElementById('pdf-eye-toggle');
+    if (overlay && eyeBtn) {
+        overlay.classList.remove('toolbar-hidden');
+        eyeBtn.classList.remove('active');
+        eyeBtn.title = 'إخفاء شريط الأدوات';
+        isPdfToolbarHidden = false;
+    }
+
     resetBrowserZoom();
 
     pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
@@ -338,6 +349,26 @@ export function toggleMozillaToolbar() {
         pdfOverlay.classList.remove('fullscreen-mode');
         expandBtn.innerHTML = '🔼';
         expandBtn.title = 'إخفاء الأزرار';
+    }
+}
+
+// دالة لتبديل إخفاء/إظهار شريط أدوات PDF
+export function togglePdfToolbar() {
+    const pdfOverlay = document.getElementById('pdf-overlay');
+    const eyeBtn = document.getElementById('pdf-eye-toggle');
+    
+    if (!pdfOverlay || !eyeBtn) return;
+    
+    isPdfToolbarHidden = !isPdfToolbarHidden;
+    
+    if (isPdfToolbarHidden) {
+        pdfOverlay.classList.add('toolbar-hidden');
+        eyeBtn.classList.add('active');
+        eyeBtn.title = 'إظهار شريط الأدوات';
+    } else {
+        pdfOverlay.classList.remove('toolbar-hidden');
+        eyeBtn.classList.remove('active');
+        eyeBtn.title = 'إخفاء شريط الأدوات';
     }
 }
 
@@ -442,6 +473,7 @@ export function initPDFViewer() {
     const downloadBtn = document.getElementById('downloadBtn');
     const shareBtn = document.getElementById('shareBtn');
     const expandToolbarBtn = document.getElementById('expand-toolbar-btn');
+    const pdfEyeToggle = document.getElementById('pdf-eye-toggle'); // زر العين الجديد
     const pdfOverlay = document.getElementById('pdf-overlay');
     const pdfFrame = document.getElementById('pdfFrame');
 
@@ -497,6 +529,14 @@ export function initPDFViewer() {
 
     if (expandToolbarBtn) {
         expandToolbarBtn.addEventListener('click', toggleMozillaToolbar);
+    }
+
+    // مستمع حدث لزر العين الجديد
+    if (pdfEyeToggle) {
+        pdfEyeToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePdfToolbar();
+        });
     }
 
     console.log('✅ معالجات المعاينة والفتح جاهزة');
