@@ -1,7 +1,7 @@
 // ============================================
 // pdf-viewer.js - معاينة PDF وفتحه بطرق متعددة
 // مع تحسين جودة المعاينة ومعالجة أخطاء أفضل
-// وإضافة زر العين لإخفاء/إظهار شريط الأدوات
+// وإضافة زر عين قابل للسحب داخل PDF
 // ============================================
 
 import { RAW_CONTENT_BASE, NAV_STATE } from '../core/config.js';
@@ -11,6 +11,10 @@ import { resetBrowserZoom } from '../core/utils.js';
 export let currentPreviewItem = null;
 export let isToolbarExpanded = false;
 export let isPdfToolbarHidden = false; // حالة إخفاء شريط أدوات PDF
+
+// متغيرات السحب للزر
+let dragActive = false;
+let startX, startY, initialLeft, initialTop;
 
 // ---------- معاينة PDF (محدثة بجودة عالية) ----------
 export async function showPDFPreview(item) {
@@ -266,6 +270,7 @@ export function openWithMozilla(item) {
 
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
+    const eyeBtn = document.getElementById('pdf-eye-draggable');
 
     if (!overlay || !pdfViewer) {
         console.error('❌ عناصر عارض PDF غير موجودة');
@@ -276,7 +281,6 @@ export function openWithMozilla(item) {
     overlay.style.display = 'flex';
 
     // إعادة تعيين حالة شريط الأدوات إلى الظاهر
-    const eyeBtn = document.getElementById('pdf-eye-toggle');
     if (overlay && eyeBtn) {
         overlay.classList.remove('toolbar-hidden');
         eyeBtn.classList.remove('active');
@@ -355,7 +359,7 @@ export function toggleMozillaToolbar() {
 // دالة لتبديل إخفاء/إظهار شريط أدوات PDF
 export function togglePdfToolbar() {
     const pdfOverlay = document.getElementById('pdf-overlay');
-    const eyeBtn = document.getElementById('pdf-eye-toggle');
+    const eyeBtn = document.getElementById('pdf-eye-draggable');
     
     if (!pdfOverlay || !eyeBtn) return;
     
@@ -370,6 +374,62 @@ export function togglePdfToolbar() {
         eyeBtn.classList.remove('active');
         eyeBtn.title = 'إخفاء شريط الأدوات';
     }
+}
+
+// دوال السحب للزر
+function startDrag(e) {
+    const eyeBtn = document.getElementById('pdf-eye-draggable');
+    if (!eyeBtn) return;
+    
+    dragActive = true;
+    eyeBtn.classList.add('dragging');
+    
+    // تحديد إحداثيات البداية
+    const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+    
+    startX = clientX;
+    startY = clientY;
+    
+    // الحصول على الموقع الحالي للزر
+    const rect = eyeBtn.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+    
+    // منع السلوك الافتراضي
+    e.preventDefault();
+}
+
+function onDrag(e) {
+    if (!dragActive) return;
+    
+    const eyeBtn = document.getElementById('pdf-eye-draggable');
+    if (!eyeBtn) return;
+    
+    const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = clientX - startX;
+    const deltaY = clientY - startY;
+    
+    // تحديث موقع الزر
+    eyeBtn.style.left = (initialLeft + deltaX) + 'px';
+    eyeBtn.style.top = (initialTop + deltaY) + 'px';
+    eyeBtn.style.right = 'auto'; // إلغاء الخاصية right لأننا نستخدم left
+    
+    e.preventDefault();
+}
+
+function stopDrag(e) {
+    if (!dragActive) return;
+    
+    const eyeBtn = document.getElementById('pdf-eye-draggable');
+    if (eyeBtn) {
+        eyeBtn.classList.remove('dragging');
+    }
+    
+    dragActive = false;
+    e.preventDefault();
 }
 
 export function smartOpen(item) {
@@ -473,7 +533,7 @@ export function initPDFViewer() {
     const downloadBtn = document.getElementById('downloadBtn');
     const shareBtn = document.getElementById('shareBtn');
     const expandToolbarBtn = document.getElementById('expand-toolbar-btn');
-    const pdfEyeToggle = document.getElementById('pdf-eye-toggle'); // زر العين الجديد
+    const pdfEyeDraggable = document.getElementById('pdf-eye-draggable'); // زر العين القابل للسحب
     const pdfOverlay = document.getElementById('pdf-overlay');
     const pdfFrame = document.getElementById('pdfFrame');
 
@@ -531,11 +591,24 @@ export function initPDFViewer() {
         expandToolbarBtn.addEventListener('click', toggleMozillaToolbar);
     }
 
-    // مستمع حدث لزر العين الجديد
-    if (pdfEyeToggle) {
-        pdfEyeToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            togglePdfToolbar();
+    // مستمعات السحب لزر العين
+    if (pdfEyeDraggable) {
+        // أحداث الماوس
+        pdfEyeDraggable.addEventListener('mousedown', startDrag);
+        window.addEventListener('mousemove', onDrag);
+        window.addEventListener('mouseup', stopDrag);
+        
+        // أحداث اللمس
+        pdfEyeDraggable.addEventListener('touchstart', startDrag, { passive: false });
+        window.addEventListener('touchmove', onDrag, { passive: false });
+        window.addEventListener('touchend', stopDrag);
+        window.addEventListener('touchcancel', stopDrag);
+        
+        // وظيفة النقر (تبديل إخفاء/إظهار شريط الأدوات) - مع التأكد من أنها ليست سحبًا
+        pdfEyeDraggable.addEventListener('click', (e) => {
+            if (!dragActive) {
+                togglePdfToolbar();
+            }
         });
     }
 
