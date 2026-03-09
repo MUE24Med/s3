@@ -865,6 +865,29 @@ html, body {
   font-size: 11px;
 }
 
+/* إخفاء شريط الأدوات عند تفعيل وضع "العين" */
+#pdf-overlay.toolbar-hidden #toolbar {
+  display: none !important;
+}
+
+/* توسعة الـ iframe ليملأ كامل المساحة عند إخفاء الشريط */
+#pdf-overlay.toolbar-hidden #pdfFrame {
+  height: 100vh !important;
+}
+
+/* زر العين في وضع النشاط (اختياري) */
+#pdf-eye-toggle.active {
+  background: #ffcc00;
+  color: #000;
+  border-color: #ffcc00;
+}
+
+/* تحسين مظهر زر العين */
+#pdf-eye-toggle {
+  font-size: 20px;
+  padding: 5px 12px;
+}
+
 /* [006] شاشة التحميل */
 #loading-overlay {
   position: fixed;
